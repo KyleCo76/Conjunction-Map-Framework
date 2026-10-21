@@ -101,7 +101,7 @@ One exception: the **Coloured Map Markers** adapter also shows its icons without
 | Gwent Players Map | 1.0.9 | **1.0.1** | Its card markers, in its author's own card art, and its "Gwent" tab |
 | Ink and Iron - All in One | 0.8.10 (0.8.7 to 0.8.9 work too) | **1.1.0** | Ink and Iron's map look, quest level tags, key-hint row, map movement and its tall info box |
 | Map Pin Teleport | 1.2.2 | 1.0.0 | Teleporting from your own map pins |
-| Map Quest Insight | 1.6.1 | 1.0.0 | Quest icons by type, coloured level labels, its info box, spreading stacked markers |
+| Map Quest Insight | 1.6.1 | **1.0.1** | Quest icons by type (main quest, contract and Gwent quest icons in its author's own art), coloured level labels, its info box, spreading stacked markers |
 | The Stable - Roach-Horse Customization | 2.2.1 | 1.0.0 | Its Stables row on the map |
 | Witcher Upgrade Gear Map | 1.0.1 | **1.0.1** | Its diagram markers, in its author's own art and school colours, its "Witcher Gear" tab and legend row |
 | Witcher's Path | 1.0.3 | 1.0.0 | Its travel route drawn on the map, and its buttons |
@@ -124,7 +124,7 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 
 <br/>
 
-- **Placeholder art** in the All Quest Objectives, Botanist and Map Quest Insight adapters, until those authors supply theirs. The Gwent Players Map and Witcher Gear Map adapters (1.0.1) use their author's own art. CMF ships another mod's art only when its author permits it, and credits them.
+- **Placeholder art** in the All Quest Objectives and Botanist adapters, until those authors supply theirs. The Gwent Players Map and Witcher Gear Map adapters (1.0.1) and the Map Quest Insight adapter (1.0.1) use their authors' own art. CMF ships another mod's art only when its author permits it, and credits them.
 - **Fog of War's clouds** do not draw on CMF's map until Fog of War supports CMF; the hiding works.
 - **Map Remastered's** own region emblems on the world overview do not show; its redrawn terrain does.
 - **Witcher's Path:** its speed setting does nothing under CMF.
@@ -321,6 +321,8 @@ Please include your CMF version, the map mods and adapters you have installed, a
 Made by Kyle with the help of AI tools (Claude and ChatGPT). Every published file is reviewed by Kyle.
 
 Card and gear art in the Gwent Players Map and Witcher Gear Map adapters by **MateusAnd**, the author of both mods, used with permission. Thanks to MateusAnd for testing CMF on Linux.
+
+Main quest, contract and Gwent quest icons in the Map Quest Insight adapter by **Wolfer**, the author of Map Quest Insight, used with permission.
 
 Icons in the Coloured Map Markers adapter by **DJ_Kovrik**, from [Coloured Map Markers](https://www.nexusmods.com/witcher3/mods/938) (maintained by LewisElementary), used with permission under the mod's compatibility notice. The adapter is not made by DJ_Kovrik or LewisElementary; questions about it go to CMF's page.
 

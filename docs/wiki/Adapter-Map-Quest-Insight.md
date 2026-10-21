@@ -46,7 +46,7 @@ The adapter is one script with four wrappers. Your mod does not change.
 |---|---|
 | `qmiIconScale` | `CMFStylePinScale(provider, pin, percent)` |
 | `qmiIconTop` | `CMFStylePin(provider, pin, CMFPropertyLabelPlace(), "", tenths)` |
-| `qmiIconKind` | `CMFStylePinIcon(provider, pin, url)`: a frame of the game's pin icon (`frame:HorseRace` and so on), or the adapter's own placeholder icons for main quests, contracts and Gwent |
+| `qmiIconKind` | `CMFStylePinIcon(provider, pin, url)`: a frame of the game's pin icon (`frame:HorseRace` and so on), or your own main quest, contract and Gwent icons, which the adapter ships with your permission |
 | `qmiLevelText` | `CMFStylePinLabel(provider, pin, yourHtml)`; a signpost name of `" "` hides the pin label instead |
 | `qmiNoCrosshairLabel` | `CMFStylePin(provider, pin, CMFPropertyLabelHide(), "crosshair", 1)` |
 | `qmiIconTint` | `CMFStylePinTint(provider, pin, rgb)` |
@@ -90,7 +90,7 @@ When you ship it, players drop the adapter. If both are installed, both name `mo
 
 ### What does not come back this way
 
-- **Your art.** Your icons for main quests, contracts and Gwent quests live inside your map file and cannot be loaded at run time. The adapter ships placeholder drawings for them in its own `texture.cache`, exactly as your own CMF support would ship your art: put the pictures in your folder's `art/`, build it with `tools/cmf_pack.py`, and pass their `img://icons/<your folder>/...` paths to `CMFStylePinIcon`. CMF itself carries no quest art.
+- **Your art.** Your icons for main quests, contracts and Gwent quests live inside your map file and cannot be loaded at run time. The adapter ships the copies you sent (2026-10-21) in its own `texture.cache`, exactly as your own CMF support would ship them: put the pictures in your folder's `art/`, build it with `tools/cmf_pack.py`, and pass their `img://icons/<your folder>/...` paths to `CMFStylePinIcon`. CMF itself carries no quest art.
 - **The quest pin draw order.** CMF has no general call for it yet.
 
 ### Status

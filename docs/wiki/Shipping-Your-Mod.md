@@ -44,7 +44,7 @@ One exception keeps existing mods' values readable for their adapters: the game 
 | `iaiLv`, `iaiDiff` | Ink and Iron 0.8.7 and 0.8.8 | its adapter |
 | `uireScale`, `uireHideLabel`, `uireLevelLabel`, `uireLevel`, `uireLevelColor` | UI Remastered | declared as names only; its adapter comes after 1.0.0 |
 
-CMF itself ships no art from other mods. An adapter carries its own placeholder pictures, or a mod author's art only with that author's permission, credited: the Gwent Players Map and Witcher Gear Map adapters carry their author MateusAnd's art since 1.0.1. Authors supply their own art and effects through the calls above.
+CMF itself ships no art from other mods. An adapter carries its own placeholder pictures, or a mod author's art only with that author's permission, credited: the Gwent Players Map and Witcher Gear Map adapters carry their author MateusAnd's art since 1.0.1, and the Map Quest Insight adapter carries its author Wolfer's quest icons since 1.0.1. Authors supply their own art and effects through the calls above.
 
 ---
 

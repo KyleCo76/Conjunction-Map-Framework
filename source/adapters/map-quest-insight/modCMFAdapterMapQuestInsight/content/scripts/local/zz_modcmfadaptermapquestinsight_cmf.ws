@@ -9,8 +9,9 @@
 // then writes icon sizes, quest icons by type, level and signpost labels, the crosshair-label switch,
 // level colours and the scrolling info box height into the map, and hides signposts per filter tab. CMF's
 // map answers none of those names. This adapter gives Map Quest Insight its handshake in script, then turns
-// each value into CMF's general calls, as Map Quest Insight's author would when porting. It ships no art
-// and copies no code. Every claim uses Map Quest Insight's own folder name as its provider, so folder order
+// each value into CMF's general calls, as Map Quest Insight's author would when porting. It copies no code.
+// Its three quest icons are Map Quest Insight's own, sent by its author for the adapter and shipped with their
+// permission (2026-10-21). Every claim uses Map Quest Insight's own folder name as its provider, so folder order
 // between mods is the same with CMF as without it.
 //
 // The pin values ride on the pin objects, which the game builds from the map's pin class: CMF's map
@@ -35,8 +36,8 @@ function MqiAdapterSetNoSignTabs(tabs : string)
 var mqiAdapterLogged : int;
 
 // The icon for a Map Quest Insight quest kind (questMapInfo.ws QMI_IconKind): a frame of the game's pin
-// icon for kinds 4 and 6-10, this adapter's own placeholder art (art/, in its texture.cache) for kinds 1, 3
-// and 5, or "" (kind 0 and 2 keep the diamond).
+// icon for kinds 4 and 6-10, Map Quest Insight's own icons (art/, in this adapter's texture.cache) for kinds
+// 1, 3 and 5, or "" (kind 0 and 2 keep the diamond).
 function MqiAdapterKindIcon(kind : int) : string
 {
 	switch (kind)

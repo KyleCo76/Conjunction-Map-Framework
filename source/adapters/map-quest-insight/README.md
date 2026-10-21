@@ -34,7 +34,7 @@ Read only, for its interface: Map Quest Insight 1.5.0's `questMapInfo.ws` (SHA-2
 |---|---|
 | `qmiIconScale` (not 0 or 1) | `CMFStylePinScale(…, round(value × 100))` |
 | `qmiIconTop` (above 0) | `CMFStylePin(…, CMFPropertyLabelPlace(), "", round(value × 10))` |
-| `qmiIconKind` on quest pins that are not fast travel | `CMFStylePinIcon`: kinds 4, 6-10 use frames of the game's pin icon (`frame:TreasureHuntMappin`, `HorseRace`, `BoatRace`, `FistFight`, `KnightErrant`, `WineContract`); kinds 1, 3 and 5 use the adapter's own placeholder icons `img://icons/modcmfadaptermapquestinsight/quest_main.png`, `quest_contract.png`, `quest_gwent.png` (its `art/`, drawn by `tools/cmf_mqi_adapter_art.py`, cooked into its own `texture.cache` by `tools/cmf_pack.py build`); kinds 0 and 2 keep the diamond |
+| `qmiIconKind` on quest pins that are not fast travel | `CMFStylePinIcon`: kinds 4, 6-10 use frames of the game's pin icon (`frame:TreasureHuntMappin`, `HorseRace`, `BoatRace`, `FistFight`, `KnightErrant`, `WineContract`); kinds 1, 3 and 5 use Map Quest Insight's own icons `img://icons/modcmfadaptermapquestinsight/quest_main.png`, `quest_contract.png`, `quest_gwent.png` (its `art/`, cooked into its own `texture.cache` by `tools/cmf_pack.py build`); kinds 0 and 2 keep the diamond |
 | `qmiLevelText` on fast-travel or quest pins | `CMFStylePinLabel` with Map Quest Insight's own HTML; a signpost name of `" "` instead hides the pin label |
 | `qmiNoCrosshairLabel` | `CMFStylePin(…, CMFPropertyLabelHide(), "crosshair", 1)`, or `"pin,crosshair"` with the signpost case |
 | `qmiIconTint` (not 0) | `CMFStylePinTint` |
@@ -52,7 +52,6 @@ Every claim names `modMapQuestInsight`, Map Quest Insight's own folder, as its p
 ## Known differences
 
 - **ALSO HERE stays with spreading on.** Map Quest Insight drops its "ALSO HERE" list only when its own map file answers `qmiSpreadMap`. CMF's map does not declare that name (no mod-specific names in core), and its map class is sealed, so the adapter cannot set it either: the game drops a write to a member the class does not declare. So under CMF the row spreads and the info box still lists the other quests on the spot, as Map Quest Insight does with spreading off. A port that asks `CMFHasAbility('spread', '')` can drop it.
-- Main quest, contract and Gwent quest icons are the adapter's placeholder drawings (Kyle's decisions, 2026-10-20 04:34Z for stand-ins and 18:05Z that placeholder art lives in the adapter, never in CMF, so CMF needs no change when the adapter is removed). Map Quest Insight's art for them lives inside its own map file and cannot be loaded at run time. The release notes list them as Map Quest Insight's one visual difference until its author publishes a pack.
 
 ## Dependencies
 
@@ -64,10 +63,11 @@ Every claim names `modMapQuestInsight`, Map Quest Insight's own folder, as its p
 | Path | What |
 |---|---|
 | `modCMFAdapterMapQuestInsight/content/scripts/local/zz_modcmfadaptermapquestinsight_cmf.ws` | the four wrappers and the log line |
+| `modCMFAdapterMapQuestInsight/art/quest_*.png` | Map Quest Insight's main quest, contract and Gwent quest icons, 96 × 96, white with its dark outline so the level tints and the tracked gold multiply them; sent by its author, Wolfer, for the adapter and shipped with their permission (2026-10-21) from `MQI icons for CMF.zip` (SHA-256 `d14cc5abbe2b376a11d76194a24cb2bbcad3aa8fdc036ffc43b14b99459cdc86`), unchanged; the zip's 128 × 128 copies are not used |
 | `modCMFAdapterMapQuestInsight/README.txt` | for players |
-| `tests/test_cmf_mqi_adapter.py` | static checks: the Map Quest Insight names it uses exist with these signatures in 1.5.0, wrapper order, every claim names `modMapQuestInsight`, it writes no pin field itself, the kind table, plus WitcherScript hygiene |
+| `tests/test_cmf_mqi_adapter.py` | static checks: the Map Quest Insight names it uses exist with these signatures in 1.5.0, wrapper order, every claim names `modMapQuestInsight`, it writes no pin field itself, the kind table, the author's three icons check clean, plus WitcherScript hygiene |
 
-No art, so there is no `texture.cache`. Build: copy the folder. `tools/cmf_pack.py check modCMFAdapterMapQuestInsight --adapts modMapQuestInsight` reports no errors; its one warning (non-literal arguments in the box height claim) is expected.
+Build: `python tools/cmf_pack.py build source/adapters/map-quest-insight/modCMFAdapterMapQuestInsight --adapts modMapQuestInsight --out <new folder>`, which cooks `art/` into `content/texture.cache`. It reports no errors; its one warning (non-literal arguments in the box height claim) is expected.
 
 ## Status
 

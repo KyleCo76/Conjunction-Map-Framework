@@ -1,5 +1,5 @@
 Map Quest Insight adapter for Conjunction Map Framework
-Version 0.2 (script only, no art)
+Version 1.0.1 (quest icons by Wolfer, Map Quest Insight's author)
 
 Brings Map Quest Insight's world map features back on Conjunction Map Framework's
 world map. Map Quest Insight stays exactly as its author ships it. Map Quest Insight
@@ -24,7 +24,7 @@ All of it follows Map Quest Insight's own menu settings:
 - Quest and signpost icon sizes.
 - Quest icons by type: treasure hunts, horse races, boat races, fist fights, knights
   errant and wine contracts use the game's own icons for them; main quests, contracts
-  and Gwent quests use this adapter's placeholder icons (see KNOWN DIFFERENCES).
+  and Gwent quests use Map Quest Insight's own icons, by its author.
 - The "Lv N" text above quest pins and the signpost names, in Map Quest Insight's
   colours, at its heights.
 - Level colours on the icons of quests you do not track.
@@ -38,9 +38,6 @@ All of it follows Map Quest Insight's own menu settings:
   cursor and the top quest is selected.
 
 KNOWN DIFFERENCES
-- Main quest, contract and Gwent quest icons are this adapter's placeholder drawings,
-  not Map Quest Insight's art, which lives inside its own map file and cannot be loaded
-  by CMF. They go away with the adapter when Map Quest Insight ships its own CMF support.
 - With "Spread stacked quest markers" on, the info box still lists the other quests on
   the same spot under ALSO HERE. Map Quest Insight drops that list only with its own map
   file.
@@ -52,5 +49,6 @@ Extract the archive into your The Witcher 3 game folder, or install it with a mo
 manager. It lands in Mods\modCMFAdapterMapQuestInsight. No Script Merger is needed.
 
 CREDITS
-Map Quest Insight is by its own author; this adapter copies none of its code and only
-calls functions and reads values it already offers.
+Map Quest Insight is by Wolfer. The main quest, contract and Gwent quest icons are
+Wolfer's, shipped in this adapter with their permission. The adapter copies none of
+Map Quest Insight's code and only calls functions and reads values it already offers.
