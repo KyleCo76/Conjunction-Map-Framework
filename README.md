@@ -10,7 +10,7 @@
 ![Windows](https://img.shields.io/badge/tested%20on-Windows%2C%20keyboard%20%26%20mouse-555)
 [![Licence CC BY-NC 4.0](https://img.shields.io/badge/licence-CC%20BY--NC%204.0-lightgrey)](LICENSE)
 
-[**Download on Nexus Mods**](NEXUS_PAGE_URL) · [**GitHub Releases**](https://github.com/KyleCo76/Conjunction-Map-Framework/releases) · [**For mod authors**](#for-mod-authors) · [**Report a problem**](#reporting-problems)
+[**Download on Nexus Mods**](NEXUS_PAGE_URL) · [**GitHub Releases**](https://github.com/KyleCo76/Conjunction-Map-Framework/releases) · [**For mod authors**](docs/wiki/Home.md) · [**Report a problem**](#reporting-problems)
 
 </div>
 
@@ -212,12 +212,13 @@ The pack tool needs only Python 3 and its standard library. It checks your art a
 
 | Document | What is in it |
 | --- | --- |
+| [Mod author docs](docs/wiki/Home.md) | **Start here.** The guide as short pages, one per ability, with an API reference |
 | [Author guide](docs/authors/icon-pack-guide.md) | Everything: art, every CMF call by API version, building, testing, shipping, settings and text, what CMF does not do yet |
 | [Pin types](docs/authors/pin-types.md) | All 162 pin type names of the 5.01 world map, with their legend tab and what a claim on each changes |
 | [Porting pages](docs/authors/) | One page per adapted mod: "you used to do this; now call these CMF functions" |
 | [Script-side map bindings](docs/api/engine-bindings.md) | Advanced: the callbacks and values that pass between scripts and CMF's map |
 
-<!-- MOD_AUTHOR_WIKI: one line linking the mod author wiki goes here once it exists -->
+> **New to CMF?** Start at the [mod author docs](docs/wiki/Home.md): the same guide split into short pages, one per topic, from [what you want to change](docs/wiki/Abilities.md) to [getting started](docs/wiki/Getting-Started.md) and a full [API reference](docs/wiki/API-Reference.md).
 
 ### Porting a mod that has a CMF adapter
 
