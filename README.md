@@ -120,7 +120,7 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 </details>
 
 <details>
-<summary><b>Known differences in 1.0.0</b></summary>
+<summary><b>Known differences</b></summary>
 
 <br/>
 
