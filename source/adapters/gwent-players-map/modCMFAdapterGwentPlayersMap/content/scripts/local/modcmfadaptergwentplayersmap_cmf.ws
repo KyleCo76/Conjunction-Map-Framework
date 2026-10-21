@@ -16,10 +16,10 @@
 // script then moves the cards onto the players' spots in the "Gwent" tab, as it does on its own map.
 // That needs the tab id to be exactly "Gwent".
 //
-// Placeholder art only (CMF's own, drawn by tools/cmf_gwent_adapter_art.py). The slot for the
-// Gwent Players Map author's art: replace the two PNGs in art/ (same names) and rebuild with
-// tools/cmf_pack.py. Large cards use the same images, drawn at Gwent Players Map's large size: its
-// map file draws the GwentPlayerLarge cards about 1.19 times the GwentPlayer ones (shape bounds 17.6 px
+// Art by MateusAnd, Gwent Players Map's author, shipped here with their permission (2026-10-21),
+// drawn from the same shapes and colours as Gwent Players Map's own map file. To change it, replace
+// the two PNGs in art/ (same names) and rebuild with tools/cmf_pack.py. Large cards use the same
+// images, drawn at Gwent Players Map's large size: its map file draws the GwentPlayerLarge cards about 1.19 times the GwentPlayer ones (shape bounds 17.6 px
 // against 14.8 px high), so the two large types claim 119 percent (CMF 4 pin size, property id 10).
 
 @addMethod(CR4MapMenu)

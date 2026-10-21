@@ -10,9 +10,9 @@
 // file, modcmfadapterwitchergearmap_stable.ws, calls Gear Map's own functions, so install and remove
 // the adapter together with Gear Map.
 //
-// Placeholder art only (CMF's own, drawn by tools/cmf_gear_adapter_art.py). The slot for the
-// Gear Map author's art: replace the four PNGs in art/ (same names) and rebuild with
-// tools/cmf_pack.py; the tints below colour light parts of the art by school.
+// Art by MateusAnd, Gear Map's author, shipped here with their permission (2026-10-21): one
+// picture per type, drawn from the same shapes and colours as Gear Map's own map file. To change
+// it, replace the PNGs in art/ (same names) and rebuild with tools/cmf_pack.py.
 //
 // Under CMF 2 the adapter also brings back Gear Map's own "Witcher Gear" filter tab and row name,
 // using Gear Map's own category id (wgm_gear) and its own string keys, which Gear Map's w3strings
@@ -28,56 +28,33 @@ function OnGameStarted(restored : bool)
 		// Icon style "No colour": one type per state.
 		CMFRegisterIcon("modWitcherGearMap", 'WitcherGear', "img://icons/modcmfadapterwitchergearmap/gear.png");
 		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtained', "img://icons/modcmfadapterwitchergearmap/gear_obtained.png");
-		// Icon style "School colour without circle": the school is part of the type name.
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearCat', "img://icons/modcmfadapterwitchergearmap/gear.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearCat', 6336767);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedCat', "img://icons/modcmfadapterwitchergearmap/gear_obtained.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearObtainedCat', 6336767);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearGriffin', "img://icons/modcmfadapterwitchergearmap/gear.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearGriffin', 7393392);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedGriffin', "img://icons/modcmfadapterwitchergearmap/gear_obtained.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearObtainedGriffin', 7393392);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearBear', "img://icons/modcmfadapterwitchergearmap/gear.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearBear', 13668432);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedBear', "img://icons/modcmfadapterwitchergearmap/gear_obtained.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearObtainedBear', 13668432);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearWolf', "img://icons/modcmfadapterwitchergearmap/gear.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearWolf', 16736352);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedWolf', "img://icons/modcmfadapterwitchergearmap/gear_obtained.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearObtainedWolf', 16736352);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearViper', "img://icons/modcmfadapterwitchergearmap/gear.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearViper', 4251824);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedViper', "img://icons/modcmfadapterwitchergearmap/gear_obtained.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearObtainedViper', 4251824);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearManticore', "img://icons/modcmfadapterwitchergearmap/gear.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearManticore', 12611839);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedManticore', "img://icons/modcmfadapterwitchergearmap/gear_obtained.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearObtainedManticore', 12611839);
+		// Icon style "School colour without circle": the school is part of the type name. The author's
+		// art is coloured per school already, so no tint is registered.
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearCat', "img://icons/modcmfadapterwitchergearmap/gear_cat.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedCat', "img://icons/modcmfadapterwitchergearmap/gear_obtained_cat.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearGriffin', "img://icons/modcmfadapterwitchergearmap/gear_griffin.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedGriffin', "img://icons/modcmfadapterwitchergearmap/gear_obtained_griffin.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearBear', "img://icons/modcmfadapterwitchergearmap/gear_bear.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedBear', "img://icons/modcmfadapterwitchergearmap/gear_obtained_bear.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearWolf', "img://icons/modcmfadapterwitchergearmap/gear_wolf.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedWolf', "img://icons/modcmfadapterwitchergearmap/gear_obtained_wolf.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearViper', "img://icons/modcmfadapterwitchergearmap/gear_viper.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedViper', "img://icons/modcmfadapterwitchergearmap/gear_obtained_viper.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearManticore', "img://icons/modcmfadapterwitchergearmap/gear_manticore.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedManticore', "img://icons/modcmfadapterwitchergearmap/gear_obtained_manticore.png");
 		// Icon style "School colour with circle": the same with "Ring" at the end.
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearCatRing', "img://icons/modcmfadapterwitchergearmap/gear_ring.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearCatRing', 6336767);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedCatRing', "img://icons/modcmfadapterwitchergearmap/gear_obtained_ring.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearObtainedCatRing', 6336767);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearGriffinRing', "img://icons/modcmfadapterwitchergearmap/gear_ring.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearGriffinRing', 7393392);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedGriffinRing', "img://icons/modcmfadapterwitchergearmap/gear_obtained_ring.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearObtainedGriffinRing', 7393392);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearBearRing', "img://icons/modcmfadapterwitchergearmap/gear_ring.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearBearRing', 13668432);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedBearRing', "img://icons/modcmfadapterwitchergearmap/gear_obtained_ring.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearObtainedBearRing', 13668432);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearWolfRing', "img://icons/modcmfadapterwitchergearmap/gear_ring.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearWolfRing', 16736352);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedWolfRing', "img://icons/modcmfadapterwitchergearmap/gear_obtained_ring.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearObtainedWolfRing', 16736352);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearViperRing', "img://icons/modcmfadapterwitchergearmap/gear_ring.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearViperRing', 4251824);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedViperRing', "img://icons/modcmfadapterwitchergearmap/gear_obtained_ring.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearObtainedViperRing', 4251824);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearManticoreRing', "img://icons/modcmfadapterwitchergearmap/gear_ring.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearManticoreRing', 12611839);
-		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedManticoreRing', "img://icons/modcmfadapterwitchergearmap/gear_obtained_ring.png");
-		CMFRegisterTint("modWitcherGearMap", 'WitcherGearObtainedManticoreRing', 12611839);
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearCatRing', "img://icons/modcmfadapterwitchergearmap/gear_cat_ring.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedCatRing', "img://icons/modcmfadapterwitchergearmap/gear_obtained_cat_ring.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearGriffinRing', "img://icons/modcmfadapterwitchergearmap/gear_griffin_ring.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedGriffinRing', "img://icons/modcmfadapterwitchergearmap/gear_obtained_griffin_ring.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearBearRing', "img://icons/modcmfadapterwitchergearmap/gear_bear_ring.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedBearRing', "img://icons/modcmfadapterwitchergearmap/gear_obtained_bear_ring.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearWolfRing', "img://icons/modcmfadapterwitchergearmap/gear_wolf_ring.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedWolfRing', "img://icons/modcmfadapterwitchergearmap/gear_obtained_wolf_ring.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearViperRing', "img://icons/modcmfadapterwitchergearmap/gear_viper_ring.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedViperRing', "img://icons/modcmfadapterwitchergearmap/gear_obtained_viper_ring.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearManticoreRing', "img://icons/modcmfadapterwitchergearmap/gear_manticore_ring.png");
+		CMFRegisterIcon("modWitcherGearMap", 'WitcherGearObtainedManticoreRing', "img://icons/modcmfadapterwitchergearmap/gear_obtained_manticore_ring.png");
 		// Legend: every Gear marker shares one row, keyed by its filteredType WitcherGear. Its image is
 		// registered on that key itself, never left to a fallback from a marker type's art.
 		CMFRegisterLegendIcon("modWitcherGearMap", 'WitcherGear', "img://icons/modcmfadapterwitchergearmap/gear.png");

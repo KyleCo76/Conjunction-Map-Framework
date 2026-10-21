@@ -1,6 +1,6 @@
 # Gwent Players Map adapter (proof of concept)
 
-`modCMFAdapterGwentPlayersMap` is a separate mod that sits between Conjunction Map Framework (CMF) and Gwent Players Map 1.0.9 (Nexus 13755). It lets Gwent Players Map's card markers draw on CMF's world map under that mod's own pin type names, in its own "Gwent" tab, with Gwent Players Map unchanged. It follows the Witcher Gear Map adapter's pattern and Kyle's adapter principle: it restores the adapted mod's own features, adds none, and ships none of its art.
+`modCMFAdapterGwentPlayersMap` is a separate mod that sits between Conjunction Map Framework (CMF) and Gwent Players Map 1.0.9 (Nexus 13755). It lets Gwent Players Map's card markers draw on CMF's world map under that mod's own pin type names, in its own "Gwent" tab, with Gwent Players Map unchanged. It follows the Witcher Gear Map adapter's pattern and Kyle's adapter principle: it restores the adapted mod's own features and adds none. Since 1.0.1 it ships the card art of Gwent Players Map's author, MateusAnd, with their permission (2026-10-21; Kyle's rule of 15:12Z: an author's art ships in the adapter only with their explicit permission).
 
 ## Provenance
 
@@ -19,7 +19,7 @@ Traced on 2026-10-20 from the reference archive `Gwent Players Map (1.0.9) 13755
 - **Card size.** Its menu var `GwmCardSize` (group `GwentPlayersMap`, options `0` small and `1` large) switches `gwm.ws` to the Large names. In its map file (pin sprite `PinIcon_122`, DefineSprite 588, frames 1474-1504) each card is two vector shapes placed at identity scale; the large shapes are 14.70 × 17.60 and 13.90 × 17.10 px against 12.30 × 14.80 and 11.65 × 14.40, about 1.19 times in each direction. Measured on 2026-10-20 by Remote Control from the probe copy's `modGwentPlayersMap` (movie SHA-256 `5103aaca…`, exported with FFDec 26.3.0).
 - **Strings.** Its `en.w3strings` carries `map_category_Gwent` = "Gwent" and `gwm_label_gwent_player` = "Gwent player". These were matched by key hash: `0xBC2BE4BD` and `0xE26C7B12`.
 
-Nothing is copied. The adapter holds only the type names, the tab id and the string keys, which are facts about the interface, plus the adapter's own placeholder art (drawn for CMF, never stored in CMF itself).
+Nothing is copied. The adapter holds only the type names, the tab id and the string keys, which are facts about the interface, plus the author's card art, given for the adapter (never stored in CMF itself).
 
 ## How it works
 
@@ -43,7 +43,6 @@ Nothing is copied. The adapter holds only the type names, the tab id and the str
 
 ## Known limits
 
-- The art is a placeholder: a white card, or grey once the player is beaten. The drop-in slot is `art/card.png` and `art/card_beaten.png`.
 
 ## Files
 
@@ -51,8 +50,8 @@ Nothing is copied. The adapter holds only the type names, the tab id and the str
 |---|---|
 | `modCMFAdapterGwentPlayersMap/content/scripts/local/modcmfadaptergwentplayersmap_cmf.ws` | 4 `CMFRegisterIcon`, 1 `CMFRegisterLegendIcon` and 5 `CMFRegister` calls |
 | `modCMFAdapterGwentPlayersMap/content/scripts/local/modcmfadaptergwentplayersmap_stable.ws` | the cards from Gwent Players Map's own functions when its `UpdateEntityPins` wrapper did not run |
-| `modCMFAdapterGwentPlayersMap/art/card*.png` | Two 96 × 96 placeholders drawn by `tools/cmf_gwent_adapter_art.py` |
+| `modCMFAdapterGwentPlayersMap/art/card*.png` | MateusAnd's two 96 × 96 cards, white and grey (beaten), from `CMF_adapter_art_GwentPlayersMap_WitcherGearMap.zip` (SHA-256 `3b287729e1ccc77dc595484767b57ca5de4852693be0e545e9feb5b3dfb5ed0f`), unchanged |
 | `modCMFAdapterGwentPlayersMap/README.txt` | For players |
-| `tests/test_cmf_gwent_adapter.py` | Static checks: the art is reproducible, the names match Gwent Players Map's, every claim names `modGwentPlayersMap`, the tab report reaches `OnGwmMapFilter`, the pack builds |
+| `tests/test_cmf_gwent_adapter.py` | Static checks: the art is the author's two cards and checks clean, the names match Gwent Players Map's, every claim names `modGwentPlayersMap`, the tab report reaches `OnGwmMapFilter`, the pack builds |
 
 Build: `python tools/cmf_pack.py build source/adapters/gwent-players-map/modCMFAdapterGwentPlayersMap --adapts modGwentPlayersMap --out <new folder>`. Five warnings, one per claim, say the Gwent names are not 5.01 pin types; that is expected.

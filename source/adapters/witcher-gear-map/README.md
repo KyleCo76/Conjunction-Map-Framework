@@ -1,6 +1,6 @@
 # Witcher Gear Map adapter (proof of concept)
 
-`modCMFAdapterWitcherGearMap` is a separate mod that sits between Conjunction Map Framework (CMF) and Witcher Upgrade Gear Map 1.0.1 (Nexus 14157). It lets Gear Map's markers draw on CMF's world map under Gear Map's own pin type names, with Gear Map unchanged. It is CMF's first adapter. It follows Kyle's principle of 2026-10-19: carry over the names another mod already uses, bridge the rest with a separate adapter mod, and never ship another mod's art. The author-facing version is [`docs/authors/witcher-gear-map-adapter.md`](../../../docs/authors/witcher-gear-map-adapter.md).
+`modCMFAdapterWitcherGearMap` is a separate mod that sits between Conjunction Map Framework (CMF) and Witcher Upgrade Gear Map 1.0.1 (Nexus 14157). It lets Gear Map's markers draw on CMF's world map under Gear Map's own pin type names, with Gear Map unchanged. It is CMF's first adapter. It follows Kyle's principle of 2026-10-19: carry over the names another mod already uses, bridge the rest with a separate adapter mod. Since 1.0.1 it ships the gear art of Gear Map's author, MateusAnd, with their permission (2026-10-21; Kyle's rule of 15:12Z: an author's art ships in the adapter only with their explicit permission). The author-facing version is [`docs/authors/witcher-gear-map-adapter.md`](../../../docs/authors/witcher-gear-map-adapter.md).
 
 ## Provenance
 
@@ -10,13 +10,13 @@ Traced from the reference archive `WitcherGearMap 14157 1.0.1 2026-10-12T11-20Z 
 - `type` is `"WitcherGear"`, plus `"Obtained"` when every shown diagram there is learned, plus the school from `wgm_IconSuffix` (`Cat`, `Griffin`, `Bear`, `Wolf`, `Viper`, `Manticore`) when the `wgm_IconStyle` option is 1 or 2, plus `"Ring"` when the option is 1. That gives 26 names: 2 for style 0, 12 for style 1 and 12 for style 2.
 - `README.md` and `LICENSE`: CC BY-NC-SA 4.0. Gear Map's own map file adds 26 frames under those names and a "Witcher Gear" legend category (compatibility write-up, section 2).
 
-Nothing is copied. The adapter holds only the type names, which are facts about the interface, and the adapter's own placeholder art (drawn for CMF, never stored in CMF itself).
+Nothing is copied. The adapter holds only the type names, which are facts about the interface, and the author's gear art, given for the adapter (never stored in CMF itself).
 
 ## How it works
 
 | Step | Who | Evidence |
 |---|---|---|
-| Register art and tints for the 26 names from an `OnGameStarted` wrapper | adapter, CMF 1 named calls | the same plug-in pattern as every CMF pack |
+| Register one picture for each of the 26 names from an `OnGameStarted` wrapper | adapter, CMF 1 named calls | the same plug-in pattern as every CMF pack |
 | Gear Map pushes its markers in `UpdateEntityPins` | Gear Map, unchanged | `wgm.ws` |
 | Vanilla `UpdateData` calls `UpdateUserMapPins` after `UpdateEntityPins` on the same array | vanilla | pin sources inventory, section 2 (`mapMenu.ws:337-344`) |
 | CMF's late pass (`UpdateUserMapPins` wrapper, `FillMissingPinFields`) writes `cmf*` fields onto pins without `cmfDone` | CMF core | `cmfCore.ws` |
@@ -54,14 +54,14 @@ The observation run (CMF plus unchanged Gear Map, 2026-10-20 00:23Z, `probes/202
 
 | Path | What |
 |---|---|
-| `modCMFAdapterWitcherGearMap/content/scripts/local/modcmfadapterwitchergearmap_cmf.ws` | 26 `CMFRegisterIcon`, 24 `CMFRegisterTint` and one `CMFRegisterLegendIcon` call, plus the CMF 2 block of three `CMFRegister` calls |
-| `modCMFAdapterWitcherGearMap/art/gear*.png` | Four 96 x 96 placeholders: white or grey diagram sheet, with or without a ring. Drawn by `tools/cmf_gear_adapter_art.py`. **The drop-in slot for Gear Map's art.** |
+| `modCMFAdapterWitcherGearMap/content/scripts/local/modcmfadapterwitchergearmap_cmf.ws` | 26 `CMFRegisterIcon` calls and one `CMFRegisterLegendIcon` call, plus the CMF 2 block of three `CMFRegister` calls. No tints: the author's art is coloured per school already |
+| `modCMFAdapterWitcherGearMap/art/gear*.png` | MateusAnd's 26 pictures, 96 x 96, one per type, from `CMF_adapter_art_GwentPlayersMap_WitcherGearMap.zip` (SHA-256 `3b287729e1ccc77dc595484767b57ca5de4852693be0e545e9feb5b3dfb5ed0f`), unchanged. The zip's `gear_ring.png` and `gear_obtained_ring.png` (no colour, with a circle) match no type Gear Map sends, so they are not shipped. `gear_obtained_griffin.png` and `gear_obtained_manticore.png` lose a little colour where grey meets the school colour when compressed (8% and 13% of visible pixels); seen side by side and accepted |
 | `modCMFAdapterWitcherGearMap/README.txt` | For players |
-| `tests/test_cmf_gear_adapter.py` | Static checks: art reproducible, the 26 names match Gear's rule, one tint per school, every claim names `modWitcherGearMap`, the script stands alone, the pack builds |
+| `tests/test_cmf_gear_adapter.py` | Static checks: one author picture per type and no tint, the 26 names match Gear's rule, every claim names `modWitcherGearMap`, the script stands alone, the pack builds |
 
 Build: `python tools/cmf_pack.py build source/adapters/witcher-gear-map/modCMFAdapterWitcherGearMap --adapts modWitcherGearMap --out <new folder>`. The tool reports 51 warnings, one per claim, saying the Gear names are not 5.01 pin types. That is expected.
 
-Placeholder school colours, all CMF's own choice: Cat `0x60B0FF`, Griffin `0x70D070`, Bear `0xD09050`, Wolf `0xFF6060`, Viper `0x40E0B0`, Manticore `0xC070FF`. Obtained markers use grey art, so their tint comes out muted.
+Up to 1.0.0 the adapter drew four placeholders of its own and coloured them with one tint per school. Since 1.0.1 every school type has the author's own coloured picture and no tint, so nothing is coloured twice.
 
 ## In-game result
 
@@ -76,6 +76,5 @@ Placeholder school colours, all CMF's own choice: Cat `0x60B0FF`, Griffin `0x70D
 
 - The legend row shows the plain sheet whatever Gear Map's icon style is, because every marker shares the `WitcherGear` legend key (Kyle, 2026-10-20 00:32Z: the ring does not appear on the legend). This is by design. A per-style legend icon would need the adapter to read Gear Map's `wgm_IconStyle` setting in an `OnConfigUI` wrapper; it was left out to keep the proof of concept free of Gear Map's settings names.
 
-- Placeholder art until Gear Map's author supplies theirs.
 - Under CMF 1: no "Witcher Gear" category or translated row name, and no count in a category of its own. CMF 2 adds them (above); not yet seen in game.
 - Tested on Windows only; Proton not checked.

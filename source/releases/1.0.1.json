@@ -1,0 +1,50 @@
+{
+ "schema": "cmf-release-spec-1",
+ "version": "1.0.1",
+ "candidate": "1.0.1-preview-1",
+ "candidateManifestSha256": "b998632b41bdcae8629ed5e656e0e4e4196f8f250d2568030baf1d86e1daf381",
+ "apiVersion": 6,
+ "sourceCommit": "0dd8f776baa02a3bbeafbf53ef344348cfbc7893",
+ "notes": {
+  "README.md": "source/releases/1.0.1/README.md",
+  "rollback-notes.md": "source/releases/1.0.1/rollback-notes.md",
+  "test-notes.md": "source/releases/1.0.1/test-notes.md"
+ },
+ "matrix": [
+  {
+   "set": "ART",
+   "record": "probes/2026-10-21-cmf-author-art/README.md",
+   "result": "PASS",
+   "launched": "2026-10-21T16:10Z"
+  }
+ ],
+ "notChecked": [
+  "controller",
+  "install through Vortex or Mod Organizer 2",
+  "Steam Deck"
+ ],
+ "packages": {
+  "modCMFAdapterGwentPlayersMap": {
+   "role": "adapter",
+   "needsApi": 2,
+   "acceptance": "Author-art launch ART, 2026-10-21 ~16:10Z (probes/2026-10-21-cmf-author-art), CMF 1.0.0 core with Ink & Iron 0.8.9: MateusAnd's cards on every Gwent marker; log claims=10 won=10, no art failed. Installed from 1.0.1-preview-1 (git archive 0f5dcd5)",
+   "adapts": {
+    "folder": "modGwentPlayersMap",
+    "name": "Gwent Players Map",
+    "version": "1.0.9",
+    "nexus": 13755
+   }
+  },
+  "modCMFAdapterWitcherGearMap": {
+   "role": "adapter",
+   "needsApi": 1,
+   "acceptance": "Author-art launch ART, 2026-10-21 ~16:10Z (probes/2026-10-21-cmf-author-art), CMF 1.0.0 core with Ink & Iron 0.8.9: MateusAnd's pictures in the school-colour styles without and with circle, no double tint; log claims=30 won=30, no art failed. Installed from 1.0.1-preview-1 (git archive 0f5dcd5)",
+   "adapts": {
+    "folder": "modWitcherGearMap",
+    "name": "Witcher Upgrade Gear Map",
+    "version": "1.0.1",
+    "nexus": 14157
+   }
+  }
+ }
+}
