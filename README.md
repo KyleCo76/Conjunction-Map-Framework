@@ -2,7 +2,7 @@
 
 # Conjunction Map Framework
 
-**One world map for The Witcher 3 that every map mod can share.**
+**One world map for The Witcher 3 that map mods can share.**
 
 [![Latest release](https://img.shields.io/github/v/release/KyleCo76/Conjunction-Map-Framework?label=release)](https://github.com/KyleCo76/Conjunction-Map-Framework/releases/latest)
 ![The Witcher 3 Remastered 5.01](https://img.shields.io/badge/The%20Witcher%203-Remastered%205.01-8b0000)
