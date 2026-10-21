@@ -311,6 +311,8 @@ Please include your CMF version, the map mods and adapters you have installed, a
 
 ## Credits and licence
 
+Made by Kyle with the help of AI tools (Claude and ChatGPT). Every published file is reviewed by Kyle.
+
 Thanks to the authors of the map mods CMF adapts. Their mods stay theirs; CMF's adapters contain none of their files or art.
 
 **Licence:** [Creative Commons Attribution-NonCommercial 4.0](https://creativecommons.org/licenses/by-nc/4.0/) (CC BY-NC 4.0), full text in [`LICENSE`](LICENSE). Anyone may copy, change and share CMF, including inside their own free mods, as long as they credit Kyle and do not sell it or use it commercially.
