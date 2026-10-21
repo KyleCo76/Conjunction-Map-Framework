@@ -8,6 +8,15 @@ CMF has no calls made for one mod. Each ability is one general call that takes i
 
 Blocks marked API version 4 or 5 ran in game on 2026-10-20 unless they say otherwise.
 
+### One mod, with and without CMF
+
+You keep one mod for players with and without CMF, plus one small optional folder:
+
+- **Your map file stays in your mod, unchanged.** Only one `panel_worldmap.redswf` loads, and the folder that sorts first wins. With CMF installed, CMF's folder sorts first and its map loads; without CMF, your own map loads and shows your look as it does today. Fields your scripts write for your own map are dropped quietly by CMF's map, which does no harm.
+- **Your CMF calls go in a separate "CMF support" folder**, such as `modAcmeMapCMF`, that players install only together with CMF. A script that calls a CMF function, or wraps `CMFCore.OnPinReady` or another CMF hook, stops the game at the script compile screen when CMF is not installed, and WitcherScript has no way to call a function only if it exists. So these calls cannot live in your main mod.
+- **That folder claims under your mod's own folder name** as its provider, exactly as CMF's adapter for your mod does (below). Players remove CMF's adapter for your mod and add your support folder, and the map looks the same. Check and build it with the pack tool's `--adapts` and your mod's folder name, as below.
+- **Do not write CMF's pin fields (`cmfIconPath` and the others) or CMF's own flash storage keys (`cmf.map.theme`, `cmf.map.space`) yourself** to keep one folder that compiles without CMF. That skips CMF's claims and winners, overwrites other mods' drawings, cannot reach CMF's hooks, and depends on CMF's internal wiring, which may change in any release; only CMF's functions are kept from 1.0.0 on. Use the support folder.
+
 ### The adapter identity rule
 
 An adapter's provider is the **adapted mod's folder name**, not the adapter's own: the Map Quest Insight adapter registers as `modMapQuestInsight`, the Gear adapter as `modWitcherGearMap`. So folder order between mods is the same with CMF as without it, and when the mod's author later ships CMF support under that same name, the two give the same result. The image paths stay under the adapter's own folder (`img://icons/modcmfadapterwitchergearmap/...`), because the texture cache is the adapter's.
