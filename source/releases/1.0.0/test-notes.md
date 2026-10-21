@@ -18,6 +18,7 @@ All on 2026-10-21, on Kyle's test copy:
 - **Minimap and Fog of War (M3):** the minimap add-on and the sample icon pack (same icons on map and minimap), Map Quest Insight, Witcher Gear Map and Gwent Players Map, and Fog of War hiding and restoring other mods' icons. Passed.
 - **A map mod not yet ported (M4):** UI Remastered Edition with CMF; its HUD, menus and hint row work, CMF's map opens. Passed.
 - **Native plugins (M6):** Apocrypha Menu Framework 1.0.6 and HUD Position Manager 1.0.0 (an ASI loader beside W3LoadFix); both plugins load, the HUD draws, CMF's map opens. Passed.
+- **An everyday game (live field test):** Kyle's own game with about 175 mods, CMF and the Ink and Iron and Map Quest Insight adapters installed from these archives through RMMR 2.5, with Map Quest Insight 1.6.1 and a mod drawing on CMF's map. Scripts compile; Ink and Iron's look, Map Quest Insight's labels and the other mod's tab and markers show; the map opens in about 2 seconds with 1,696 pins and moves at 60 frames per second. Passed.
 
 The first run of the full set (M1) found the Gwent and Gear markers missing with The Stable installed and an empty "Conjunction Map Framework" entry under Options > Mods; both were fixed and the sets above ran on the fixed files.
 
@@ -25,7 +26,7 @@ The first run of the full set (M1) found the Gwent and Gear markers missing with
 
 - Proton / Linux.
 - Controllers. Keyboard and mouse only.
-- Installing through a mod manager (Vortex, MO2). The test copy was set up by copying folders.
+- Installing through Vortex or Mod Organizer 2. The test copy was set up by copying folders; the everyday game used RMMR 2.5.
 - Mods not named on the compatibility list.
 - Smooth Map and Community Patch - World Map with CMF 1.0.0: no adapter ships for them.
 
@@ -49,7 +50,7 @@ The first run of the full set (M1) found the Gwent and Gear markers missing with
 | Static | unit tests at the freeze commit, known failures listed and explained | 173655ade2c03bc7a326602daf83abd99048aadf: 513 tests, 43 failures and 20 errors, all from absent `build/` fixtures, Windows-only skill paths and absent specimens; none from this release's code |
 | Offline | panel build movie hash and repackage check; adapter packs rebuilt with `tools/cmf_pack.py` and compared by SHA-256 with the launched files | `source/previews/1.0.0-preview-4.json` and `1.0.0-preview-5.json` with their READMEs |
 | Probe launches | each ability's own launch on the probe copy | 2026-10-19 to 2026-10-21, `probes/2026-10-*-cmf-*/README.md` |
-| Final matrix | the sets above | `probes/2026-10-21-cmf-final-matrix/README.md` (one section per set) |
+| Final matrix | the sets above | `probes/2026-10-21-cmf-final-matrix/README.md` (one section per set); the everyday game in `probes/2026-10-21-cmf-live-field-test/README.md` |
 | Live acceptance | Kyle's acceptance of the release | Kyle accepted release candidate `1.0.0-preview-4` on 2026-10-21 03:42Z (PR #56, merged as 32ebbd6) and `dist/1.0.0` from it (PR #57, 04:01Z). `1.0.0-preview-5` equals it except three adapter `README.txt` texts (Botanist, The Stable, Map Quest Insight), corrected before publication; his acceptance of that cut follows its own review |
 
-Never written as tested: Proton, controllers, mod-manager install, or in-game behaviour of anything only read in code.
+Never written as tested: Proton, controllers, Vortex or Mod Organizer 2 install, or in-game behaviour of anything only read in code.

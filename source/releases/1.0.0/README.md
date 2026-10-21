@@ -56,7 +56,7 @@ See `rollback-notes.md`. In short: remove adapters and packs first, then the min
 
 ## Known limits
 
-- Not tested: controllers, Proton / Linux, installing through a mod manager.
+- Not tested: controllers, Proton / Linux, installing through Vortex or Mod Organizer 2. Installing through RMMR 2.5 was checked in an everyday game.
 - A map mod that still ships its own copy of the world map keeps its scripts and menus, but its own map-screen look does not show while CMF is installed, until that mod is ported to CMF or a CMF adapter for it is installed.
 - Placeholder art in the All Quest Objectives, Botanist, Gwent Players Map, Map Quest Insight and Witcher Gear Map adapters until their authors supply theirs. Fog of War's clouds and Map Remastered's own region emblems do not draw on CMF's map.
 - No adapter for Smooth Map or Community Patch - World Map: they change only their own map file, so an adapter could not tell whether they are installed.

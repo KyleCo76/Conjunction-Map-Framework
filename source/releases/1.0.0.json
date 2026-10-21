@@ -64,12 +64,18 @@
    "record": "probes/2026-10-21-cmf-final-matrix/README.md",
    "result": "PASS",
    "launched": "2026-10-21T03:40Z"
+  },
+  {
+   "set": "LIVE",
+   "record": "probes/2026-10-21-cmf-live-field-test/README.md",
+   "result": "PASS",
+   "launched": "2026-10-21T04:45Z"
   }
  ],
  "notChecked": [
   "Proton/Linux",
   "controller",
-  "install through a mod manager"
+  "install through Vortex or Mod Organizer 2"
  ],
  "packages": {
   "mod0000_ConjunctionMapFramework": {
