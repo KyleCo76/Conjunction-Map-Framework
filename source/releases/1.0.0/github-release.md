@@ -12,7 +12,7 @@ Each archive has a `README.txt` with install and removal steps. The list of supp
 ### In this release
 
 - CMF script interface version 6: pin icons, tints, backgrounds, greying, legend rows and tabs, hiding, pin size and labels, map themes, pin clicks, smooth movement, spreading stacked pins and drawing on the map.
-- Tested with Ink & Iron and the other adapted map mods as their authors ship them, and in a full, everyday modded game installed with RMMR.
+- Tested with Ink & Iron and the other supported map mods as their authors ship them: CMF's adapters do the proof-of-concept work, so no work was needed from those authors for initial compatibility. The final check ran on a 175-mod everyday game, installed with RMMR.
 - Adapters for All Quest Objectives, Botanist, Fog of War, Gwent Players Map, Ink and Iron, Map Pin Teleport, Map Quest Insight, The Stable, Witcher Upgrade Gear Map and Witcher's Path.
 
 ### Tested

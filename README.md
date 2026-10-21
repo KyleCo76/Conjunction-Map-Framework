@@ -23,7 +23,7 @@ In The Witcher 3 only **one** mod's world map file can load at a time. Map mods 
 **Conjunction Map Framework (CMF)** becomes the game's one map. Other mods no longer replace the map; they tell CMF what they want shown. CMF settles once, when your game loads, whose icon, colour or legend row wins each spot, and draws the result every time you open the map.
 
 > [!TIP]
-> **Ink & Iron and CMF, side by side, with no work from Ink & Iron's author.** CMF 1.0.0 brings back Ink & Iron's whole map look, its quest level tags and its own map movement on CMF's map, with Ink & Iron installed exactly as its author ships it. The same goes for the other nine adapted map mods: none of their authors had to change a line. Before release, CMF also ran in a full, everyday modded game (about 175 mods), installed with RMMR, beside Ink & Iron and Map Quest Insight.
+> **Ink & Iron on CMF's map.** Ink & Iron's full map look, its "Lv N" quest tags and its smooth map movement all run on CMF's map. The same goes for the other mods under [Supported map mods](#supported-map-mods), including Map Quest Insight, Witcher's Path, Gwent Players Map, All Quest Objectives and Map Remastered. CMF's own adapters do the proof-of-concept work, so none of these mods needed work from their authors for initial compatibility. The final check ran on a 175-mod everyday game, installed with RMMR.
 
 ```mermaid
 flowchart LR
