@@ -49,7 +49,7 @@ if (CMFHasProperty(8))
 }
 ```
 
-That gives a "Witcher Gear" tab after the game's tabs, with your row in it at 703. The row is also listed under Default and All, as in your own map file. It is named "Witcher Gear" from your `wgm_label`, not after the first marker. The `CMFHasProperty(8)` guard keeps the script compiling on API version 1, which skips the block. Under API version 2, hiding the row under All hides every one of your 26 types, not only plain `WitcherGear` markers. In your own map file, hiding it there misses the other 25 types (CMF version 2 spec, section 4.1). This passed in game in the API version 2 launch (2026-10-20). A CMF support folder of your own carries the same block with your folder name as the provider.
+That gives a "Witcher Gear" tab after the game's tabs, with your row in it at 703. The row is also listed under Default and All, as in your own map file. It is named "Witcher Gear" from your `wgm_label`, not after the first marker. The `CMFHasProperty(8)` guard keeps the script compiling on API version 1, which skips the block. Under API version 2, hiding the row under All hides every one of your 26 types, not only plain `WitcherGear` markers. In your own map file, hiding it there misses the other 25 types. This passed in game in the API version 2 launch (2026-10-20). A CMF support folder of your own carries the same block with your folder name as the provider.
 
 Not yet under CMF:
 

@@ -106,7 +106,7 @@ Many map mods work with CMF as they are, with no adapter. An **adapter** is a sm
 
 **Tested, no adapter needed:** Map Remastered 2.4.2 (without the minimap add-on), All Quest Markers, Wild Monster Hunt, Wolf's Bearing, Apocrypha Menu Framework 1.0.6, HUD Position Manager 1.0.0.
 
-**Needs its author's update:** a map mod that still ships its own copy of the world map keeps its scripts and menus under CMF, but its map-screen features stay hidden until it supports CMF or gets an adapter. UI Remastered Edition was tested this way: its HUD and menus work, CMF's map opens. Smooth Map and Community Patch - World Map have no adapter in 1.0.0, because they change only their own map file and an adapter could not tell whether they are installed.
+**Not supported yet (needs its author's update):** some map mods keep their map features, and often their icon art, inside their own copy of the world map file. CMF never copies another mod's art or files, so those features stay hidden under CMF until the author updates the mod for CMF or gives permission for an adapter to use them. The mod's scripts and menus keep working meanwhile. UI Remastered Edition was tested this way: its HUD and menus work, CMF's map opens. Smooth Map and Community Patch - World Map are in the same group: everything they change lives in their own map file, so 1.0.0 has no adapter for them.
 
 The full, current list is on the [Nexus Mods page](NEXUS_PAGE_URL).
 
@@ -140,7 +140,7 @@ The full, current list is on the [Nexus Mods page](NEXUS_PAGE_URL).
 - **The map moves at 60 frames per second** by default.
 
 > [!IMPORTANT]
-> **Not tested:** controllers, Proton / Linux, and installing through a mod manager (Vortex, MO2). CMF 1.0.0 was tested on Windows with keyboard and mouse, with the files copied in by hand.
+> **Not tested:** controllers and Proton / Linux. CMF 1.0.0 was tested on Windows with keyboard and mouse, both with the files copied in by hand and installed with RMMR in a full, everyday game setup.
 
 ---
 

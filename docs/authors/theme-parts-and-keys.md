@@ -1,0 +1,167 @@
+# Map theme parts and keys
+
+This page lists every part of the map that CMF's theme calls can name, every key each part and each drawing kind takes, and what each key does. It belongs with the author guide's sections "The map theme", "Pin clicks", "Smooth map movement", "Spreading stacked pins" and "Drawing on the map itself" ([`icon-pack-guide.md`](icon-pack-guide.md#5-write-your-script)), which explain the calls themselves:
+
+- `CMFStylePart(provider, part, key, text, number)` sets one style key of a part, or one behaviour key.
+- `CMFDraw(provider, anchor, id, kind)` makes a drawing tied to a part or to another drawing; `CMFDrawSet(provider, id, key, text, number)` sets one key of it, and `CMFDrawSetList(provider, id, key, values)` one list key.
+- `CMFHasAbility(part, key)` answers whether the installed CMF knows a part, layer or drawing kind (`key` `''`) or a key. It answers from the same lists as the tables at the end of this page.
+
+Every name here is a general piece of the game's world map, not of any mod. A key not in the lists is refused and logged (`theme rejected ... reason=unknown`); the pack tool's `check` reports it before you ship. The tables at the end of this page are generated from the lists CMF and the pack tool hold, so they always match the installed CMF 1.0.0 (API version 6).
+
+## Values
+
+- **Words go in `text`, everything else in `number`.** The keys that take words are marked in the tables below. Pass `0` as the number for a word key and `""` as the text for a number key.
+- **Colours** are decimal `0xRRGGBB` numbers, as for tints: red x 65536 + green x 256 + blue, from `0` to `16777215`.
+- **Opacities** (`alpha`, `alpha2`, every key ending in `Alpha`, `alphaHover`) run from `0` to `1`.
+- **Switches** (`centerInLimit`, `frameTimed`, `crosshairRoam`, `brackets`, `sizeZoom`, `preview`, `strokeZoom`) take `0` or `1`.
+- **Sizes** (`size`, `scale`, `nameSize`, `titleSize`, `bodySize`) must be above `0` and at most `1000`. Other numbers run from `-100000` to `100000` unless a key's own range says otherwise.
+- **`"unset"`** as the text withdraws your own value of any key (API version 6), so the next folder's value or the game's applies from the next opening.
+
+## Who wins
+
+- **Styles: one owner per part.** The earliest folder that styles a part owns every style key of that part, so two looks never mix inside one part's text. Other folders' style calls on that part are ignored and logged once.
+- **Behaviour keys are won one by one.** On `map`, `navigation`, `opening` and `spread`, each key goes to the earliest folder that sets that key.
+- **Every mod may draw.** Drawings from several mods sit together. Within one layer they are sorted by `order`, then by folder with the earlier folder on top, then by the order the calls were made. A drawing id belongs to the folder that made it first, so prefix your ids with your mod's name.
+- **Keys nobody sets keep the game's look and behaviour**, except the four movement keys CMF sets itself (see "Smooth map movement" in the guide).
+
+## The parts
+
+| Part | What it is |
+| --- | --- |
+| `screen` | the whole 1920 x 1080 screen; an anchor for drawings, with no style keys |
+| `map` | the map area (region map, interior map and world view) |
+| `mapEdge` | the edge of the visible map image; its drawings move and zoom with the map |
+| `title` | the region title |
+| `tracker` | the quest tracker and its key row |
+| `legend` | the pin legend with its tab and scroll arrows |
+| `legendRow` | each legend row |
+| `legendTab` | the legend's tab name |
+| `tooltip` | the pin information box |
+| `preview` | the corner overview |
+| `worldButton` | the world-view button with its key |
+| `worldHint` | the "go to world view" hint beside the world-view button |
+| `hints` | the key-hint row inside the map (see "Key hints and filter tab reports" in the guide) |
+| `keyCap` | every key cap in the hint row, the tracker keys and the world-view button |
+| `pinLabel` | the label above each pin (level tags and label texts) |
+| `pinName` | the name below each fast-travel pin (signposts, harbours) |
+| `navigation` | how the map pans and zooms, and the controller crosshair |
+| `markerPanel` | the panel for placing your own map markers |
+| `pinButton` | the button CMF draws beside a pin whose click a mod won (API version 6) |
+| `mapSpace` | the map itself, in world metres: an anchor for drawings that pan and zoom with the map (API version 6) |
+| `opening` | how the map opens and closes (API version 6) |
+| `spread` | how stacked pins fan out into a row (API version 6) |
+
+Not reachable through any part: the game's top bar and its own key-hint row (they belong to the common menu, not the map), the world view's painting and region shields, and the HUD minimap.
+
+## Style keys
+
+**Text keys**: `font` takes any font the game has loaded, such as `$TitleFont`, `$BodyFont`, `$BoldFont` or `$NormalFont`; `size` is in px; `color` is a colour; `spacing` is letter spacing in px; `align` is `left`, `center` or `right`.
+
+**Glow keys**: two glows, `glow1Color`, `glow1Alpha`, `glow1Blur`, `glow1Strength` and `glow2Color`, `glow2Alpha`, `glow2Blur`, `glow2Strength`. On `title` and `keyCap` they replace the text's own glow. On other parts they are added only to text that has no glow or shadow of its own, so the game's own shadows stay; on `worldButton` and `hints` they apply to the whole button.
+
+**Shadow keys**: `shadowDistance`, `shadowAngle` (degrees), `shadowColor`, `shadowAlpha`, `shadowBlur`, `shadowStrength`.
+
+**`hide`** takes a comma-separated list of the game's own decorations on that part, from the words listed for it in the table at the end: `plate` (the backing plate), `selection` (the highlight of the selected row or tab), `arrowPlate` (the plate behind a row's arrow), `trackedPlate` (the tooltip's plate for the followed quest), `divider` (the tooltip's divider line), `frame` (the corner overview's frame), `edgeFade` (the map's edge gradients) and `clickRect` (a key cap's click area).
+
+The other keys, part by part:
+
+- **`map`**: `top` and `bottom` are the map area's edges in screen px (default `0` and `1080`; the game's own area is 110 to 970), and the map draws its tiles and pins down to them. `panLimit` is `map` or `screen`: with `screen`, panning stops when the map image's edge reaches the area between `top` and `bottom` across the full width. `centerInLimit` `1` centres a map smaller than that area; `0` lets it move freely inside it. `backdrop` is a colour drawn over the area under the map image.
+- **`title`**: `x`, `y` move the title by px; `screenX`, `screenY` place its left and top at screen px instead. `wrap` `keep` keeps the game's line breaks; `none` keeps the title on one line.
+- **`tracker`**: `nameFont`, `nameSize`, `nameColor` style the quest name.
+- **`legendRow`**: `color` (a row's text), `colorSelected` (the selected row), `colorOff` (a row whose pins are switched off), `counterColor` (the pin count).
+- **`legendTab`**: `color` and `spacing` for the tab name.
+- **`tooltip`**: `titleFont`, `titleSize`, `titleColor` for its title and `bodyFont`, `bodySize`, `bodyColor` for its text.
+- **`hints`**: `x`, `y` (px), `scale` and `align` place and size the key-hint row.
+- **`keyCap`**: `color` (the key's name), `iconColor` (the key's icon), `brackets` (`0` drops the game's brackets round the key name), `keyGap` (px the key name moves right), `labelGap` (extra px before the label).
+- **`pinLabel`**: with `rise` set, the label's text box sits with its bottom `rise` x the pin's icon scale + `riseOffset` px above the pin's centre; `riseTracked` and `riseOffsetTracked` do the same for the followed quest's pins and fall back to the untracked values. A label place claim (property `11`) on a pin wins over `rise`. The label's colour comes from a label colour claim (property `17`).
+- **`markerPanel`**: `minLeft`, `maxRight`, `minTop`, `maxBottom` keep the marker panel inside these screen px.
+- **`pinButton`**: `width`, `height`, `curve` (corner rounding), `fill`, `alpha`, `stroke`, `strokeWidth`, and `offsetX`, `offsetY` (the button's top-left corner measured from the pin, in px), plus the text and glow keys. One look applies to every mod's buttons. See "Pin clicks" in the guide.
+- **`navigation`**: `frameTimed`, `stepMs`, `worldStepMs`, `maxStepMs`, `zoomTimed`, `padHoldMs`, `tweenEveryFrame`, `frameRate`, `zoomOutFit` and `edgeOvershoot` are explained with their ranges in "Smooth map movement" in the guide. The controller crosshair keys: `crosshairRoam` `1` lets the crosshair move freely near the screen's edges, and pin snapping then measures from the crosshair; `safeLeft`, `safeTop`, `safeRight`, `safeBottom` are the screen px rectangle the crosshair roams in before the map pans; `snapSeconds` is the time the crosshair takes to snap to a pin, and `centerSeconds` the time the map takes to centre. No launch has used a controller, so these keys are checked by value only.
+- **`opening`**: `slideSeconds`, `slideOffset`, `closeSeconds`, `pinsDuringSlide`, `pinStepMs`, `pinBatch`, `pinBudgetMs`, `showDelayMs`, `fadeSeconds`, `tileFadeSeconds` and `revealSeconds`, with their ranges in "Smooth map movement" in the guide.
+- **`spread`**: `on`, `anyPin`, `enterRadius`, `stackDistance`, `gap`, `maxPins`, `openMs`, `closeMs`, `lockRadius` and `keepRadius`, with their ranges in "Spreading stacked pins" in the guide.
+
+## Drawings
+
+`CMFDraw(provider, anchor, id, kind)` ties a drawing to an anchor: a part, `mapSpace`, or any drawing id any mod made. A drawing tied to another drawing is placed against that drawing's box and drawn just above it; if the anchor drawing goes away, the drawings tied to it are hidden and logged once. `kind` `''` withdraws the drawing.
+
+**Kinds.** `rect` is a rectangle. `ring` is the rectangle with a hole `inset` px in from every edge. `ellipse` fills the box. `polygon` draws `points` (`"x,y x,y ..."`, px from the point `originX`, `originY`, each `0` to `1` across the box). `band` is a strip `size` px deep along `side` of the box (`left`, `right`, `top` or `bottom`), scaled with the map's edge fade when `sizeZoom` is `1`, at least `minSize` px and at most `maxShare` of the box's smaller side; a gradient on a band runs from its inner end to the box's edge. `text` is the game's HTML text, and `line` and `movie` draw on the map itself (below).
+
+**The box a drawing is placed against.** A part's box is its visible text, each text field trimmed to its text width plus 8 px, with its pin icons, markers and arrows, leaving out anything hidden or nearly transparent and the game's own plates. `measure` `field` uses the part's whole text field instead of its trimmed text (`trim`, the default). `screen` is 0, 0, 1920, 1080; `map` is the map area; `mapEdge` is the visible map image; `pinLabel` and `pinName` are the label's text box (text width + 4 by text height + 4 px) in the pin's own space. A part with nothing visible draws nothing, so a hidden tracker or tooltip takes its drawings with it.
+
+**Place**, applied in this order:
+
+1. `left`, `top`, `right`, `bottom` push each edge of the box outward in px (negative values move it inward).
+2. `screenLeft`, `screenTop`, `screenRight`, `screenBottom` fix an edge at a screen px instead.
+3. `width` or `widthShare` (a share of the box's width) gives a fixed width, placed by `alignX` (`0` left to `1` right, default `0.5`); otherwise `minWidth` grows the drawing to the right. `height`, `heightShare`, `alignY` and `minHeight` work the same way downward.
+4. `offsetX`, `offsetY` move the result by px.
+5. `minLeft`, `maxRight`, `minTop`, `maxBottom` keep it inside these screen px without changing its size.
+
+**Paint.** `fill` and `alpha` give a plain colour; on `pinLabel` and `pinName` drawings `fill` may be the text `"label"`, the label's own colour. `fill2`, `alpha2`, `gradient` `"linear"`, `angle` (degrees) and `curve` grade the colour and opacity from `fill`/`alpha` to `fill2`/`alpha2`. `stroke`, `strokeAlpha` and `strokeWidth` draw an outline; a drawing with only a stroke is not filled. Glow and shadow keys work as on parts. `repeat` (`1` to `64`) draws copies grown outward by `repeatStep` px each, and `alphaList` (`"a,b,c ..."`) gives each copy its own opacity, the innermost first: a soft shadow of rings is one drawing.
+
+**Layer and conditions.** `layer` is `over` by default (just above the part), `under` (just below it), `belowMap` (under the map image), `aboveMap` (over the map image and under every panel) or `top` (over every panel). On `screen`, `under` means `aboveMap` and `over` means `top`; on `map`, `under` means `belowMap` and `over` means `aboveMap`. A drawing tied to another drawing is drawn in its anchor's layer. `order` sorts drawings within a layer, lower first. `view` (`"region,interior,world"`) limits the views it shows in, and `when` is `selected` (on `legendRow` and `legendTab`), `tracked` or `untracked` (on `pinLabel` and `pinName`).
+
+**Boxes that stack, react and click** (API version 6). `above` (px) stacks a drawing that far above its anchor's top, at its own height, clearing every box, plate or frame drawn on that part by any mod. `tab` shows a drawing only while the legend tab with that id is selected; if no pin makes that tab, CMF adds it, named by `tabLabel` (your text or a `[[key]]`). `click` `1` or more on a drawing on a screen part makes it take the mouse and report a left click to `CMFCore.OnDrawingClicked` with that number; while the pointer is over it, `fillHover`, `alphaHover`, `strokeHover`, `strokeAlphaHover`, `strokeWidthHover` and `colorHover` give its hover look.
+
+**Text** (API version 6). A `text` drawing shows `text` (the game's HTML) with `font`, `size`, `color`, `align`, and `padding` px round the words; it paints its own box with the box keys. `wrap` is `none` (one line, running past the box's edges, centred), `wrap` (break at the box's width; the box takes the wrapped height) or `fit` (one line; the box grows to it). On `mapSpace` it sits at `x`, `y` metres, the same size at every zoom unless `sizeZoom` is `1`.
+
+**On the map itself** (`mapSpace`, API version 6). `line` draws polylines in world metres from the list keys `xs`, `ys`, `starts` (where each unjoined segment starts), `modes` (one per segment, an index into `colors`) and `colors`, with `stroke`, `strokeAlpha`, `strokeWidth` and `strokeZoom` (`0`: the same px at every zoom; `1`: scales with the map). `movie` loads your own small movie from `src` (`"swf/<your folder>/<name>.swf"`). Every map-space drawing also takes `layer` (`under`: above the map tiles and cut off at the map's edge; `over`: above the edge fade), `order`, `alpha`, `view` (only `region` shows), `area` (one area name, such as `AN_NMLandNovigrad`), `preview` (`1`: a copy in the corner overview, for `line` and `movie`), `fadeMs` (`0` to `5000`), `tab`, `tabLabel`, and `listen` with `listenFields` to read data your script already writes to the map menu's flash storage. "Drawing on the map itself" in the guide explains each.
+
+## Every part, kind and key
+
+The tables below are generated by `tools/cmf_author_docs.py` from the lists in `tools/cmf_pack.py` and `cmfCore.ws`; do not edit them by hand.
+
+<!-- cmf:generated-tables begin -->
+### Key groups
+
+- **text keys**: `font` (text), `size`, `color`, `spacing`, `align` (text)
+- **glow keys**: `glow1Color`, `glow1Alpha`, `glow1Blur`, `glow1Strength`, `glow2Color`, `glow2Alpha`, `glow2Blur`, `glow2Strength`
+- **shadow keys**: `shadowDistance`, `shadowAngle`, `shadowColor`, `shadowAlpha`, `shadowBlur`, `shadowStrength`
+- **box keys** (every kind but `line` and `movie`): `left`, `top`, `right`, `bottom`, `width`, `height`, `widthShare`, `heightShare`, `minWidth`, `minHeight`, `alignX`, `alignY`, `offsetX`, `offsetY`, `minLeft`, `maxRight`, `minTop`, `maxBottom`, `screenLeft`, `screenRight`, `screenTop`, `screenBottom`, `measure` (text), `fill`, `alpha`, `fill2`, `alpha2`, `gradient` (text), `angle`, `curve`, `stroke`, `strokeAlpha`, `strokeWidth`, `layer` (text), `order`, `view` (text), `when` (text), `repeat`, `repeatStep`, `alphaList` (text), `tab` (text), `tabLabel` (text), `click`, `above`, `fillHover`, `alphaHover`, `strokeHover`, `strokeAlphaHover`, `strokeWidthHover`, `colorHover`, glow keys, shadow keys
+- **map-space keys** (`line` and `movie`): `layer` (text), `order`, `alpha`, `view` (text), `area` (text), `preview`, `fadeMs`, `tab` (text), `tabLabel` (text), `listen` (text), `listenFields` (text)
+
+"(text)" marks a key whose value goes in the `text` argument.
+
+### Parts and their style keys
+
+| Part | Style keys | `hide` words |
+| --- | --- | --- |
+| `screen` | none | none |
+| `map` | `top`, `bottom`, `panLimit` (text), `centerInLimit`, `backdrop` | none |
+| `mapEdge` | `hide` (text) | `edgeFade` |
+| `title` | text keys, glow keys, `x`, `y`, `screenX`, `screenY`, `wrap` (text), `hide` (text) | `plate` |
+| `tracker` | glow keys, `nameFont` (text), `nameSize`, `nameColor`, `hide` (text) | `plate` |
+| `legend` | glow keys | none |
+| `legendRow` | glow keys, `color`, `colorSelected`, `colorOff`, `counterColor`, `hide` (text) | `plate`, `selection`, `arrowPlate` |
+| `legendTab` | glow keys, `color`, `spacing`, `hide` (text) | `plate`, `selection` |
+| `tooltip` | glow keys, `titleFont` (text), `titleSize`, `titleColor`, `bodyFont` (text), `bodySize`, `bodyColor`, `hide` (text) | `plate`, `trackedPlate`, `divider` |
+| `preview` | `hide` (text) | `frame` |
+| `worldButton` | glow keys, `hide` (text) | `plate` |
+| `worldHint` | glow keys, `hide` (text) | `plate` |
+| `hints` | glow keys, `x`, `y`, `scale`, `align` (text) | none |
+| `keyCap` | glow keys, `color`, `iconColor`, `brackets`, `keyGap`, `labelGap`, `hide` (text) | `plate`, `clickRect` |
+| `pinLabel` | shadow keys, `font` (text), `size`, `rise`, `riseTracked`, `riseOffset`, `riseOffsetTracked` | none |
+| `pinName` | shadow keys, `font` (text), `size` | none |
+| `navigation` | `frameTimed`, `stepMs`, `worldStepMs`, `maxStepMs`, `crosshairRoam`, `safeLeft`, `safeTop`, `safeRight`, `safeBottom`, `snapSeconds`, `centerSeconds`, `zoomTimed`, `padHoldMs`, `tweenEveryFrame`, `frameRate`, `zoomOutFit`, `edgeOvershoot` | none |
+| `markerPanel` | `minLeft`, `maxRight`, `minTop`, `maxBottom` | none |
+| `pinButton` | text keys, glow keys, `width`, `height`, `curve`, `fill`, `alpha`, `stroke`, `strokeWidth`, `offsetX`, `offsetY` | none |
+| `mapSpace` | none | none |
+| `opening` | `slideSeconds`, `slideOffset`, `closeSeconds`, `pinsDuringSlide`, `pinStepMs`, `pinBatch`, `pinBudgetMs`, `showDelayMs`, `fadeSeconds`, `tileFadeSeconds`, `revealSeconds` | none |
+| `spread` | `on`, `anyPin`, `enterRadius`, `stackDistance`, `gap`, `maxPins`, `openMs`, `closeMs`, `lockRadius`, `keepRadius` | none |
+
+### Drawing kinds and their keys
+
+| Kind | Anchors | Keys | List keys |
+| --- | --- | --- | --- |
+| `rect` | any part but `mapSpace`, or a drawing | box keys | none |
+| `ring` | any part but `mapSpace`, or a drawing | box keys, `inset` | none |
+| `ellipse` | any part but `mapSpace`, or a drawing | box keys | none |
+| `polygon` | any part but `mapSpace`, or a drawing | box keys, `points` (text), `originX`, `originY` | none |
+| `band` | any part but `mapSpace`, or a drawing | box keys, `side` (text), `size`, `sizeZoom`, `minSize`, `maxShare` | none |
+| `line` | `mapSpace` only | map-space keys, `stroke`, `strokeAlpha`, `strokeWidth`, `strokeZoom` | `xs`, `ys`, `starts`, `modes`, `colors` |
+| `text` | any part, `mapSpace` or a drawing | box keys, `text` (text), `font` (text), `size`, `color`, `align` (text), `wrap` (text), `padding`, `x`, `y`, `sizeZoom`, `area` (text), `fadeMs`, `listen` (text), `listenFields` (text) | none |
+| `movie` | `mapSpace` only | map-space keys, `src` (text) | any your movie documents |
+
+### Layers
+
+`under`, `over`, `belowMap`, `aboveMap`, `top`
+<!-- cmf:generated-tables end -->

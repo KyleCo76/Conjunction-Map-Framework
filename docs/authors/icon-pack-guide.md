@@ -152,7 +152,7 @@ Write a property newer than the CMF version you require as its number, not as it
 | `CMFRegisterBackground(provider : string, area : name, imageRoot : string)` | Replaces the map image of one area, such as `'AN_NMLandNovigrad'` (Velen and Novigrad). The tiles live in your pack's texture cache at `gameplay\gui_new\maps\<imageRoot>\level<L>\tile<X>x<Y>.jpg`, with the same tile size, level range and tile count as the area's vanilla image; CMF logs those values per area (`background area=...`) the first time the map shows it. The map draws level 0 as its background layer, then the area's own levels. |
 | `CMFRequireVersion(provider : string, minVersion : int) : bool` | Returns `false` and logs a line when the installed CMF is older than `minVersion`. Wrap your calls in it as above. |
 | `CMFReleaseProvider(provider : string)` | Withdraws everything your pack registered. Only needed if your pack can be switched off without being uninstalled. |
-| `CMFGetVersion() : int` | The installed CMF interface version (`4`). |
+| `CMFGetVersion() : int` | The installed CMF interface version (`6` in CMF 1.0.0). |
 
 Behaviour you can rely on:
 
@@ -373,7 +373,7 @@ API version 5 lets a mod restyle the map itself and draw on it, with three gener
 | `CMFDrawSet(provider : string, id : name, key : name, text : string, number : float) : bool` | Sets one key of your drawing: its place, paint, glow, layer and conditions. |
 | `CMFHasAbility(part : name, key : name) : bool` | Asks whether this CMF knows a part, layer or kind (`key` `''`) or a key, before you use it. |
 
-- **Parts** are the game map's own pieces: `screen`, `map`, `mapEdge`, `title`, `tracker`, `legend`, `legendRow`, `legendTab`, `tooltip`, `preview`, `worldButton`, `worldHint`, `hints`, `keyCap`, `pinLabel` (labels above pins), `pinName` (names below fast-travel pins), `navigation`, `markerPanel` and, from API version 6, `opening`. Which keys each takes, and the words its `hide` key accepts, are on the [theme parts and keys](theme-parts-and-keys.md) page; the pack tool's check reports any key a part does not take.
+- **Parts** are the game map's own pieces: `screen`, `map`, `mapEdge`, `title`, `tracker`, `legend`, `legendRow`, `legendTab`, `tooltip`, `preview`, `worldButton`, `worldHint`, `hints`, `keyCap`, `pinLabel` (labels above pins), `pinName` (names below fast-travel pins), `navigation`, `markerPanel` and, from API version 6, `opening`. Which keys each takes, what each key does, and the words its `hide` key accepts, are in [`theme-parts-and-keys.md`](theme-parts-and-keys.md); the pack tool's check reports any key a part does not take.
 - **Words go in `text`, everything else in `number`.** Fonts (`"$TitleFont"`), `hide` lists (`"plate,divider"`), layers, views and `"label"` are text; colours are decimal `0xRRGGBB` numbers, as for tints.
 - **A drawing is placed against its anchor's box**: the part's visible text trimmed to its width plus 8 px, or the box of the drawing it is tied to. `left`, `top`, `right`, `bottom` push each edge outward in px (negative moves inward); `width`/`height` with `alignX`/`alignY` give a fixed size; `minLeft`, `maxRight`, `minTop`, `maxBottom` keep it on screen; `screenLeft` and the others fix an edge to the screen. On `pinLabel` and `pinName` the box is the label's text box (text width + 4 by text height + 4 px).
 - **Paint** with `fill`/`alpha`, a linear gradient with `fill2`, `alpha2`, `gradient` `"linear"`, `angle` and `curve`, an outline with `stroke`, and glows and shadows with the same keys as parts. `repeat` and `repeatStep` draw grown copies (a soft shadow of rings), `alphaList` gives each copy its own opacity.
@@ -704,7 +704,7 @@ A plain icon pack has no menu and no text, because it only re-skins types whose 
 - Ship your page and row names in your own `content/<lang>.w3strings`, in your own block of 10,000 string IDs, with every key prefixed by your slug. Never use CMF's block (2000200000 to 2000209999).
 - Read your setting in your `OnGameStarted` wrapper and again in a `CR4MapMenu.OnConfigUI` wrapper before calling the wrapped method, then register or `CMFReleaseProvider`. Registering is idempotent, so this is safe on every map opening.
 
-The pack tool carries `content/*.w3strings` and the menu XML into the build. CMF's settings convention and its test pack's toggle are documented in `docs/development/settings-and-strings.md`.
+The pack tool carries `content/*.w3strings` and the menu XML into the build. CMF's test pack is a complete example of one toggle: its menu [`source/settings/menus/modCMFTestIconPack.xml`](../../source/settings/menus/modCMFTestIconPack.xml), its strings [`source/settings/modCMFTestIconPack.strings.json`](../../source/settings/modCMFTestIconPack.strings.json) and its script [`cmfTestIconPack.ws`](../../source/providers/modCMFTestIconPack/content/scripts/local/cmfTestIconPack.ws), which reads the toggle at game start and at each map opening and then registers its icons or releases them.
 
 ### Names CMF answers
 
