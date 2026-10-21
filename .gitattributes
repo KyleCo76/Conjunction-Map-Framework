@@ -1,0 +1,9 @@
+# Preserve historical evidence bytes regardless of host core.autocrlf.
+* -text
+
+# New owned source uses the approved LF convention.
+payload/**/*.ws text eol=lf
+source/panel/**/*.as text eol=lf
+source/probes/**/*.ws text eol=lf
+tools/**/*.py text eol=lf
+tests/**/*.py text eol=lf

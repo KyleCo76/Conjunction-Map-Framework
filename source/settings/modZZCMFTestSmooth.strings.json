@@ -1,0 +1,8 @@
+{
+  "mod": "modZZCMFTestSmooth",
+  "idBase": 2000209010,
+  "strings": [
+    {"id": 2000209011, "key": "panel_cmftestsmooth", "text": {"en": "CMF Smooth Map Check"}},
+    {"id": 2000209012, "key": "option_cmfts_enabled", "text": {"en": "Smooth Map check"}}
+  ]
+}

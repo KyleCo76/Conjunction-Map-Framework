@@ -1,0 +1,11 @@
+# Build output, local game copies and staged probe copies
+/build/
+/probes/
+/dist/
+/previews/
+__pycache__/
+*.py[cod]
+
+# Editor and temporary output
+*.tmp
+*.log

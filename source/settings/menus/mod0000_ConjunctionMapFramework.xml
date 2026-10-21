@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UserConfig>
+	<Group id="CMFSettings" displayName="cmf_settings">
+		<VisibleVars>
+			<Var id="CMFProviderOrder1" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFProviderOrder2" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFProviderOrder3" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFProviderOrder4" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFProviderOrder5" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFProviderOrder6" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFProviderOrder7" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFProviderOrder8" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFDebug" value="false" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+		</VisibleVars>
+	</Group>
+</UserConfig>

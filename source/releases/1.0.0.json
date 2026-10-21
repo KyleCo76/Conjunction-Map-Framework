@@ -1,0 +1,200 @@
+{
+ "schema": "cmf-release-spec-1",
+ "version": "1.0.0",
+ "candidate": "1.0.0-preview-5",
+ "candidateManifestSha256": "27f5a38fe6a296b910bc46e6270362a14e5258645037e68147fdfd39d61d662f",
+ "apiVersion": 6,
+ "sourceCommit": "173655ade2c03bc7a326602daf83abd99048aadf",
+ "notes": {
+  "README.md": "source/releases/1.0.0/README.md",
+  "rollback-notes.md": "source/releases/1.0.0/rollback-notes.md",
+  "test-notes.md": "source/releases/1.0.0/test-notes.md"
+ },
+ "matrix": [
+  {
+   "set": "M1c",
+   "record": "probes/2026-10-21-cmf-final-matrix/README.md",
+   "result": "PASS",
+   "launched": "2026-10-21T02:01Z"
+  },
+  {
+   "set": "M5a",
+   "record": "probes/2026-10-21-cmf-final-matrix/README.md",
+   "result": "PASS",
+   "launched": "2026-10-21T02:17Z"
+  },
+  {
+   "set": "M5b",
+   "record": "probes/2026-10-21-cmf-final-matrix/README.md",
+   "result": "PASS",
+   "launched": "2026-10-21T02:23Z"
+  },
+  {
+   "set": "M1d",
+   "record": "probes/2026-10-21-cmf-final-matrix/README.md",
+   "result": "PASS",
+   "launched": "2026-10-21T02:42Z"
+  },
+  {
+   "set": "M1e",
+   "record": "probes/2026-10-21-cmf-final-matrix/README.md",
+   "result": "PASS",
+   "launched": "2026-10-21T03:04Z"
+  },
+  {
+   "set": "M2",
+   "record": "probes/2026-10-21-cmf-final-matrix/README.md",
+   "result": "PASS",
+   "launched": "2026-10-21T03:14Z"
+  },
+  {
+   "set": "M3",
+   "record": "probes/2026-10-21-cmf-final-matrix/README.md",
+   "result": "PASS",
+   "launched": "2026-10-21T03:21Z"
+  },
+  {
+   "set": "M4",
+   "record": "probes/2026-10-21-cmf-final-matrix/README.md",
+   "result": "PASS",
+   "launched": "2026-10-21T03:26Z"
+  },
+  {
+   "set": "M6",
+   "record": "probes/2026-10-21-cmf-final-matrix/README.md",
+   "result": "PASS",
+   "launched": "2026-10-21T03:40Z"
+  }
+ ],
+ "notChecked": [
+  "Proton/Linux",
+  "controller",
+  "install through a mod manager"
+ ],
+ "packages": {
+  "mod0000_ConjunctionMapFramework": {
+   "role": "core",
+   "needsApi": 6,
+   "acceptance": "Final matrix launches M1e (2026-10-21 03:04Z, Kyle: \"Feels smooth\"), M2 (03:14Z), M3 (03:21Z) and M4 (03:26Z) (probes/2026-10-21-cmf-final-matrix): cmfCore.ws 83147e83 (PR #55, merged 173655a) and the menu file cadd78ce (PR #53, installed since M5a 02:17Z), with preview 3's panel (bundle e4f23a42, metadata 84d85395), cmfSettings.ws 9e258017 and string tables. Panel, settings script and string tables are preview 3's staged bytes; cmfCore.ws and the menu file equal the tree at 173655a"
+  },
+  "modCMFAdapterAllQuestObjectives": {
+   "role": "adapter",
+   "needsApi": 6,
+   "adapts": {
+    "folder": "modAQOOMRemastered",
+    "name": "All Quest Objectives On Map - Remastered",
+    "version": "1.2.1",
+    "nexus": 14319
+   },
+   "acceptance": "Launch P6+C2 run 2, 2026-10-20 ~20:05Z (probes/2026-10-20-cmf-p6-click-fix; revision 3 in probes/2026-10-20-cmf-aqo/rev3), with an earlier CMF 6 core (P6+C2: cmfCore.ws e3b6b048, panel movie 1794fd7b), not this core; installed, log clean, in launch Build 1b with this core. Rebuilt from 8358645 with tools/cmf_pack.py: all three files identical"
+  },
+  "modCMFAdapterBotanist": {
+   "role": "adapter",
+   "needsApi": 5,
+   "adapts": {
+    "folder": "modBotanist",
+    "name": "Botanist - NG - Remastered",
+    "version": "3.0.0.2",
+    "nexus": 8260
+   },
+   "acceptance": "Launch Build 1b, 2026-10-21 00:11Z (probes/2026-10-20-cmf-big-test-1b; pack probes/2026-10-20-cmf-botanist), with this core. Rebuilt from 8358645 with tools/cmf_pack.py: script and texture.cache identical; README.txt differs in text only (ran 635eb115, commit 68ed1d1 after the launch)"
+  },
+  "modCMFAdapterFogOfWar": {
+   "role": "adapter",
+   "needsApi": 3,
+   "adapts": {
+    "folder": "modFogOfWar",
+    "name": "Fog of War",
+    "version": "1.2.1",
+    "nexus": 13627
+   },
+   "acceptance": "Launch OF, 2026-10-20 16:33Z (probes/2026-10-20-cmf-order-fow), with the CMF 5 core, not this core. Script identical; README.txt differs in text only (ran dcfd529e)"
+  },
+  "modCMFAdapterGwentPlayersMap": {
+   "role": "adapter",
+   "needsApi": 2,
+   "adapts": {
+    "folder": "modGwentPlayersMap",
+    "name": "Gwent Players Map",
+    "version": "1.0.9",
+    "nexus": 13755
+   },
+   "acceptance": "Final matrix launch M1d, 2026-10-21 ~02:42Z (probes/2026-10-21-cmf-final-matrix; PR #54 head 3fd857f), with The Stable installed: all 46 players' cards on the map; idle without The Stable in M3 (03:21Z) with the 60 fps core. Rebuilt from 173655a with tools/cmf_pack.py: _stable.ws 29638816 = the launched script; _cmf.ws, README.txt and texture.cache identical to preview 3"
+  },
+  "modCMFAdapterInkAndIron": {
+   "role": "adapter",
+   "needsApi": 5,
+   "adapts": {
+    "folder": "modInkAndIronUI",
+    "name": "Ink and Iron AIO",
+    "version": "0.8.8"
+   },
+   "acceptance": "NOT YET RUN as shipped. Launches P6+C and P6+C2 run 2, 2026-10-20 (probes/2026-10-20-cmf-ii-movement), ran script 7eaf8818 (commit e1e2e85); this script (f1d99b9f, 505be9d) differs from it in one header comment line only (target version wording). README.txt differs in text (ran d3b608c4). Installed, log clean, in launch build 1b with this core (the 7eaf8818 script)"
+  },
+  "modCMFAdapterMapPinTeleport": {
+   "role": "adapter",
+   "needsApi": 6,
+   "adapts": {
+    "folder": "modMapPinTeleport",
+    "name": "Map Pin Teleport",
+    "version": "1.2.2",
+    "nexus": 13541
+   },
+   "acceptance": "Launch P6+C steps 9-10 and P6+C2 run 2 steps 1-4, 2026-10-20 (probes/2026-10-20-cmf-p6-click-fix; pack probes/2026-10-20-cmf-map-pin-teleport), with an earlier CMF 6 core (P6+C2: cmfCore.ws e3b6b048, panel movie 1794fd7b), not this core; installed, log clean, in launch Build 1b with this core. Script identical; README.txt differs in text only (the launch ran the older text of 5d9a6b7)"
+  },
+  "modCMFAdapterMapQuestInsight": {
+   "role": "adapter",
+   "needsApi": 6,
+   "adapts": {
+    "folder": "modMapQuestInsight",
+    "name": "Map Quest Insight",
+    "version": "1.6.1",
+    "nexus": 14219
+   },
+   "acceptance": "Launch P6+C2 run 2, 2026-10-20 20:08Z (probes/2026-10-20-cmf-p6-click-fix), with an earlier CMF 6 core (P6+C2: cmfCore.ws e3b6b048, panel movie 1794fd7b), not this core; installed, log clean, in launch Build 1b with this core. Rebuilt from 8358645 with tools/cmf_pack.py: all three files identical"
+  },
+  "modCMFAdapterTheStable": {
+   "role": "adapter",
+   "needsApi": 2,
+   "adapts": {
+    "folder": "modArdDhuStable",
+    "name": "The Stable - Roach-Horse Customization Mod",
+    "version": "2.2.1",
+    "nexus": 6132
+   },
+   "acceptance": "Final matrix launch M1d, 2026-10-21 ~02:42Z (probes/2026-10-21-cmf-final-matrix; PR #54 head 3fd857f): provider modArdDhuStable 1/1/0, Stables row registered with The Stable installed. Rebuilt from 173655a with tools/cmf_pack.py: script d051a409 = the launched script; README.txt differs in text only (requirements line from PR #54)"
+  },
+  "modCMFAdapterWitcherGearMap": {
+   "role": "adapter",
+   "needsApi": 1,
+   "adapts": {
+    "folder": "modWitcherGearMap",
+    "name": "Witcher Upgrade Gear Map",
+    "version": "1.0.1",
+    "nexus": 14157
+   },
+   "acceptance": "Final matrix launch M1d, 2026-10-21 ~02:42Z (probes/2026-10-21-cmf-final-matrix; PR #54 head 3fd857f), with The Stable installed: Gear markers reach the map; Fog of War hid and restored them in M3 (03:21Z) with the 60 fps core. Rebuilt from 173655a with tools/cmf_pack.py: _cmf.ws 005b7bd2 and _stable.ws 37769472 = the launched scripts; texture.cache identical to preview 3; README.txt differs in text only (requirements line from PR #54)"
+  },
+  "modCMFAdapterWitchersPath": {
+   "role": "adapter",
+   "needsApi": 6,
+   "adapts": {
+    "folder": "modWitchersPath",
+    "name": "Witcher's Path",
+    "version": "1.0.3",
+    "nexus": 13423
+   },
+   "acceptance": "Launches D4, D5 and D6, 2026-10-20 21:58Z-22:25Z (probes/2026-10-20-cmf-map-drawing-4, -5, -6; pack probes/2026-10-20-cmf-witchers-path); installed, log clean, in launch Build 1b with this core. Script identical; README.txt differs in text only (ran 072d9a37)"
+  },
+  "modCMFMinimapPanel": {
+   "role": "addon",
+   "needsApi": 1,
+   "acceptance": "Same bytes as previews 1 and 2 (source unchanged since 88370d1); last launch C5, 2026-10-20 16:16-16:20Z (probes/2026-10-20-cmf-core5-check), with the CMF 5 core, not this core (out of the probe copy since P6+C). Panel pair repackaged byte for byte from its resource (movie bb0dba80)"
+  },
+  "modCMFExampleIconPack": {
+   "role": "example",
+   "needsApi": 1,
+   "acceptance": "Launch D1, 2026-10-20 ~20:20Z (probes/2026-10-20-cmf-map-drawing; built from 80fada8): the cleared campfire tick passed; installed, log clean, in launch Build 1b with this core. Rebuilt from 8358645 with tools/cmf_pack.py: all three files identical"
+  }
+ }
+}

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UserConfig>
+	<Group id="CMFTestSmooth" displayName="Mods.cmf_menu.cmftestsmooth">
+		<VisibleVars>
+			<Var id="CMFTS_Enabled" value="false" displayName="cmfts_enabled" displayType="TOGGLE"/>
+		</VisibleVars>
+	</Group>
+</UserConfig>

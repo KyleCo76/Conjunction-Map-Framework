@@ -1,0 +1,109 @@
+# Map Pin Teleport on Conjunction Map Framework: the change for its author
+
+This note is for the author of Map Pin Teleport (Nexus 13541). It shows how the "GO NOW" button, the E key and the "Go Now" hint come back on Conjunction Map Framework's (CMF) world map, using the adapter CMF ships as a worked example, [`source/adapters/map-pin-teleport/modCMFAdapterMapPinTeleport`](../../source/adapters/map-pin-teleport/modCMFAdapterMapPinTeleport/).
+
+The adapter targets Map Pin Teleport 1.2.2 and CMF API version 6. It passed in game on 2026-10-20: the GO NOW button, the E key and a long teleport from Novigrad to southern Velen all reached `ModPinTP_Request`.
+
+## Why your teleport needs anything at all
+
+Only one `panel_worldmap.redswf` loads. When CMF is installed, CMF's map loads instead of yours, so three things in your map file are missing:
+
+- the "GO NOW" button you draw beside each placed pin;
+- E, Enter or gamepad A on a selected placed pin sending `OnStaticMapPinUsed` with `-2 - (id & 0x3FFFFFFF)`;
+- the "Go Now" entry you append to the button bar.
+
+Your scripts keep running. `ModPinTP_Request` is there; nothing calls it.
+
+The made-up area number had a second problem: All Quest Objectives reports its own clicks the same way, with numbers of -1000 and lower, and your wrapper takes every number of -2 or lower. With both mods' scripts installed, a click meant for one could reach the other. CMF's pin clicks have no shared numbers: each click goes to the one mod that claimed it.
+
+## You used to, now you call
+
+**The inputs.** You used to catch E, Enter and A in `HubMap.handleInput` and draw a button per placed pin. Now you claim those inputs on the player's own pin types (property id 16, `CMFPropertyPinClick()`): `use` is E, Enter or gamepad A on the selected pin, acted on when the key comes up after it went down on the map, as yours; `button` is a button CMF draws beside the pin, following pan and zoom and hidden off screen, as yours:
+
+```
+CMFRegister("modMapPinTeleport", CMFPropertyPinClick(), 'User1', '', "use,button", 1);
+```
+
+and the same for `User2` to `User7`.
+
+**The words.** You used to append `modPinTP_GoNow` to the button bar and turn it into "Go Now" in your `OnAppendGFxButton` wrapper, and write "GO NOW" on your button. Now you give CMF the words (property ids 20 and 21); CMF shows them only on pins whose click you won:
+
+```
+CMFRegister("modMapPinTeleport", CMFPropertyPinClickHint(), 'User1', '', "Go Now", 1);
+CMFRegister("modMapPinTeleport", CMFPropertyPinClickButton(), 'User1', '', "GO NOW", 1);
+```
+
+For a translated text, pass `GetLocStringByKeyExt("your_key")` instead of the literal.
+
+**The button's look.** You used to draw it yourself. Now you style CMF's `pinButton` part with your own values:
+
+```
+CMFStylePart("modMapPinTeleport", 'pinButton', 'width', "", 150);
+CMFStylePart("modMapPinTeleport", 'pinButton', 'height', "", 40);
+CMFStylePart("modMapPinTeleport", 'pinButton', 'curve', "", 10);
+CMFStylePart("modMapPinTeleport", 'pinButton', 'fill', "", 1709072);	// 0x1A1410
+CMFStylePart("modMapPinTeleport", 'pinButton', 'alpha', "", 0.9);
+CMFStylePart("modMapPinTeleport", 'pinButton', 'stroke', "", 13149530);	// 0xC8A55A
+CMFStylePart("modMapPinTeleport", 'pinButton', 'strokeWidth', "", 2);
+CMFStylePart("modMapPinTeleport", 'pinButton', 'offsetX', "", 28);
+CMFStylePart("modMapPinTeleport", 'pinButton', 'offsetY', "", -20);
+CMFStylePart("modMapPinTeleport", 'pinButton', 'font', "$NormalFont", 0);
+CMFStylePart("modMapPinTeleport", 'pinButton', 'size', "", 20);
+CMFStylePart("modMapPinTeleport", 'pinButton', 'color', "", 15258528);	// 0xE8D3A0
+CMFStylePart("modMapPinTeleport", 'pinButton', 'align', "center", 0);
+```
+
+`offsetX` and `offsetY` place the button's top-left corner from the pin. The part is shared by every mod's buttons, and the earliest folder that styles it sets the look for all of them.
+
+**The click.** You used to wrap `OnStaticMapPinUsed` and pick out `areaNameId <= -2`. Now CMF calls its hook `OnPinClicked` once for each click you won, and you call your own function:
+
+```
+@wrapMethod(CMFCore)
+function OnPinClicked(menu : CR4MapMenu, provider : string, pinTag : name, pinId : int, pinType : string,
+	input : string, value : int) : bool
+{
+	var lowBits : int;
+	if (provider != "modMapPinTeleport")
+	{
+		return wrappedMethod(menu, provider, pinTag, pinId, pinType, input, value);
+	}
+	lowBits = pinId % 1073741824;
+	if (lowBits < 0)
+	{
+		lowBits += 1073741824;
+	}
+	ModPinTP_Request(menu, lowBits);
+	return true;
+}
+```
+
+`pinId` is the placed pin's own id. Your map file masked it to its low 30 bits; the two lines after the test do the same, so `ModPinTP_Request` finds the pin exactly as before. If you change `ModPinTP_Request` to match the whole id, pass `pinId` as it is. Pass every other provider's click on unchanged, as above; then the order in which the game runs wrappers never matters.
+
+The claims and the look go in one `CR4Game.OnGameStarted` wrapper, after `CMFRequireVersion("modMapPinTeleport", 6)`. The [adapter's script](../../source/adapters/map-pin-teleport/modCMFAdapterMapPinTeleport/content/scripts/local/modcmfadaptermappinteleport_cmf.ws) is the whole thing. Your `OnStaticMapPinUsed` and `OnAppendGFxButton` wrappers can stay: under CMF nothing sends their numbers or label, and CMF's own `OnAppendGFxButton` wrapper passes your label on.
+
+You get the same teleport as with your own map file. In addition, it shares the map with every other CMF mod, All Quest Objectives' clicks no longer reach your script, conflicts are settled by a documented order, and no Script Merger is needed.
+
+## Who wins a pin
+
+One mod wins the click on each pin: a claim on one pin beats a claim on its tag, which beats a claim on its type; at the same level the mod earlier in CMF's provider order wins (folder order unless the player set one). Your claims are type claims under your own folder name, `modMapPinTeleport`, so folder order between mods stays as it is without CMF. The hint and button text follow the winner. CMF logs each click (`click provider=modMapPinTeleport input=button type=User1 ...`) and each lost claim (`click shadowed provider=... by=modMapPinTeleport`).
+
+## Shipping it yourself
+
+Ship it as an optional "CMF support" folder next to your mod. It must stay separate, because a CMF call fails to compile when CMF is not installed:
+
+```
+Mods/
+  modMapPinTeleportCMF/                         any folder name of yours, starting with "mod"
+    README.txt
+    content/scripts/local/modmappinteleportcmf_cmf.ws
+```
+
+- **Provider.** Keep `modMapPinTeleport` as the first argument of every call, so your folder and the adapter give the same result.
+- **No art.** The button is drawn from your values; there is no `texture.cache`.
+- **Check.** Run `python tools/cmf_pack.py check path/to/modMapPinTeleportCMF --adapts modMapPinTeleport` from the CMF repository. It notes that the folder needs CMF 6.
+- **Tell players** to uninstall CMF's adapter when they install your CMF support. The two are not meant to run together: with both installed the game may stop at the script compile screen, and removing the adapter fixes it. Both make the same claims under the same name, so your folder alone gives the same result.
+
+## What has not been checked
+
+- Gamepad A and touch taps (no controller or touch screen on the test PC).
+- Proton.

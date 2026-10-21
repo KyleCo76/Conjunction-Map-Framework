@@ -1,0 +1,1305 @@
+{
+ "schema": "cmf-pin-types-1",
+ "game": "The Witcher 3 5.01",
+ "source": "cmf-build",
+ "pinSpriteSha256": "d9b5f0daff36ed8e30318f868eeb5b8d69767aa72651964bdc035f437cee81d4",
+ "legendSha256": "25d8e7c015ca126f00295a39b928348455be805c2bb3be8e7431be84143ac005",
+ "types": [
+  {
+   "name": "RoadSign",
+   "art": true,
+   "category": "General",
+   "priority": 101,
+   "reach": "yes",
+   "note": "signpost (fast travel); hidden while sailing"
+  },
+  {
+   "name": "Harbor",
+   "art": true,
+   "category": "General",
+   "priority": 102,
+   "reach": "yes",
+   "note": "shown only while sailing"
+  },
+  {
+   "name": "NoticeBoardFull",
+   "art": true,
+   "category": "General",
+   "priority": 103,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "NoticeBoard",
+   "art": true,
+   "category": "General",
+   "priority": 104,
+   "reach": "yes",
+   "note": "notice board with nothing new; the full board is NoticeBoardFull"
+  },
+  {
+   "name": "PlayerStash",
+   "art": true,
+   "category": "General",
+   "priority": 105,
+   "reach": "yes",
+   "note": "stash"
+  },
+  {
+   "name": "PlayerStashDiscoverable",
+   "art": true,
+   "category": "General",
+   "priority": 106,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "Horse",
+   "art": true,
+   "category": "General",
+   "priority": 107,
+   "reach": "yes",
+   "note": "Roach"
+  },
+  {
+   "name": "Transport",
+   "art": true,
+   "category": "General",
+   "priority": 108,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "StoryQuest",
+   "art": true,
+   "category": "Quests",
+   "priority": 201,
+   "reach": "yes",
+   "note": "quest pin: every quest pin shares one legend row"
+  },
+  {
+   "name": "ChapterQuest",
+   "art": true,
+   "category": "Quests",
+   "priority": 202,
+   "reach": "yes",
+   "note": "quest pin: every quest pin shares one legend row"
+  },
+  {
+   "name": "SideQuest",
+   "art": true,
+   "category": "Quests",
+   "priority": 203,
+   "reach": "yes",
+   "note": "quest pin: every quest pin shares one legend row"
+  },
+  {
+   "name": "MonsterQuest",
+   "art": true,
+   "category": "Quests",
+   "priority": 204,
+   "reach": "yes",
+   "note": "quest pin: every quest pin shares one legend row"
+  },
+  {
+   "name": "TreasureQuest",
+   "art": true,
+   "category": "Quests",
+   "priority": 205,
+   "reach": "yes",
+   "note": "quest pin: every quest pin shares one legend row"
+  },
+  {
+   "name": "QuestReturn",
+   "art": true,
+   "category": "Quests",
+   "priority": 206,
+   "reach": "yes",
+   "note": "quest pin: every quest pin shares one legend row"
+  },
+  {
+   "name": "HorseRace",
+   "art": true,
+   "category": "Quests",
+   "priority": 207,
+   "reach": "yes",
+   "note": "quest pin: every quest pin shares one legend row"
+  },
+  {
+   "name": "NonQuestHorseRace",
+   "art": true,
+   "category": "Quests",
+   "priority": 208,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "BoatRace",
+   "art": true,
+   "category": "Quests",
+   "priority": 209,
+   "reach": "yes",
+   "note": "quest pin: every quest pin shares one legend row"
+  },
+  {
+   "name": "QuestBelgard",
+   "art": true,
+   "category": "Quests",
+   "priority": 210,
+   "reach": "yes",
+   "note": "quest pin: every quest pin shares one legend row"
+  },
+  {
+   "name": "QuestCoronata",
+   "art": true,
+   "category": "Quests",
+   "priority": 212,
+   "reach": "yes",
+   "note": "quest pin: every quest pin shares one legend row"
+  },
+  {
+   "name": "QuestVermentino",
+   "art": true,
+   "category": "Quests",
+   "priority": 212,
+   "reach": "yes",
+   "note": "quest pin: every quest pin shares one legend row"
+  },
+  {
+   "name": "QuestAvailable",
+   "art": true,
+   "category": "Quests",
+   "priority": 213,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "QuestAvailableHoS",
+   "art": true,
+   "category": "Quests",
+   "priority": 214,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "QuestAvailableBaW",
+   "art": true,
+   "category": "Quests",
+   "priority": 215,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "QuestAvailableLy",
+   "art": true,
+   "category": "Quests",
+   "priority": 216,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "QuestObjective",
+   "art": true,
+   "category": "Quests",
+   "priority": 217,
+   "reach": "yes",
+   "note": "the tracked quest's other objectives; they stay gold whatever tint is registered; quest pin: every quest pin shares one legend row"
+  },
+  {
+   "name": "QuestObjectiveOther",
+   "art": true,
+   "category": "Quests",
+   "priority": 218,
+   "reach": "yes",
+   "note": "untracked quest objectives; the usual target for quest tints (Map Quest Insight tints this one); quest pin: every quest pin shares one legend row"
+  },
+  {
+   "name": "Entrance",
+   "art": true,
+   "category": "Exploration",
+   "priority": 301,
+   "reach": "yes",
+   "note": "cave or dungeon entrance"
+  },
+  {
+   "name": "NotDiscoveredPOI",
+   "art": true,
+   "category": "Exploration",
+   "priority": 302,
+   "reach": "yes",
+   "note": "the \"?\" pin of every undiscovered place; a claim changes all of them at once"
+  },
+  {
+   "name": "NotDiscoveredPOI_1",
+   "art": true,
+   "category": "Exploration",
+   "priority": 303,
+   "reach": "base",
+   "note": "level variant of NotDiscoveredPOI (vanilla adds the level to the drawn frame only); register NotDiscoveredPOI, and its image covers every level"
+  },
+  {
+   "name": "NotDiscoveredPOI_2",
+   "art": true,
+   "category": "Exploration",
+   "priority": 304,
+   "reach": "base",
+   "note": "level variant of NotDiscoveredPOI (vanilla adds the level to the drawn frame only); register NotDiscoveredPOI, and its image covers every level"
+  },
+  {
+   "name": "NotDiscoveredPOI_3",
+   "art": true,
+   "category": "Exploration",
+   "priority": 305,
+   "reach": "base",
+   "note": "level variant of NotDiscoveredPOI (vanilla adds the level to the drawn frame only); register NotDiscoveredPOI, and its image covers every level"
+  },
+  {
+   "name": "MonsterNest",
+   "art": true,
+   "category": "Exploration",
+   "priority": 306,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "MonsterNest_1",
+   "art": true,
+   "category": "Exploration",
+   "priority": 307,
+   "reach": "base",
+   "note": "level variant of MonsterNest (vanilla adds the level to the drawn frame only); register MonsterNest, and its image covers every level"
+  },
+  {
+   "name": "MonsterNest_2",
+   "art": true,
+   "category": "Exploration",
+   "priority": 308,
+   "reach": "base",
+   "note": "level variant of MonsterNest (vanilla adds the level to the drawn frame only); register MonsterNest, and its image covers every level"
+  },
+  {
+   "name": "MonsterNest_3",
+   "art": true,
+   "category": "Exploration",
+   "priority": 309,
+   "reach": "base",
+   "note": "level variant of MonsterNest (vanilla adds the level to the drawn frame only); register MonsterNest, and its image covers every level"
+  },
+  {
+   "name": "MonsterNestDisabled",
+   "art": true,
+   "category": "Exploration",
+   "priority": 310,
+   "reach": "yes",
+   "note": "completed MonsterNest; its own type, so a claim on MonsterNest leaves it stock"
+  },
+  {
+   "name": "TreasureHuntMappin",
+   "art": true,
+   "category": "Exploration",
+   "priority": 316,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "TreasureHuntMappin_1",
+   "art": true,
+   "category": "Exploration",
+   "priority": 317,
+   "reach": "base",
+   "note": "level variant of TreasureHuntMappin (vanilla adds the level to the drawn frame only); register TreasureHuntMappin, and its image covers every level"
+  },
+  {
+   "name": "TreasureHuntMappin_2",
+   "art": true,
+   "category": "Exploration",
+   "priority": 318,
+   "reach": "base",
+   "note": "level variant of TreasureHuntMappin (vanilla adds the level to the drawn frame only); register TreasureHuntMappin, and its image covers every level"
+  },
+  {
+   "name": "TreasureHuntMappin_3",
+   "art": true,
+   "category": "Exploration",
+   "priority": 319,
+   "reach": "base",
+   "note": "level variant of TreasureHuntMappin (vanilla adds the level to the drawn frame only); register TreasureHuntMappin, and its image covers every level"
+  },
+  {
+   "name": "TreasureHuntMappinDisabled",
+   "art": true,
+   "category": "Exploration",
+   "priority": 320,
+   "reach": "yes",
+   "note": "completed TreasureHuntMappin; its own type, so a claim on TreasureHuntMappin leaves it stock"
+  },
+  {
+   "name": "SpoilsOfWar",
+   "art": true,
+   "category": "Exploration",
+   "priority": 321,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "SpoilsOfWar_1",
+   "art": false,
+   "category": "Exploration",
+   "priority": 322,
+   "reach": "base",
+   "note": "level variant of SpoilsOfWar (vanilla adds the level to the drawn frame only); register SpoilsOfWar, and its image covers every level"
+  },
+  {
+   "name": "SpoilsOfWar_2",
+   "art": false,
+   "category": "Exploration",
+   "priority": 323,
+   "reach": "base",
+   "note": "level variant of SpoilsOfWar (vanilla adds the level to the drawn frame only); register SpoilsOfWar, and its image covers every level"
+  },
+  {
+   "name": "SpoilsOfWar_3",
+   "art": false,
+   "category": "Exploration",
+   "priority": 324,
+   "reach": "base",
+   "note": "level variant of SpoilsOfWar (vanilla adds the level to the drawn frame only); register SpoilsOfWar, and its image covers every level"
+  },
+  {
+   "name": "SpoilsOfWarDisabled",
+   "art": true,
+   "category": "Exploration",
+   "priority": 325,
+   "reach": "yes",
+   "note": "completed SpoilsOfWar; its own type, so a claim on SpoilsOfWar leaves it stock"
+  },
+  {
+   "name": "BanditCamp",
+   "art": true,
+   "category": "Exploration",
+   "priority": 326,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "BanditCamp_1",
+   "art": true,
+   "category": "Exploration",
+   "priority": 327,
+   "reach": "base",
+   "note": "level variant of BanditCamp (vanilla adds the level to the drawn frame only); register BanditCamp, and its image covers every level"
+  },
+  {
+   "name": "BanditCamp_2",
+   "art": true,
+   "category": "Exploration",
+   "priority": 328,
+   "reach": "base",
+   "note": "level variant of BanditCamp (vanilla adds the level to the drawn frame only); register BanditCamp, and its image covers every level"
+  },
+  {
+   "name": "BanditCamp_3",
+   "art": true,
+   "category": "Exploration",
+   "priority": 329,
+   "reach": "base",
+   "note": "level variant of BanditCamp (vanilla adds the level to the drawn frame only); register BanditCamp, and its image covers every level"
+  },
+  {
+   "name": "BanditCampDisabled",
+   "art": true,
+   "category": "Exploration",
+   "priority": 330,
+   "reach": "yes",
+   "note": "completed BanditCamp; its own type, so a claim on BanditCamp leaves it stock"
+  },
+  {
+   "name": "BanditCampfire",
+   "art": true,
+   "category": "Exploration",
+   "priority": 331,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "BanditCampfire_1",
+   "art": false,
+   "category": "Exploration",
+   "priority": 332,
+   "reach": "base",
+   "note": "level variant of BanditCampfire (vanilla adds the level to the drawn frame only); register BanditCampfire, and its image covers every level"
+  },
+  {
+   "name": "BanditCampfire_2",
+   "art": false,
+   "category": "Exploration",
+   "priority": 333,
+   "reach": "base",
+   "note": "level variant of BanditCampfire (vanilla adds the level to the drawn frame only); register BanditCampfire, and its image covers every level"
+  },
+  {
+   "name": "BanditCampfire_3",
+   "art": false,
+   "category": "Exploration",
+   "priority": 334,
+   "reach": "base",
+   "note": "level variant of BanditCampfire (vanilla adds the level to the drawn frame only); register BanditCampfire, and its image covers every level"
+  },
+  {
+   "name": "BanditCampfireDisabled",
+   "art": true,
+   "category": "Exploration",
+   "priority": 335,
+   "reach": "yes",
+   "note": "completed BanditCampfire; its own type, so a claim on BanditCampfire leaves it stock"
+  },
+  {
+   "name": "BossAndTreasure",
+   "art": true,
+   "category": "Exploration",
+   "priority": 336,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "BossAndTreasure_1",
+   "art": true,
+   "category": "Exploration",
+   "priority": 337,
+   "reach": "base",
+   "note": "level variant of BossAndTreasure (vanilla adds the level to the drawn frame only); register BossAndTreasure, and its image covers every level"
+  },
+  {
+   "name": "BossAndTreasure_2",
+   "art": true,
+   "category": "Exploration",
+   "priority": 338,
+   "reach": "base",
+   "note": "level variant of BossAndTreasure (vanilla adds the level to the drawn frame only); register BossAndTreasure, and its image covers every level"
+  },
+  {
+   "name": "BossAndTreasure_3",
+   "art": true,
+   "category": "Exploration",
+   "priority": 339,
+   "reach": "base",
+   "note": "level variant of BossAndTreasure (vanilla adds the level to the drawn frame only); register BossAndTreasure, and its image covers every level"
+  },
+  {
+   "name": "BossAndTreasureDisabled",
+   "art": true,
+   "category": "Exploration",
+   "priority": 340,
+   "reach": "yes",
+   "note": "completed BossAndTreasure; its own type, so a claim on BossAndTreasure leaves it stock"
+  },
+  {
+   "name": "Contraband",
+   "art": true,
+   "category": "Exploration",
+   "priority": 341,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "Contraband_1",
+   "art": false,
+   "category": "Exploration",
+   "priority": 342,
+   "reach": "base",
+   "note": "level variant of Contraband (vanilla adds the level to the drawn frame only); register Contraband, and its image covers every level"
+  },
+  {
+   "name": "Contraband_2",
+   "art": false,
+   "category": "Exploration",
+   "priority": 343,
+   "reach": "base",
+   "note": "level variant of Contraband (vanilla adds the level to the drawn frame only); register Contraband, and its image covers every level"
+  },
+  {
+   "name": "Contraband_3",
+   "art": false,
+   "category": "Exploration",
+   "priority": 344,
+   "reach": "base",
+   "note": "level variant of Contraband (vanilla adds the level to the drawn frame only); register Contraband, and its image covers every level"
+  },
+  {
+   "name": "ContrabandDisabled",
+   "art": true,
+   "category": "Exploration",
+   "priority": 345,
+   "reach": "yes",
+   "note": "completed Contraband; its own type, so a claim on Contraband leaves it stock"
+  },
+  {
+   "name": "ContrabandShip",
+   "art": true,
+   "category": "Exploration",
+   "priority": 346,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "ContrabandShip_1",
+   "art": false,
+   "category": "Exploration",
+   "priority": 347,
+   "reach": "base",
+   "note": "level variant of ContrabandShip (vanilla adds the level to the drawn frame only); register ContrabandShip, and its image covers every level"
+  },
+  {
+   "name": "ContrabandShip_2",
+   "art": false,
+   "category": "Exploration",
+   "priority": 348,
+   "reach": "base",
+   "note": "level variant of ContrabandShip (vanilla adds the level to the drawn frame only); register ContrabandShip, and its image covers every level"
+  },
+  {
+   "name": "ContrabandShip_3",
+   "art": false,
+   "category": "Exploration",
+   "priority": 349,
+   "reach": "base",
+   "note": "level variant of ContrabandShip (vanilla adds the level to the drawn frame only); register ContrabandShip, and its image covers every level"
+  },
+  {
+   "name": "ContrabandShipDisabled",
+   "art": true,
+   "category": "Exploration",
+   "priority": 350,
+   "reach": "yes",
+   "note": "completed ContrabandShip; its own type, so a claim on ContrabandShip leaves it stock"
+  },
+  {
+   "name": "RescuingTown",
+   "art": true,
+   "category": "Exploration",
+   "priority": 351,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "RescuingTown_1",
+   "art": true,
+   "category": "Exploration",
+   "priority": 352,
+   "reach": "base",
+   "note": "level variant of RescuingTown (vanilla adds the level to the drawn frame only); register RescuingTown, and its image covers every level"
+  },
+  {
+   "name": "RescuingTown_2",
+   "art": true,
+   "category": "Exploration",
+   "priority": 353,
+   "reach": "base",
+   "note": "level variant of RescuingTown (vanilla adds the level to the drawn frame only); register RescuingTown, and its image covers every level"
+  },
+  {
+   "name": "RescuingTown_3",
+   "art": true,
+   "category": "Exploration",
+   "priority": 354,
+   "reach": "base",
+   "note": "level variant of RescuingTown (vanilla adds the level to the drawn frame only); register RescuingTown, and its image covers every level"
+  },
+  {
+   "name": "RescuingTownDisabled",
+   "art": true,
+   "category": "Exploration",
+   "priority": 355,
+   "reach": "yes",
+   "note": "completed RescuingTown; its own type, so a claim on RescuingTown leaves it stock"
+  },
+  {
+   "name": "DungeonCrawl",
+   "art": true,
+   "category": "Exploration",
+   "priority": 356,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "DungeonCrawl_1",
+   "art": false,
+   "category": "Exploration",
+   "priority": 357,
+   "reach": "base",
+   "note": "level variant of DungeonCrawl (vanilla adds the level to the drawn frame only); register DungeonCrawl, and its image covers every level"
+  },
+  {
+   "name": "DungeonCrawl_2",
+   "art": false,
+   "category": "Exploration",
+   "priority": 358,
+   "reach": "base",
+   "note": "level variant of DungeonCrawl (vanilla adds the level to the drawn frame only); register DungeonCrawl, and its image covers every level"
+  },
+  {
+   "name": "DungeonCrawl_3",
+   "art": false,
+   "category": "Exploration",
+   "priority": 359,
+   "reach": "base",
+   "note": "level variant of DungeonCrawl (vanilla adds the level to the drawn frame only); register DungeonCrawl, and its image covers every level"
+  },
+  {
+   "name": "DungeonCrawlDisabled",
+   "art": true,
+   "category": "Exploration",
+   "priority": 360,
+   "reach": "yes",
+   "note": "completed DungeonCrawl; its own type, so a claim on DungeonCrawl leaves it stock"
+  },
+  {
+   "name": "Hideout",
+   "art": true,
+   "category": "Exploration",
+   "priority": 361,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "HideoutDisabled",
+   "art": true,
+   "category": "Exploration",
+   "priority": 362,
+   "reach": "yes",
+   "note": "completed Hideout; its own type, so a claim on Hideout leaves it stock"
+  },
+  {
+   "name": "InfestedVineyard",
+   "art": true,
+   "category": "Exploration",
+   "priority": 363,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "InfestedVineyard_1",
+   "art": true,
+   "category": "Exploration",
+   "priority": 364,
+   "reach": "base",
+   "note": "level variant of InfestedVineyard (vanilla adds the level to the drawn frame only); register InfestedVineyard, and its image covers every level"
+  },
+  {
+   "name": "InfestedVineyard_2",
+   "art": true,
+   "category": "Exploration",
+   "priority": 365,
+   "reach": "base",
+   "note": "level variant of InfestedVineyard (vanilla adds the level to the drawn frame only); register InfestedVineyard, and its image covers every level"
+  },
+  {
+   "name": "InfestedVineyard_3",
+   "art": true,
+   "category": "Exploration",
+   "priority": 366,
+   "reach": "base",
+   "note": "level variant of InfestedVineyard (vanilla adds the level to the drawn frame only); register InfestedVineyard, and its image covers every level"
+  },
+  {
+   "name": "InfestedVineyardDisabled",
+   "art": true,
+   "category": "Exploration",
+   "priority": 367,
+   "reach": "yes",
+   "note": "completed InfestedVineyard; its own type, so a claim on InfestedVineyard leaves it stock"
+  },
+  {
+   "name": "Plegmund",
+   "art": true,
+   "category": "Exploration",
+   "priority": 368,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "WineContract",
+   "art": true,
+   "category": "Exploration",
+   "priority": 369,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "KnightErrant",
+   "art": true,
+   "category": "Exploration",
+   "priority": 370,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "SignalingStake",
+   "art": true,
+   "category": "Exploration",
+   "priority": 371,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "Boat",
+   "art": true,
+   "category": "Exploration",
+   "priority": 372,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "Shopkeeper",
+   "art": true,
+   "category": "NPCs",
+   "priority": 501,
+   "reach": "yes",
+   "note": "general merchant"
+  },
+  {
+   "name": "Archmaster",
+   "art": true,
+   "category": "NPCs",
+   "priority": 502,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "Blacksmith",
+   "art": true,
+   "category": "NPCs",
+   "priority": 503,
+   "reach": "yes",
+   "note": "blacksmith (weapons)"
+  },
+  {
+   "name": "Armorer",
+   "art": true,
+   "category": "NPCs",
+   "priority": 504,
+   "reach": "yes",
+   "note": "armorer (armour)"
+  },
+  {
+   "name": "Alchemic",
+   "art": true,
+   "category": "NPCs",
+   "priority": 506,
+   "reach": "yes",
+   "note": "alchemist"
+  },
+  {
+   "name": "Herbalist",
+   "art": true,
+   "category": "NPCs",
+   "priority": 507,
+   "reach": "yes",
+   "note": "herbalist"
+  },
+  {
+   "name": "Innkeeper",
+   "art": true,
+   "category": "NPCs",
+   "priority": 508,
+   "reach": "yes",
+   "note": "innkeeper"
+  },
+  {
+   "name": "Enchanter",
+   "art": true,
+   "category": "NPCs",
+   "priority": 509,
+   "reach": "yes",
+   "note": "runewright (Blood and Wine)"
+  },
+  {
+   "name": "Prostitute",
+   "art": true,
+   "category": "NPCs",
+   "priority": 510,
+   "reach": "yes",
+   "note": "courtesan"
+  },
+  {
+   "name": "Hairdresser",
+   "art": true,
+   "category": "NPCs",
+   "priority": 511,
+   "reach": "yes",
+   "note": "barber"
+  },
+  {
+   "name": "Torch",
+   "art": true,
+   "category": "NPCs",
+   "priority": 512,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "WineMerchant",
+   "art": true,
+   "category": "NPCs",
+   "priority": 513,
+   "reach": "yes",
+   "note": "wine merchant"
+  },
+  {
+   "name": "DyeMerchant",
+   "art": true,
+   "category": "NPCs",
+   "priority": 514,
+   "reach": "yes",
+   "note": "dye merchant"
+  },
+  {
+   "name": "Cammerlengo",
+   "art": true,
+   "category": "NPCs",
+   "priority": 515,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "PlaceOfPower",
+   "art": true,
+   "category": "Buffs",
+   "priority": 601,
+   "reach": "yes",
+   "note": "Place of Power"
+  },
+  {
+   "name": "PlaceOfPower_1",
+   "art": false,
+   "category": "Buffs",
+   "priority": 602,
+   "reach": "base",
+   "note": "level variant of PlaceOfPower (vanilla adds the level to the drawn frame only); register PlaceOfPower, and its image covers every level"
+  },
+  {
+   "name": "PlaceOfPower_2",
+   "art": false,
+   "category": "Buffs",
+   "priority": 603,
+   "reach": "base",
+   "note": "level variant of PlaceOfPower (vanilla adds the level to the drawn frame only); register PlaceOfPower, and its image covers every level"
+  },
+  {
+   "name": "PlaceOfPower_3",
+   "art": false,
+   "category": "Buffs",
+   "priority": 604,
+   "reach": "base",
+   "note": "level variant of PlaceOfPower (vanilla adds the level to the drawn frame only); register PlaceOfPower, and its image covers every level"
+  },
+  {
+   "name": "PlaceOfPowerDisabled",
+   "art": true,
+   "category": "Buffs",
+   "priority": 605,
+   "reach": "yes",
+   "note": "completed PlaceOfPower; its own type, so a claim on PlaceOfPower leaves it stock"
+  },
+  {
+   "name": "Whetstone",
+   "art": true,
+   "category": "Buffs",
+   "priority": 606,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "GrindStone",
+   "art": true,
+   "category": "Buffs",
+   "priority": 607,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "ArmorRepairTable",
+   "art": true,
+   "category": "Buffs",
+   "priority": 608,
+   "reach": "yes",
+   "note": "armorer's table"
+  },
+  {
+   "name": "AlchemyTable",
+   "art": true,
+   "category": "Buffs",
+   "priority": 609,
+   "reach": "yes",
+   "note": "alchemy table"
+  },
+  {
+   "name": "MutagenDismantle",
+   "art": true,
+   "category": "Buffs",
+   "priority": 610,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "Bookshelf",
+   "art": true,
+   "category": "Buffs",
+   "priority": 611,
+   "reach": "yes",
+   "note": "bookshelf"
+  },
+  {
+   "name": "Bed",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "yes",
+   "note": "bed"
+  },
+  {
+   "name": "BoatBuilder",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "Camp",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "Cave",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "Companion",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "Container",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "DwarvenFurnace",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "Enemy",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "no",
+   "note": "never drawn on the world map (vanilla filters it out)"
+  },
+  {
+   "name": "EnemyDead",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "no",
+   "note": "never drawn on the world map (vanilla filters it out)"
+  },
+  {
+   "name": "FistFight",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "GenericFocus",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "no",
+   "note": "never drawn on the world map (vanilla filters it out)"
+  },
+  {
+   "name": "Herb",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "yes",
+   "note": "no legend row; every herb pin is this type and its tag is the herb kind, so a tag claim changes every pin of that herb"
+  },
+  {
+   "name": "HiverNest",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "HiverNestDisabled",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "yes",
+   "note": "completed HiverNest; its own type, so a claim on HiverNest leaves it stock"
+  },
+  {
+   "name": "HorseRacingNPC",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "KnightErrantDisabled",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "yes",
+   "note": "completed KnightErrant; its own type, so a claim on KnightErrant leaves it stock"
+  },
+  {
+   "name": "LettenStories",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "LettenStoriesDisabled",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "yes",
+   "note": "completed LettenStories; its own type, so a claim on LettenStories leaves it stock"
+  },
+  {
+   "name": "MagicLamp",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "yes",
+   "note": ""
+  },
+  {
+   "name": "MonsterClue",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "MonsterHunt",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "NettelStories",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "NettelStoriesDisabled",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "yes",
+   "note": "completed NettelStories; its own type, so a claim on NettelStories leaves it stock"
+  },
+  {
+   "name": "PlaceOfPowerStrong",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "Player",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "no",
+   "note": "player arrow; built by UpdatePlayerPin, which API version 1 does not reach"
+  },
+  {
+   "name": "PlegmundDisabled",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "yes",
+   "note": "completed Plegmund; its own type, so a claim on Plegmund leaves it stock"
+  },
+  {
+   "name": "Quest",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "QuestGiverChapter",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "QuestGiverSide",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "QuestGiverStory",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "racetrack",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  },
+  {
+   "name": "Rift",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "no",
+   "note": "never drawn on the world map (vanilla filters it out)"
+  },
+  {
+   "name": "SignalingStakeDisabled",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "yes",
+   "note": "completed SignalingStake; its own type, so a claim on SignalingStake leaves it stock"
+  },
+  {
+   "name": "Stables",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "yes",
+   "note": "stables"
+  },
+  {
+   "name": "Teleport",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "no",
+   "note": "never drawn on the world map (vanilla filters it out)"
+  },
+  {
+   "name": "User1",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "no",
+   "note": "player-placed pin; built by UpdateUserMapPin, which API version 1 does not reach"
+  },
+  {
+   "name": "User2",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "no",
+   "note": "player-placed pin; built by UpdateUserMapPin, which API version 1 does not reach"
+  },
+  {
+   "name": "User3",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "no",
+   "note": "player-placed pin; built by UpdateUserMapPin, which API version 1 does not reach"
+  },
+  {
+   "name": "User4",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "no",
+   "note": "player-placed pin; built by UpdateUserMapPin, which API version 1 does not reach"
+  },
+  {
+   "name": "User5",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "no",
+   "note": "player-placed pin; built by UpdateUserMapPin, which API version 1 does not reach"
+  },
+  {
+   "name": "User6",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "no",
+   "note": "player-placed pin; built by UpdateUserMapPin, which API version 1 does not reach"
+  },
+  {
+   "name": "User7",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "no",
+   "note": "player-placed pin; built by UpdateUserMapPin, which API version 1 does not reach"
+  },
+  {
+   "name": "WineContractDisabled",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "yes",
+   "note": "completed WineContract; its own type, so a claim on WineContract leaves it stock"
+  },
+  {
+   "name": "WitcherHouse",
+   "art": true,
+   "category": null,
+   "priority": null,
+   "reach": "unknown",
+   "note": "stock glyph only; not among the types vanilla 5.01 sends to the world map"
+  }
+ ]
+}

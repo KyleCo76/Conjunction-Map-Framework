@@ -1,0 +1,8 @@
+{
+  "mod": "modCMFTestIconPack",
+  "idBase": 2000209000,
+  "strings": [
+    {"id": 2000209001, "key": "panel_cmftestpack", "text": {"en": "CMF Test Icon Pack"}},
+    {"id": 2000209002, "key": "option_cmftp_enabled", "text": {"en": "Show test icons"}}
+  ]
+}

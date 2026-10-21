@@ -1,0 +1,41 @@
+# The Stable on Conjunction Map Framework: the change for its author
+
+This note is for the author of The Stable - Roach-Horse Customization Mod (Nexus 6132). It is written against The Stable 2.2.1, the Remastered file. It shows how the one change The Stable's map file makes comes back on Conjunction Map Framework's (CMF) world map, using the adapter CMF ships as a worked example, [`source/adapters/the-stable/modCMFAdapterTheStable`](../../source/adapters/the-stable/modCMFAdapterTheStable/).
+
+## Why the mod needs anything at all
+
+The Stable ships its own `panel_worldmap.redswf` because only one map file loads. It is the game's 5.01 map with one line added to `HubMapPinPanel`: `"Stables": new PinTypeDefinition("NPCs", 516)`, so the stable masters' horseshoe markers get a row under the NPCs filter. CMF solves the same problem a different way: every mod tells CMF in script what it wants on the map, and CMF's one map draws all of it. When CMF is installed, CMF's map loads instead of yours. Your markers still draw, with the game's own Stables drawing, but the Stables row is missing, so the NPCs filter cannot show or hide them.
+
+Your scripts are not affected: the names and descriptions you write on your pins, the `EMMPT_Stable` merchant type, the horses, the shop and the scenes all work as before.
+
+## You used to, now you call
+
+**The Stables row.** You used to add `"Stables": new PinTypeDefinition("NPCs", 516)` to `HubMapPinPanel`. Now you register it as data (API version 2, property id 6), with the same category and priority, under your folder name:
+
+```
+@wrapMethod(CR4Game)
+function OnGameStarted(restored : bool)
+{
+	var result : bool;
+	result = wrappedMethod(restored);
+	if (CMFRequireVersion("modArdDhuStable", 2))
+	{
+		CMFRegister("modArdDhuStable", 6, 'Stables', '', "NPCs", 516);
+	}
+	return result;
+}
+```
+
+That is the whole port. The marker needs no art call, because `Stables` is a game pin type and CMF's map draws the game's frame for it. The row's label comes from your pins' own label, as in the game.
+
+With this in your own scripts, you can drop your map file: a player then needs no merged map file for The Stable, and Community Patch - World Map no longer has to carry your row.
+
+## Order between mods
+
+Use your folder name, `modArdDhuStable`, as the provider. CMF settles a row two mods claim by folder name, ignoring case, so your place among other mods stays as without CMF. Community Patch - World Map's adapter claims the same row with the same value under `mod000CommunityPatch_WorldMap`, which sorts first and wins, as its map file loads over yours without CMF. With equal values, the map is the same either way.
+
+## What has been checked
+
+Static checks (`tests/test_cmf_the_stable_adapter.py`): the claim matches your 2.2.1 map file, it equals Community Patch's adapter's Stables claim, and the pack builds. In game on 2026-10-20/21 (CMF API version 6, without Community Patch): the horseshoe showed on the map and the minimap with your name and description for it once Geralt had been to the Novigrad stable master, the Stables row under NPCs hid and showed it, and the log showed the row under your folder name with nothing rejected.
+
+Your 2.2 scripts take over `CR4MapMenu.UpdateEntityPins`, which CMF also wraps, and your copy still calls `AddPinTypeData`, which CMF also wraps. Both of CMF's wrappers still ran in that test (no late per-pin requests in the log), so nothing in your scripts needs changing for CMF.

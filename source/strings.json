@@ -1,0 +1,14 @@
+{
+  "mod": "mod0000_ConjunctionMapFramework",
+  "idBase": 2000200000,
+  "strings": [
+    {"id": 2000200001, "key": "cmf_popup_title", "text": {"en": "Conjunction Map Framework"}},
+    {"id": 2000200002, "key": "cmf_popup_rebuild", "text": {"en": "Rebuild map configuration"}},
+    {"id": 2000200003, "key": "cmf_popup_rebuild_complete", "text": {"en": "Map configuration rebuilt."}},
+    {"id": 2000200004, "key": "cmf_popup_rebuild_failed", "text": {"en": "Map configuration could not be rebuilt."}},
+    {"id": 2000200005, "key": "cmf_popup_duplicate_provider", "text": {"en": "A native map provider superseded its legacy adapter."}},
+    {"id": 2000200006, "key": "cmf_region_unavailable", "text": {"en": "Map imagery unavailable. Close and reopen the map."}},
+    {"id": 2000200007, "key": "panel_cmf_menu", "text": {"en": "Conjunction Map Framework"}},
+    {"id": 2000200008, "key": "cmf_map_level_prefix", "text": {"en": "Lv"}}
+  ]
+}

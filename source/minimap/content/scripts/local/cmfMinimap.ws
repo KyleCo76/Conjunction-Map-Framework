@@ -1,0 +1,213 @@
+// Conjunction Map Framework minimap: hands the core's type-level icon and tint winners to the CMF
+// minimap panel (hud_minimap2) and hands them again whenever the core's revision changes.
+// The engine adds minimap pins itself, so styling is per pin type; instance (tag) claims stay off the minimap.
+// Needs mod0000_ConjunctionMapFramework (CMFCore.GetRevision and FindTypeWinner) and the CMF minimap panel.
+
+@addField(CR4HudModuleMinimap2)
+var cmfClearStylesSFF : CScriptedFlashFunction;
+
+@addField(CR4HudModuleMinimap2)
+var cmfSetStyleSFF : CScriptedFlashFunction;
+
+@addField(CR4HudModuleMinimap2)
+var cmfApplyStylesSFF : CScriptedFlashFunction;
+
+@addField(CR4HudModuleMinimap2)
+var cmfSentRevision : int;
+
+@addField(CR4HudModuleMinimap2)
+var cmfStylesSent : bool;
+
+@wrapMethod(CR4HudModuleMinimap2)
+function OnConfigUI()
+{
+	var result : bool;
+	result = wrappedMethod();
+	cmfClearStylesSFF = NULL;
+	cmfSetStyleSFF = NULL;
+	cmfApplyStylesSFF = NULL;
+	cmfStylesSent = false;
+	CMFPushMinimapStyles();
+	return result;
+}
+
+@wrapMethod(CR4HudModuleMinimap2)
+function OnTick(timeDelta : float)
+{
+	var result : bool;
+	result = wrappedMethod(timeDelta);
+	CMFPushMinimapStyles();
+	return result;
+}
+
+// Cheap when nothing changed: one revision read per HUD tick.
+@addMethod(CR4HudModuleMinimap2)
+public function CMFPushMinimapStyles()
+{
+	var core : CMFCore;
+	var flashModule : CScriptedFlashSprite;
+	var types : array<name>;
+	var claim : SCMFClaim;
+	var iconPath : string;
+	var tint : int;
+	var tinted : bool;
+	var revision, i, sent : int;
+	core = theGame.CMFGetCore();
+	revision = core.GetRevision();
+	if (cmfStylesSent && revision == cmfSentRevision)
+	{
+		return;
+	}
+	if (!cmfSetStyleSFF)
+	{
+		flashModule = GetModuleFlash();
+		if (!flashModule)
+		{
+			return;
+		}
+		cmfClearStylesSFF = flashModule.GetMemberFlashFunction("CMFClearTypeStyles");
+		cmfSetStyleSFF = flashModule.GetMemberFlashFunction("CMFSetTypeStyle");
+		cmfApplyStylesSFF = flashModule.GetMemberFlashFunction("CMFApplyTypeStyles");
+	}
+	if (!cmfClearStylesSFF || !cmfSetStyleSFF || !cmfApplyStylesSFF)
+	{
+		return;
+	}
+	cmfClearStylesSFF.InvokeSelf();
+	CMFMinimapPinTypes(types);
+	sent = 0;
+	for (i = 0; i < types.Size(); i += 1)
+	{
+		iconPath = "";
+		tint = 0;
+		tinted = false;
+		if (core.FindTypeWinner(CMFPropertyIcon(), types[i], claim))
+		{
+			iconPath = claim.text;
+		}
+		if (core.FindTypeWinner(CMFPropertyTint(), types[i], claim))
+		{
+			tint = claim.number;
+			tinted = true;
+		}
+		if (iconPath != "" || tinted)
+		{
+			cmfSetStyleSFF.InvokeSelfFourArgs(FlashArgString(NameToString(types[i])), FlashArgString(iconPath),
+				FlashArgInt(tint), FlashArgBool(tinted));
+			sent += 1;
+		}
+	}
+	cmfApplyStylesSFF.InvokeSelf();
+	cmfSentRevision = revision;
+	cmfStylesSent = true;
+	CMFLog("minimap styles revision=" + revision + " types=" + sent);
+}
+
+// Base names of the vanilla 5.01 minimap's class<Type> pin symbols (the panel also matches the _1 to _3
+// level variants to their base type). tools/cmf_minimap_panel.py refuses a build when this list and the
+// movie differ.
+function CMFMinimapPinTypes(out types : array<name>)
+{
+	types.Clear();
+	types.PushBack('Alchemic');
+	types.PushBack('AlchemyTable');
+	types.PushBack('Archmaster');
+	types.PushBack('ArmorRepairTable');
+	types.PushBack('Armorer');
+	types.PushBack('BanditCamp');
+	types.PushBack('BanditCampDisabled');
+	types.PushBack('BanditCampfire');
+	types.PushBack('BanditCampfireDisabled');
+	types.PushBack('Bed');
+	types.PushBack('Blacksmith');
+	types.PushBack('Boat');
+	types.PushBack('BoatBuilder');
+	types.PushBack('BoatRace');
+	types.PushBack('Bookshelf');
+	types.PushBack('BossAndTreasure');
+	types.PushBack('BossAndTreasureDisabled');
+	types.PushBack('Cammerlengo');
+	types.PushBack('ChapterQuest');
+	types.PushBack('Companion');
+	types.PushBack('Contraband');
+	types.PushBack('ContrabandDisabled');
+	types.PushBack('ContrabandShip');
+	types.PushBack('ContrabandShipDisabled');
+	types.PushBack('DungeonCrawl');
+	types.PushBack('DungeonCrawlDisabled');
+	types.PushBack('DyeMerchant');
+	types.PushBack('Enchanter');
+	types.PushBack('Enemy');
+	types.PushBack('EnemyDead');
+	types.PushBack('Entrance');
+	types.PushBack('GenericFocus');
+	types.PushBack('Hairdresser');
+	types.PushBack('Harbor');
+	types.PushBack('Herb');
+	types.PushBack('Herbalist');
+	types.PushBack('Hideout');
+	types.PushBack('HideoutDisabled');
+	types.PushBack('Horse');
+	types.PushBack('HorseRace');
+	types.PushBack('HorseRaceDummy');
+	types.PushBack('HorseRaceTarget');
+	types.PushBack('HorseRacingNPC');
+	types.PushBack('InfestedVineyard');
+	types.PushBack('InfestedVineyardDisabled');
+	types.PushBack('Innkeeper');
+	types.PushBack('KnightErrant');
+	types.PushBack('KnightErrantDisabled');
+	types.PushBack('MagicLamp');
+	types.PushBack('MonsterHunt');
+	types.PushBack('MonsterNest');
+	types.PushBack('MonsterNestDisabled');
+	types.PushBack('MonsterQuest');
+	types.PushBack('MutagenDismantle');
+	types.PushBack('NonQuestHorseRace');
+	types.PushBack('NotDiscoveredPOI');
+	types.PushBack('NoticeBoard');
+	types.PushBack('NoticeBoardFull');
+	types.PushBack('PlaceOfPower');
+	types.PushBack('PlaceOfPowerDisabled');
+	types.PushBack('PlayerStash');
+	types.PushBack('PlayerStashDiscoverable');
+	types.PushBack('Plegmund');
+	types.PushBack('PlegmundDisabled');
+	types.PushBack('Prostitute');
+	types.PushBack('QuestAvailable');
+	types.PushBack('QuestAvailableBaW');
+	types.PushBack('QuestAvailableHoS');
+	types.PushBack('QuestBelgard');
+	types.PushBack('QuestCoronata');
+	types.PushBack('QuestLoot');
+	types.PushBack('QuestObjective');
+	types.PushBack('QuestObjectiveOther');
+	types.PushBack('QuestReturn');
+	types.PushBack('QuestVermentino');
+	types.PushBack('RescuingTown');
+	types.PushBack('RescuingTownDisabled');
+	types.PushBack('Rift');
+	types.PushBack('RoadSign');
+	types.PushBack('Shopkeeper');
+	types.PushBack('SideQuest');
+	types.PushBack('SignalingStake');
+	types.PushBack('SignalingStakeDisabled');
+	types.PushBack('SpoilsOfWar');
+	types.PushBack('SpoilsOfWarDisabled');
+	types.PushBack('Stables');
+	types.PushBack('StoryQuest');
+	types.PushBack('Teleport');
+	types.PushBack('Torch');
+	types.PushBack('TreasureHuntMappin');
+	types.PushBack('TreasureHuntMappinDisabled');
+	types.PushBack('TreasureQuest');
+	types.PushBack('User1');
+	types.PushBack('User2');
+	types.PushBack('User3');
+	types.PushBack('User4');
+	types.PushBack('Whetstone');
+	types.PushBack('WineContract');
+	types.PushBack('WineContractDisabled');
+	types.PushBack('WineMerchant');
+	types.PushBack('WitcherHouse');
+}

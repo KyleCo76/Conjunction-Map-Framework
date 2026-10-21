@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UserConfig>
+	<Group id="CMFTestPack" displayName="Mods.cmf_menu.cmftestpack">
+		<VisibleVars>
+			<Var id="CMFTP_Enabled" value="true" displayName="cmftp_enabled" displayType="TOGGLE"/>
+		</VisibleVars>
+	</Group>
+</UserConfig>

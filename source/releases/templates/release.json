@@ -1,0 +1,22 @@
+{
+ "schema": "cmf-release-spec-1",
+ "version": "<<FILL: X.Y.Z>>",
+ "candidate": "<<FILL: X.Y.Z-preview-N that passed the final matrix>>",
+ "candidateManifestSha256": "<<FILL: SHA-256 of that candidate's manifest.json>>",
+ "apiVersion": "<<FILL: CMFGetVersion() at freeze, a number>>",
+ "sourceCommit": "<<FILL: full 40-digit freeze commit>>",
+ "notes": {
+  "README.md": "source/releases/<<FILL: X.Y.Z>>/README.md",
+  "rollback-notes.md": "source/releases/<<FILL: X.Y.Z>>/rollback-notes.md",
+  "test-notes.md": "source/releases/<<FILL: X.Y.Z>>/test-notes.md"
+ },
+ "matrix": [
+  {"set": "<<FILL: set name, e.g. M1>>", "record": "<<FILL: probes/<date>-cmf-matrix-<set>/README.md>>", "result": "<<FILL: PASS>>", "launched": "<<FILL: UTC time>>"}
+ ],
+ "notChecked": ["Proton/Linux", "controller", "install through a mod manager"],
+ "packages": {
+  "mod0000_ConjunctionMapFramework": {"role": "core", "needsApi": "<<FILL: number>>", "acceptance": "<<FILL: launches and matrix sets that ran these exact bytes>>"},
+  "modCMFMinimapPanel": {"role": "addon", "needsApi": "<<FILL: number>>", "acceptance": "<<FILL>>"},
+  "<<FILL: modCMFAdapter<Mod>>>": {"role": "adapter", "needsApi": "<<FILL: number>>", "acceptance": "<<FILL>>", "adapts": {"folder": "<<FILL: the adapted mod's folder>>", "name": "<<FILL>>", "nexus": "<<FILL: Nexus id, a number, or remove>>", "version": "<<FILL: upstream version it targets>>"}}
+ }
+}
