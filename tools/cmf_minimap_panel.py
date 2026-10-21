@@ -1,13 +1,16 @@
-"""Build the CMF minimap panel and stage modCMFMinimapPanel (developer only).
+"""Build the CMF minimap add-on and stage modCMFMinimapPanel (developer only).
 
-Steps: read the pinned vanilla hud_minimap2.redswf (CR2W, one CSwfResource and
-one CSwfTexture; taken from content0/bundles/startup.bundle when given that), export its movie with FFDec, apply source/panel/minimap/edits.json,
-compile the edited classes with -importScript, restore the opaque movie tail,
-swap the movie into the resource, package it under the minimap depot path, then
-gate the result:
-  * a full re-export may differ from vanilla only in the edited classes;
-  * every non-ABC tag, the opaque tail and the texture export stay byte identical;
-  * the pin types listed in cmfMinimap.ws are exactly the movie's class<Type> symbols;
+The add-on replaces no game file. Steps: read the game's unused hud_watermark.redswf
+(CR2W, one CSwfResource; taken from content0/bundles/startup.bundle when given that),
+export its movie with FFDec, compile source/minimap/overlay/HudModuleWatermark.as over its
+one class with -importScript, restore the opaque movie tail, swap the movie into the
+resource, and package it under the HUD's unused hud_pickeditemsinfo depot path. The
+watermark movie is the only HUD movie that imports assets from an empty address (every
+other one imports gfxfontlib.swf or nothing), which may stop the HUD from loading it, so
+the import and the one text field that uses it are dropped. Then gate:
+  * a full re-export may differ from the base movie only in that class;
+  * every other non-ABC tag, the opaque tail and the CR2W head stay byte identical;
+  * the pin types listed in cmfMinimap.ws are exactly the game minimap's class<Type> symbols;
   * tools/cmf_panel.py read_package must pass and the bundle must extract to the resource.
 Writes <out>/Mods/modCMFMinimapPanel plus build.json with every hash.
 Never deploys or launches anything.
@@ -27,10 +30,11 @@ import lz4.block
 
 import cmf_package
 import cmf_panel
-from cmf_pin_panel import apply_edits, changed_classes, ffdec
+from cmf_pin_panel import changed_classes, ffdec
 
 ROOT = Path(__file__).resolve().parents[1]
-EDITS = ROOT/'source/panel/minimap/edits.json'
+PINS = ROOT/'source/minimap/overlay/overlay.json'
+CLASS_SOURCE = ROOT/'source/minimap/overlay/HudModuleWatermark.as'
 SCRIPT = ROOT/'source/minimap/content/scripts/local/cmfMinimap.ws'
 MOD = 'modCMFMinimapPanel'
 
@@ -45,7 +49,7 @@ def need(ok, why):
 
 
 def read_resource(data):
-    """Validate the minimap CR2W layout and return its parts (names, export rows, movie)."""
+    """Validate a HUD movie CR2W (one CSwfResource, optionally one CSwfTexture) and return its parts."""
     need(len(data) >= 160 and data[:4] == b'CR2W', 'CR2W signature')
     version, flags, stamp, build, size, buffersize, crc, _ = struct.unpack_from('<IIQIIIII', data, 4)
     need(version == 164 and flags == stamp == build == 0 and size == buffersize == len(data), 'CR2W header')
@@ -60,11 +64,12 @@ def read_resource(data):
     strings = tables[0]
     names = [strings[o:strings.index(0, o)].decode('ascii') for o, _ in struct.iter_unpack('<II', tables[1])]
     exports = list(struct.iter_unpack('<HHIIIII', tables[4]))
-    need([names[e[0]] for e in exports] == ['CSwfResource', 'CSwfTexture'], 'export topology')
+    need([names[e[0]] for e in exports] in (['CSwfResource'], ['CSwfResource', 'CSwfTexture']), 'export topology')
     for name, _, _, length, offset, _, stored in exports:
         need(zlib.crc32(data[offset:offset + length]) == stored, names[name] + ' export CRC')
     _, _, _, length, offset, _, _ = exports[0]
-    need(exports[1][4] == offset + length and exports[1][4] + exports[1][3] == len(data), 'export order/EOF')
+    end = exports[1][4] + exports[1][3] if len(exports) > 1 else offset + length
+    need((len(exports) == 1 or exports[1][4] == offset + length) and end == len(data), 'export order/EOF')
     raw = data[offset:offset + length]
     pos = 1
     while True:
@@ -77,7 +82,7 @@ def read_resource(data):
     movie_length = struct.unpack_from('<I', raw, pos)[0]
     need(raw[pos + 4 + movie_length:] == b'\0' * 4, 'movie/Unk1 boundary')
     return {'names': names, 'properties': tables[3], 'head': raw[:pos],
-            'texture': data[exports[1][4]:], 'movie': raw[pos + 4:pos + 4 + movie_length]}
+            'texture': data[offset + length:], 'movie': raw[pos + 4:pos + 4 + movie_length]}
 
 
 def resource_from_bundle(bundle, depot):
@@ -170,36 +175,96 @@ def movie_pin_types(scripts):
     return sorted({re.sub(r'_[0-9]+$', '', n) for n in names}), len(names)
 
 
-def build(vanilla, java, jar, out):
+# The base movie's empty-address import, its text field and the placement of that field.
+UNUSED_TEXT_TAGS = (71, 37, 70)
+
+
+def is_unused_text_tag(tag):
+    code, payload = tag['code'], tag['payload']
+    if code == 71:
+        return payload == b'\0\x01\0\0\0'
+    if code == 37:
+        return payload[:2] == b'\x01\0'
+    if code == 70:
+        return payload[:1] == b'\x06' and payload[2:5] == b'\x01\0\x01'
+    return False
+
+
+def drop_unused_text(data):
+    """Drop the empty-address ImportAssets2, the DefineEditText it serves and its PlaceObject3."""
+    movie = cmf_panel.read_movie(data)
+    need(data[:1] == b'C', 'compressed movie expected')
+    dropped = [t for t in movie['tags'] if is_unused_text_tag(t)]
+    need([t['code'] for t in dropped] == list(UNUSED_TEXT_TAGS), 'unused text tags not found exactly once')
+    body = zlib.decompress(data[8:])
+    kept, position = [], len(movie['framing'])
+    for tag in movie['tags']:
+        start = position
+        position += 2 + (4 if struct.unpack_from('<H', body, position)[0] & 63 == 63 else 0) + tag['size']
+        raw = body[start:position]
+        need(sha(raw) == tag['sha256'], 'tag walk')
+        if not is_unused_text_tag(tag):
+            kept.append(raw)
+    new_body = movie['framing'] + b''.join(kept)
+    result = data[:4] + struct.pack('<I', len(new_body) + 8) + zlib.compress(new_body + movie['tail'])
+    after = cmf_panel.read_movie(result)
+    need([t for t in after['tags']] == [t for t in movie['tags'] if not is_unused_text_tag(t)], 'kept tags changed')
+    need(after['tail'] == movie['tail'], 'opaque movie tail changed')
+    return result
+
+
+def base_resource(path, depot):
+    data = Path(path).read_bytes()
+    if data[:8] == b'POTATO70':
+        data = resource_from_bundle(data, depot)
+    return data
+
+
+def build(vanilla, java, jar, out, minimap_path=None):
     out = Path(out)
     need(not out.exists(), 'output directory already exists')
-    edits = json.loads(EDITS.read_text(encoding='utf-8'))
-    depot = edits['depot']
+    pins = json.loads(PINS.read_text(encoding='utf-8'))
+    depot = pins['depot']
     script = SCRIPT.read_bytes()
     need(b'\r' not in script and all(b < 128 for b in script), 'cmfMinimap.ws must be ASCII/LF')
-    original = Path(vanilla).read_bytes()
-    if original[:8] == b'POTATO70':
-        original = resource_from_bundle(original, depot)
-    need(sha(original) == edits['vanillaRedswfSha256'], 'vanilla resource hash mismatch')
+    source = CLASS_SOURCE.read_bytes()
+    need(b'\r' not in source and all(b < 128 for b in source), 'HudModuleWatermark.as must be ASCII/LF')
+    original = base_resource(vanilla, pins['baseDepot'])
+    need(sha(original) == pins['baseRedswfSha256'], 'base resource hash mismatch')
     before = read_resource(original)
     movie = before['movie']
-    need(sha(movie) == edits['vanillaMovieSha256'], 'vanilla movie hash mismatch')
+    need(sha(movie) == pins['baseMovieSha256'], 'base movie hash mismatch')
+    minimap = base_resource(minimap_path or vanilla, pins['minimapDepot'])
+    need(sha(minimap) == pins['minimapRedswfSha256'], 'game minimap resource hash mismatch')
+    minimap_movie = read_resource(minimap)['movie']
+    need(sha(minimap_movie) == pins['minimapMovieSha256'], 'game minimap movie hash mismatch')
     work = out/'work'
     work.mkdir(parents=True)
-    (work/'vanilla.gfx').write_bytes(movie)
-    ffdec(java, jar, '-export', 'script', work/'export-vanilla', work/'vanilla.gfx')
-    vanilla_scripts = work/'export-vanilla'/'scripts'
-    types, symbols = movie_pin_types(vanilla_scripts)
+    (work/'base.gfx').write_bytes(movie)
+    (work/'minimap.gfx').write_bytes(minimap_movie)
+    ffdec(java, jar, '-export', 'script', work/'export-minimap', work/'minimap.gfx')
+    types, symbols = movie_pin_types(work/'export-minimap'/'scripts')
     listed = script_pin_types(script.decode('ascii'))
-    need(listed == types, 'cmfMinimap.ws pin types differ from the movie: %s'
+    need(listed == types, 'cmfMinimap.ws pin types differ from the game minimap: %s'
          % sorted(set(listed) ^ set(types)))
-    apply_edits(vanilla_scripts, edits, work/'src')
-    ffdec(java, jar, '-onerror', 'abort', '-importScript', work/'vanilla.gfx', work/'compiled.gfx', work/'src')
-    candidate = restore_tail(movie, (work/'compiled.gfx').read_bytes(), edits['vanillaMovieTailSha256'])
-    (work/'panel.gfx').write_bytes(candidate)
-    ffdec(java, jar, '-export', 'script', work/'export-panel', work/'panel.gfx')
-    changed = changed_classes(vanilla_scripts, work/'export-panel'/'scripts')
-    need(changed == sorted(edits['classes']), 'unexpected changed classes: %s' % changed)
+    ffdec(java, jar, '-export', 'script', work/'export-base', work/'base.gfx')
+    base_scripts = work/'export-base'/'scripts'
+    need((base_scripts/pins['class']).is_file(), 'base movie lacks ' + pins['class'])
+    target = work/'src'/pins['class']
+    target.parent.mkdir(parents=True)
+    target.write_bytes(source)
+    ffdec(java, jar, '-onerror', 'abort', '-importScript', work/'base.gfx', work/'compiled.gfx', work/'src')
+    candidate = restore_tail(movie, (work/'compiled.gfx').read_bytes(), pins['baseMovieTailSha256'])
+    candidate = drop_unused_text(candidate)
+    cmf_panel.compare_movies(cmf_panel.read_movie(drop_unused_text(movie)), cmf_panel.read_movie(candidate), True)
+    (work/'addon.gfx').write_bytes(candidate)
+    ffdec(java, jar, '-export', 'script', work/'export-addon', work/'addon.gfx')
+    changed = changed_classes(base_scripts, work/'export-addon'/'scripts')
+    need(changed == [pins['class']], 'unexpected changed classes: %s' % changed)
+    exported = (work/'export-addon'/'scripts'/pins['class']).read_text(encoding='utf-8')
+    for name in re.findall(r'GetMemberFlashFunction\("([A-Za-z]+)"\)', script.decode('ascii')):
+        need(('public function %s(' % name) in exported, 'add-on movie lacks ' + name)
+    need('return "PickedItemsInfoModule";' in exported, 'add-on movie module name')
     resource = cmf_package.swap_movie(original, candidate)
     compare_resources(before, read_resource(resource), candidate)
     bundle = make_bundle(resource, depot)
@@ -214,10 +279,10 @@ def build(vanilla, java, jar, out):
         target = out/'Mods'/name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(data)
-    report = {'schema': 'cmf-minimap-panel-build-1', 'edits': sha(EDITS.read_bytes()), 'depot': depot,
-              'vanillaRedswf': sha(original), 'vanillaMovie': sha(movie), 'movie': sha(candidate),
-              'resource': sha(resource), 'changedClasses': changed, 'classSymbols': symbols,
-              'pinTypes': len(types), 'layout': layout['layout'],
+    report = {'schema': 'cmf-minimap-addon-build-1', 'pins': sha(PINS.read_bytes()), 'depot': depot,
+              'classSource': sha(source), 'baseRedswf': sha(original), 'baseMovie': sha(movie),
+              'movie': sha(candidate), 'resource': sha(resource), 'changedClasses': changed,
+              'minimapClassSymbols': symbols, 'pinTypes': len(types), 'layout': layout['layout'],
               'files': {'Mods/' + name: sha(data) for name, data in sorted(files.items())}}
     (out/'build.json').write_text(json.dumps(report, indent=1) + '\n', encoding='utf-8')
     return report
@@ -225,12 +290,13 @@ def build(vanilla, java, jar, out):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument('--vanilla', required=True, help='pinned vanilla hud_minimap2.redswf, or the game startup.bundle holding it')
+    parser.add_argument('--vanilla', required=True, help='the game startup.bundle, or the extracted hud_watermark.redswf')
+    parser.add_argument('--minimap', help='the extracted hud_minimap2.redswf when --vanilla is not startup.bundle')
     parser.add_argument('--java', required=True)
     parser.add_argument('--ffdec', required=True, help='FFDec 26.3.0 ffdec.jar (with flashlib beside it)')
     parser.add_argument('--out', required=True, help='new output directory')
     args = parser.parse_args()
-    print(json.dumps(build(args.vanilla, args.java, args.ffdec, args.out), indent=1))
+    print(json.dumps(build(args.vanilla, args.java, args.ffdec, args.out, args.minimap), indent=1))
 
 
 if __name__ == '__main__':

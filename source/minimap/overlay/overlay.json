@@ -1,0 +1,13 @@
+{
+ "schema": "cmf-minimap-overlay-1",
+ "description": "CMF minimap add-on movie: the game's unused hud_watermark movie with its one class replaced by source/minimap/overlay/HudModuleWatermark.as, shipped under the HUD's unused hud_pickeditemsinfo slot so no game file is replaced. The game's hud_minimap2 movie is read only to check the script's pin type list.",
+ "baseDepot": "gameplay\\gui_new\\swf\\hud\\hud_watermark.redswf",
+ "depot": "gameplay\\gui_new\\swf\\hud\\hud_pickeditemsinfo.redswf",
+ "baseRedswfSha256": "bc8d441c2a7322b1041609d2163769cdc5be3a60877c6e5799c02e29cea845e7",
+ "baseMovieSha256": "87843590a8bde9af871b3ac08ed51c4180b15e60d04de366c4bd0efe8f04eaa6",
+ "baseMovieTailSha256": "560bac028c4c4079fdb6dcc2977c0e1c985c13736ca6ca50f78fb224d6bf412a",
+ "class": "red/game/witcher3/hud/modules/HudModuleWatermark.as",
+ "minimapDepot": "gameplay\\gui_new\\swf\\hud\\hud_minimap2.redswf",
+ "minimapRedswfSha256": "cd423233a1022e3c9ab1e16a68e00294ced3bf21ea3b39715edcb8db972fd51e",
+ "minimapMovieSha256": "33e3e80f22dc2b193394d0dfe9decd898b77b8e2cf5eb2fb70cf558c848e2306"
+}

@@ -1,24 +1,48 @@
-// Conjunction Map Framework minimap: hands the core's type-level icon and tint winners to the CMF
-// minimap panel (hud_minimap2) and hands them again whenever the core's revision changes.
-// The engine adds minimap pins itself, so styling is per pin type; instance (tag) claims stay off the minimap.
-// Needs mod0000_ConjunctionMapFramework (CMFCore.GetRevision and FindTypeWinner) and the CMF minimap panel.
+// Conjunction Map Framework minimap add-on: hands the core's type-level icon and tint winners to the add-on's
+// own HUD part, which styles claimed pins of whichever minimap is loaded and replaces no game file.
+// The part fills the HUD's unused PickedItemsInfoModule slot (hud_pickeditemsinfo); the game never creates it.
+// The engine adds minimap pins itself, so styling is per pin type; single-pin claims stay off the minimap.
+// Needs mod0000_ConjunctionMapFramework (CMFCore.GetRevision and FindTypeWinner).
 
-@addField(CR4HudModuleMinimap2)
+@wrapMethod(CR4ScriptedHud)
+function OnConfigUI()
+{
+	var result : bool;
+	result = wrappedMethod();
+	if (!hudModulesNames.Contains('PickedItemsInfoModule'))
+	{
+		CreateHudModule("PickedItemsInfoModule");
+		CMFLog("minimap add-on part requested");
+	}
+	return result;
+}
+
+// Raised by the add-on movie on the HUD itself once it is on stage, before the game binds the part.
+@addMethod(CR4ScriptedHud)
+event OnCMFMinimapAddonLoaded(hudClass : string)
+{
+	CMFLog("minimap add-on movie loaded hud=" + hudClass);
+}
+
+@addField(CR4HudModulePickedItemsInfo)
 var cmfClearStylesSFF : CScriptedFlashFunction;
 
-@addField(CR4HudModuleMinimap2)
+@addField(CR4HudModulePickedItemsInfo)
 var cmfSetStyleSFF : CScriptedFlashFunction;
 
-@addField(CR4HudModuleMinimap2)
+@addField(CR4HudModulePickedItemsInfo)
 var cmfApplyStylesSFF : CScriptedFlashFunction;
 
-@addField(CR4HudModuleMinimap2)
+@addField(CR4HudModulePickedItemsInfo)
+var cmfTickSFF : CScriptedFlashFunction;
+
+@addField(CR4HudModulePickedItemsInfo)
 var cmfSentRevision : int;
 
-@addField(CR4HudModuleMinimap2)
+@addField(CR4HudModulePickedItemsInfo)
 var cmfStylesSent : bool;
 
-@wrapMethod(CR4HudModuleMinimap2)
+@wrapMethod(CR4HudModulePickedItemsInfo)
 function OnConfigUI()
 {
 	var result : bool;
@@ -26,22 +50,52 @@ function OnConfigUI()
 	cmfClearStylesSFF = NULL;
 	cmfSetStyleSFF = NULL;
 	cmfApplyStylesSFF = NULL;
+	cmfTickSFF = NULL;
 	cmfStylesSent = false;
+	CMFLog("minimap add-on part ready");
 	CMFPushMinimapStyles();
 	return result;
 }
 
-@wrapMethod(CR4HudModuleMinimap2)
+@wrapMethod(CR4HudModulePickedItemsInfo)
 function OnTick(timeDelta : float)
 {
 	var result : bool;
 	result = wrappedMethod(timeDelta);
 	CMFPushMinimapStyles();
+	if (cmfTickSFF)
+	{
+		cmfTickSFF.InvokeSelf();
+	}
 	return result;
 }
 
+@addMethod(CR4HudModulePickedItemsInfo)
+event OnCMFMinimapFound(minimapClass : string, pinLayers : int)
+{
+	CMFLog("minimap found class=" + minimapClass + " layers=" + pinLayers);
+}
+
+@addMethod(CR4HudModulePickedItemsInfo)
+event OnCMFMinimapPin(pinType : string, x : float, y : float, claimed : bool)
+{
+	var claimText : string;
+	claimText = "no";
+	if (claimed)
+	{
+		claimText = "yes";
+	}
+	CMFLog("minimap pin type=" + pinType + " x=" + FloatToString(x) + " y=" + FloatToString(y) + " claimed=" + claimText);
+}
+
+@addMethod(CR4HudModulePickedItemsInfo)
+event OnCMFMinimapArtFailed(url : string)
+{
+	CMFLog("minimap art failed " + url);
+}
+
 // Cheap when nothing changed: one revision read per HUD tick.
-@addMethod(CR4HudModuleMinimap2)
+@addMethod(CR4HudModulePickedItemsInfo)
 public function CMFPushMinimapStyles()
 {
 	var core : CMFCore;
@@ -68,6 +122,7 @@ public function CMFPushMinimapStyles()
 		cmfClearStylesSFF = flashModule.GetMemberFlashFunction("CMFClearTypeStyles");
 		cmfSetStyleSFF = flashModule.GetMemberFlashFunction("CMFSetTypeStyle");
 		cmfApplyStylesSFF = flashModule.GetMemberFlashFunction("CMFApplyTypeStyles");
+		cmfTickSFF = flashModule.GetMemberFlashFunction("CMFTick");
 	}
 	if (!cmfClearStylesSFF || !cmfSetStyleSFF || !cmfApplyStylesSFF)
 	{
@@ -103,9 +158,9 @@ public function CMFPushMinimapStyles()
 	CMFLog("minimap styles revision=" + revision + " types=" + sent);
 }
 
-// Base names of the vanilla 5.01 minimap's class<Type> pin symbols (the panel also matches the _1 to _3
+// Base names of the vanilla 5.01 minimap's class<Type> pin symbols (the add-on also matches the _1 to _3
 // level variants to their base type). tools/cmf_minimap_panel.py refuses a build when this list and the
-// movie differ.
+// game's minimap movie differ.
 function CMFMinimapPinTypes(out types : array<name>)
 {
 	types.Clear();

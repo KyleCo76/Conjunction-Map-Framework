@@ -67,12 +67,12 @@ flowchart LR
 
 ### What to download
 
-CMF comes as separate archives. You always need CMF itself; take the rest only for the mods you play with. The newest version of each file is on the [Nexus Mods page](https://www.nexusmods.com/witcher3/mods/14693) and in the [latest GitHub Release](https://github.com/KyleCo76/Conjunction-Map-Framework/releases/latest); each adapter's current version is in the [Supported map mods](#supported-map-mods) table.
+CMF comes as separate archives. You always need CMF itself; take the rest only for the mods you play with. The newest version of each file is on the [Nexus Mods page](https://www.nexusmods.com/witcher3/mods/14693) and in [GitHub Releases](https://github.com/KyleCo76/Conjunction-Map-Framework/releases); each adapter's current version is in the [Supported map mods](#supported-map-mods) table.
 
 | Archive | What it is | When to install it |
 | --- | --- | --- |
 | `mod0000_ConjunctionMapFramework` | CMF itself (1.1.0) | **Always** |
-| `modCMFMinimapPanel` | Minimap add-on: your icon packs' icons and colours on the HUD minimap too | Optional. Never beside another mod that changes the minimap (see [Good to know](#good-to-know)) |
+| `modCMFMinimapPanel` | Minimap add-on (2.0.0): your icon packs' icons and colours on the HUD minimap too, on top of whichever minimap you have | Optional. See [Good to know](#good-to-know) for the minimap and HUD mods it was tested with |
 | `modCMFExampleIconPack` | Sample icon pack: a small example for pack authors | Optional |
 | `modCMFAdapter…` (11 archives) | Adapters for 11 map mods that don't support CMF yet | Only for those mods you use, and only until the mod's author updates it for CMF. See [Supported map mods](#supported-map-mods) |
 
@@ -81,7 +81,7 @@ CMF comes as separate archives. You always need CMF itself; take the rest only f
 1. Install CMF: copy its `Mods` and `bin` folders into your game folder and let Windows merge them.
 2. Install your map mods as their authors describe.
 3. If one of those mods is in the adapter list below, add its adapter's `Mods` folder. Many map mods need no adapter at all, and an adapter is only needed until that mod's author updates it for CMF.
-4. Optionally add the minimap add-on.
+4. Optionally add the minimap add-on. It replaces no game file, so it goes in beside your HUD or minimap mod.
 5. Start the game. The first start recompiles scripts and takes a little longer.
 
 Every archive has a `README.txt` with its full install, update and removal steps. To remove CMF later, take out adapters and packs first, then the minimap add-on, then CMF. CMF writes nothing into your saves.
@@ -111,7 +111,7 @@ One exception: the **Coloured Map Markers** adapter also shows its icons without
 
 <br/>
 
-**Tested, no adapter needed:** Map Remastered 2.4.2 (without the minimap add-on), All Quest Markers, Wild Monster Hunt, Wolf's Bearing, Apocrypha Menu Framework 1.0.6, HUD Position Manager 1.0.0.
+**Tested, no adapter needed:** Map Remastered 2.4.2, All Quest Markers, Wild Monster Hunt, Wolf's Bearing, Apocrypha Menu Framework 1.0.6, HUD Position Manager 1.0.0.
 
 **Not supported yet (needs its author's update):** some map mods keep their map features, and often their icon art, inside their own copy of the world map file. CMF never copies another mod's art or files unless its author permits it, so those features stay hidden under CMF until the author updates the mod for CMF or gives permission for an adapter to use them. The mod's scripts and menus keep working meanwhile. UI Remastered Edition was tested this way: its HUD and menus work, CMF's map opens. Smooth Map and Community Patch - World Map are in the same group: everything they change lives in their own map file, so 1.0.0 has no adapter for them.
 
@@ -142,7 +142,11 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
   CMFProviderOrder2=modOtherPack
   ```
 - **When a mod ships its own CMF support, uninstall CMF's adapter for it.** With both installed, the game stops at the script compile screen.
-- **The minimap add-on replaces the game's minimap.** Do not install it with any other mod that does: HUD Position Manager, UI Remastered Edition, Ink and Iron (its HUD), Map Remastered, Map Icons - Remastered, Colorized Map Icons, Coloured Map Markers.
+- **The minimap add-on (2.0.0) replaces no game file.** It adds its own small HUD part on top of whichever minimap is installed and draws your icon packs' art on the pins a pack claims. It never moves, resizes or hides the minimap, and pins no pack claims stay as your minimap draws them.
+  - Tested with the game's own minimap, HUD Position Manager 1.0.0, Ink and Iron 0.8.10, Map Remastered 2.4.2, UI Remastered Edition 1.00 and Coloured Map Markers 1.60, and removed cleanly after each. Other minimap and HUD mods have not been tried with it yet.
+  - UI Remastered Edition hides its minimap by default: turn it on under Options > Mods > UI Remastered Edition > navigation mode Minimap.
+  - On the minimap it changes pins by type only: a pack's change to one particular pin (one notice board, say) shows on the world map only, and pins a pack hides still show on the minimap.
+  - Coming from the 1.0.0 add-on: 2.0.0 replaces it in the same `modCMFMinimapPanel` folder. Unlike 1.0.0, it no longer has to stay away from other minimap mods.
 - **Do not give another map mod a lower `Priority` than CMF** in `mods.settings`; that switches CMF's map off.
 - **The map moves at 60 frames per second** by default.
 
@@ -259,8 +263,8 @@ The Coloured Map Markers adapter has no porting page: that mod has no scripts, s
 | --- | --- |
 | `source/core` | CMF's scripts (`cmfCore.ws`, `cmfSettings.ws`) |
 | `source/settings`, `source/strings.json` | CMF's menu file and the source of its string tables |
-| `source/panel` | the edit sets CMF applies to the game's world map and minimap panels, and CMF's own ActionScript classes |
-| `source/minimap` | the minimap add-on's script |
+| `source/panel` | the edit sets CMF applies to the game's world map panel, and CMF's own ActionScript classes |
+| `source/minimap` | the minimap add-on: its script and its own HUD part's ActionScript class |
 | `source/adapters` | the 11 adapters, one folder each, with a developer `README.md` and the shipped pack folder |
 | `examples/modCMFExampleIconPack` | the sample icon pack, to copy from |
 | `source/providers` | developer test packs (never shipped) |
@@ -305,7 +309,7 @@ Each version has a [GitHub Release](https://github.com/KyleCo76/Conjunction-Map-
 To check a download in PowerShell, in the folder with the archive:
 
 ```powershell
-Get-FileHash .\mod0000_ConjunctionMapFramework-1.0.0.zip -Algorithm SHA256
+Get-FileHash .\mod0000_ConjunctionMapFramework-1.1.0.zip -Algorithm SHA256
 ```
 
 The result must equal that file's line in `SHA256SUMS`.
