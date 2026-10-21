@@ -7,7 +7,7 @@
 [![Latest release](https://img.shields.io/github/v/release/KyleCo76/Conjunction-Map-Framework?label=release)](https://github.com/KyleCo76/Conjunction-Map-Framework/releases/latest)
 ![The Witcher 3 Remastered 5.01](https://img.shields.io/badge/The%20Witcher%203-Remastered%205.01-8b0000)
 ![CMF API version 6](https://img.shields.io/badge/CMF%20API-version%206-2f6f4f)
-![Windows](https://img.shields.io/badge/tested%20on-Windows%2C%20keyboard%20%26%20mouse-555)
+![Windows and Linux](https://img.shields.io/badge/tested%20on-Windows%20%7C%20Linux%20%28Proton%29-555)
 [![Licence CC BY-NC 4.0](https://img.shields.io/badge/licence-CC%20BY--NC%204.0-lightgrey)](LICENSE)
 
 [**Download on Nexus Mods**](https://www.nexusmods.com/witcher3/mods/14693) · [**GitHub Releases**](https://github.com/KyleCo76/Conjunction-Map-Framework/releases) · [**For mod authors**](docs/wiki/Home.md) · [**Report a problem**](#reporting-problems)
@@ -61,12 +61,16 @@ flowchart LR
 
 ### What you need
 
-- **The Witcher 3: Wild Hunt Remastered**, Steam patch **5.01** (build 5.0.1048522), DirectX 12, on Windows.
+- **The Witcher 3: Wild Hunt Remastered**, Steam patch **5.01** (build 5.0.1048522), DirectX 12.
+- **Windows**, or **Linux with Steam and Proton**: tested on Linux by MateusAnd, the Gwent Players Map author (keyboard and mouse). Steam Deck not confirmed.
 - For each adapter: the mod it adapts, at the version named in the table below.
 
 ### What is in 1.0.0
 
 1.0.0 is 13 separate archives. You always need the first one; take the rest only for the mods you play with.
+
+> [!NOTE]
+> **Adapter update 1.0.1:** the Gwent Players Map and Witcher Gear Map adapters now carry their author's own art. Take those two from the [1.0.1 release](https://github.com/KyleCo76/Conjunction-Map-Framework/releases/tag/v1.0.1); CMF and everything else stay at 1.0.0.
 
 | Archive | What it is | When to install it |
 | --- | --- | --- |
@@ -87,20 +91,20 @@ Every archive has a `README.txt` with its full install, update and removal steps
 
 ### Supported map mods
 
-Many map mods work with CMF as they are, with no adapter. An **adapter** is a small stand-in for a mod that doesn't support CMF yet: it brings that mod's map features back on CMF's map while the mod itself stays exactly as its author ships it. Once the author updates the mod for CMF, you remove the adapter. Adapters **contain none of the mod they adapt**, add no features of their own, and **only work with that mod installed**: without it, the game stops at the script compile screen.
+Many map mods work with CMF as they are, with no adapter. An **adapter** is a small stand-in for a mod that doesn't support CMF yet: it brings that mod's map features back on CMF's map while the mod itself stays exactly as its author ships it. Once the author updates the mod for CMF, you remove the adapter. Adapters **contain none of the mod they adapt** (only art its author gave for CMF, credited), add no features of their own, and **only work with that mod installed**: without it, the game stops at the script compile screen.
 
-| Mod | Tested version | What the adapter brings back |
-| --- | --- | --- |
-| All Quest Objectives On Map - Remastered | 1.2.1 | Difficulty icons on quest objectives, its legend row, removing cached merchant pins |
-| Botanist - NG - Remastered | 3.0.0.2 | Its herb markers and legend rows |
-| Fog of War | 1.2.1 | Hides every map icon under the fog, including other mods' icons |
-| Gwent Players Map | 1.0.9 | Its card markers and its "Gwent" tab |
-| Ink and Iron - All in One | 0.8.8 (0.8.7 works too) | Ink and Iron's map look, quest level tags, key-hint row and map movement |
-| Map Pin Teleport | 1.2.2 | Teleporting from your own map pins |
-| Map Quest Insight | 1.6.1 | Quest icons by type, coloured level labels, its info box, spreading stacked markers |
-| The Stable - Roach-Horse Customization | 2.2.1 | Its Stables row on the map |
-| Witcher Upgrade Gear Map | 1.0.1 | Its diagram markers, "Witcher Gear" tab and legend row |
-| Witcher's Path | 1.0.3 | Its travel route drawn on the map, and its buttons |
+| Mod | Tested version | Adapter | What the adapter brings back |
+| --- | --- | --- | --- |
+| All Quest Objectives On Map - Remastered | 1.2.1 | 1.0.0 | Difficulty icons on quest objectives, its legend row, removing cached merchant pins |
+| Botanist - NG - Remastered | 3.0.0.2 | 1.0.0 | Its herb markers and legend rows |
+| Fog of War | 1.2.1 | 1.0.0 | Hides every map icon under the fog, including other mods' icons |
+| Gwent Players Map | 1.0.9 | **1.0.1** | Its card markers, in its author's own card art, and its "Gwent" tab |
+| Ink and Iron - All in One | 0.8.8 (0.8.7 works too) | 1.0.0 | Ink and Iron's map look, quest level tags, key-hint row and map movement |
+| Map Pin Teleport | 1.2.2 | 1.0.0 | Teleporting from your own map pins |
+| Map Quest Insight | 1.6.1 | 1.0.0 | Quest icons by type, coloured level labels, its info box, spreading stacked markers |
+| The Stable - Roach-Horse Customization | 2.2.1 | 1.0.0 | Its Stables row on the map |
+| Witcher Upgrade Gear Map | 1.0.1 | **1.0.1** | Its diagram markers, in its author's own art and school colours, its "Witcher Gear" tab and legend row |
+| Witcher's Path | 1.0.3 | 1.0.0 | Its travel route drawn on the map, and its buttons |
 
 <details>
 <summary><b>Tested with no adapter needed, and mods that need their author's update</b></summary>
@@ -109,7 +113,7 @@ Many map mods work with CMF as they are, with no adapter. An **adapter** is a sm
 
 **Tested, no adapter needed:** Map Remastered 2.4.2 (without the minimap add-on), All Quest Markers, Wild Monster Hunt, Wolf's Bearing, Apocrypha Menu Framework 1.0.6, HUD Position Manager 1.0.0.
 
-**Not supported yet (needs its author's update):** some map mods keep their map features, and often their icon art, inside their own copy of the world map file. CMF never copies another mod's art or files, so those features stay hidden under CMF until the author updates the mod for CMF or gives permission for an adapter to use them. The mod's scripts and menus keep working meanwhile. UI Remastered Edition was tested this way: its HUD and menus work, CMF's map opens. Smooth Map and Community Patch - World Map are in the same group: everything they change lives in their own map file, so 1.0.0 has no adapter for them.
+**Not supported yet (needs its author's update):** some map mods keep their map features, and often their icon art, inside their own copy of the world map file. CMF never copies another mod's art or files unless its author permits it, so those features stay hidden under CMF until the author updates the mod for CMF or gives permission for an adapter to use them. The mod's scripts and menus keep working meanwhile. UI Remastered Edition was tested this way: its HUD and menus work, CMF's map opens. Smooth Map and Community Patch - World Map are in the same group: everything they change lives in their own map file, so 1.0.0 has no adapter for them.
 
 The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/witcher3/mods/14693).
 
@@ -120,7 +124,7 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 
 <br/>
 
-- **Placeholder art** in the All Quest Objectives, Botanist, Gwent Players Map, Map Quest Insight and Witcher Gear Map adapters, until those authors supply theirs. CMF never ships another mod's art.
+- **Placeholder art** in the All Quest Objectives, Botanist and Map Quest Insight adapters, until those authors supply theirs. The Gwent Players Map and Witcher Gear Map adapters (1.0.1) use their author's own art. CMF ships another mod's art only when its author permits it, and credits them.
 - **Fog of War's clouds** do not draw on CMF's map until Fog of War supports CMF; the hiding works.
 - **Map Remastered's** own region emblems on the world overview do not show; its redrawn terrain does.
 - **Witcher's Path:** its speed setting does nothing under CMF.
@@ -143,7 +147,7 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 - **The map moves at 60 frames per second** by default.
 
 > [!IMPORTANT]
-> **Not tested:** controllers and Proton / Linux. CMF 1.0.0 was tested on Windows with keyboard and mouse, both with the files copied in by hand and installed with RMMR in a full, everyday game setup.
+> **Not tested:** controllers and the Steam Deck. CMF 1.0.0 was tested on Windows with keyboard and mouse, both with the files copied in by hand and installed with RMMR in a full, everyday game setup. On Linux (Steam with Proton, keyboard and mouse) MateusAnd, the Gwent Players Map author, tested it with the Gwent Players Map, Witcher Gear Map and Map Pin Teleport adapters: scripts compiled, the game started, and every adapter feature worked.
 
 ---
 
@@ -313,7 +317,9 @@ Please include your CMF version, the map mods and adapters you have installed, a
 
 Made by Kyle with the help of AI tools (Claude and ChatGPT). Every published file is reviewed by Kyle.
 
-Thanks to the authors of the map mods CMF adapts. Their mods stay theirs; CMF's adapters contain none of their files or art.
+Card and gear art in the Gwent Players Map and Witcher Gear Map adapters by **MateusAnd**, the author of both mods, used with permission. Thanks to MateusAnd for testing CMF on Linux.
+
+Thanks to the authors of the map mods CMF adapts. Their mods stay theirs; CMF's adapters contain none of their files, and their art only where the author gave it for CMF, credited.
 
 **Licence:** [Creative Commons Attribution-NonCommercial 4.0](https://creativecommons.org/licenses/by-nc/4.0/) (CC BY-NC 4.0), full text in [`LICENSE`](LICENSE). Anyone may copy, change and share CMF, including inside their own free mods, as long as they credit Kyle and do not sell it or use it commercially.
 
