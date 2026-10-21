@@ -1,6 +1,6 @@
 # Making an icon pack for Conjunction Map Framework
 
-Conjunction Map Framework (CMF) is the single world map that every map mod works through. CMF ships the map; other mods tell CMF what they want changed, and CMF decides and draws it. That way several map mods can be installed at once without each shipping its own copy of the map.
+Conjunction Map Framework (CMF) is a single world map that map mods can share. CMF ships the map; other mods tell CMF what they want changed, and CMF decides and draws it. That way several map mods can be installed at once without each shipping its own copy of the map.
 
 An **icon pack** is the simplest kind of CMF mod. It changes how existing map pins look on the full-screen world map: their icon, their legend icon and their colour. It does not add or move pins; from API version 3 any CMF mod can also hide pins, and from API version 4 resize pins and change their labels (section 5). You do not edit any map file and you do not need Script Merger, FFDec, REDkit or WolvenKit.
 
@@ -718,7 +718,7 @@ One exception keeps existing mods' values readable for their adapters: the game 
 | `iaiLv`, `iaiDiff` | Ink and Iron 0.8.7 and 0.8.8 | its adapter |
 | `uireScale`, `uireHideLabel`, `uireLevelLabel`, `uireLevel`, `uireLevelColor` | UI Remastered | declared as names only; its adapter comes after 1.0.0 |
 
-CMF and its adapters ship no art from other mods: authors supply their own art and effects through the calls above.
+CMF itself ships no art from other mods. An adapter carries its own placeholder pictures, or a mod author's art only with that author's permission, credited: the Gwent Players Map and Witcher Gear Map adapters carry their author MateusAnd's art since 1.0.1. Authors supply their own art and effects through the calls above.
 
 ## 10. What CMF does not do yet
 
@@ -871,13 +871,12 @@ and you answer `OnCMFMapHintsReady()` (on `CR4MapMenu`) by sending the list agai
 You used to push your markers with your own types (`WitcherGearWolf` and the rest) and draw them in your own map file. Your script keeps pushing the same pins; the art and tab come from calls:
 
 ```
-CMFRegisterIcon("modWitcherGearMap", 'WitcherGearWolf', "img://icons/modcmfadapterwitchergearmap/gear.png");
-CMFRegisterTint("modWitcherGearMap", 'WitcherGearWolf', 16736352);
+CMFRegisterIcon("modWitcherGearMap", 'WitcherGearWolf', "img://icons/modcmfadapterwitchergearmap/gear_wolf.png");
 CMFRegister("modWitcherGearMap", 8, 'wgm_gear', '', "[[map_category_wgm_gear]]", 8);
 CMFRegister("modWitcherGearMap", 6, 'WitcherGear', '', "wgm_gear", 703);
 ```
 
-Gear's pins use numeric ids (from 1464287232), so another mod reaches them by type or in `OnPinReady`, not by tag. The adapter is `source/adapters/witcher-gear-map`.
+One picture per type, each school in its own colour, so no tint is needed. Since adapter 1.0.1 those pictures are your own, shipped with your permission and credited. Gear's pins use numeric ids (from 1464287232), so another mod reaches them by type or in `OnPinReady`, not by tag. The adapter is `source/adapters/witcher-gear-map`.
 
 ### Gwent Players Map
 
@@ -896,7 +895,7 @@ event OnCMFMapFilter(category : string)
 }
 ```
 
-The event passes CMF's tab report on to your own, so your script moves the cards exactly as before. Your large cards were drawn bigger in your map file; a size claim (API version 4) gives them the same 119 percent (seen in game on 2026-10-20). The adapter is `source/adapters/gwent-players-map`, and [its author page](gwent-players-map-adapter.md) has the whole change.
+The event passes CMF's tab report on to your own, so your script moves the cards exactly as before. Your large cards were drawn bigger in your map file; a size claim (API version 4) gives them the same 119 percent (seen in game on 2026-10-20). Since adapter 1.0.1 the two cards are your own art, shipped with your permission and credited. The adapter is `source/adapters/gwent-players-map`, and [its author page](gwent-players-map-adapter.md) has the whole change.
 
 ### Fog of War
 
@@ -970,7 +969,7 @@ CMFStylePart("modSmoothMap", 'opening', 'pinBudgetMs', "", 8);
 CMFStylePart("modSmoothMap", 'opening', 'revealSeconds', "", 0.2);
 ```
 
-The full list, with every value your map file used, is in "Smooth map movement" above. Each key is won on its own by the earliest folder that sets it, so your values mix with Ink & Iron's and Map Quest Insight's key by key instead of one map file replacing the others. The adapter is `modCMFAdapterSmoothMap`, and its author page has the whole change. It ran in game on 2026-10-20: all 15 keys were accepted.
+The full list, with every value your map file used, is in "Smooth map movement" above. Each key is won on its own by the earliest folder that sets it, so your values mix with Ink & Iron's and Map Quest Insight's key by key instead of one map file replacing the others. A proof-of-concept example adapter, `modCMFAdapterSmoothMap`, shows the whole change, and [its author page](smooth-map-adapter.md) walks through it. It is an example, not a shipped adapter: it ran in game on 2026-10-20 together with Ink & Iron, where all 15 keys were accepted, but Smooth Map's values on their own have not been checked in a launch.
 
 ### Community Patch - World Map (API version 6)
 

@@ -85,7 +85,9 @@ THEME_PART_KEYS = {
     'legend': THEME_GLOW,
     'legendRow': THEME_GLOW + ('color', 'colorSelected', 'colorOff', 'counterColor', 'hide'),
     'legendTab': THEME_GLOW + ('color', 'spacing', 'hide'),
-    'tooltip': THEME_GLOW + ('titleFont', 'titleSize', 'titleColor', 'bodyFont', 'bodySize', 'bodyColor', 'hide'),
+    'tooltip': THEME_GLOW + ('titleFont', 'titleSize', 'titleColor', 'bodyFont', 'bodySize', 'bodyColor', 'hide',
+                             'clearMinHeight', 'clearView', 'clearSide', 'clearCursor', 'clearLeft', 'clearTop',
+                             'clearRight', 'clearBottom'),
     'preview': ('hide',),
     'worldButton': THEME_GLOW + ('hide',),
     'worldHint': THEME_GLOW + ('hide',),
@@ -113,7 +115,7 @@ THEME_SHAPE_COMMON = ('left', 'top', 'right', 'bottom', 'width', 'height', 'widt
 # Version 6 (map-space drawing): drawing tabs, clicks and the hover look on the box kinds; the map-space kinds
 # line and movie (mapSpace only) and text (mapSpace, placed at x, y metres, or any part or drawing).
 THEME_HOVER = ('fillHover', 'alphaHover', 'strokeHover', 'strokeAlphaHover', 'strokeWidthHover', 'colorHover')
-THEME_BOX = THEME_SHAPE_COMMON + ('tab', 'tabLabel', 'click', 'above') + THEME_HOVER
+THEME_BOX = THEME_SHAPE_COMMON + ('tab', 'tabLabel', 'click', 'above') + THEME_HOVER + ('minPartHeight',)
 THEME_SPACE = ('layer', 'order', 'alpha', 'view', 'area', 'preview', 'fadeMs', 'tab', 'tabLabel', 'listen',
                'listenFields')
 THEME_KIND_KEYS = {'rect': THEME_BOX, 'ring': THEME_BOX + ('inset',), 'ellipse': THEME_BOX,
@@ -544,10 +546,10 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
                     report.error(where, "'%s' is not a part of CMF's map (%s); CMF rejects the call"
                                  % (target, ', '.join(THEME_PART_KEYS)))
                 elif key not in THEME_PART_KEYS[target]:
-                    report.error(where, "part '%s' takes no key '%s' in CMF 5; CMF rejects the call (ask "
+                    report.error(where, "part '%s' takes no key '%s' in CMF 7; CMF rejects the call (ask "
                                         "CMFHasAbility first for a key a later CMF adds)" % (target, key))
             elif key not in THEME_SHAPE_KEYS and target not in movies:
-                report.error(where, "'%s' is not a drawing key in CMF 6; CMF rejects the call (a movie drawing "
+                report.error(where, "'%s' is not a drawing key in CMF 7; CMF rejects the call (a movie drawing "
                                     "takes its own keys after CMFDraw)" % key)
         elif name == 'CMFDrawSetList':
             literal = THEME_PART.match(rest)

@@ -1,6 +1,6 @@
 # Ink and Iron adapter
 
-`modCMFAdapterInkAndIron` is a separate mod that sits between Conjunction Map Framework (CMF) and Ink and Iron AIO (0.8.7 and 0.8.8 read; its `modInkAndIronUI` folder). With CMF installed, CMF's world map replaces Ink and Iron's map, while Ink and Iron's HUD, compass and menus load as normal. This adapter brings back what Ink and Iron's map adds, through CMF's general calls:
+`modCMFAdapterInkAndIron` is a separate mod that sits between Conjunction Map Framework (CMF) and Ink and Iron (0.8.7 to 0.8.10 read; the separate `modInkAndIronUI` folder or the All In One file's `modInkAndIron` folder, proven with 0.8.9 on 2026-10-21). With CMF installed, CMF's world map replaces Ink and Iron's map, while Ink and Iron's HUD, compass and menus load as normal. This adapter brings back what Ink and Iron's map adds, through CMF's general calls:
 - its look (CMF 5's `CMFStylePart`, `CMFDraw` and `CMFDrawSet`);
 - its quest-level tags (`OnPinReady`, `CMFStylePinLabel`, property 17 `LabelColor`);
 - its key-hint row (`cmf.map.hints`);
@@ -14,6 +14,7 @@ These parts of Ink and Iron were read only, for its interface and its look's val
 - `inkironui_map.ws`, lines 1-107: the hint row;
 - `inkironui_questlevel.ws`, lines 104-105;
 - its 0.8.7 map file `panel_worldmap.redswf`, decompiled with the pinned FFDec: `MapMenu.ink*`, `iiFrame`, `HubMapContainer.inkEdge`/`inkLim`, `TooltipMap.inkFont`, `InputFeedbackButton.inkSyncCap`, `KeyboardButtonIcon.label`, `HubMapPinCategoryItemRenderer`, `StaticMapPinDescribed.iaiLvTab`, and the `HubMap`/`UniverseMap` navigation;
+- its 0.8.10 map file, compared with 0.8.9 by the review a launch record kept in the private development repository: the info box framed on every view (`inkPinTipPanel`), a second fill under a box 330 px or taller with its padding, and `inkTipPlace`, which moves such a box clear of the cursor and the panels. Adapter 1.1.0 restores these with CMF 7's `minPartHeight` (drawing `inkTipBacking`) and the `tooltip` clear keys, both asked for with `CMFHasAbility` first; the values are inferred from the review, not from Ink and Iron's code;
 - its 0.8.8 map file (the same `panel_worldmap.redswf`), read for the movement by the smooth map movement research (a launch record kept in the private development repository, sections 4.1 and 6.1): `HubMap` `Timer(1)` and `handleScrollAndZoomTimer` (pan scaled by elapsed / 17 ms, cap 100 ms; zoom once per 17 ms through an accumulator), `UniverseMap` (elapsed / 24 ms), and the movie's frame rate 60.
 
 The adapter copies no code and no art. The look is numbers (colours, sizes, positions, fonts) handed to CMF's own drawing, and the hint gathering repeats the three calls of Ink and Iron's `InkMapHints` with Ink and Iron's own `InkGatherHints`.

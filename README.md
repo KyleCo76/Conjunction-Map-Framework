@@ -6,7 +6,7 @@
 
 [![Latest release](https://img.shields.io/github/v/release/KyleCo76/Conjunction-Map-Framework?label=release)](https://github.com/KyleCo76/Conjunction-Map-Framework/releases/latest)
 ![The Witcher 3 Remastered 5.01](https://img.shields.io/badge/The%20Witcher%203-Remastered%205.01-8b0000)
-![CMF API version 6](https://img.shields.io/badge/CMF%20API-version%206-2f6f4f)
+![CMF API version 7](https://img.shields.io/badge/CMF%20API-version%207-2f6f4f)
 ![Windows and Linux](https://img.shields.io/badge/tested%20on-Windows%20%7C%20Linux%20%28Proton%29-555)
 [![Licence CC BY-NC 4.0](https://img.shields.io/badge/licence-CC%20BY--NC%204.0-lightgrey)](LICENSE)
 
@@ -41,7 +41,7 @@ flowchart LR
 
 - [For players](#for-players)
   - [What you need](#what-you-need)
-  - [What is in 1.0.0](#what-is-in-100)
+  - [What to download](#what-to-download)
   - [Installing](#installing)
   - [Supported map mods](#supported-map-mods)
   - [Good to know](#good-to-know)
@@ -65,19 +65,16 @@ flowchart LR
 - **Windows**, or **Linux with Steam and Proton**: tested on Linux by MateusAnd, the Gwent Players Map author (keyboard and mouse). Steam Deck not confirmed.
 - For each adapter: the mod it adapts, at the version named in the table below.
 
-### What is in 1.0.0
+### What to download
 
-1.0.0 is 13 separate archives. You always need the first one; take the rest only for the mods you play with.
-
-> [!NOTE]
-> **Adapter update 1.0.1:** the Gwent Players Map and Witcher Gear Map adapters now carry their author's own art. Take those two from the [1.0.1 release](https://github.com/KyleCo76/Conjunction-Map-Framework/releases/tag/v1.0.1); CMF and everything else stay at 1.0.0.
+CMF comes as separate archives. You always need CMF itself; take the rest only for the mods you play with. The newest version of each file is on the [Nexus Mods page](https://www.nexusmods.com/witcher3/mods/14693) and in the [latest GitHub Release](https://github.com/KyleCo76/Conjunction-Map-Framework/releases/latest); each adapter's current version is in the [Supported map mods](#supported-map-mods) table.
 
 | Archive | What it is | When to install it |
 | --- | --- | --- |
-| `mod0000_ConjunctionMapFramework` | CMF itself | **Always** |
+| `mod0000_ConjunctionMapFramework` | CMF itself (1.1.0) | **Always** |
 | `modCMFMinimapPanel` | Minimap add-on: your icon packs' icons and colours on the HUD minimap too | Optional. Never beside another mod that changes the minimap (see [Good to know](#good-to-know)) |
 | `modCMFExampleIconPack` | Sample icon pack: a small example for pack authors | Optional |
-| `modCMFAdapter…` (10 archives) | Adapters for 10 map mods that don't support CMF yet | Only for those mods you use, and only until the mod's author updates it for CMF. See [Supported map mods](#supported-map-mods) |
+| `modCMFAdapter…` (11 archives) | Adapters for 11 map mods that don't support CMF yet | Only for those mods you use, and only until the mod's author updates it for CMF. See [Supported map mods](#supported-map-mods) |
 
 ### Installing
 
@@ -93,13 +90,16 @@ Every archive has a `README.txt` with its full install, update and removal steps
 
 Many map mods work with CMF as they are, with no adapter. An **adapter** is a small stand-in for a mod that doesn't support CMF yet: it brings that mod's map features back on CMF's map while the mod itself stays exactly as its author ships it. Once the author updates the mod for CMF, you remove the adapter. Adapters **contain none of the mod they adapt** (only art its author gave for CMF, credited), add no features of their own, and **only work with that mod installed**: without it, the game stops at the script compile screen.
 
+One exception: the **Coloured Map Markers** adapter also shows its icons without that mod installed. Coloured Map Markers is a map-file-only mod with no scripts an adapter could check, and its author's permission covers using its icons on their own. Keep Coloured Map Markers installed anyway if you like its minimap colours: it keeps colouring the minimap as before.
+
 | Mod | Tested version | Adapter | What the adapter brings back |
 | --- | --- | --- | --- |
 | All Quest Objectives On Map - Remastered | 1.2.1 | 1.0.0 | Difficulty icons on quest objectives, its legend row, removing cached merchant pins |
 | Botanist - NG - Remastered | 3.0.0.2 | 1.0.0 | Its herb markers and legend rows |
+| Coloured Map Markers | 1.60 (optional, see above) | 1.0.0 | Its coloured icons: 60 of the mod's own Shape icons on 61 pin types (merchants, places, points of interest open and completed, crafting spots), used with permission |
 | Fog of War | 1.2.1 | 1.0.0 | Hides every map icon under the fog, including other mods' icons |
 | Gwent Players Map | 1.0.9 | **1.0.1** | Its card markers, in its author's own card art, and its "Gwent" tab |
-| Ink and Iron - All in One | 0.8.8 (0.8.7 works too) | 1.0.0 | Ink and Iron's map look, quest level tags, key-hint row and map movement |
+| Ink and Iron - All in One | 0.8.10 (0.8.7 to 0.8.9 work too) | **1.1.0** | Ink and Iron's map look, quest level tags, key-hint row, map movement and its tall info box |
 | Map Pin Teleport | 1.2.2 | 1.0.0 | Teleporting from your own map pins |
 | Map Quest Insight | 1.6.1 | 1.0.0 | Quest icons by type, coloured level labels, its info box, spreading stacked markers |
 | The Stable - Roach-Horse Customization | 2.2.1 | 1.0.0 | Its Stables row on the map |
@@ -142,12 +142,12 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
   CMFProviderOrder2=modOtherPack
   ```
 - **When a mod ships its own CMF support, uninstall CMF's adapter for it.** With both installed, the game stops at the script compile screen.
-- **The minimap add-on replaces the game's minimap.** Do not install it with any other mod that does: HUD Position Manager, UI Remastered Edition, Ink and Iron (its HUD), Map Remastered, Map Icons - Remastered, Colorized Map Icons, Coloured Map Marker.
+- **The minimap add-on replaces the game's minimap.** Do not install it with any other mod that does: HUD Position Manager, UI Remastered Edition, Ink and Iron (its HUD), Map Remastered, Map Icons - Remastered, Colorized Map Icons, Coloured Map Markers.
 - **Do not give another map mod a lower `Priority` than CMF** in `mods.settings`; that switches CMF's map off.
 - **The map moves at 60 frames per second** by default.
 
 > [!IMPORTANT]
-> **Not tested:** controllers and the Steam Deck. CMF 1.0.0 was tested on Windows with keyboard and mouse, both with the files copied in by hand and installed with RMMR in a full, everyday game setup. On Linux (Steam with Proton, keyboard and mouse) MateusAnd, the Gwent Players Map author, tested it with the Gwent Players Map, Witcher Gear Map and Map Pin Teleport adapters: scripts compiled, the game started, and every adapter feature worked.
+> **Not tested:** controllers and the Steam Deck. CMF 1.0.0 and 1.1.0 were tested on Windows with keyboard and mouse, both with the files copied in by hand and installed with RMMR in a full, everyday game setup. On Linux (Steam with Proton, keyboard and mouse) MateusAnd, the Gwent Players Map author, tested CMF 1.0.0 with the Gwent Players Map, Witcher Gear Map and Map Pin Teleport adapters: scripts compiled, the game started, and every adapter feature worked.
 
 ---
 
@@ -159,7 +159,7 @@ Three rules shape everything CMF offers:
 
 1. **Abilities, not special cases.** Every ability is one general call that takes its target as an argument. CMF has no calls made for one particular mod, and names (pin types, tags, tab ids, folder names) are open, so your mod can style a pin another mod added.
 2. **Clear winners.** When two mods ask for the same thing, a hide wins; otherwise the folder name that sorts first wins, unless the player sets an order. CMF settles this once per game load.
-3. **The version number is a promise.** `CMFGetVersion()` returns CMF's script interface version (**6** in 1.0.0), not a release number. Nothing is removed from 1.0.0 on; later versions only add.
+3. **The version number is a promise.** `CMFGetVersion()` returns CMF's script interface version (**7** in 1.1.0), not a release number. Nothing is removed from 1.0.0 on; later versions only add.
 
 ### What CMF can do for your mod
 
@@ -175,6 +175,7 @@ Three rules shape everything CMF offers:
 | A hook on every pin as the map builds it (`CMFCore.OnPinReady`) | 4 | [The pin hook](docs/authors/icon-pack-guide.md#the-pin-hook-onpinready-api-version-4) |
 | Key hints and filter tab reports | 4 | [Key hints](docs/authors/icon-pack-guide.md#key-hints-and-filter-tab-reports-api-version-4) |
 | A full map theme: frames, fonts, colours, legend and backdrop | 5 | [The map theme](docs/authors/icon-pack-guide.md#the-map-theme-api-version-5) |
+| Info box extras for themes: a drawing that shows only while the box is tall (`minPartHeight`), and a tall box moved beside the cursor, clear of the other panels (the `clear…` keys) | 7 | [Theme parts and keys](docs/wiki/Theme-Parts-and-Keys.md) |
 | Pin clicks handed back to your script, with button text | 6 | [Pin clicks](docs/authors/icon-pack-guide.md#pin-clicks-api-version-6) |
 | Smooth map movement | 6 | [Smooth map movement](docs/authors/icon-pack-guide.md#smooth-map-movement-api-version-6) |
 | Spreading stacked pins apart | 6 | [Spreading stacked pins](docs/authors/icon-pack-guide.md#spreading-stacked-pins-api-version-6) |
@@ -241,7 +242,9 @@ The adapters are teaching examples, written as the code that mod's own author wo
 | Witcher Upgrade Gear Map | [page](docs/authors/witcher-gear-map-adapter.md) | [source](source/adapters/witcher-gear-map/) |
 | Witcher's Path | [page](docs/authors/witchers-path-adapter.md) | [source](source/adapters/witchers-path/) |
 
-Smooth Map and Community Patch - World Map have porting sections in the [author guide, section 12](docs/authors/icon-pack-guide.md#12-teaching-examples-moving-a-map-mod-onto-cmf), but no adapter ships for them.
+The Coloured Map Markers adapter has no porting page: that mod has no scripts, so the adapter is only its icons registered with CMF ([source](source/adapters/coloured-map-markers/)).
+
+**Smooth Map** has a [porting page](docs/authors/smooth-map-adapter.md) and a [proof-of-concept example adapter](source/adapters/smooth-map/) for its author. That example is not part of any CMF release, and Smooth Map's values on their own have not been checked in a launch. Community Patch - World Map has a porting section in the [author guide, section 12](docs/authors/icon-pack-guide.md#12-teaching-examples-moving-a-map-mod-onto-cmf); no adapter ships for either mod.
 
 ---
 
@@ -258,7 +261,7 @@ Smooth Map and Community Patch - World Map have porting sections in the [author 
 | `source/settings`, `source/strings.json` | CMF's menu file and the source of its string tables |
 | `source/panel` | the edit sets CMF applies to the game's world map and minimap panels, and CMF's own ActionScript classes |
 | `source/minimap` | the minimap add-on's script |
-| `source/adapters` | the 10 adapters, one folder each, with a developer `README.md` and the shipped pack folder |
+| `source/adapters` | the 11 adapters, one folder each, with a developer `README.md` and the shipped pack folder |
 | `examples/modCMFExampleIconPack` | the sample icon pack, to copy from |
 | `source/providers` | developer test packs (never shipped) |
 | `docs/authors`, `docs/api` | the author guide, pin type list, porting pages and map bindings |
@@ -318,6 +321,8 @@ Please include your CMF version, the map mods and adapters you have installed, a
 Made by Kyle with the help of AI tools (Claude and ChatGPT). Every published file is reviewed by Kyle.
 
 Card and gear art in the Gwent Players Map and Witcher Gear Map adapters by **MateusAnd**, the author of both mods, used with permission. Thanks to MateusAnd for testing CMF on Linux.
+
+Icons in the Coloured Map Markers adapter by **DJ_Kovrik**, from [Coloured Map Markers](https://www.nexusmods.com/witcher3/mods/938) (maintained by LewisElementary), used with permission under the mod's compatibility notice. The adapter is not made by DJ_Kovrik or LewisElementary; questions about it go to CMF's page.
 
 Thanks to the authors of the map mods CMF adapts. Their mods stay theirs; CMF's adapters contain none of their files, and their art only where the author gave it for CMF, credited.
 

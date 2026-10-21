@@ -92,8 +92,8 @@ These come from your own scripts, unchanged under CMF:
 
 - The cards and the tab passed in game on 2026-10-20 (launch S2-1) and ran again with API version 4 in the N4 launch.
 - Adapter 0.2 passed with API version 5 the same day (launch C5): the tab report under its API version 4 name, and the large cards, about 1.2 times the small ones on screen.
-- The art is the adapter's own placeholder, in its `texture.cache`: a white card, grey once the player is beaten. CMF itself carries none. It is a stand-in until you publish your own CMF support folder, which loads your art the same way.
+- The art is your own: since adapter 1.0.1 its `texture.cache` carries your two cards, white and grey once the player is beaten, shipped with your permission (2026-10-21) and credited in its README. Up to 1.0.0 it drew placeholders of its own. CMF itself carries none. The adapter is a stand-in until you publish your own CMF support folder, which loads your art the same way.
 
 ## Can CMF do this without the author?
 
-Yes, and that is what the adapter is. It uses only the names your mod already sends (types, tab id, string keys and the event name), copies none of your code or art, and loads its own placeholder art through CMF, as your CMF support would load yours.
+Yes, and that is what the adapter is. It uses only the names your mod already sends (types, tab id, string keys and the event name), copies none of your code, and loads your card art, shipped with your permission, through CMF, as your CMF support would.

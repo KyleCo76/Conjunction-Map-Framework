@@ -8,7 +8,7 @@
 // drawing tabs, clicks and the OnDrawingClicked and OnMapListening hooks).
 // Never remove a call once published.
 
-function CMFGetVersion() : int { return 6; }
+function CMFGetVersion() : int { return 7; }
 
 function CMFPropertyIcon() : int { return 1; }
 function CMFPropertyLegendIcon() : int { return 2; }
@@ -2816,7 +2816,9 @@ function CMFThemePartKeys(part : name) : string
 		case 'legendTab':
 			return CMFThemeGlowKeys() + ",color,spacing,hide";
 		case 'tooltip':
-			return CMFThemeGlowKeys() + ",titleFont,titleSize,titleColor,bodyFont,bodySize,bodyColor,hide";
+			// Version 7: clear* moves a tall info box clear of the cursor and the other panels.
+			return CMFThemeGlowKeys() + ",titleFont,titleSize,titleColor,bodyFont,bodySize,bodyColor,hide," +
+				"clearMinHeight,clearView,clearSide,clearCursor,clearLeft,clearTop,clearRight,clearBottom";
 		case 'preview':
 			return "hide";
 		case 'worldButton':
@@ -2875,7 +2877,8 @@ function CMFThemeHideWords(part : name) : string
 // The keys each drawing kind takes in this CMF (CMFDrawSet). Version 6 adds tab, tabLabel, click, above and the
 // hover keys to the box kinds, and the map-space kinds: line and movie on mapSpace only, text on mapSpace (placed
 // at x, y metres) or on any part or drawing; line, text and movie also take listen and listenFields. A movie
-// also takes any key its author documents for the movie.
+// also takes any key its author documents for the movie. Version 7 adds minPartHeight to the box kinds and text:
+// the drawing shows only while its part's box is at least that many pixels tall.
 function CMFThemeShapeKeys(kind : name) : string
 {
 	var keys : string;
@@ -2883,7 +2886,7 @@ function CMFThemeShapeKeys(kind : name) : string
 	keys = "left,top,right,bottom,width,height,widthShare,heightShare,minWidth,minHeight,alignX,alignY,offsetX,offsetY," +
 		"minLeft,maxRight,minTop,maxBottom,screenLeft,screenRight,screenTop,screenBottom,measure,fill,alpha,fill2,alpha2," +
 		"gradient,angle,curve,stroke,strokeAlpha,strokeWidth,layer,order,view,when,repeat,repeatStep,alphaList," +
-		CMFThemeGlowKeys() + "," + CMFThemeShadowKeys() + ",tab,tabLabel,click,above," + CMFThemeHoverKeys();
+		CMFThemeGlowKeys() + "," + CMFThemeShadowKeys() + ",tab,tabLabel,click,above," + CMFThemeHoverKeys() + ",minPartHeight";
 	space = "layer,order,alpha,view,area,preview,fadeMs,tab,tabLabel,listen,listenFields";
 	switch (kind)
 	{
@@ -2917,7 +2920,7 @@ function CMFThemeAllShapeKeys() : string
 function CMFThemeTextKey(key : name) : bool
 {
 	return CMFListHas("font,nameFont,titleFont,bodyFont,align,wrap,panLimit,hide,layer,when,gradient,side,measure,view," +
-		"points,alphaList,area,src,tab,tabLabel,text,listen,listenFields", NameToString(key));
+		"points,alphaList,area,src,tab,tabLabel,text,listen,listenFields,clearView,clearSide", NameToString(key));
 }
 
 // Map-space drawing: a word with no space or comma (area names, tab ids).
@@ -2979,7 +2982,10 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 			case 'measure':
 				return text == "trim" || text == "field";
 			case 'view':
+			case 'clearView':
 				return CMFThemeWordsOk(text, "region,interior,world");
+			case 'clearSide':
+				return text == "left" || text == "right";
 			case 'area':
 			case 'tab':
 				return CMFThemeWordOk(text);
@@ -3028,6 +3034,10 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 	{
 		return number >= 1 && number <= 64;
 	}
+	if (k == "minPartHeight" || k == "clearMinHeight" || k == "clearCursor")
+	{
+		return number >= 0 && number <= 4000;
+	}
 	if (part == 'spread')
 	{
 		return CMFThemeSpreadValueOk(key, number);
@@ -3051,7 +3061,8 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 // Version 5. Asks before using an ability: CMFHasAbility(part, '') is true for every part, layer and drawing
 // kind this CMF knows; CMFHasAbility(part, key) for every style key the part takes, and for a drawing kind
 // every key and list key its drawings take. Version 6 adds mapSpace, line, text and movie
-// (CMFHasAbility('mapSpace', ''), ('line', 'colors'), ('text', '')). Abilities designed for later (images,
+// (CMFHasAbility('mapSpace', ''), ('line', 'colors'), ('text', '')). Version 7 adds ('tooltip', 'clearMinHeight')
+// and the other clear keys, and ('rect', 'minPartHeight') on every box kind and text. Abilities designed for later (images,
 // the map hold) answer false until a CMF version adds them.
 function CMFHasAbility(part : name, key : name) : bool
 {

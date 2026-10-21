@@ -45,7 +45,7 @@ def replaced(cls):
 class ApiTests(unittest.TestCase):
     def test_version6_calls(self):
         core = CORE.read_text(encoding='ascii')
-        for line in ('function CMFGetVersion() : int { return 6; }',
+        for line in ('function CMFGetVersion() : int { return 7; }',
                      'function CMFPropertyPinClick() : int { return 16; }',
                      'function CMFPropertyPinClickHint() : int { return 20; }',
                      'function CMFPropertyPinClickButton() : int { return 21; }'):

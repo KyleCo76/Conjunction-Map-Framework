@@ -1,6 +1,6 @@
 # Conjunction Map Framework for mod authors
 
-Conjunction Map Framework (CMF) is one world map for The Witcher 3 (Remastered, patch 5.01) that every map mod works through. Only one copy of the map file loads in the game, so before CMF two map mods that each shipped their own copy could not both work. With CMF, your mod no longer ships a map file: it tells CMF what it wants changed on the map, and CMF decides between mods and draws the result. Several map mods then work at once, with no Script Merger and no edited map files.
+Conjunction Map Framework (CMF) is one world map for The Witcher 3 (Remastered, patch 5.01) that map mods can share. Only one copy of the map file loads in the game, so before CMF two map mods that each shipped their own copy could not both work. With CMF, your mod no longer ships a map file: it tells CMF what it wants changed on the map, and CMF decides between mods and draws the result. Several map mods then work at once, with no Script Merger and no edited map files.
 
 These pages are for anyone who has made a Witcher 3 mod before and wants to build on CMF: an icon pack, a mod that adds its own pins, a new look for the whole map, or an existing map mod moving onto CMF. Everything here is CMF 1.0.0, which is API version 6 (`CMFGetVersion()` returns `6`; that number is the version of CMF's script interface, not a release number).
 
@@ -21,7 +21,7 @@ CMF 1.0.0 ships adapters for existing map mods. Each adapter is a teaching examp
 - brings back what the mod already does on the map, and adds nothing of its own;
 - works only with its mod installed, because it reads the mod's own settings and values; it never gives a player the mod's features without the mod;
 - claims under the adapted mod's own folder name, so folder order is the same with CMF as without it;
-- ships no art from other mods. Where a mod drew its own pictures inside its map file, the adapter uses simple placeholder pictures of its own, in its own folder, never in CMF, until the author ships theirs;
+- carries our own placeholder pictures, or a mod author's art only with that author's permission, credited. Where a mod drew its own pictures inside its map file, the adapter uses simple placeholders of its own, in its own folder, never in CMF, until the author ships theirs or allows theirs to be used. The Gwent Players Map and Witcher Gear Map adapters carry their author MateusAnd's own art since 1.0.1;
 - is removed by the player once the mod's author ships CMF support of their own.
 
 The pages under "Moving a map mod onto CMF" show each one.

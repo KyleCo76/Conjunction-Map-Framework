@@ -1,7 +1,8 @@
-// Ink and Iron adapter for Conjunction Map Framework. Requires CMF 5 or later (the map movement needs CMF 6)
-// and Ink and Iron AIO 0.8.8 (0.8.7 alike; its modInkAndIronUI folder), which stays unchanged. Install and
-// remove the two together: this file calls Ink and Iron's own functions, so the game stops at the script
-// compile screen when modInkAndIronUI is missing.
+// Ink and Iron adapter for Conjunction Map Framework. Requires CMF 5 or later (the map movement needs CMF 6, the
+// tall info box's backing and placement CMF 7) and Ink and Iron 0.8.7 to 0.8.10, which stays unchanged: the
+// separate modInkAndIronUI folder or the All In One file's modInkAndIron folder. Install and remove the two
+// together: this file calls Ink and Iron's own functions, so the game stops at the script compile screen when
+// Ink and Iron is missing.
 //
 // CMF replaces only Ink and Iron's world map; its HUD, compass and menus load as normal. Everything Ink and
 // Iron's map adds comes back through CMF's general calls, written the way Ink and Iron's author would write
@@ -27,7 +28,8 @@
 // Two of Ink and Iron's glitches are not copied (Kyle, 2026-10-20: "Don't copy a broken function"): its
 // region title is cut at a word ("VELEN - NO") because its field keeps the game's line wrap, so here the
 // title stays on one line (wrap none); and the legend frame always wraps every row it shows.
-// Every claim uses Ink and Iron's own folder name (modInkAndIronUI) as its provider. CMF's map declares
+// Every claim uses Ink and Iron's folder name of 0.8.8 (modInkAndIronUI) as its provider; the name is only a
+// label, so it works the same with the All In One folder (modInkAndIron). CMF's map declares
 // iaiLv and iaiDiff for this adapter only, because the game drops pin fields its class does not declare.
 //
 // The file name sorts after inkironui_map.ws: wrappers nest by script file name, so this
@@ -342,25 +344,55 @@ function InkAdapterFrameLegend()
 	InkAdapterFrameRing('legend', 'inkLegendInner', 16, 1, 11832388, 0.55, 43, "", 0);	// 0xB48C44, 4 to 5 px inside
 }
 
+// The info box's frame on every map view (Ink and Iron 0.8.10 frames it on the region and interior maps too,
+// MapMenu.inkPinTipPanel; 0.8.9 only on the world view). CMF 7 or later also gets 0.8.10's two touches for a
+// tall box (330 px or more with its 20 px padding, so a measured box of 290 px or more), on the region and
+// interior maps only: a second dark fill under the frame (0x0B0A08 at 0.5455, about 90 percent dark with the
+// frame's own fill), and the box moved clear of the cursor and the panels (MapMenu.inkTipPlace: right of the
+// cursor first, inside 24 to 1896 by 104 to 1000 with the padding, so 44 to 1876 by 124 to 980 for the box).
 function InkAdapterFrameTip()
 {
-	InkAdapterFrameShadow('tooltip', 'inkTipShadow', "world", 0);
-	InkAdapterFrameFill('tooltip', 'inkTipFill', "world", 0);
-	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen1', 1, "world");
-	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen2', 2, "world");
-	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen3', 3, "world");
-	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen4', 4, "world");
-	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen5', 5, "world");
-	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen6', 6, "world");
-	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen7', 7, "world");
-	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen8', 8, "world");
-	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen9', 9, "world");
-	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen10', 10, "world");
-	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen11', 11, "world");
-	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen12', 12, "world");
-	InkAdapterFrameRing('tooltip', 'inkTipOutline', 21, 1, 328707, 0.65, 41, "world", 0);	// 0x050403, 0 to 1 px outside
-	InkAdapterFrameRing('tooltip', 'inkTipBorder', 20, 1.5, 8025708, 0.95, 42, "world", 0);	// 0x7A766C, 0 to 1.5 px inside
-	InkAdapterFrameRing('tooltip', 'inkTipInner', 16, 1, 11832388, 0.55, 43, "world", 0);	// 0xB48C44, 4 to 5 px inside
+	InkAdapterFrameShadow('tooltip', 'inkTipShadow', "", 0);
+	InkAdapterFrameFill('tooltip', 'inkTipFill', "", 0);
+	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen1', 1, "");
+	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen2', 2, "");
+	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen3', 3, "");
+	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen4', 4, "");
+	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen5', 5, "");
+	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen6', 6, "");
+	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen7', 7, "");
+	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen8', 8, "");
+	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen9', 9, "");
+	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen10', 10, "");
+	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen11', 11, "");
+	InkAdapterFrameSheen('inkTipFill', 'inkTipSheen12', 12, "");
+	InkAdapterFrameRing('tooltip', 'inkTipOutline', 21, 1, 328707, 0.65, 41, "", 0);	// 0x050403, 0 to 1 px outside
+	InkAdapterFrameRing('tooltip', 'inkTipBorder', 20, 1.5, 8025708, 0.95, 42, "", 0);	// 0x7A766C, 0 to 1.5 px inside
+	InkAdapterFrameRing('tooltip', 'inkTipInner', 16, 1, 11832388, 0.55, 43, "", 0);	// 0xB48C44, 4 to 5 px inside
+	if (CMFHasAbility('rect', 'minPartHeight'))
+	{
+		CMFDraw("modInkAndIronUI", 'tooltip', 'inkTipBacking', 'rect');
+		CMFDrawSet("modInkAndIronUI", 'inkTipBacking', 'left', "", 20);
+		CMFDrawSet("modInkAndIronUI", 'inkTipBacking', 'top', "", 20);
+		CMFDrawSet("modInkAndIronUI", 'inkTipBacking', 'right', "", 20);
+		CMFDrawSet("modInkAndIronUI", 'inkTipBacking', 'bottom', "", 20);
+		CMFDrawSet("modInkAndIronUI", 'inkTipBacking', 'fill', "", 723464);	// 0x0B0A08
+		CMFDrawSet("modInkAndIronUI", 'inkTipBacking', 'alpha', "", 0.5455);
+		CMFDrawSet("modInkAndIronUI", 'inkTipBacking', 'layer', "under", 0);
+		CMFDrawSet("modInkAndIronUI", 'inkTipBacking', 'order', "", 27);
+		CMFDrawSet("modInkAndIronUI", 'inkTipBacking', 'view', "region,interior", 0);
+		CMFDrawSet("modInkAndIronUI", 'inkTipBacking', 'minPartHeight', "", 290);
+	}
+	if (CMFHasAbility('tooltip', 'clearMinHeight'))
+	{
+		CMFStylePart("modInkAndIronUI", 'tooltip', 'clearMinHeight', "", 290);
+		CMFStylePart("modInkAndIronUI", 'tooltip', 'clearView', "region,interior", 0);
+		CMFStylePart("modInkAndIronUI", 'tooltip', 'clearSide', "right", 0);
+		CMFStylePart("modInkAndIronUI", 'tooltip', 'clearLeft', "", 44);
+		CMFStylePart("modInkAndIronUI", 'tooltip', 'clearTop', "", 124);
+		CMFStylePart("modInkAndIronUI", 'tooltip', 'clearRight', "", 1876);
+		CMFStylePart("modInkAndIronUI", 'tooltip', 'clearBottom', "", 980);
+	}
 }
 
 // Two dark glows on the text of the tracker, tooltip and legend (MapMenu.inkShadow, TooltipMap.inkFont):

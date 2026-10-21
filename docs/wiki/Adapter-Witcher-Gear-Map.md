@@ -7,13 +7,12 @@
 You used to push your markers with your own types (`WitcherGearWolf` and the rest) and draw them in your own map file. Your script keeps pushing the same pins; the art and tab come from calls:
 
 ```
-CMFRegisterIcon("modWitcherGearMap", 'WitcherGearWolf', "img://icons/modcmfadapterwitchergearmap/gear.png");
-CMFRegisterTint("modWitcherGearMap", 'WitcherGearWolf', 16736352);
+CMFRegisterIcon("modWitcherGearMap", 'WitcherGearWolf', "img://icons/modcmfadapterwitchergearmap/gear_wolf.png");
 CMFRegister("modWitcherGearMap", 8, 'wgm_gear', '', "[[map_category_wgm_gear]]", 8);
 CMFRegister("modWitcherGearMap", 6, 'WitcherGear', '', "wgm_gear", 703);
 ```
 
-Gear's pins use numeric ids (from 1464287232), so another mod reaches them by type or in `OnPinReady`, not by tag. The adapter is `source/adapters/witcher-gear-map`.
+One picture per type, each school in its own colour, so no tint is needed. Since adapter 1.0.1 those pictures are your own, shipped with your permission and credited. Gear's pins use numeric ids (from 1464287232), so another mod reaches them by type or in `OnPinReady`, not by tag. The adapter is `source/adapters/witcher-gear-map`.
 
 ## The whole change, for its author
 
@@ -27,7 +26,7 @@ CMF fixes that without a map file: a mod tells CMF, by name, which image to draw
 
 ### The quick change: ship one optional folder
 
-Your existing mod does not change. Next to it you publish an optional "CMF support" folder. It is the adapter with your art in place of the placeholder:
+Your existing mod does not change. Next to it you publish an optional "CMF support" folder. It is the adapter under your own name; since adapter 1.0.1 the adapter already carries your art, shipped with your permission and credited:
 
 ```
 Mods/
@@ -37,7 +36,7 @@ Mods/
     content/scripts/local/modwitchergearmapcmf_cmf.ws
 ```
 
-The script is one `OnGameStarted` wrapper with one `CMFRegisterIcon` call per marker type you use, plus a `CMFRegisterTint` call where you want CMF to colour the art. Copy [the adapter's script](../../source/adapters/witcher-gear-map/modCMFAdapterWitcherGearMap/content/scripts/local/modcmfadapterwitchergearmap_cmf.ws), then replace the provider id `modCMFAdapterWitcherGearMap` with your folder name, everywhere it appears. That folder name is your provider id.
+The script is one `OnGameStarted` wrapper with one `CMFRegisterIcon` call per marker type you use. A `CMFRegisterTint` call is needed only where you want CMF to colour plain art; the adapter has none, because your pictures are coloured per school already. Copy [the adapter's script](../../source/adapters/witcher-gear-map/modCMFAdapterWitcherGearMap/content/scripts/local/modcmfadapterwitchergearmap_cmf.ws), then replace the provider id `modCMFAdapterWitcherGearMap` with your folder name, everywhere it appears. That folder name is your provider id.
 
 It stays a separate folder because a CMF call fails to compile when CMF is not installed. Players without CMF install your mod as today; players with CMF add the folder.
 
@@ -45,8 +44,8 @@ It stays a separate folder because a CMF call fails to compile when CMF is not i
 
 1. Export your marker art as square PNGs, 96 x 96 recommended, transparent background, with the outer 4 pixels left empty. The rules are in the [icon pack guide](Getting-Started.md#4-make-your-art).
 2. Put them in the folder's `art/`. Either:
-   - **keep the adapter's four names**, `gear.png`, `gear_obtained.png`, `gear_ring.png` and `gear_obtained_ring.png`, and let CMF's tints colour them by school. Paint the parts that should take the school colour white or light, because a tint multiplies; or
-   - **give each type its own image**, for example `art/witchergearobtainedcatring.png`, point that type's `CMFRegisterIcon` at it, and delete its `CMFRegisterTint` line.
+   - **keep the adapter's 26 pictures**, which are yours: `gear.png`, `gear_obtained.png`, then `gear_<school>.png`, `gear_obtained_<school>.png` and the same with `_ring`, for example `gear_obtained_cat_ring.png`; or
+   - **use other names**, and point each type's `CMFRegisterIcon` at its image. To let CMF colour plain art by school instead, paint the parts that should take the colour white or light and add a `CMFRegisterTint` per school type, because a tint multiplies.
 3. Run `python tools/cmf_pack.py build path/to/modWitcherGearMapCMF --out path/to/new-folder` from the CMF repository. It cooks your PNGs into the folder's own `texture.cache` and writes the `Mods` folder to ship. It warns that names like `WitcherGear` are not 5.01 pin types. That is expected, because they are yours.
 
 The image path for `art/<name>.png` is `img://icons/<your folder in lower case>/<name>.png`.
@@ -81,7 +80,7 @@ This happens with or without CMF. On a fresh install, the School, Tier and Icon 
 
 ### Can CMF do this without the author?
 
-Yes, and that is what the adapter is. It uses the same names your mod already sends and copies none of your code or art. Its placeholder art is the adapter's own, in its `texture.cache`; CMF itself carries none. It is a stand-in until you publish your own CMF support folder, which loads your art the same way.
+Yes, and that is what the adapter is. It uses the same names your mod already sends and copies none of your code. Up to 1.0.0 it drew four placeholders of its own; since 1.0.1 it carries your own 26 pictures in its `texture.cache`, shipped with your permission (2026-10-21) and credited in its README. CMF itself carries none. It is a stand-in until you publish your own CMF support folder, which loads your art the same way.
 
 ---
 

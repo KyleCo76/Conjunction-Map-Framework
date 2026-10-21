@@ -144,6 +144,20 @@ class PromoteTests(PromoteCase):
         self.assertEqual([p['files'] for p in manifest['packages']], [p['files'] for p in candidate['packages']])
         self.assertEqual(manifest, json.loads((self.out/'manifest.json').read_text(encoding='ascii')))
 
+    def test_a_new_package_can_keep_its_own_version(self):
+        # A first adapter shipped in a later CMF release (the Coloured Map Markers adapter 1.0.0 in CMF 1.1.0).
+        self.spec['packages']['modCMFAdapterDemo']['version'] = '0.9.0'
+        manifest = self.promote()
+        self.assertTrue((self.out/'modCMFAdapterDemo-0.9.0.zip').is_file())
+        self.assertFalse((self.out/'modCMFAdapterDemo-1.0.0.zip').exists())
+        self.assertEqual([(p['zip'], p['version']) for p in manifest['packages']],
+                         [('mod0000_CMFDemo-1.0.0.zip', '1.0.0'), ('modCMFAdapterDemo-0.9.0.zip', '0.9.0')])
+        self.assertEqual(preview.verify(self.out), [])
+
+    def test_refuses_a_package_version_that_is_not_x_y_z(self):
+        self.spec['packages']['modCMFAdapterDemo']['version'] = '1.0'
+        self.refused('version must be X.Y.Z')
+
     def test_sha256sums_covers_everything_in_sha256sum_format(self):
         self.promote()
         lines = (self.out/'SHA256SUMS').read_bytes().decode('ascii')

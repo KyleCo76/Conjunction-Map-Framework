@@ -4,7 +4,7 @@ This note is for the author of Fog of War (Nexus 13627). It shows how Fog of War
 
 ## What changes under CMF
 
-Only one `panel_worldmap.redswf` loads, and CMF's sorts first, so your clouds do not draw under CMF. CMF will not draw them for you, because they are your artwork; they stay missing until you port them. CMF plans a way for your own drawing code and pictures to run on its map before 1.0.0, so you can port them. Your scripts keep running, so `FogOfWarFilterPins` still removes the pins under fog. It only sees the pins added inside your `UpdateEntityPins` wrapper, though: a mod whose script file sorts after `modFogOfWarMap.ws` and pushes pins there (Witcher Gear Map's `wgm.ws`) adds them after your filter ran, so they show through the fog. That is true without CMF too.
+Only one `panel_worldmap.redswf` loads, and CMF's sorts first, so your clouds do not draw under CMF. CMF will not draw them for you, because they are your artwork; they stay missing until you port them. CMF 1.0.0 gives you the way to port them: move your cloud drawing code into a small movie of your own and hand it your grid and settings as a `movie` drawing on `mapSpace` ([Drawing on the map itself](icon-pack-guide.md#drawing-on-the-map-itself-api-version-6)); that use has not yet run in game. Your scripts keep running, so `FogOfWarFilterPins` still removes the pins under fog. It only sees the pins added inside your `UpdateEntityPins` wrapper, though: a mod whose script file sorts after `modFogOfWarMap.ws` and pushes pins there (Witcher Gear Map's `wgm.ws`) adds them after your filter ran, so they show through the fog. That is true without CMF too.
 
 CMF API version 3 offers a hide that applies to every pin, decided in one place after all wrappers have run:
 

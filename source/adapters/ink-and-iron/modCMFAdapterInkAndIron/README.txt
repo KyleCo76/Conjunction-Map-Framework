@@ -1,5 +1,5 @@
 Ink and Iron adapter for Conjunction Map Framework
-Version 0.3 (script only, no art)
+Version 1.1.0 (script only, no art)
 
 With Conjunction Map Framework installed, CMF's world map replaces Ink and Iron's
 world map; Ink and Iron's HUD, compass and menus load as normal. This adapter brings
@@ -8,11 +8,12 @@ row and the way its map moves. Ink and Iron stays exactly as its author ships it
 
 REQUIREMENTS
 - Conjunction Map Framework version 5 or later. Ink and Iron's map movement needs
-  version 6; on version 5 everything else works and the map moves as the game's does.
-- Ink and Iron AIO 0.8.8, with its modInkAndIronUI folder installed (0.8.7 works
-  too: its map file and the parts this adapter uses are the same).
-  This adapter calls Ink and Iron's own functions. Without modInkAndIronUI the game
-  stops at the script compile screen.
+  version 6, and the darker backing and new place of a long info box need version 7
+  (CMF 1.1.0); on an older version everything else works.
+- Ink and Iron 0.8.7 to 0.8.10: the All In One file (its modInkAndIron folder) or
+  the separate modInkAndIronUI folder. The parts this adapter uses are the same in
+  each. This adapter calls Ink and Iron's own functions: without Ink and Iron the
+  game stops at the script compile screen.
 
 INSTALL AND REMOVE THEM TOGETHER
 - Install this adapter only while Ink and Iron and CMF 5 are installed.
@@ -28,6 +29,9 @@ WHAT YOU SEE
 - Ink and Iron's map look: the full-height map over its ink backdrop with the soft
   edge, its framed quest tracker and legend, its region title with the gold diamond,
   its corner overview frame, gold key letters, and its legend colours.
+- Ink and Iron 0.8.10's info box: framed on every map, and on the region and interior
+  maps a long box (a long quest text) gets a darker backing and moves beside the
+  cursor, clear of the legend, the quest card and the other panels.
 - With Ink and Iron's option "Quest levels on world map pins" on, quest pins show
   Ink and Iron's "Lv N" tag, coloured by difficulty, on its dark plate. With the
   option off, nothing is added.
@@ -44,11 +48,14 @@ TWO SMALL DIFFERENCES, ON PURPOSE
 
 KNOWN LIMITS
 - If another CMF pack styles the same part of the map, the pack whose folder name
-  sorts first wins. This adapter counts as Ink and Iron's folder (modInkAndIronUI).
+  sorts first wins. This adapter counts as Ink and Iron's folder (modInkAndIronUI,
+  for either folder name).
   For the map's movement each setting is decided on its own the same way, so with
   another smooth-map mod installed, the settings Ink and Iron does not decide (for
   example how fast the map opens) can come from that mod.
 - The controller crosshair has not been tried: no test so far used a controller.
+- With Ink and Iron 0.8.9 or earlier the info box is framed on the region and interior
+  maps too, as Ink and Iron 0.8.10 does.
 
 INSTALL
 Extract the archive into your The Witcher 3 game folder, or install it with a mod

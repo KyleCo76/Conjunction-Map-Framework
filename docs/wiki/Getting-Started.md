@@ -2,7 +2,7 @@
 
 # Getting started
 
-Conjunction Map Framework (CMF) is the single world map that every map mod works through. CMF ships the map; other mods tell CMF what they want changed, and CMF decides and draws it. That way several map mods can be installed at once without each shipping its own copy of the map.
+Conjunction Map Framework (CMF) is a single world map that map mods can share. CMF ships the map; other mods tell CMF what they want changed, and CMF decides and draws it. That way several map mods can be installed at once without each shipping its own copy of the map.
 
 An **icon pack** is the simplest kind of CMF mod. It changes how existing map pins look on the full-screen world map: their icon, their legend icon and their colour. It does not add or move pins; from API version 3 any CMF mod can also hide pins, and from API version 4 resize pins and change their labels ([section 5](Writing-Your-Script.md#5-write-your-script)). You do not edit any map file and you do not need Script Merger, FFDec, REDkit or WolvenKit.
 

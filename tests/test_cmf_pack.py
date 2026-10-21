@@ -298,7 +298,7 @@ class ScriptTests(unittest.TestCase):
             '\tCMFDraw("modAcmeIcons", \'legend\', \'acmeArc\', \'arc\');\n': 'not a drawing kind',
             '\tCMFDraw("modAcmeIcons", \'legend\', \'title\', \'rect\');\n': 'cannot be a drawing id',
             '\tCMFDraw("modAcmeIcons", \'over\', \'acmeBox\', \'rect\');\n': 'cannot be an anchor',
-            '\tCMFDrawSet("modAcmeIcons", \'acmeBox\', \'image\', "img://x.png", 0);\n': 'not a drawing key in CMF 6',
+            '\tCMFDrawSet("modAcmeIcons", \'acmeBox\', \'image\', "img://x.png", 0);\n': 'not a drawing key in CMF 7',
             '\tCMFRegister("modAcmeIcons", 17, \'Herbalist\', \'\', "", 16777216);\n': 'not a colour',
         }
         for body, expected in cases.items():

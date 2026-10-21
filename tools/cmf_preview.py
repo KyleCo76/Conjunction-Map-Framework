@@ -57,7 +57,7 @@ PLACEHOLDER = '<<FILL'
 DEV_WORDS = {'test', 'tests', 'probe', 'probes', 'tool', 'tools'}
 SPEC_KEYS = {'schema', 'version', 'candidate', 'candidateManifestSha256', 'apiVersion', 'sourceCommit',
              'notes', 'matrix', 'notChecked', 'packages'}
-PACKAGE_KEYS = {'role', 'needsApi', 'acceptance', 'adapts'}
+PACKAGE_KEYS = {'role', 'needsApi', 'acceptance', 'adapts', 'version'}
 MATRIX_KEYS = ('set', 'record', 'result', 'launched')
 
 
@@ -438,6 +438,8 @@ def check_release_spec(spec):
             problems.append('%s: role must be one of %s' % (mod, ', '.join(RELEASE_ROLES)))
         if not isinstance(package.get('acceptance'), str) or not package.get('acceptance'):
             problems.append('%s: acceptance is missing' % mod)
+        if 'version' in package and not VERSION.match(str(package['version'])):
+            problems.append('%s: version must be X.Y.Z (the package\'s own version, when it differs from the release)' % mod)
         needs = package.get('needsApi')
         if not is_count(needs) or (api is not None and needs > api):
             problems.append('%s: needsApi must be a whole number from 1 to apiVersion' % mod)
@@ -510,8 +512,10 @@ def promote(candidate, spec, out, repo=ROOT):
     written, packages = {}, []
     for package in source['packages']:
         data, release = contents[package['mod']], spec['packages'][package['mod']]
-        entry = {'zip': '%s-%s.zip' % (package['mod'], version), 'sha256': sha256(data), 'size': len(data),
-                 'mod': package['mod'], 'role': release['role'], 'version': version}
+        # A package new in this release (a first adapter) may carry its own version; it defaults to the release's.
+        own = release.get('version', version)
+        entry = {'zip': '%s-%s.zip' % (package['mod'], own), 'sha256': sha256(data), 'size': len(data),
+                 'mod': package['mod'], 'role': release['role'], 'version': own}
         if 'adapts' in release:
             entry['adapts'] = release['adapts']
         entry.update({'needsApi': release['needsApi'], 'acceptance': release['acceptance'],
@@ -535,7 +539,8 @@ def promote(candidate, spec, out, repo=ROOT):
     sums = ''.join('%s  %s\n' % (sha256(written[n]), n) for n in sorted(written))
     (out/'SHA256SUMS').write_bytes(sums.encode('ascii'))
     for package in source['packages']:
-        if (out/('%s-%s.zip' % (package['mod'], version))).read_bytes() != contents[package['mod']]:
+        own = spec['packages'][package['mod']].get('version', version)
+        if (out/('%s-%s.zip' % (package['mod'], own))).read_bytes() != contents[package['mod']]:
             raise SpecError('%s: written bytes differ from the candidate' % package['zip'])
     return manifest
 
@@ -587,8 +592,9 @@ def verify_release(folder, manifest, sums):
             problems.append('%s: still has template placeholders' % other_file['path'])
     for package in manifest.get('packages', []):
         name, mod = package['zip'], package['mod']
-        if name != '%s-%s.zip' % (mod, version) or package.get('version') != version:
-            problems.append('%s: must be %s-%s.zip with version %s' % (name, mod, version, version))
+        own = package.get('version')
+        if not VERSION.match(str(own)) or name != '%s-%s.zip' % (mod, own):
+            problems.append('%s: must be %s-<version>.zip with its X.Y.Z version (%s unless the spec says)' % (name, mod, version))
         if package.get('role') not in RELEASE_ROLES:
             problems.append('%s: role %r is not one of %s' % (name, package.get('role'), ', '.join(RELEASE_ROLES)))
         if ('adapts' in package) != (package.get('role') == 'adapter'):
