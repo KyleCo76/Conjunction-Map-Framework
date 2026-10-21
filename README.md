@@ -10,7 +10,7 @@
 ![Windows](https://img.shields.io/badge/tested%20on-Windows%2C%20keyboard%20%26%20mouse-555)
 [![Licence CC BY-NC 4.0](https://img.shields.io/badge/licence-CC%20BY--NC%204.0-lightgrey)](LICENSE)
 
-[**Download on Nexus Mods**](NEXUS_PAGE_URL) · [**GitHub Releases**](https://github.com/KyleCo76/Conjunction-Map-Framework/releases) · [**For mod authors**](docs/wiki/Home.md) · [**Report a problem**](#reporting-problems)
+[**Download on Nexus Mods**](https://www.nexusmods.com/witcher3/mods/14693) · [**GitHub Releases**](https://github.com/KyleCo76/Conjunction-Map-Framework/releases) · [**For mod authors**](docs/wiki/Home.md) · [**Report a problem**](#reporting-problems)
 
 </div>
 
@@ -111,7 +111,7 @@ Many map mods work with CMF as they are, with no adapter. An **adapter** is a sm
 
 **Not supported yet (needs its author's update):** some map mods keep their map features, and often their icon art, inside their own copy of the world map file. CMF never copies another mod's art or files, so those features stay hidden under CMF until the author updates the mod for CMF or gives permission for an adapter to use them. The mod's scripts and menus keep working meanwhile. UI Remastered Edition was tested this way: its HUD and menus work, CMF's map opens. Smooth Map and Community Patch - World Map are in the same group: everything they change lives in their own map file, so 1.0.0 has no adapter for them.
 
-The full, current list is on the [Nexus Mods page](NEXUS_PAGE_URL).
+The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/witcher3/mods/14693).
 
 </details>
 
