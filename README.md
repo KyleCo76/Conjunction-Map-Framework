@@ -83,7 +83,7 @@ CMF comes as separate archives. You always need CMF itself; take the rest only f
 | Archive | What it is | When to install it |
 | --- | --- | --- |
 | `mod0000_ConjunctionMapFramework` | CMF itself (1.2.1) | **Always** |
-| `modCMFInGameMenu` | In-game menu add-on (1.0.1): choose in Options which map mod wins each feature | Optional. See [Good to know](#good-to-know) |
+| `modCMFInGameMenu` | In-game menu add-on (1.1.0): choose in Options which map mod wins each feature | Optional. See [Good to know](#good-to-know) |
 | `modCMFMinimapPanel` | Minimap add-on (2.1.0): your icon packs' icons and colours on the HUD minimap too, on top of whichever minimap you have | Optional. See [Good to know](#good-to-know) for the minimap and HUD mods it was tested with |
 | `modCMFExampleIconPack` | Sample icon pack: a small example for pack authors | Optional |
 | `modCMFAdapter…` (12 archives) | Adapters for 12 map mods that don't support CMF yet | Only for those mods you use, and only until the mod's author updates it for CMF. See [Supported map mods](#supported-map-mods) |
@@ -109,7 +109,7 @@ Two exceptions:
 
 | Mod | Tested version | Adapter | What the adapter brings back |
 | --- | --- | --- | --- |
-| All Quest Objectives On Map - Remastered | 1.2.1 | 1.0.0 | Difficulty icons on quest objectives, its legend row, removing cached merchant pins |
+| All Quest Objectives On Map - Remastered | 1.2.1 | **1.1.0** | Difficulty icons on quest objectives, its legend row, removing cached merchant pins |
 | Botanist - NG - Remastered | 3.0.0.2 | 1.0.0 | Its herb markers and legend rows |
 | Coloured Map Markers | 1.60 (optional, see above) | **1.0.1** | Its coloured icons: 60 of the mod's own Shape icons on 61 pin types (merchants, places, points of interest open and completed, crafting spots), used with permission |
 | Fog of War | 1.2.1 | 1.0.0 | Hides every map icon under the fog, including other mods' icons |
@@ -153,9 +153,10 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 
 ### Good to know
 
-- **The in-game menu add-on (1.0.1) is optional.** With `modCMFInGameMenu` installed, Options > Mods > Conjunction Map Framework lets you choose which of your map mods wins each feature.
+- **The in-game menu add-on (1.1.0) is optional.** With `modCMFInGameMenu` installed, Options > Mods > Conjunction Map Framework lets you choose which of your map mods wins each feature.
   - **Mod order** ranks your map mods once; **Basic choices** has one row per feature (pin icons, pin colours, legend, map look, map movement and more); **Advanced choices** splits a feature further, such as quest icons from one mod and shop icons from another; **Status** shows which mod wins each piece now, and why.
   - Every row starts on **Automatic**, which keeps CMF's usual winner and names it in brackets. **Vanilla** uses the game's own look; or pick one of your loaded map mods.
+  - Highlight a row and the help box at the bottom of the screen names every loaded map mod that offers it, for example "Offered by: Botanist, Map Quest Insight". Some offers are known only after the world map has been opened once in a session, and the box says so until then.
   - The more specific choice wins: Advanced beats Basic, and Basic beats Mod order. No restart is needed: the minimap add-on follows as soon as Options closes, and the world map the next time you open it.
   - Hidden pins add up: every mod's hides apply, unless you keep only one mod's, none (Vanilla), or leave out up to three mods.
   - Without the add-on every choice is Automatic, and choices it left behind are ignored. The same choices can also go into `dx12user.settings` by hand, with the game closed: `CMFFile_…` lines under a `[CMFSettings]` heading (add the heading if it is missing), listed in CMF's `README.txt`.

@@ -6,6 +6,8 @@
 - **Its own legend row** "All Quest Objectives" for objectives of quests the player does not follow, in the Quests tab at the mod's priority 200. It uses `CMFRegisterLegendRow` and `CMFRegisterLegendLabel` (API version 2) under CMF's quest-row rule (API version 6): a won row claim on a quest pin's `filteredType` takes those quest pins out of the shared quest row (author guide, "Quest rows").
 - **Removing a cached merchant pin** by using it twice. It uses CMF's pin clicks (API version 6, property 16 `PinClick` and the hook `CMFCore.OnPinClicked`), as designed in the pin click research (a launch record kept in the private development repository, sections 3.2 and 5.1) and taught in the author guide (`docs/authors/icon-pack-guide.md`, "Pin clicks").
 
+It also gives the mod its name in CMF's in-game menu: `CMFSetProviderName("modAQOOMRemastered", "All Quest Objectives")` (API version 8, adapter 1.1.0), called once per game start beside the row. Without it the menu tidies the provider's folder name to "AQOOMRemastered" (seen in the CMF 1.2.1 release test). The name is the mod's own text for its row (`FILTER_LABEL`) and changes nothing on the map.
+
 All Quest Objectives is unchanged. The adapter adds no rule of its own. The page for the mod's authors is [`docs/authors/all-quest-objectives-adapter.md`](../../../docs/authors/all-quest-objectives-adapter.md).
 
 ## Teaching example
@@ -71,7 +73,7 @@ Read for its interface only. Nothing is copied: the frame colours were read from
 ## Dependencies
 
 - **All Quest Objectives 1.2.1, a compile dependency.** The adapter calls its functions. It is installed and removed together with that mod, and removed first.
-- **CMF API version 6** to compile (`CMFPropertyPinClick`, the `OnPinClicked` hook). Earlier CMF versions stop at the compile screen.
+- **CMF API version 8** (CMF 1.2.0) to compile, from adapter 1.1.0: `CMFSetProviderName`. The click claim and hook need version 6 (`CMFPropertyPinClick`, the `OnPinClicked` hook). Earlier CMF versions stop at the compile screen; players on them keep adapter 1.0.0.
 - **Saves.** The adapter writes nothing into saves. All Quest Objectives keeps its merchant list in saves made while it is installed, so probe launches end without saving.
 
 ## Files
@@ -82,7 +84,7 @@ Read for its interface only. Nothing is copied: the frame colours were read from
 | `modCMFAdapterAllQuestObjectives/art/badge.png`, `mark.png` | the two placeholder pictures, cooked into the pack's `content/texture.cache` by `tools/cmf_pack.py build` |
 | `modCMFAdapterAllQuestObjectives/README.txt` | for players |
 | `adapter_art.py` | draws the two pictures (developer only; kept beside the adapter) |
-| `tests/test_cmf_aqo_adapter.py` | static checks: the two hook wrappers keep CMF's signatures and pass other providers on; the icon table matches the mod's 19 names and colours and the pictures are 96 x 96; the click claim is per pin with the mod's folder as provider and `use, doubleClick` only; the fake area number matches the mod's map file; only the three All Quest Objectives names are called; no pin field is written; WitcherScript hygiene; the pack tool in adapter mode. With `CMF_AQO_SCRIPTS` set to the mod's `content/scripts/local`, the signatures and the name list are checked against its files too (passed 2026-10-20); otherwise that case is skipped, which is not qualification |
+| `tests/test_cmf_aqo_adapter.py` | static checks: the two hook wrappers keep CMF's signatures and pass other providers on; the icon table matches the mod's 19 names and colours and the pictures are 96 x 96; the click claim is per pin with the mod's folder as provider and `use, doubleClick` only; the fake area number matches the mod's map file; only the three All Quest Objectives names are called; no pin field is written; WitcherScript hygiene; the menu name is set once, beside the row, with the mod's folder as provider; the pack tool in adapter mode. With `CMF_AQO_SCRIPTS` set to the mod's `content/scripts/local`, the signatures and the name list are checked against its files too (passed 2026-10-20); otherwise that case is skipped, which is not qualification |
 
 Build: `python tools/cmf_pack.py build modCMFAdapterAllQuestObjectives --adapts modAQOOMRemastered --out <folder>`. The check gives no warnings: the tool counts the image paths passed to `CMFStylePinIcon` as uses of `art/badge.png` and `art/mark.png`.
 
@@ -94,6 +96,8 @@ Launch P6+C2 run 2 (2026-10-20 ~20:05Z, record a launch record kept in the priva
 - Difficulty icons: proven. Green badges showed on untracked objectives, and the tracked quest kept the game's gold marker.
 - Legend row: proven. The "All Quest Objectives" row showed in the Quests tab; hiding it removed those objectives and kept the tracked gold marker.
 - Cached merchant pin click: not tried in game. It needs a merchant the game has stopped showing, and the step was optional.
+
+Adapter 1.1.0 (the menu name) passed on 2026-10-22 in two launches, the second from its release archive in the CMF 1.2.2 release test: the menu's Legend row read "Automatic (All Quest Objectives)", with no rejection or compile error.
 
 ## Limits
 

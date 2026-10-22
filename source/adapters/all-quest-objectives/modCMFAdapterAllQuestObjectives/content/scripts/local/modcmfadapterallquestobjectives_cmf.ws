@@ -1,7 +1,8 @@
-// All Quest Objectives adapter for Conjunction Map Framework. Requires CMF 6 or later and All Quest
-// Objectives On Map - Remastered 1.2.1 (Nexus 14319), which stays unchanged. Install and remove the two
+// All Quest Objectives adapter for Conjunction Map Framework. Requires CMF 8 (CMF 1.2.0) or later and All
+// Quest Objectives On Map - Remastered 1.2.1 (Nexus 14319), which stays unchanged. Install and remove the two
 // together: this file calls All Quest Objectives' own functions, so the game stops at the script compile
-// screen when that mod is missing, and it wraps CMF 6's click hook, which earlier CMF versions do not have.
+// screen when that mod is missing, and it wraps CMF 6's click hook and calls CMF 8's CMFSetProviderName,
+// which earlier CMF versions do not have.
 //
 // Three of All Quest Objectives' map features come back here.
 //
@@ -17,6 +18,10 @@
 // QuestObjectiveOther) in their own row instead of the game's shared quest row, so the player can hide them
 // on their own: the game's Quests tab, priority 200, named by aqoomRowLabel ("All Quest Objectives", its
 // constant FILTER_LABEL). This adapter registers that row and its name once per session.
+//
+// Its name in CMF's in-game menu. The menu lists each mod by name, and without one it tidies the provider's
+// folder name, which here reads "AQOOMRemastered". The adapter names the provider "All Quest Objectives",
+// the mod's own name for its row, once per session with the row. The name changes nothing on the map.
 //
 // Cached merchant pins. All Quest Objectives keeps a grey "[CACHED]" copy of a merchant's pin once the game
 // stops showing it, and lets the player remove that copy by using it twice. Its own map file did the click:
@@ -38,7 +43,8 @@
 // Quest Insight's included). Cached pins are neither fast-travel nor quest pins, so CMF lets the click claim
 // take "use" and "doubleClick".
 
-// All Quest Objectives' own legend row for the objectives of untracked quests, as its map file lists it.
+// All Quest Objectives' own legend row for the objectives of untracked quests, as its map file lists it, and
+// the mod's name in CMF's in-game menu.
 @wrapMethod(CR4Game)
 function OnGameStarted(restored : bool)
 {
@@ -46,6 +52,7 @@ function OnGameStarted(restored : bool)
 	result = wrappedMethod(restored);
 	CMFRegisterLegendRow("modAQOOMRemastered", 'QuestObjectiveOther', 'Quests', 200);
 	CMFRegisterLegendLabel("modAQOOMRemastered", 'QuestObjectiveOther', "All Quest Objectives");
+	CMFSetProviderName("modAQOOMRemastered", "All Quest Objectives");
 	return result;
 }
 

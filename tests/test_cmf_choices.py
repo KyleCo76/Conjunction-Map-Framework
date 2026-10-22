@@ -532,15 +532,19 @@ class MenuScriptTests(unittest.TestCase):
         self.assertNotIn('core.ProviderName(winner) + " ("', text)
         self.assertNotIn('labels.PushBack(core.ProviderName(', text)
 
-    def test_no_offered_by_line_and_no_headings_on_basic(self):
-        # Kyle 2026-10-22 (menu launches 3 to 5): no route showed a per-row "which mods" line well, so it is cut
-        # everywhere; Basic keeps no headings, so the game draws no jump list beside it.
+    def test_help_box_on_every_page_and_no_headings_on_basic(self):
+        # Kyle 2026-10-22 16:43Z ("Box everywhere"): the help line shows only in the Options list's own help box. A row
+        # label change also renames the selected left-hand entry (night launch), so no label or value update is used,
+        # and no per-row description line (it moves the rows).
         text = self.script()
-        for gone in ('OnOptionSelectionChanged', 'm_fxUpdateOption', 'force_update_values', '"description"', 'CMFInfo_'):
+        for gone in ('force_update_values', '"description"', 'm_fxUpdateOptionValue', 'm_fxUpdateOptionLabel',
+                     'CMFInfo_', 'SetMemberFlashUInt("tag"', 'menu selection'):
             self.assertNotIn(gone, text)
+        self.assertIn('"showBardsBalladTooltip"', text)
+        self.assertIn('@wrapMethod(CR4IngameMenu) function OnShowOptionSubmenu(', text)
         root = ET.fromstring(addon.menu_xml())
+        self.assertFalse([var.get('id') for var in root.iter('Var') if var.get('id', '').startswith('CMFInfo_')])
         for var in root.iter('Var'):
-            self.assertFalse(var.get('id', '').startswith('CMFInfo_'))
             self.assertNotEqual(var.get('displayType'), 'SUBTLE_SEPARATOR')
         # Headings stay only where they carry text found nowhere else (Mod order's meaning, the loaded-mods count);
         # the choice pages are plain lists (Kyle 2026-10-22 06:26Z and 06:41Z).

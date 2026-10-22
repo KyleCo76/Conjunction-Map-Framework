@@ -1,5 +1,5 @@
 All Quest Objectives adapter for Conjunction Map Framework
-Version 0.3 (its own legend row)
+Version 1.1.0
 
 Brings back three of All Quest Objectives' map features on Conjunction Map Framework's
 world map: the difficulty icons on untracked quest objectives, their own legend row,
@@ -10,13 +10,15 @@ row to list and which pins take the click, and hands each click back to All Ques
 Objectives.
 
 REQUIREMENTS
-- Conjunction Map Framework version 6 or later.
+- Conjunction Map Framework 1.2.0 or later. With an earlier CMF the game stops at the
+  script compile screen; update CMF first, or keep adapter 1.0.0.
 - All Quest Objectives On Map - Remastered 1.2.1 (Nexus mod 14319), installed as its
   author describes. This adapter calls All Quest Objectives' own functions. Without
   it the game stops at the script compile screen. Other versions are not checked.
 
 INSTALL AND REMOVE THEM TOGETHER
-- Install this adapter only while All Quest Objectives 1.2.1 and CMF 6 are installed.
+- Install this adapter only while All Quest Objectives 1.2.1 and CMF 1.2.0 or later are
+  installed.
 - Remove this adapter BEFORE removing All Quest Objectives or Conjunction Map
   Framework. If either is removed first, the game stops at the script compile screen
   until this adapter is removed too.
@@ -38,6 +40,10 @@ WHAT YOU SEE
   same cached pin to remove it." appears; do it again and "Merchant pin removed." shows
   and the pin goes. Reopening the map starts over, as before.
 - Signposts, quests and every other pin keep the game's own use.
+- With CMF's in-game menu add-on, All Quest Objectives is listed by its name, "All Quest
+  Objectives", once a save is loaded. At the title screen, before any save is loaded,
+  the menu still shows its folder name tidied ("AQOOMRemastered"). The name changes
+  nothing on the map.
 
 KNOWN DIFFERENCES AND LIMITS
 - The badge and the exclamation mark are this adapter's own placeholder drawings in
@@ -49,6 +55,11 @@ KNOWN DIFFERENCES AND LIMITS
   decides which mod's choice wins. Its choices are made pin by pin, so they win over
   any mod that changes a whole pin type or one tag. If Map Quest Insight's adapter is
   installed too, this one's icons win on the pins both change.
+
+CHANGES
+- 1.1.0: names All Quest Objectives in CMF's in-game menu ("All Quest Objectives"
+  instead of "AQOOMRemastered"). Needs CMF 1.2.0 or later. Nothing else changed.
+- 1.0.0: first release.
 
 INSTALL
 Extract the archive into your The Witcher 3 game folder, or install it with a mod

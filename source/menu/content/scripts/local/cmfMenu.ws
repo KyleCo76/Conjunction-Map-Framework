@@ -11,6 +11,49 @@ class CMFMenuState extends CObject
 {
 	private var rowVars : array<name>;
 	private var rowAnswers : array<string>;
+	private var helpVars : array<name>;
+	private var helpTexts : array<string>;
+	private var boxShown : bool;
+
+	// 1.1.0: the help line of a choice row ("Offered by: ..."), made when its page is built.
+	public function RememberHelp(varName : name, text : string)
+	{
+		var i : int;
+		i = helpVars.FindFirst(varName);
+		if (i < 0)
+		{
+			helpVars.PushBack(varName);
+			helpTexts.PushBack(text);
+		}
+		else
+		{
+			helpTexts[i] = text;
+		}
+	}
+
+	public function Help(varName : name, out text : string) : bool
+	{
+		var i : int;
+		i = helpVars.FindFirst(varName);
+		text = "";
+		if (i < 0)
+		{
+			return false;
+		}
+		text = helpTexts[i];
+		return true;
+	}
+
+	// Whether the Options list's help box shows a CMF help line now.
+	public function SetBoxShown(shown : bool)
+	{
+		boxShown = shown;
+	}
+
+	public function BoxShown() : bool
+	{
+		return boxShown;
+	}
 
 	public function Remember(varName : name, answers : string)
 	{
@@ -565,6 +608,7 @@ function CMFMenuFillPick(storage : CScriptedFlashValueStorage, row : CScriptedFl
 	current = CMFMenuPlaceStored(stored, labels, answers, 25, providers);
 	CMFMenuSetChoices(storage, row, labels, current, !offeredAny && stored == "");
 	theGame.CMFMenuGetState().Remember(varName, CMFMenuJoin(answers));
+	theGame.CMFMenuGetState().RememberHelp(varName, CMFMenuHelpText(choice, providers, remembered, seen));
 	if (config.GetVarValue(groupName, varName) != IntToString(current))
 	{
 		config.SetVarValue(groupName, varName, IntToString(current));
@@ -723,6 +767,84 @@ function CMFMenuFillWin(storage : CScriptedFlashValueStorage, row : CScriptedFla
 	}
 	labels.PushBack(text);
 	CMFMenuSetChoices(storage, row, labels, 0, greyed);
+}
+
+// 1.1.0: the help line of a choice row. It names every loaded map mod that offers the piece, in order; before the
+// map has been opened some offers are not known yet, so it says so (menu launch 3: the line named one mod while more
+// could be chosen).
+function CMFMenuHelpText(choice : int, providers : array<string>, remembered : bool, seen : bool) : string
+{
+	var core : CMFCore;
+	var text : string;
+	var i, shown : int;
+	if (remembered)
+	{
+		return "Load a save to see which mods offer this";
+	}
+	core = theGame.CMFGetCore();
+	text = "";
+	shown = 0;
+	for (i = 0; i < providers.Size(); i += 1)
+	{
+		if (core.Offers(choice, providers[i]))
+		{
+			if (shown > 0)
+			{
+				text += ", ";
+			}
+			text += core.ProviderName(providers[i]);
+			shown += 1;
+		}
+	}
+	if (shown == 0)
+	{
+		if (!seen)
+		{
+			return "Open the map once to see which mods offer this";
+		}
+		return "No loaded map mod offers this";
+	}
+	if (!seen)
+	{
+		return "Offered by: " + text + " (open the map once for the rest)";
+	}
+	return "Offered by: " + text;
+}
+
+// 1.1.0: the game calls this each time the highlight moves to an Options row (menu launch 3). A CMF choice row shows
+// its help line in the Options list's own help box (updateBardsBalladText and showBardsBalladTooltip); any other row
+// hides the box again. Changing a row's label instead also renames the selected left-hand entry (night launch
+// 2026-10-22), so the help line never goes into a row.
+@wrapMethod(CR4IngameMenu) function OnOptionSelectionChanged(optionName : name, value : bool)
+{
+	var menuState : CMFMenuState;
+	var text : string;
+	menuState = theGame.CMFMenuGetState();
+	if (StrBeginsWith(NameToString(optionName), "CMFPick_") && menuState.Help(optionName, text))
+	{
+		m_flashModule.GetMemberFlashFunction("updateBardsBalladText").InvokeSelfOneArg(FlashArgString(text));
+		m_flashModule.GetMemberFlashFunction("showBardsBalladTooltip").InvokeSelfOneArg(FlashArgBool(true));
+		menuState.SetBoxShown(true);
+	}
+	else if (menuState.BoxShown())
+	{
+		m_flashModule.GetMemberFlashFunction("updateBardsBalladText").InvokeSelfOneArg(FlashArgString(""));
+		m_flashModule.GetMemberFlashFunction("showBardsBalladTooltip").InvokeSelfOneArg(FlashArgBool(false));
+		menuState.SetBoxShown(false);
+	}
+	return wrappedMethod(optionName, value);
+}
+
+// 1.1.0: a newly shown Options page never keeps the box from the last one.
+@wrapMethod(CR4IngameMenu) function OnShowOptionSubmenu(actionType : int, menuTag : int, id : string) : void
+{
+	if (theGame.CMFMenuGetState().BoxShown())
+	{
+		m_flashModule.GetMemberFlashFunction("updateBardsBalladText").InvokeSelfOneArg(FlashArgString(""));
+		m_flashModule.GetMemberFlashFunction("showBardsBalladTooltip").InvokeSelfOneArg(FlashArgBool(false));
+		theGame.CMFMenuGetState().SetBoxShown(false);
+	}
+	wrappedMethod(actionType, menuTag, id);
 }
 
 // Called by the game after an Options row changes and its value is stored. A choice or order row stores the folder
