@@ -753,7 +753,7 @@ One exception keeps existing mods' values readable for their adapters: the game 
 | --- | --- | --- |
 | `qmiLevelText`, `qmiIconScale`, `qmiIconTop`, `qmiIconKind`, `qmiNoCrosshairLabel`, `qmiIconTint` | Map Quest Insight 1.5.0 | its adapter |
 | `iaiLv`, `iaiDiff` | Ink and Iron 0.8.7 and 0.8.8 | its adapter |
-| `uireScale`, `uireHideLabel`, `uireLevelLabel`, `uireLevel`, `uireLevelColor` | UI Remastered | declared as names only; its adapter, UI Remastered Edition adapter 1.0.0 (CMF 1.1.3), registers no claims and only splits UI Remastered's pin titles in `OnPinReady` |
+| `uireScale`, `uireHideLabel`, `uireLevelLabel`, `uireLevel`, `uireLevelColor` | UI Remastered | declared as names only; CMF ships no adapter for it |
 
 CMF itself ships no art from other mods. An adapter carries its own placeholder pictures, or a mod author's art only with that author's permission, credited: the Gwent Players Map and Witcher Gear Map adapters carry their author MateusAnd's art since 1.0.1, and the Map Quest Insight adapter carries its author Wolfer's quest icons since 1.0.1. Authors supply their own art and effects through the calls above.
 

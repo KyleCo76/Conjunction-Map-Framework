@@ -86,7 +86,7 @@ CMF comes as separate archives. You always need CMF itself; take the rest only f
 | `modCMFInGameMenu` | In-game menu add-on (1.1.0): choose in Options which map mod wins each feature | Optional. See [Good to know](#good-to-know) |
 | `modCMFMinimapPanel` | Minimap add-on (2.1.0): your icon packs' icons and colours on the HUD minimap too, on top of whichever minimap you have | Optional. See [Good to know](#good-to-know) for the minimap and HUD mods it was tested with |
 | `modCMFExampleIconPack` | Sample icon pack: a small example for pack authors | Optional |
-| `modCMFAdapter…` (12 archives) | Adapters for 12 map mods that don't support CMF yet | Only for those mods you use, and only until the mod's author updates it for CMF. See [Supported map mods](#supported-map-mods) |
+| `modCMFAdapter…` (11 archives) | Adapters for 11 map mods that don't support CMF yet | Only for those mods you use, and only until the mod's author updates it for CMF. See [Supported map mods](#supported-map-mods) |
 
 ### Installing
 
@@ -102,10 +102,7 @@ Every archive has a `README.txt` with its full install, update and removal steps
 
 Many map mods work with CMF as they are, with no adapter. An **adapter** is a small stand-in for a mod that doesn't support CMF yet: it brings that mod's map features back on CMF's map while the mod itself stays exactly as its author ships it. Once the author updates the mod for CMF, you remove the adapter. Adapters **contain none of the mod they adapt** (only art its author gave for CMF, credited), add no features of their own, and **only work with that mod installed**: without it, the game stops at the script compile screen.
 
-Two exceptions:
-
-- The **Coloured Map Markers** adapter also shows its icons without that mod installed. Coloured Map Markers is a map-file-only mod with no scripts an adapter could check, and its author's permission covers using its icons on their own. Keep Coloured Map Markers installed anyway if you like its minimap colours: it keeps colouring the minimap as before, and with the minimap add-on the adapter's icons show on top of that minimap too.
-- The **UI Remastered Edition** adapter only calls CMF, so the game still starts without UI Remastered Edition; the adapter then changes nothing. Install it only with UI Remastered Edition.
+One exception: the **Coloured Map Markers** adapter also shows its icons without that mod installed. Coloured Map Markers is a map-file-only mod with no scripts an adapter could check, and its author's permission covers using its icons on their own. Keep Coloured Map Markers installed anyway if you like its minimap colours: it keeps colouring the minimap as before, and with the minimap add-on the adapter's icons show on top of that minimap too.
 
 | Mod | Tested version | Adapter | What the adapter brings back |
 | --- | --- | --- | --- |
@@ -118,7 +115,6 @@ Two exceptions:
 | Map Pin Teleport | 1.2.2 | 1.0.0 | Teleporting from your own map pins |
 | Map Quest Insight | 1.6.1 | **1.0.1** | Quest icons by type (main quest, contract and Gwent quest icons in its author's own art), coloured level labels, its info box, spreading stacked markers |
 | The Stable - Roach-Horse Customization | 2.2.1 | 1.0.0 | Its Stables row on the map |
-| UI Remastered Edition | 1.00 | **1.0.1** | Clean quest titles: its quest level text on its own line under the objective, instead of a stray "#UHL#" marker and the level inside the title |
 | Witcher Upgrade Gear Map | 1.0.1 | **1.0.1** | Its diagram markers, in its author's own art and school colours, its "Witcher Gear" tab and legend row |
 | Witcher's Path | 1.0.3 | 1.0.0 | Its travel route drawn on the map, and its buttons |
 
@@ -129,7 +125,7 @@ Two exceptions:
 
 **Tested, no adapter needed:** Map Remastered 2.4.2, All Quest Markers, Wild Monster Hunt, Wolf's Bearing, Apocrypha Menu Framework 1.0.6, HUD Position Manager 1.0.0.
 
-**Not supported yet (needs its author's update):** some map mods keep their map features, and often their icon art, inside their own copy of the world map file. CMF never copies another mod's art or files unless its author permits it, so those features stay hidden under CMF until the author updates the mod for CMF or gives permission for an adapter to use them. The mod's scripts and menus keep working meanwhile. UI Remastered Edition is partly in this group: its HUD and menus work, CMF's map opens and its adapter keeps quest titles clean, but its own map look (its quest icons, legend counts and journal on the map) stays missing until its author updates it for CMF. Smooth Map and Community Patch - World Map are in the same group: everything they change lives in their own map file, so 1.0.0 has no adapter for them.
+**Not supported yet (needs its author's update):** some map mods keep their map features, and often their icon art, inside their own copy of the world map file. CMF never copies another mod's art or files unless its author permits it, so those features stay hidden under CMF until the author updates the mod for CMF or gives permission for an adapter to use them. The mod's scripts and menus keep working meanwhile. UI Remastered Edition is in this group: its HUD and menus work and CMF's map opens, but its own map look (its quest icons, legend counts and journal on the map) does not show under CMF. Its CMF adapter was removed after word from the mod's author. Without it, quest titles in CMF's info box show UI Remastered's raw "#UHL#" level marker again. Smooth Map and Community Patch - World Map are in the same group: everything they change lives in their own map file, so 1.0.0 has no adapter for them.
 
 The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/witcher3/mods/14693).
 
@@ -146,7 +142,6 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 - **Witcher's Path:** its speed setting does nothing under CMF.
 - **World Map Merger** has not been tried with CMF. Its merged map file loads ahead of CMF's, which would switch CMF's map off.
 - **Map Pin Teleport:** the "Go Now" texts are English, as in the mod itself.
-- **UI Remastered Edition:** the adapter puts the quest level line under the objective in the info box; UI Remastered's own map shows it in its own tooltip.
 - Per-mod details are in each adapter's `README.txt` and in the release's `test-notes.md`.
 
 </details>
@@ -272,7 +267,7 @@ The adapters are teaching examples, written as the code that mod's own author wo
 | Witcher Upgrade Gear Map | [page](docs/authors/witcher-gear-map-adapter.md) | [source](source/adapters/witcher-gear-map/) |
 | Witcher's Path | [page](docs/authors/witchers-path-adapter.md) | [source](source/adapters/witchers-path/) |
 
-The Coloured Map Markers adapter has no porting page: that mod has no scripts, so the adapter is only its icons registered with CMF ([source](source/adapters/coloured-map-markers/)). The UI Remastered Edition adapter has none either: its one change, splitting a quest title at UI Remastered's level marker, is explained in its [source](source/adapters/ui-remastered/).
+The Coloured Map Markers adapter has no porting page: that mod has no scripts, so the adapter is only its icons registered with CMF ([source](source/adapters/coloured-map-markers/)).
 
 **Smooth Map** has a [porting page](docs/authors/smooth-map-adapter.md) and a [proof-of-concept example adapter](source/adapters/smooth-map/) for its author. That example is not part of any CMF release, and Smooth Map's values on their own have not been checked in a launch. Community Patch - World Map has a porting section in the [author guide, section 12](docs/authors/icon-pack-guide.md#12-teaching-examples-moving-a-map-mod-onto-cmf); no adapter ships for either mod.
 
@@ -292,7 +287,7 @@ The Coloured Map Markers adapter has no porting page: that mod has no scripts, s
 | `source/panel` | the edit sets CMF applies to the game's world map panel, and CMF's own ActionScript classes |
 | `source/menu` | the in-game menu add-on: its script, menu file and string source |
 | `source/minimap` | the minimap add-on: its script and its own HUD part's ActionScript class |
-| `source/adapters` | the 12 adapters, one folder each, with a developer `README.md` and the shipped pack folder |
+| `source/adapters` | the 11 adapters, one folder each, with a developer `README.md` and the shipped pack folder |
 | `examples/modCMFExampleIconPack` | the sample icon pack, to copy from |
 | `source/providers` | developer test packs (never shipped) |
 | `docs/authors`, `docs/api` | the author guide, pin type list, porting pages and map bindings |
