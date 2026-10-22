@@ -47,6 +47,28 @@ function CMFSettingsProviderRank(order : string, provider : string) : int
 	return StrFindFirst("," + StrLower(order) + ",", "," + StrLower(provider) + ",");
 }
 
+// Version 8: a per-feature choice as written in a setting ([CMFSettings] CMFFile_<key>, or a menu row): spaces
+// removed; "vanilla" or "off" in any case read "vanilla"; "", "auto", "automatic" and "default" read "" (Automatic);
+// anything else is a folder name, kept as written. One word per value, never a comma. The core reads every
+// CMFFile_ value of the group each time it prepares winners (CMFCore.ReadChoices).
+function CMFSettingsChoiceValue(value : string) : string
+{
+	var word : string;
+	var lowered : string;
+	word = StrReplaceAll(value, " ", "");
+	lowered = StrLower(word);
+	if (lowered == "vanilla" || lowered == "off")
+	{
+		return "vanilla";
+	}
+	if (lowered == "" || lowered == "auto" || lowered == "automatic" || lowered == "default")
+	{
+		return "";
+	}
+	return word;
+}
+
+// The who-wins report (CMFCore.ReportChoices) when true.
 function CMFSettingsDebug() : bool
 {
 	return theGame.GetInGameConfigWrapper().GetVarValue('CMFSettings', 'CMFDebug') == "true";

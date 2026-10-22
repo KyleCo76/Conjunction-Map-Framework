@@ -92,7 +92,9 @@ Write a property newer than the CMF version you require as its number, not as it
 | `CMFRegisterBackground(provider : string, area : name, imageRoot : string)` | Replaces the map image of one area, such as `'AN_NMLandNovigrad'` (Velen and Novigrad). The tiles live in your pack's texture cache at `gameplay\gui_new\maps\<imageRoot>\level<L>\tile<X>x<Y>.jpg`, with the same tile size, level range and tile count as the area's vanilla image; CMF logs those values per area (`background area=...`) the first time the map shows it. The map draws level 0 as its background layer, then the area's own levels. |
 | `CMFRequireVersion(provider : string, minVersion : int) : bool` | Returns `false` and logs a line when the installed CMF is older than `minVersion`. Wrap your calls in it as above. |
 | `CMFReleaseProvider(provider : string)` | Withdraws everything your pack registered. Only needed if your pack can be switched off without being uninstalled. |
-| `CMFGetVersion() : int` | The installed CMF interface version (`6` in CMF 1.0.0). |
+| `CMFGetVersion() : int` | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0). |
+| `CMFSetProviderName(provider : string, displayName : string) : bool` | API version 8. The name CMF's in-game menu shows for your mod, for example `"Acme Icons"`; without it the menu shows your folder name tidied. Returns `false` and logs for an empty provider or name. See [Players' choices](Who-Wins-Each-Feature.md). |
+| `CMFChoicesChanged()` | API version 8. Tells CMF that a player's choice changed, so it prepares its winners again before the next lookup. CMF's menu add-on calls it; a pack never needs to. |
 
 Behaviour you can rely on:
 

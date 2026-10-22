@@ -4,7 +4,7 @@ Conjunction Map Framework (CMF) is a single world map that map mods can share. C
 
 An **icon pack** is the simplest kind of CMF mod. It changes how existing map pins look on the full-screen world map: their icon, their legend icon and their colour. It does not add or move pins; from API version 3 any CMF mod can also hide pins, and from API version 4 resize pins and change their labels (section 5). You do not edit any map file and you do not need Script Merger, FFDec, REDkit or WolvenKit.
 
-This guide is for someone who has made a Witcher 3 mod before but has never seen CMF. Everything it describes is in CMF's API version 6 (`CMFGetVersion()` returns `6`; this is the version of CMF's script interface, not a release number). Calls and sections marked API version 2 to 6 need that version or later; the rest works from API version 1 on. Parts that have not yet run in game say so. Section 12 shows how existing map mods move onto CMF. A finished example is in [`examples/modCMFExampleIconPack`](../../examples/modCMFExampleIconPack/).
+This guide is for someone who has made a Witcher 3 mod before but has never seen CMF. Everything it describes is in CMF 1.2.0, which is API version 8 (`CMFGetVersion()` returns `8`; this is the version of CMF's script interface, not a release number). Calls and sections marked API version 2 to 8 need that version or later; the rest works from API version 1 on. Parts that have not yet run in game say so. Section 12 shows how existing map mods move onto CMF. A finished example is in [`examples/modCMFExampleIconPack`](../../examples/modCMFExampleIconPack/).
 
 ## 1. What you need
 
@@ -152,7 +152,9 @@ Write a property newer than the CMF version you require as its number, not as it
 | `CMFRegisterBackground(provider : string, area : name, imageRoot : string)` | Replaces the map image of one area, such as `'AN_NMLandNovigrad'` (Velen and Novigrad). The tiles live in your pack's texture cache at `gameplay\gui_new\maps\<imageRoot>\level<L>\tile<X>x<Y>.jpg`, with the same tile size, level range and tile count as the area's vanilla image; CMF logs those values per area (`background area=...`) the first time the map shows it. The map draws level 0 as its background layer, then the area's own levels. |
 | `CMFRequireVersion(provider : string, minVersion : int) : bool` | Returns `false` and logs a line when the installed CMF is older than `minVersion`. Wrap your calls in it as above. |
 | `CMFReleaseProvider(provider : string)` | Withdraws everything your pack registered. Only needed if your pack can be switched off without being uninstalled. |
-| `CMFGetVersion() : int` | The installed CMF interface version (`6` in CMF 1.0.0). |
+| `CMFGetVersion() : int` | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0). |
+| `CMFSetProviderName(provider : string, displayName : string) : bool` | API version 8. The name CMF's in-game menu shows for your mod, for example `"Acme Icons"`; without it the menu shows your folder name tidied. Returns `false` and logs for an empty provider or name. See [Players' choices](icon-pack-guide.md#players-choices-who-wins-each-feature-api-version-8). |
+| `CMFChoicesChanged()` | API version 8. Tells CMF that a player's choice changed, so it prepares its winners again before the next lookup. CMF's menu add-on calls it; a pack never needs to. |
 
 Behaviour you can rely on:
 
@@ -615,6 +617,41 @@ function OnDrawingClicked(menu : CR4MapMenu, provider : string, id : name, input
 
 Log lines: `space sent area= entries= values=`, `panel space drawn area= drawings= lines= points= texts= movies= ms=`, `panel movie loaded`, `panel movie drawn id= ok=`, `listen ready keys=`, `panel listen arrived key=`, `panel listen refused key=`, `panel space check ...` (about a second after each draw: the layers' colour and visibility, each drawing's box on screen, a line's colours, a text's width, a movie's state), `panel drawing click id= value=`, `drawing click provider= id= value=` (and `reason=nohandler` when nobody answers). Not in this version: the map waiting for a drawing before its fade-in (`holdMap`), simplifying long lines by zoom, clicks on `mapSpace` drawings, and children tied to a `mapSpace` drawing.
 
+### Players' choices: who wins each feature (API version 8)
+
+From CMF 1.2.0 a player can choose which mod wins each feature of the map, and each piece of most features: pin icons from one mod, pin colours from another, the map painting of one region from a third. The player chooses in CMF's optional in-game menu add-on (`modCMFInGameMenu`, under Options > Mods > Conjunction Map Framework) or in the settings file; [Settings file keys](settings-file-keys.md) lists every feature and piece with its file key and its menu row. Each choice is a mod, Vanilla (the game's own look for that piece) or Automatic.
+
+Your script does not change. Keep registering as before: the player's choices decide between the claims mods have sent, they never add or change a claim. With nothing chosen, CMF 1.2.0 picks the winners exactly as 1.1.0 did, and packs made for earlier versions need no change.
+
+**The order of authority.** For each piece CMF asks these levels in turn. The first one that is not Automatic decides; the menu's Status page and the log name each level as shown in brackets:
+
+1. the Advanced in-game choice for the piece (Advanced),
+2. the Basic in-game choice for its feature (Basic),
+3. the in-game Mod order (Mod order),
+4. the Advanced file choice, `CMFFile_<Feature>_<Piece>` (Advanced file),
+5. the Basic file choice, `CMFFile_<Feature>` (Basic file),
+6. the file Mod order, `CMFProviderOrder1` to `CMFProviderOrder8` (File order),
+7. CMF's default order, folder names sorted (Default).
+
+When two mods claim the same thing, a level decides between them only when it names one of them; a level that names another mod, Vanilla or nothing passes the question to the next level. A mod chosen for a piece wins every pin it has something for. On a pin where it has nothing, the next mod in order decides, or the game's own look shows when the player sets the General row "If the chosen mod has nothing for a pin" (or `CMFFile_Fallthrough`) to Vanilla. In-game choices come only from the menu add-on: without it every in-game level reads Automatic, and values a removed add-on left behind steer nothing.
+
+**Added together: hidden pins and drawings.** Hide claims (with greyed pins and filter-tab hides) and drawings are never decided between mods: every mod's applies. Their choices work differently. Automatic keeps every mod's, Vanilla keeps none, a chosen mod keeps only that mod's, and three Ignore slots (`Hidden_Ignore1` to `3`, `Drawings_Ignore1` to `3`) each leave one mod out. When any in-game row of one of these two features is set, the in-game rows replace the file's for that feature; they are not added to them.
+
+**Your mod's name in the menu.** The menu lists mods by name. Without a name of your own it tidies your folder name: it drops the `mod` prefix, then CMF's own `CMFAdapter` or `CMF` prefix (so an adapter reads as the mod it adapts), then leading digits and underscores; underscores become spaces, words split where a small letter meets a capital, and each word starts with a capital. `modExampleIconPack` reads "Example Icon Pack", `modCMFAdapterSomeMod` reads "Some Mod". To choose the name yourself, call `CMFSetProviderName` once, where you register your claims:
+
+```
+if (CMFRequireVersion("modAcmeIcons", 8))
+{
+	CMFSetProviderName("modAcmeIcons", "Acme Icons");
+}
+```
+
+A call to a function CMF does not have stops the game at the script compile screen, which `CMFRequireVersion` cannot prevent, so calling `CMFSetProviderName` means your pack needs CMF 1.2.0 or later. If your pack must also load on an older CMF, leave the call out and let the menu tidy your folder name.
+
+**When choices are read.** CMF reads the choices each time it prepares its winners. `CMFChoicesChanged()` makes it prepare them again before the next lookup, so the world map shows the new winners the next time it opens and the minimap add-on follows on its next frame. The menu add-on calls it when a row changes; a pack does not need it. Some offers are known only after the world map has been opened once in a session, because CMF learns them as the pins are drawn.
+
+Settings values hold one word each and never a comma: the game ends a value at its first comma.
+
 ## 6. Choosing pin types
 
 [`pin-types.md`](pin-types.md) lists every name the 5.01 world map uses, generated from the map itself, with a column saying whether a claim on it does anything in API version 1. Things worth knowing before you choose:
@@ -745,6 +782,7 @@ CMF itself ships no art from other mods. An adapter carries its own placeholder 
   ```
 
   Listed packs win over every pack not listed, in the order given; the rest keep folder order. It changes only which pack's look CMF uses, never what a mod is allowed to do. Put one name on each line: the game reads a value only up to its first comma, and rewrites the file that way when it exits. The game also moves the section within the file when it saves settings; that is harmless. This form ran in game on 2026-10-20: both names were read in order and kept when the game exited.
+- **Choose who wins, feature by feature (CMF 1.2.0).** The optional in-game menu add-on, `modCMFInGameMenu`, lets you pick a mod, Vanilla or Automatic for each feature (pin icons, colours, size, labels, clicks, the legend, hidden pins, the map look, movement, painting and drawings) and for most of their pieces, under Options > Mods > Conjunction Map Framework. Without it, write the same choices into `dx12user.settings` under `[CMFSettings]`, one per line, for example `CMFFile_Icons=modCMFExampleIconPack` or `CMFFile_Painting_Skellige=Vanilla`. [Settings file keys](settings-file-keys.md) lists every key, and [Players' choices](icon-pack-guide.md#players-choices-who-wins-each-feature-api-version-8) explains which answer wins when several are set.
 - **A map mod not yet ported to CMF** ships its own copy of the map. CMF's map loads first, so that mod's own map-screen features (new pins or filter rows, colours, fog, faster scrolling) will not show until the mod is ported to CMF. Its scripts and menus keep working.
 - **Do not give another map mod a lower `Priority` than CMF in `mods.settings`** unless you mean to switch CMF's map off. If you do, CMF packs' icons disappear and nothing else breaks.
 - **Minimap icons are optional.** CMF's main folder leaves the HUD minimap stock. The separate `modCMFMinimapPanel` folder (2.1.0) adds its own HUD part on top of whichever minimap is installed and never moves or resizes that minimap, so it replaces no game file. It changes minimap pins by type only: type claims (an icon or tint per pin type) show on it, and a claim on one particular pin shows on the world map only. A pin type a pack hides everywhere is hidden on the minimap too: that takes a type hide (`CMFRegisterHidden`, not `CMFRegisterHiddenForTag`) on the exact pin type, for every map context (`mapContext` left empty), with no exemption a pin of that type could meet (the quest and tracked exemptions on quest types, the fast-travel exemption on `RoadSign`, `Harbor` and `Transport`). The add-on then masks that pin's icon, though a quest ring or glow the minimap draws round it can still show; as on the world map, a hide beats an icon or tint. Hides of single pins (tags), filtered types or map contexts, and hides with such an exemption, stay world-map only, and unclaimed pins look as the installed minimap draws them. Without the add-on the minimap shows every pin as before. It uses the HUD's unused `hud_pickeditemsinfo` slot, so a mod that fills that slot too would clash; none is known. It was tested with the game's own minimap, HUD Position Manager 1.0.0, Ink & Iron 0.8.10, Map Remastered 2.4.2, UI Remastered Edition 1.00 (navigation mode set to Minimap) and Coloured Map Markers 1.60 with its adapter; moving the minimap with HUD Position Manager, controllers and Proton are not yet tested.
@@ -989,7 +1027,7 @@ CMFRegisterTint("mod000CommunityPatch_WorldMap", 'Botanist', 16763904);	// gold 
 CMFRegister("mod000CommunityPatch_WorldMap", 6, 'Stables', '', "NPCs", 516);
 ```
 
-CMF's tabs show fast-travel pins, so an `OnPinReady` wrapper (API version 4) leaves every pin with `isFastTravel` out of your tab, the same test your map file made: `CMFStylePin("mod000CommunityPatch_WorldMap", dataObject, CMFPropertyTabHide(), "Botanist", 1)`. Smooth GUI changes nothing but the frame rate, so you send no other `navigation` key; if the game cannot change the rate while running, CMF answers `false` and the map stays at 24. The adapter is `source/adapters/community-patch`; its herb pictures are placeholders in its own texture cache, and its author page has the whole change. In game on 2026-10-20, without Botanist installed, the log showed the 60 fps map, the Botanist tab and its rows, and the Stables row. The herb art and tints and keeping Botanist's rows out of Default were seen on 2026-10-21 through the Botanist adapter, which makes the same claims (Community Patch was out for that launch).
+CMF's tabs show fast-travel pins, so an `OnPinReady` wrapper (API version 4) leaves every pin with `isFastTravel` out of your tab, the same test your map file made: `CMFStylePin("mod000CommunityPatch_WorldMap", dataObject, CMFPropertyTabHide(), "Botanist", 1)`. Smooth GUI changes nothing but the frame rate, so you send no other `navigation` key; if the game cannot change the rate while running, CMF answers `false` and the map stays at 24. The adapter is `source/adapters/community-patch`; its herb pictures are placeholders in its own texture cache, and [its author page](community-patch-adapter.md) has the whole change. In game on 2026-10-20, without Botanist installed, the log showed the 60 fps map, the Botanist tab and its rows, and the Stables row. The herb art and tints and keeping Botanist's rows out of Default were seen on 2026-10-21 through the Botanist adapter, which makes the same claims (Community Patch was out for that launch).
 
 ### Botanist (API version 6)
 

@@ -42,6 +42,8 @@ class AuthorDocsTest(unittest.TestCase):
         self.assertEqual(sorted(p.name for p in WIKI.glob('*.md')), sorted(self.pages))
         self.assertEqual((ROOT/docs.THEME).read_text(encoding='utf-8'), self.theme,
                          'theme tables out of date: run python tools/cmf_author_docs.py build')
+        self.assertEqual((ROOT/docs.SETTINGS).read_text(encoding='utf-8'), self.build.settings,
+                         'settings keys out of date: run python tools/cmf_author_docs.py build')
 
     def test_links_and_anchors_resolve(self):
         for name, text in self.pages.items():
@@ -83,6 +85,25 @@ class AuthorDocsTest(unittest.TestCase):
         text = (ROOT/docs.THEME).read_text(encoding='utf-8').replace('`riseOffsetTracked`', 'riseOffsetTracked')
         build.theme_text(text)
         self.assertTrue(any('riseOffsetTracked' in error for error in build.errors))
+
+    def test_every_settings_key_is_listed(self):
+        core = (ROOT/docs.CORE).read_text(encoding='utf-8')
+        listed = re.search(r'function CMFChoiceKeys\(\) : string\s*\{\s*return (.*?);', core, re.S).group(1)
+        keys = [k for k in ''.join(re.findall(r'"([^"]*)"', listed)).split(',') if k]
+        self.assertGreater(len(keys), 50)
+        page = self.pages['Settings-File-Keys.md']
+        for key in keys + ['Fallthrough']:
+            self.assertIn('| `CMFFile_%s` |' % key, page)
+
+    def test_a_choice_key_without_a_menu_row_fails(self):
+        build = docs.Build()
+        real = docs.read
+        docs.read = lambda path: real(path).replace('CMFPick_Look_Hints', 'CMFPick_Gone') if path == docs.CHOICE_MENU else real(path)
+        try:
+            build.settings_tables()
+        finally:
+            docs.read = real
+        self.assertTrue(any('Look_Hints' in error for error in build.errors))
 
     def test_wiki_form(self):
         build = docs.Build(wiki=True, repo_url='https://github.com/OWNER/REPO')

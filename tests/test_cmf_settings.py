@@ -39,6 +39,12 @@ def catalog(path):
     return json.loads(path.read_text(encoding='utf-8'))
 
 
+def choice_keys():
+    core = (ROOT/'source/core/content/scripts/local/cmfCore.ws').read_text(encoding='ascii')
+    body = re.search(r'function CMFChoiceKeys\(\) : string\n\{\n\treturn (.*?);\n\}', core, re.S).group(1)
+    return ''.join(re.findall(r'"([^"]*)"', body)).split(',')
+
+
 class MenuTests(unittest.TestCase):
     def test_menus_follow_the_safe_schema(self):
         for path in (CORE_MENU, PACK_MENU):
@@ -60,7 +66,11 @@ class MenuTests(unittest.TestCase):
         # a group with no visible rows, and only the leaf is dropped, so a nested path would leave
         # an empty "Conjunction Map Framework" entry under Options > Mods.
         self.assertEqual(group.get('displayName'), 'cmf_settings')
-        self.assertEqual([v.get('id') for v in group.iter('Var')], ['CMFProviderOrder%d' % i for i in range(1, 9)] + ['CMFDebug'])
+        ids = [v.get('id') for v in group.iter('Var')]
+        self.assertEqual(ids[:8], ['CMFProviderOrder%d' % i for i in range(1, 9)])
+        self.assertEqual(ids[-1], 'CMFDebug')
+        # Version 8: one hidden file choice per choice key, then the fall-through choice.
+        self.assertEqual(ids[8:-1], ['CMFFile_' + k for k in choice_keys()] + ['CMFFile_Fallthrough'])
 
     def test_every_visible_label_key_ships(self):
         core = {s['key'] for s in catalog(CORE_CATALOG)['strings']}

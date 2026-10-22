@@ -15,4 +15,4 @@
 
 ---
 
-[Previous: Pin types for icon packs](Pin-Types.md) · [Contents](Home.md) · [Next: For players: installing CMF, icon packs and other map mods](For-Players.md)
+[Previous: Settings file keys](Settings-File-Keys.md) · [Contents](Home.md) · [Next: For players: installing CMF, icon packs and other map mods](For-Players.md)

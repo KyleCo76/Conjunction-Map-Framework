@@ -63,7 +63,10 @@ class ProviderOrderTests(unittest.TestCase):
         self.assertIn('CMFSettingsProviderRank(providerOrder, a)', beats_body)
         self.assertIn('return CMFFolderBeats(a, b);', beats_body)
         self.assertIn('return ProviderBeats(a.provider, b.provider);', body(core, '\tprivate function Beats('))
-        self.assertEqual(core.count('CMFFolderBeats('), 2)
+        # Version 8: besides ProviderBeats, only the menu add-on's lists (Providers, WinnerOf) sort by folder name.
+        self.assertEqual(core.count('CMFFolderBeats('), 4)
+        self.assertIn('if (OrderDecides(menuOrder, a, b, result))', beats_body)
+        self.assertLess(beats_body.index('menuOrder'), beats_body.index('providerOrder'))
 
     def test_settings_reader_joins_one_name_per_slot(self):
         settings = SETTINGS.read_text(encoding='ascii')

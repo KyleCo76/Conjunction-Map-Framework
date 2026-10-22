@@ -1,5 +1,5 @@
 UI Remastered Edition adapter for Conjunction Map Framework
-Version 1.0.0
+Version 1.0.1
 
 Puts UI Remastered Edition's "required level" text back where it belongs on
 Conjunction Map Framework's world map. UI Remastered stays exactly as its author ships
@@ -26,12 +26,17 @@ KNOWN LIMITS
   author ports it.
 - Where the level line sits is this adapter's choice: under the objective. UI Remastered's
   own map places it in its own tooltip.
+- With Map Quest Insight installed too, the extra level line can make a quest's info
+  box tall enough for Map Quest Insight's tall-box rule, which then shows the box at
+  the side of the screen instead of under the pin. That is Map Quest Insight's own
+  rule for tall boxes.
 
 TESTED
 On Windows with keyboard and mouse, with CMF 1.1.0 and UI Remastered Edition 1.00:
-quest titles in the info box and under the crosshair showed no "#UHL#", and the
-suggested level showed on its own line under the objective. Not tested: controllers,
-Steam Deck, Proton on Linux.
+quest titles in the info box showed no "#UHL#", and the suggested level showed on its
+own line under the objective. The name under the crosshair reads the same title, so it
+loses the marker too, but it was not checked on its own. Not tested: controllers, Steam
+Deck, Proton on Linux.
 
 INSTALL
 Extract the archive into your The Witcher 3 game folder, or install it with a mod

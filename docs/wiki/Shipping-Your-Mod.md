@@ -48,4 +48,4 @@ CMF itself ships no art from other mods. An adapter carries its own placeholder 
 
 ---
 
-[Previous: Install and test](Install-and-Test.md) · [Contents](Home.md) · [Next: Greying pins](Greying-Pins.md)
+[Previous: Install and test](Install-and-Test.md) · [Contents](Home.md) · [Next: Players' choices: who wins each feature](Who-Wins-Each-Feature.md)

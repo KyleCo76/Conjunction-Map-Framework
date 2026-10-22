@@ -51,7 +51,9 @@ API = {'CMFRegisterIcon', 'CMFRegisterLegendIcon', 'CMFRegisterTint', 'CMFRegist
        'CMFStylePart', 'CMFDraw', 'CMFDrawSet', 'CMFHasAbility', 'CMFPropertyLabelColor',
        # Version 6: pin clicks, the spread rank, keeping a tab's rows out of Default and map-space drawing.
        'CMFPropertyPinClick', 'CMFPropertyPinClickHint', 'CMFPropertyPinClickButton', 'CMFPropertySpreadRank',
-       'CMFPropertyCategoryNoDefault', 'CMFRegisterCategoryNoDefault', 'CMFDrawSetList', 'CMFMapRefresh'}
+       'CMFPropertyCategoryNoDefault', 'CMFRegisterCategoryNoDefault', 'CMFDrawSetList', 'CMFMapRefresh',
+       # Version 8: the provider's name in CMF's in-game menu, and a changed player choice.
+       'CMFSetProviderName', 'CMFChoicesChanged'}
 # Categories the vanilla legend defines; a pack's own category id may not reuse one (CMF compares ignoring case).
 VANILLA_CATEGORIES = ('All', 'Default', 'General', 'Quests', 'Exploration', 'NPCs', 'Buffs')
 # Calls that need CMF 2; a pack using them should check CMFRequireVersion(pack, 2) or CMFHasProperty(8).
@@ -70,6 +72,10 @@ VERSION5 = {'CMFStylePart', 'CMFDraw', 'CMFDrawSet', 'CMFHasAbility', 'CMFProper
 # CMFHasProperty(23), for map-space drawing CMFHasAbility('mapSpace', '').
 VERSION6 = {'CMFPropertyPinClick', 'CMFPropertyPinClickHint', 'CMFPropertyPinClickButton', 'CMFPropertySpreadRank',
             'CMFPropertyCategoryNoDefault', 'CMFRegisterCategoryNoDefault', 'CMFDrawSetList', 'CMFMapRefresh'}
+# Version 7 added theme keys only (the tall info box). Calls that need CMF 8 (players' choices); a pack using them
+# should check CMFRequireVersion(pack, 8), and compiles only with CMF 8 or later.
+VERSION7 = set()
+VERSION8 = {'CMFSetProviderName', 'CMFChoicesChanged'}
 # The map theme's fixed names and keys, as cmfCore.ws lists them (CMFThemeParts, CMFThemePartKeys and the rest;
 # tests/test_cmf_pack.py keeps the two in step).
 THEME_GLOW = ('glow1Color', 'glow1Alpha', 'glow1Blur', 'glow1Strength', 'glow2Color', 'glow2Alpha', 'glow2Blur',
@@ -621,6 +627,10 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
         report.note(path_label, 'uses %s, so the pack compiles only with CMF 6 or later; say so in its README '
                                 '(the generic CMFRegister ids 16, 20 and 21 behind CMFHasProperty(16) still compile on '
                                 'CMF 1)' % ', '.join(needs6))
+    needs8 = sorted(set(m.group(1) for m in CALL.finditer(code)) & VERSION8)
+    if needs8:
+        report.note(path_label, 'calls %s, so the pack compiles only with CMF 8 (1.2.0) or later; say so in its README'
+                    % ', '.join(needs8))
     hooked = re.search(r'@wrapMethod\(\s*CMFCore\s*\)\s*function\s+(%s)\s*\(' % '|'.join(HOOKS), code)
     if (not re.search(r'@wrapMethod\(\s*CR4Game\s*\)\s*function\s+OnGameStarted\s*\(', code) and not hooked
             and CALL.search(code)):

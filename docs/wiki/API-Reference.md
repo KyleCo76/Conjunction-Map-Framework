@@ -2,13 +2,13 @@
 
 # API reference
 
-Every function, property id, hook and map event CMF 1.0.0 offers to mods (API version 6). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
+Every function, property id, hook and map event CMF offers to mods (API version 8). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
 
 ## Functions
 
 | Function | Since | What it does | Explained on |
 | --- | --- | --- | --- |
-| `CMFGetVersion() : int` | 1 | The installed CMF interface version (`6` in CMF 1.0.0). | [Getting started](Getting-Started.md), [Writing your script](Writing-Your-Script.md) |
+| `CMFGetVersion() : int` | 1 | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0). | [Getting started](Getting-Started.md), [Writing your script](Writing-Your-Script.md) |
 | `CMFHasProperty(propertyId : int) : bool` | 1 | `true` when the installed CMF understands that property id. | [Writing your script](Writing-Your-Script.md), [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md), [Hiding pins](Hiding-Pins.md) |
 | `CMFRegister(provider : string, propertyId : int, target : name, mapContext : name, text : string, number : int) : bool` | 1 | One claim for a pin type (a map area for property 4). | [Writing your script](Writing-Your-Script.md), [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Pin clicks](Pin-Clicks.md) |
 | `CMFRegisterBackground(provider : string, area : name, imageRoot : string)` | 1 | Replaces the map image of one area, such as `'AN_NMLandNovigrad'` (Velen and Novigrad). | [Writing your script](Writing-Your-Script.md) |
@@ -20,7 +20,7 @@ Every function, property id, hook and map event CMF 1.0.0 offers to mods (API ve
 | `CMFRegisterLegendIcon(provider : string, pinType : name, url : string)` | 1 | Sets only the legend row art for that type. | [Writing your script](Writing-Your-Script.md), [Choosing pin types](Choosing-Pin-Types.md), [Check and build](Check-and-Build.md) |
 | `CMFRegisterTint(provider : string, pinType : name, rgb : int)` | 1 | Multiplies the type's pin art by a colour. | [Writing your script](Writing-Your-Script.md), [Check and build](Check-and-Build.md), [Porting a map mod](Porting-a-Map-Mod.md) |
 | `CMFReleaseProvider(provider : string)` | 1 | Withdraws everything your pack registered. | [Writing your script](Writing-Your-Script.md), [Shipping your mod](Shipping-Your-Mod.md), [Greying pins](Greying-Pins.md) |
-| `CMFRequireVersion(provider : string, minVersion : int) : bool` | 1 | Returns `false` and logs a line when the installed CMF is older than `minVersion`. | [Writing your script](Writing-Your-Script.md), [Install and test](Install-and-Test.md), [Greying pins](Greying-Pins.md) |
+| `CMFRequireVersion(provider : string, minVersion : int) : bool` | 1 | Returns `false` and logs a line when the installed CMF is older than `minVersion`. | [Writing your script](Writing-Your-Script.md), [Players' choices: who wins each feature](Who-Wins-Each-Feature.md), [Install and test](Install-and-Test.md) |
 | `CMFPropertyBackground() : int` | 1 | Returns property id `4`. | [Writing your script](Writing-Your-Script.md) |
 | `CMFPropertyDisabled() : int` | 1 | Returns property id `5`. | [Writing your script](Writing-Your-Script.md) |
 | `CMFPropertyIcon() : int` | 1 | Returns property id `1`. | [Writing your script](Writing-Your-Script.md) |
@@ -63,6 +63,8 @@ Every function, property id, hook and map event CMF 1.0.0 offers to mods (API ve
 | `CMFPropertyPinClickButton() : int` | 6 | Returns property id `21`. | [Pin clicks](Pin-Clicks.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Pin Teleport](Adapter-Map-Pin-Teleport.md) |
 | `CMFPropertyPinClickHint() : int` | 6 | Returns property id `20`. | [Pin clicks](Pin-Clicks.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Pin Teleport](Adapter-Map-Pin-Teleport.md) |
 | `CMFPropertySpreadRank() : int` | 6 | Returns property id `22`. | [Spreading stacked pins](Spreading-Stacked-Pins.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Quest Insight](Adapter-Map-Quest-Insight.md) |
+| `CMFChoicesChanged()` | 8 | Tells CMF that a player's choice changed, so it prepares its winners again before the next lookup. | [Writing your script](Writing-Your-Script.md), [Players' choices: who wins each feature](Who-Wins-Each-Feature.md) |
+| `CMFSetProviderName(provider : string, displayName : string) : bool` | 8 | The name CMF's in-game menu shows for your mod, for example `"Acme Icons"`; without it the menu shows your folder name tidied. | [Players' choices: who wins each feature](Who-Wins-Each-Feature.md), [Writing your script](Writing-Your-Script.md) |
 
 ## Property ids
 
@@ -121,6 +123,8 @@ CMF's map calls these events on `CR4MapMenu` under CMF's own names. Add one with
 - **4**: `CMFLabelHideCrosshair`, `CMFLabelHidePin`, `CMFLevelLabel`, `CMFPropertyInfoBoxHeight`, `CMFPropertyLabelHide`, `CMFPropertyLabelPlace`, `CMFPropertyLabelText`, `CMFPropertyPinScale`, `CMFPropertyTabHide`, `CMFStylePinLabel`, `CMFStylePinScale`, hook `OnPinReady`, hook `OnMapReady`
 - **5**: `CMFDraw`, `CMFDrawSet`, `CMFHasAbility`, `CMFPropertyLabelColor`, `CMFStylePart`
 - **6**: `CMFDrawSetList`, `CMFMapRefresh`, `CMFPropertyCategoryNoDefault`, `CMFPropertyPinClick`, `CMFPropertyPinClickButton`, `CMFPropertyPinClickHint`, `CMFPropertySpreadRank`, `CMFRegisterCategoryNoDefault`, hook `OnPinClicked`, hook `OnDrawingClicked`, hook `OnMapListening`
+- **7**: no new calls (new theme keys only)
+- **8**: `CMFChoicesChanged`, `CMFSetProviderName`
 
 ---
 

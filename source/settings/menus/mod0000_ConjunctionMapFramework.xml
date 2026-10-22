@@ -10,6 +10,66 @@
 			<Var id="CMFProviderOrder6" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFProviderOrder7" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFProviderOrder8" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Icons" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Colours" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Size" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Labels" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Clicks" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Legend" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Hidden" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Look" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Movement" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Painting" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Drawings" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Icons_General" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Icons_Quests" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Icons_Places" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Icons_Completed" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Icons_Services" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Icons_Power" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Icons_Other" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Icons_Added" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Colours_General" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Colours_Quests" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Colours_Places" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Colours_Completed" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Colours_Services" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Colours_Power" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Colours_Other" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Colours_Added" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Size_Scale" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Size_Lead" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Size_Spread" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Labels_Text" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Labels_Place" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Clicks_Pins" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Legend_Rows" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Legend_Names" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Legend_Tabs" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Hidden_Ignore1" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Hidden_Ignore2" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Hidden_Ignore3" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Look_Frames" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Look_Legend" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Look_InfoBox" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Look_Hints" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Look_PinText" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Movement_Area" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Movement_Pan" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Movement_Opening" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Painting_WhiteOrchard" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Painting_WhiteOrchardWinter" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Painting_Velen" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Painting_Skellige" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Painting_KaerMorhen" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Painting_Vizima" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Painting_IsleOfMists" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Painting_Spiral" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Painting_Toussaint" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Drawings_Ignore1" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Drawings_Ignore2" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Drawings_Ignore3" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Fallthrough" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFDebug" value="false" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 		</VisibleVars>
 	</Group>

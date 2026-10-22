@@ -5,10 +5,12 @@
 // their hint and button, the OnPinClicked hook and the pinButton theme part, spreading stacked pins: the
 // spread theme part and the SpreadRank pin property, quest rows, keeping a tab's rows out of Default, and
 // map-space drawing: the mapSpace anchor, the line, text and movie kinds, CMFDrawSetList, CMFMapRefresh,
-// drawing tabs, clicks and the OnDrawingClicked and OnMapListening hooks).
+// drawing tabs, clicks and the OnDrawingClicked and OnMapListening hooks; version 7: the tall info box;
+// version 8: per-feature choices (which mod wins each feature and piece, Vanilla, the order of authority),
+// tidy provider names and the menu add-on's hook and calls).
 // Never remove a call once published.
 
-function CMFGetVersion() : int { return 7; }
+function CMFGetVersion() : int { return 8; }
 
 function CMFPropertyIcon() : int { return 1; }
 function CMFPropertyLegendIcon() : int { return 2; }
@@ -335,6 +337,192 @@ function CMFIsVanillaCategory(category : string, ignoreCase : bool) : bool
 		category == "Exploration" || category == "NPCs" || category == "Buffs";
 }
 
+// Version 8: per-feature choices. CMF groups what mods send it into eleven features (the menu's Basic rows) and
+// splits most of them into pieces (its Advanced rows), written Feature_Piece. The menu add-on's rows and the
+// [CMFSettings] file values CMFFile_<key> use these keys. Hidden and Drawings are added together (every mod's
+// applies), so their pieces are three slots that each leave one mod out. CMFCore keeps the order as indices:
+// 0 to 10 are the features in this order, then the pieces.
+function CMFChoiceKeys() : string
+{
+	return "Icons,Colours,Size,Labels,Clicks,Legend,Hidden,Look,Movement,Painting,Drawings," +
+		"Icons_General,Icons_Quests,Icons_Places,Icons_Completed,Icons_Services,Icons_Power,Icons_Other,Icons_Added," +
+		"Colours_General,Colours_Quests,Colours_Places,Colours_Completed,Colours_Services,Colours_Power,Colours_Other," +
+		"Colours_Added,Size_Scale,Size_Lead,Size_Spread,Labels_Text,Labels_Place,Clicks_Pins,Legend_Rows,Legend_Names," +
+		"Legend_Tabs,Hidden_Ignore1,Hidden_Ignore2,Hidden_Ignore3,Look_Frames,Look_Legend,Look_InfoBox,Look_Hints," +
+		"Look_PinText,Movement_Area,Movement_Pan,Movement_Opening,Painting_WhiteOrchard,Painting_WhiteOrchardWinter," +
+		"Painting_Velen,Painting_Skellige,Painting_KaerMorhen,Painting_Vizima,Painting_IsleOfMists,Painting_Spiral," +
+		"Painting_Toussaint,Drawings_Ignore1,Drawings_Ignore2,Drawings_Ignore3";
+}
+
+// Version 8: the pin group of a pin type for the Advanced icon and colour rows, as an offset from Icons_General:
+// 0 General, 1 Quests, 2 Places, 3 Completed places (the "...Disabled" types), 4 Shops and services, 5 Places of
+// power and workbenches, 6 Other (types with no legend tab of their own), 7 Pins added by mods (a type the game's
+// map does not use). The groups follow the map's legend tabs (docs/authors/pin-types.md); the level variants _1
+// to _3 count as their base type.
+function CMFPinGroup(pinType : string) : int
+{
+	var stem : string;
+	stem = pinType;
+	if (StrLen(stem) > 2 && (StrEndsWith(stem, "_1") || StrEndsWith(stem, "_2") || StrEndsWith(stem, "_3")))
+	{
+		stem = StrLeft(stem, StrLen(stem) - 2);
+	}
+	if (StrFindFirst(stem, "Quest") >= 0 || stem == "HorseRace" || stem == "BoatRace")
+	{
+		return 1;
+	}
+	if (CMFListHas(CMFPinGroupTypes(5), stem))
+	{
+		return 5;
+	}
+	if (StrEndsWith(stem, "Disabled"))
+	{
+		return 3;
+	}
+	if (CMFListHas(CMFPinGroupTypes(0), stem))
+	{
+		return 0;
+	}
+	if (CMFListHas(CMFPinGroupTypes(4), stem))
+	{
+		return 4;
+	}
+	if (CMFListHas(CMFPinGroupTypes(2), stem))
+	{
+		return 2;
+	}
+	if (CMFListHas(CMFPinGroupTypes(6), stem))
+	{
+		return 6;
+	}
+	return 7;
+}
+
+// The game's own types of one pin group (CMFPinGroup); quests and completed places go by name instead.
+function CMFPinGroupTypes(group : int) : string
+{
+	switch (group)
+	{
+		case 0:
+			return "RoadSign,Harbor,NoticeBoardFull,NoticeBoard,PlayerStash,PlayerStashDiscoverable,Horse,Transport";
+		case 2:
+			return "Entrance,NotDiscoveredPOI,MonsterNest,TreasureHuntMappin,SpoilsOfWar,BanditCamp,BanditCampfire," +
+				"BossAndTreasure,Contraband,ContrabandShip,RescuingTown,DungeonCrawl,Hideout,InfestedVineyard,Plegmund," +
+				"WineContract,KnightErrant,SignalingStake,Boat";
+		case 4:
+			return "Shopkeeper,Archmaster,Blacksmith,Armorer,Alchemic,Herbalist,Innkeeper,Enchanter,Prostitute,Hairdresser," +
+				"Torch,WineMerchant,DyeMerchant,Cammerlengo";
+		case 5:
+			return "PlaceOfPower,PlaceOfPowerDisabled,PlaceOfPowerStrong,Whetstone,GrindStone,ArmorRepairTable,AlchemyTable," +
+				"MutagenDismantle,Bookshelf";
+		case 6:
+			return "Bed,BoatBuilder,Camp,Cave,Companion,Container,DwarvenFurnace,Enemy,EnemyDead,FistFight,GenericFocus,Herb," +
+				"HiverNest,HorseRaceDummy,HorseRaceTarget,HorseRacingNPC,LettenStories,MagicLamp,MonsterClue,MonsterHunt," +
+				"NettelStories,Player,racetrack,Rift,Stables,Teleport,User1,User2,User3,User4,User5,User6,User7,WitcherHouse";
+	}
+	return "";
+}
+
+// Version 8: the Advanced painting row (CMFChoiceKeys index) of a map area, as the "CMF background area=" log
+// line names it, or -1 for an area with no row of its own (the Basic painting row still covers it).
+function CMFPaintingChoice(area : string) : int
+{
+	var lowered : string;
+	lowered = StrLower(area);
+	if (StrFindFirst(lowered, "prolog") >= 0)
+	{
+		if (StrFindFirst(lowered, "winter") >= 0)
+		{
+			return 48;
+		}
+		return 47;
+	}
+	if (StrFindFirst(lowered, "novigrad") >= 0 || StrFindFirst(lowered, "velen") >= 0)
+	{
+		return 49;
+	}
+	if (StrFindFirst(lowered, "skellige") >= 0)
+	{
+		return 50;
+	}
+	if (StrFindFirst(lowered, "kaer") >= 0)
+	{
+		return 51;
+	}
+	if (StrFindFirst(lowered, "wyzima") >= 0 || StrFindFirst(lowered, "vizima") >= 0)
+	{
+		return 52;
+	}
+	if (StrFindFirst(lowered, "island") >= 0 || StrFindFirst(lowered, "myst") >= 0)
+	{
+		return 53;
+	}
+	if (StrFindFirst(lowered, "spiral") >= 0)
+	{
+		return 54;
+	}
+	if (StrFindFirst(lowered, "bob") >= 0)
+	{
+		return 55;
+	}
+	return -1;
+}
+
+// Version 8: a provider's name for the menu when it set none (CMFSetProviderName): the folder name without its
+// "mod" prefix, then without CMF's own "CMFAdapter" or "CMF" prefix (an adapter reads as the mod it adapts), and
+// without leading digits and underscores; underscores as spaces, words split where a small letter meets a capital,
+// each word starting with a capital ("modExampleIconPack" reads "Example Icon Pack", "modCMFAdapterSomeMod" reads
+// "Some Mod", "modsome_map_mod" reads "Some Map Mod").
+function CMFTidyName(provider : string) : string
+{
+	var rest, result, letter, previous : string;
+	var i, size : int;
+	rest = provider;
+	if (StrBeginsWith(StrLower(rest), "mod"))
+	{
+		rest = StrRight(rest, StrLen(rest) - 3);
+	}
+	if (StrBeginsWith(StrLower(rest), "cmfadapter") && StrLen(rest) > 10)
+	{
+		rest = StrRight(rest, StrLen(rest) - 10);
+	}
+	else if (StrBeginsWith(StrLower(rest), "cmf") && StrLen(rest) > 3)
+	{
+		rest = StrRight(rest, StrLen(rest) - 3);
+	}
+	while (StrLen(rest) > 0 && StrFindFirst("0123456789_", StrLeft(rest, 1)) >= 0)
+	{
+		rest = StrRight(rest, StrLen(rest) - 1);
+	}
+	if (rest == "")
+	{
+		return provider;
+	}
+	result = "";
+	previous = "";
+	size = StrLen(rest);
+	for (i = 0; i < size; i += 1)
+	{
+		letter = StrRight(StrLeft(rest, i + 1), 1);
+		if (letter == "_")
+		{
+			letter = " ";
+		}
+		else if (previous == "" || previous == " ")
+		{
+			letter = StrUpper(letter);
+		}
+		else if (StrUpper(letter) == letter && StrLower(letter) != letter &&
+			StrLower(previous) == previous && StrUpper(previous) != previous)
+		{
+			result += " ";
+		}
+		result += letter;
+		previous = letter;
+	}
+	return result;
+}
+
 // Target levels: 0 every pin (hide claims only), 1 one pin type, 2 one pin instance (tag).
 // Background claims are level 1 with pinType holding the map area name (m_shownArea).
 // Disabled claims carry a map context ('FastTravel', 'Boat', 'GlobalMap'; None means every context).
@@ -372,6 +560,30 @@ class CMFCore extends CObject
 	private var spaceArea : name;
 	private var catchArray : CScriptedFlashArray;
 	private var catching : bool;
+	// Version 8: per-feature choices, indexed as CMFChoiceKeys. menuChoices come from the menu add-on
+	// (ReadMenuChoices), fileChoices from [CMFSettings] CMFFile_<key>; "" is Automatic. Both are read, and each
+	// choice's deciding answer worked out, each time winners are prepared.
+	private var choiceKeys : array<string>;
+	private var choiceFeature : array<int>;
+	private var menuChoices : array<string>;
+	private var fileChoices : array<string>;
+	private var menuOrder : string;
+	private var menuPresent : bool;
+	private var menuFall : string;
+	private var menuReport : bool;
+	private var fallVanilla : bool;
+	private var choicesActive : bool;
+	private var decideAnswer : array<string>;
+	private var decideLevel : array<int>;
+	private var offerProviders : array<string>;
+	private var offerFlags : array<bool>;
+	private var styledOffers : array<string>;
+	private var lastStyledOffer : string;
+	private var nameProviders : array<string>;
+	private var nameTexts : array<string>;
+	private var groupCacheType : string;
+	private var groupCacheValue : int;
+	private var mapSeen : bool;
 
 	public function RequestRefresh()
 	{
@@ -578,25 +790,56 @@ class CMFCore extends CObject
 
 	// The provider that owns a part's style keys (the earliest folder that styled the part), or for the
 	// behaviour parts map, navigation, opening and spread the owner of that one key.
+	// Version 8: through the part's choice (PartChoice): Vanilla gives no owner, a chosen mod that styled the part
+	// owns it, and otherwise the next level decides (none when the General row says Vanilla).
 	private function ThemeStyleOwner(part : name, key : name) : string
 	{
-		var i : int;
-		var owner : string;
+		var i, choice : int;
+		var owner, answer : string;
 		var perKey : bool;
 		perKey = part == 'map' || part == 'navigation' || part == 'opening' || part == 'spread';
 		owner = "";
+		choice = -1;
+		answer = "";
+		if (choicesActive)
+		{
+			choice = PartChoice(part);
+			if (choice >= 0)
+			{
+				answer = decideAnswer[choice];
+			}
+			if (answer == "vanilla")
+			{
+				return "";
+			}
+			if (answer == "@order")
+			{
+				answer = "";
+			}
+		}
 		for (i = 0; i < themeEntries.Size(); i += 1)
 		{
-			if (themeEntries[i].kind == 1 && themeEntries[i].target == part && (!perKey || themeEntries[i].key == key) &&
-				(owner == "" || CMFProviderBeats(themeEntries[i].provider, owner)))
+			if (themeEntries[i].kind == 1 && themeEntries[i].target == part && (!perKey || themeEntries[i].key == key))
 			{
-				owner = themeEntries[i].provider;
+				if (answer != "" && themeEntries[i].provider == answer)
+				{
+					return answer;
+				}
+				if (owner == "" || PieceBeats(choice, themeEntries[i].provider, owner))
+				{
+					owner = themeEntries[i].provider;
+				}
 			}
+		}
+		if (answer != "" && fallVanilla)
+		{
+			return "";
 		}
 		return owner;
 	}
 
-	// The provider that owns a drawing id: the earliest folder that made it with CMFDraw, or "".
+	// The provider that owns a drawing id: the earliest folder that made it with CMFDraw, or "". Version 8: a
+	// provider the Drawings choice leaves out owns nothing.
 	private function ThemeDrawingOwner(id : name) : string
 	{
 		var i : int;
@@ -604,7 +847,7 @@ class CMFCore extends CObject
 		owner = "";
 		for (i = 0; i < themeEntries.Size(); i += 1)
 		{
-			if (themeEntries[i].kind == 2 && themeEntries[i].target == id &&
+			if (themeEntries[i].kind == 2 && themeEntries[i].target == id && AdditiveAllows(10, themeEntries[i].provider) &&
 				(owner == "" || CMFProviderBeats(themeEntries[i].provider, owner)))
 			{
 				owner = themeEntries[i].provider;
@@ -721,6 +964,12 @@ class CMFCore extends CObject
 			}
 			else
 			{
+				if (!AdditiveAllows(10, themeEntries[i].provider))
+				{
+					NoteTheme("theme drawing left out provider=" + themeEntries[i].provider + " id=" +
+						NameToString(themeEntries[i].target) + " reason=choice");
+					continue;
+				}
 				owner = ThemeDrawingOwner(themeEntries[i].target);
 				if (owner == "")
 				{
@@ -817,6 +1066,12 @@ class CMFCore extends CObject
 			{
 				continue;
 			}
+			if (!AdditiveAllows(10, themeEntries[i].provider))
+			{
+				NoteTheme("theme drawing left out provider=" + themeEntries[i].provider + " id=" +
+					NameToString(themeEntries[i].target) + " reason=choice");
+				continue;
+			}
 			owner = ThemeDrawingOwner(themeEntries[i].target);
 			if (owner != themeEntries[i].provider)
 			{
@@ -874,20 +1129,902 @@ class CMFCore extends CObject
 		}
 	}
 
+	// Version 8: the choice keys (CMFChoiceKeys) and each one's feature, built once.
+	private function EnsureChoices()
+	{
+		var rest, key : string;
+		var i : int;
+		if (choiceKeys.Size() > 0)
+		{
+			return;
+		}
+		rest = CMFChoiceKeys() + ",";
+		while (StrLen(rest) > 0)
+		{
+			key = StrBeforeFirst(rest, ",");
+			rest = StrAfterFirst(rest, ",");
+			if (key != "")
+			{
+				choiceKeys.PushBack(key);
+			}
+		}
+		for (i = 0; i < choiceKeys.Size(); i += 1)
+		{
+			if (StrFindFirst(choiceKeys[i], "_") < 0)
+			{
+				choiceFeature.PushBack(i);
+			}
+			else
+			{
+				choiceFeature.PushBack(choiceKeys.FindFirst(StrBeforeFirst(choiceKeys[i], "_")));
+			}
+			menuChoices.PushBack("");
+			fileChoices.PushBack("");
+			decideAnswer.PushBack("");
+			decideLevel.PushBack(7);
+		}
+	}
+
+	// Version 8: reads the file choices ([CMFSettings] values named CMFFile_<key>, plus CMFFile_Fallthrough), asks
+	// the menu add-on for its rows (ReadMenuChoices), and works out each choice's deciding answer once, so every
+	// lookup of one preparation uses one set of choices. A folder name is matched to a provider ignoring case.
+	private function ReadChoices()
+	{
+		var config : CInGameConfigWrapper;
+		var varName : name;
+		var key, value : string;
+		var i, count, level : int;
+		EnsureChoices();
+		for (i = 0; i < choiceKeys.Size(); i += 1)
+		{
+			menuChoices[i] = "";
+			fileChoices[i] = "";
+		}
+		menuOrder = "";
+		menuPresent = false;
+		menuFall = "";
+		menuReport = false;
+		fallVanilla = false;
+		config = theGame.GetInGameConfigWrapper();
+		count = config.GetVarsNumByGroupName('CMFSettings');
+		for (i = 0; i < count; i += 1)
+		{
+			varName = config.GetVarNameByGroupName('CMFSettings', i);
+			key = NameToString(varName);
+			if (!StrBeginsWith(key, "CMFFile_"))
+			{
+				continue;
+			}
+			value = CMFSettingsChoiceValue(config.GetVarValue('CMFSettings', varName));
+			key = StrAfterFirst(key, "CMFFile_");
+			if (key == "Fallthrough")
+			{
+				fallVanilla = value == "vanilla";
+				continue;
+			}
+			level = choiceKeys.FindFirst(key);
+			if (level >= 0)
+			{
+				fileChoices[level] = CanonicalProvider(value);
+			}
+		}
+		ReadMenuChoices();
+		if (menuFall != "")
+		{
+			fallVanilla = menuFall == "vanilla";
+		}
+		choicesActive = false;
+		for (i = 0; i < choiceKeys.Size(); i += 1)
+		{
+			if (menuChoices[i] != "" || fileChoices[i] != "")
+			{
+				choicesActive = true;
+			}
+		}
+		for (i = 0; i < choiceKeys.Size(); i += 1)
+		{
+			decideAnswer[i] = DecideChoice(i, level);
+			decideLevel[i] = level;
+		}
+	}
+
+	// A folder name written in a setting or the menu, as the provider spells it (matched ignoring case); "" and
+	// "vanilla" stay as they are, and a name no provider has is kept as written (it then decides nothing).
+	private function CanonicalProvider(value : string) : string
+	{
+		var lowered : string;
+		var i : int;
+		if (value == "" || value == "vanilla")
+		{
+			return value;
+		}
+		lowered = StrLower(value);
+		for (i = 0; i < claims.Size(); i += 1)
+		{
+			if (StrLower(claims[i].provider) == lowered)
+			{
+				return claims[i].provider;
+			}
+		}
+		for (i = 0; i < themeEntries.Size(); i += 1)
+		{
+			if (StrLower(themeEntries[i].provider) == lowered)
+			{
+				return themeEntries[i].provider;
+			}
+		}
+		for (i = 0; i < styledOffers.Size(); i += 1)
+		{
+			if (StrLower(StrAfterFirst(styledOffers[i], "/")) == lowered)
+			{
+				return StrAfterFirst(styledOffers[i], "/");
+			}
+		}
+		return value;
+	}
+
+	// Version 8 hook, called each time winners are prepared, after the file choices are read. The menu add-on wraps
+	// it (@wrapMethod(CMFCore)), calls wrappedMethod() and hands over its rows with SetMenuChoice, SetMenuOrder,
+	// SetMenuFallthrough and SetMenuReport. Without the add-on nothing is set, so every in-game level reads
+	// Automatic and values a removed add-on left in dx12user.settings steer nothing. It does nothing by itself.
+	public function ReadMenuChoices()
+	{
+	}
+
+	// Version 8, for the menu add-on inside ReadMenuChoices: one row's answer for a choice key (CMFChoiceKeys):
+	// a folder name, "vanilla", or "" for Automatic. False (logged) for an unknown key.
+	public function SetMenuChoice(key : string, value : string) : bool
+	{
+		var i : int;
+		EnsureChoices();
+		menuPresent = true;
+		i = choiceKeys.FindFirst(key);
+		if (i < 0)
+		{
+			CMFLog("choice rejected key=" + key + " reason=key");
+			return false;
+		}
+		menuChoices[i] = CanonicalProvider(CMFSettingsChoiceValue(value));
+		return true;
+	}
+
+	// Version 8, for the menu add-on: the in-game Mod order, folder names earliest first joined with commas.
+	public function SetMenuOrder(order : string)
+	{
+		menuPresent = true;
+		menuOrder = StrReplaceAll(order, " ", "");
+	}
+
+	// Version 8, for the menu add-on: the General row, "vanilla" (a chosen mod that lacks a piece shows the game's
+	// own) or "next" (the next mod in order decides, the default).
+	public function SetMenuFallthrough(value : string)
+	{
+		menuPresent = true;
+		menuFall = StrLower(value);
+	}
+
+	// Version 8, for the menu add-on: the General row that writes the who-wins report to the log.
+	public function SetMenuReport(report : bool)
+	{
+		menuPresent = true;
+		menuReport = report;
+	}
+
+	// Kyle's order of authority for one choice: the first level whose answer is not Automatic. Returns a folder name,
+	// "vanilla", or "@order" for an order level, with its level (LevelName); "" and level 7 when no level answers.
+	// A feature has no Advanced levels. Added-together features read their answers in AdditiveAllows instead.
+	private function DecideChoice(choice : int, out level : int) : string
+	{
+		var feature : int;
+		feature = choiceFeature[choice];
+		if (choice != feature && menuChoices[choice] != "")
+		{
+			level = 1;
+			return menuChoices[choice];
+		}
+		if (menuChoices[feature] != "")
+		{
+			level = 2;
+			return menuChoices[feature];
+		}
+		if (menuOrder != "")
+		{
+			level = 3;
+			return "@order";
+		}
+		if (choice != feature && fileChoices[choice] != "")
+		{
+			level = 4;
+			return fileChoices[choice];
+		}
+		if (fileChoices[feature] != "")
+		{
+			level = 5;
+			return fileChoices[feature];
+		}
+		if (providerOrder != "")
+		{
+			level = 6;
+			return "@order";
+		}
+		level = 7;
+		return "";
+	}
+
+	// Version 8: the name of a level of the order of authority, for the menu's Status page and the log. The last
+	// level, folder-name order, reads "Default" (Kyle 2026-10-22: the CMF default order; it also fits the column).
+	public function LevelName(level : int) : string
+	{
+		switch (level)
+		{
+			case 1:
+				return "Advanced";
+			case 2:
+				return "Basic";
+			case 3:
+				return "Mod order";
+			case 4:
+				return "Advanced file";
+			case 5:
+				return "Basic file";
+			case 6:
+				return "File order";
+			case 7:
+				return "Default";
+		}
+		return "";
+	}
+
+	// Version 8: true when provider a wins choice `choice` over b: each level in turn (Advanced in-game, Basic
+	// in-game, in-game Mod order, Advanced file, Basic file, file order, folder name) decides when it names one of
+	// them; a level naming another mod, Vanilla or nothing passes to the next. -1 uses the orders only.
+	public function PieceBeats(choice : int, a : string, b : string) : bool
+	{
+		var feature : int;
+		var result : bool;
+		if (choicesActive && choice >= 0 && a != b)
+		{
+			feature = choiceFeature[choice];
+			if (choice != feature && PickDecides(menuChoices[choice], a, b, result))
+			{
+				return result;
+			}
+			if (PickDecides(menuChoices[feature], a, b, result))
+			{
+				return result;
+			}
+			if (OrderDecides(menuOrder, a, b, result))
+			{
+				return result;
+			}
+			if (choice != feature && PickDecides(fileChoices[choice], a, b, result))
+			{
+				return result;
+			}
+			if (PickDecides(fileChoices[feature], a, b, result))
+			{
+				return result;
+			}
+		}
+		return ProviderBeats(a, b);
+	}
+
+	private function PickDecides(pick : string, a : string, b : string, out result : bool) : bool
+	{
+		if (pick == "" || pick == "vanilla")
+		{
+			return false;
+		}
+		if (a == pick)
+		{
+			result = true;
+			return true;
+		}
+		if (b == pick)
+		{
+			result = false;
+			return true;
+		}
+		return false;
+	}
+
+	// An order decides when it lists a or b: listed before unlisted, then earlier first.
+	private function OrderDecides(order : string, a : string, b : string, out result : bool) : bool
+	{
+		var rankA, rankB : int;
+		if (order == "")
+		{
+			return false;
+		}
+		rankA = CMFSettingsProviderRank(order, a);
+		rankB = CMFSettingsProviderRank(order, b);
+		if (rankA == rankB)
+		{
+			return false;
+		}
+		if (rankA < 0)
+		{
+			result = false;
+		}
+		else if (rankB < 0)
+		{
+			result = true;
+		}
+		else
+		{
+			result = rankA < rankB;
+		}
+		return true;
+	}
+
+	// Version 8: the choice (CMFChoiceKeys index) one property of one pin type belongs to, or -1 when the property is
+	// not chosen per feature. Hides, greyed pins and tab hides (5, 9, 15) answer the Hidden feature; a type left empty
+	// (a tag or every-pin claim) answers the whole feature.
+	public function PropertyChoice(propertyId : int, pinType : string) : int
+	{
+		var choice : int;
+		switch (propertyId)
+		{
+			case 1:
+			case 2:
+				if (pinType == "")
+				{
+					return 0; // Icons
+				}
+				return 11 + PinGroupOf(pinType); // Icons_General
+			case 3:
+				if (pinType == "")
+				{
+					return 1; // Colours
+				}
+				return 19 + PinGroupOf(pinType); // Colours_General
+			case 4:
+				choice = CMFPaintingChoice(pinType);
+				if (choice < 0)
+				{
+					return 9; // Painting
+				}
+				return choice;
+			case 5:
+			case 9:
+			case 15:
+				return 6; // Hidden
+			case 6:
+				return 33; // Legend_Rows
+			case 7:
+				return 34; // Legend_Names
+			case 8:
+			case 23:
+				return 35; // Legend_Tabs
+			case 10:
+				return 27; // Size_Scale
+			case 22:
+				return 28; // Size_Lead
+			case 12:
+			case 17:
+				return 30; // Labels_Text
+			case 11:
+			case 13:
+				return 31; // Labels_Place
+			case 14:
+				return 41; // Look_InfoBox
+			case 16:
+			case 20:
+			case 21:
+				return 32; // Clicks_Pins
+		}
+		return -1;
+	}
+
+	// Version 8: the choice a theme part belongs to (part styles; drawings answer Drawings), or -1.
+	public function PartChoice(part : name) : int
+	{
+		switch (part)
+		{
+			case 'screen':
+			case 'mapEdge':
+			case 'title':
+			case 'tracker':
+			case 'preview':
+			case 'worldButton':
+			case 'worldHint':
+			case 'markerPanel':
+				return 39; // Look_Frames
+			case 'legend':
+			case 'legendRow':
+			case 'legendTab':
+				return 40; // Look_Legend
+			case 'tooltip':
+				return 41; // Look_InfoBox
+			case 'hints':
+			case 'keyCap':
+				return 42; // Look_Hints
+			case 'pinLabel':
+			case 'pinName':
+			case 'pinButton':
+				return 43; // Look_PinText
+			case 'map':
+				return 44; // Movement_Area
+			case 'navigation':
+				return 45; // Movement_Pan
+			case 'opening':
+				return 46; // Movement_Opening
+			case 'spread':
+				return 29; // Size_Spread
+		}
+		return -1;
+	}
+
+	// The pin group of the last type asked (pin lookups ask for one pin's type several times in a row).
+	private function PinGroupOf(pinType : string) : int
+	{
+		if (pinType != groupCacheType || groupCacheType == "")
+		{
+			groupCacheType = pinType;
+			groupCacheValue = CMFPinGroup(pinType);
+		}
+		return groupCacheValue;
+	}
+
+	// Version 8: true when a provider's part of an added-together feature applies (Hidden 6: hides, greyed pins and
+	// tab hides; Drawings 10). Automatic keeps every mod's, Vanilla none, a mod only that mod's, and the three Ignore
+	// slots leave mods out. When any in-game row of the feature is set, the in-game rows replace the file's.
+	private function AdditiveAllows(feature : int, provider : string) : bool
+	{
+		var slot : int;
+		if (!choicesActive)
+		{
+			return true;
+		}
+		slot = 36; // Hidden_Ignore1
+		if (feature == 10)
+		{
+			slot = 56; // Drawings_Ignore1
+		}
+		if (menuChoices[feature] != "" || menuChoices[slot] != "" || menuChoices[slot + 1] != "" ||
+			menuChoices[slot + 2] != "")
+		{
+			return ChoiceAllows(menuChoices[feature], menuChoices[slot], menuChoices[slot + 1], menuChoices[slot + 2],
+				provider);
+		}
+		return ChoiceAllows(fileChoices[feature], fileChoices[slot], fileChoices[slot + 1], fileChoices[slot + 2],
+			provider);
+	}
+
+	private function ChoiceAllows(basic : string, ignore1 : string, ignore2 : string, ignore3 : string,
+		provider : string) : bool
+	{
+		if (provider == ignore1 || provider == ignore2 || provider == ignore3)
+		{
+			return false;
+		}
+		if (basic == "")
+		{
+			return true;
+		}
+		if (basic == "vanilla")
+		{
+			return false;
+		}
+		return basic == provider;
+	}
+
+	// Version 8: a per-pin style (CMFStylePin) passes the piece's choice: never under Vanilla; under a chosen mod
+	// that mod's always, and another mod's only when the chosen mod has nothing for this pin and the General row
+	// does not say Vanilla.
+	private function StyleAllowed(choice : int, provider : string, dataObject : CScriptedFlashObject, propertyId : int,
+		ownerField : string) : bool
+	{
+		var answer : string;
+		var claim : SCMFClaim;
+		if (!choicesActive || choice < 0)
+		{
+			return true;
+		}
+		answer = decideAnswer[choice];
+		if (answer == "vanilla")
+		{
+			return false;
+		}
+		if (answer == "" || answer == "@order" || answer == provider)
+		{
+			return true;
+		}
+		if (CMFPinOwner(dataObject, ownerField) == answer)
+		{
+			return false;
+		}
+		if (FindOwn(propertyId, answer, dataObject.GetMemberFlashString("type"), '', 1, claim) ||
+			FindOwn(propertyId, answer, dataObject.GetMemberFlashString("filteredType"), '', 1, claim))
+		{
+			return false;
+		}
+		return !fallVanilla;
+	}
+
+	// Version 8: which provider offers which choice, for the menu add-on: any claim, theme entry, or a pin the
+	// provider styled itself in an earlier map build (styledOffers). Rebuilt each preparation.
+	private function PrepareOffers()
+	{
+		var i : int;
+		offerProviders.Clear();
+		offerFlags.Clear();
+		for (i = 0; i < claims.Size(); i += 1)
+		{
+			NoteOfferFor(PropertyChoice(claims[i].propertyId, NameToString(claims[i].pinType)), claims[i].provider);
+		}
+		for (i = 0; i < themeEntries.Size(); i += 1)
+		{
+			if (themeEntries[i].kind == 1)
+			{
+				NoteOfferFor(PartChoice(themeEntries[i].target), themeEntries[i].provider);
+			}
+			else
+			{
+				NoteOfferFor(10, themeEntries[i].provider); // Drawings
+			}
+		}
+		for (i = 0; i < styledOffers.Size(); i += 1)
+		{
+			NoteOfferFor(StringToInt(StrBeforeFirst(styledOffers[i], "/")), StrAfterFirst(styledOffers[i], "/"));
+		}
+	}
+
+	private function NoteOfferFor(choice : int, provider : string)
+	{
+		var p, start, i : int;
+		if (choice < 0 || provider == "")
+		{
+			return;
+		}
+		EnsureChoices();
+		p = offerProviders.FindFirst(provider);
+		if (p < 0)
+		{
+			offerProviders.PushBack(provider);
+			p = offerProviders.Size() - 1;
+			for (i = 0; i < choiceKeys.Size(); i += 1)
+			{
+				offerFlags.PushBack(false);
+			}
+		}
+		start = p * choiceKeys.Size();
+		offerFlags[start + choice] = true;
+		offerFlags[start + choiceFeature[choice]] = true;
+	}
+
+	// A provider styled a pin itself (CMFStylePin): it offers that pin's choice from now on (capped).
+	private function NoteStyledOffer(choice : int, provider : string)
+	{
+		var offerKey : string;
+		if (choice < 0)
+		{
+			return;
+		}
+		offerKey = "" + choice + "/" + provider;
+		if (offerKey == lastStyledOffer)
+		{
+			return;
+		}
+		lastStyledOffer = offerKey;
+		if (styledOffers.Size() < 256 && !styledOffers.Contains(offerKey))
+		{
+			styledOffers.PushBack(offerKey);
+			NoteOfferFor(choice, provider);
+		}
+	}
+
+	// Version 8, for the menu add-on: the number of choices (CMFChoiceKeys), one key, and its feature's index.
+	public function ChoiceCount() : int
+	{
+		EnsureChoices();
+		return choiceKeys.Size();
+	}
+
+	public function ChoiceKey(choice : int) : string
+	{
+		EnsureChoices();
+		if (choice < 0 || choice >= choiceKeys.Size())
+		{
+			return "";
+		}
+		return choiceKeys[choice];
+	}
+
+	public function ChoiceIndex(key : string) : int
+	{
+		EnsureChoices();
+		return choiceKeys.FindFirst(key);
+	}
+
+	public function ChoiceFeature(choice : int) : int
+	{
+		EnsureChoices();
+		if (choice < 0 || choice >= choiceKeys.Size())
+		{
+			return -1;
+		}
+		return choiceFeature[choice];
+	}
+
+	// Version 8, for the menu add-on: every provider CMF has met (claims, theme, styled pins), in folder order.
+	public function Providers(out providers : array<string>)
+	{
+		var i, k : int;
+		if (dirty)
+		{
+			Prepare();
+		}
+		providers.Clear();
+		for (i = 0; i < offerProviders.Size(); i += 1)
+		{
+			k = 0;
+			while (k < providers.Size() && CMFFolderBeats(providers[k], offerProviders[i]))
+			{
+				k += 1;
+			}
+			providers.Insert(k, offerProviders[i]);
+		}
+	}
+
+	// Version 8, for the menu add-on: true when the provider sends CMF anything for this choice. An Ignore slot asks
+	// for its feature.
+	public function Offers(choice : int, provider : string) : bool
+	{
+		var p : int;
+		EnsureChoices();
+		if (choice < 0 || choice >= choiceKeys.Size())
+		{
+			return false;
+		}
+		if ((choice >= 36 && choice <= 38) || choice >= 56)
+		{
+			choice = choiceFeature[choice];
+		}
+		p = offerProviders.FindFirst(provider);
+		if (p < 0)
+		{
+			return false;
+		}
+		return offerFlags[p * choiceKeys.Size() + choice];
+	}
+
+	// Version 8, for the menu add-on's rows and the report: who wins a choice now. Returns a provider, "vanilla" (a
+	// level says Vanilla, or the chosen mod offers nothing and the General row says Vanilla) or "" (no provider offers
+	// it, level 0). level is the deciding level (LevelName). skipLevel leaves one level out: the asking row's own (1
+	// Advanced, 2 Basic, 3 Mod order), or 0. Not for the added-together features (AllowedCount).
+	public function WinnerOf(choice : int, skipLevel : int, out level : int) : string
+	{
+		var candidates : array<string>;
+		var feature, i, l, rank, bestRank : int;
+		var pick, order, best : string;
+		level = 0;
+		if (dirty)
+		{
+			Prepare();
+		}
+		EnsureChoices();
+		if (choice < 0 || choice >= choiceKeys.Size())
+		{
+			return "";
+		}
+		for (i = 0; i < offerProviders.Size(); i += 1)
+		{
+			if (Offers(choice, offerProviders[i]))
+			{
+				candidates.PushBack(offerProviders[i]);
+			}
+		}
+		if (candidates.Size() == 0)
+		{
+			return "";
+		}
+		feature = choiceFeature[choice];
+		for (l = 1; l <= 6; l += 1)
+		{
+			if (l == skipLevel)
+			{
+				continue;
+			}
+			if (l == 3 || l == 6)
+			{
+				order = menuOrder;
+				if (l == 6)
+				{
+					order = providerOrder;
+				}
+				best = "";
+				bestRank = -1;
+				for (i = 0; i < candidates.Size(); i += 1)
+				{
+					rank = CMFSettingsProviderRank(order, candidates[i]);
+					if (rank >= 0 && (bestRank < 0 || rank < bestRank))
+					{
+						best = candidates[i];
+						bestRank = rank;
+					}
+				}
+				if (best != "")
+				{
+					level = l;
+					return best;
+				}
+				continue;
+			}
+			pick = "";
+			if (l == 1 && choice != feature)
+			{
+				pick = menuChoices[choice];
+			}
+			else if (l == 2)
+			{
+				pick = menuChoices[feature];
+			}
+			else if (l == 4 && choice != feature)
+			{
+				pick = fileChoices[choice];
+			}
+			else if (l == 5)
+			{
+				pick = fileChoices[feature];
+			}
+			if (pick == "")
+			{
+				continue;
+			}
+			level = l;
+			if (pick == "vanilla" || (!candidates.Contains(pick) && fallVanilla))
+			{
+				return "vanilla";
+			}
+			if (candidates.Contains(pick))
+			{
+				return pick;
+			}
+		}
+		level = 7;
+		best = candidates[0];
+		for (i = 1; i < candidates.Size(); i += 1)
+		{
+			if (CMFFolderBeats(candidates[i], best))
+			{
+				best = candidates[i];
+			}
+		}
+		return best;
+	}
+
+	// Version 8, for the menu add-on: of the providers offering an added-together feature (6 Hidden, 10 Drawings),
+	// how many apply now (AdditiveAllows); offered receives how many offer it.
+	public function AllowedCount(feature : int, out offered : int) : int
+	{
+		var i, allowed : int;
+		if (dirty)
+		{
+			Prepare();
+		}
+		offered = 0;
+		allowed = 0;
+		for (i = 0; i < offerProviders.Size(); i += 1)
+		{
+			if (Offers(feature, offerProviders[i]))
+			{
+				offered += 1;
+				if (AdditiveAllows(feature, offerProviders[i]))
+				{
+					allowed += 1;
+				}
+			}
+		}
+		return allowed;
+	}
+
+	// Version 8: true when the menu add-on handed over its rows at the last preparation.
+	public function MenuPresent() : bool
+	{
+		return menuPresent;
+	}
+
+	// Version 8: true once the world map has been drawn since the game started. Offers made only while pins are
+	// styled (CMFStylePin) are known from then on, so the menu greys a row no mod offers only after that.
+	public function MapSeen() : bool
+	{
+		return mapSeen;
+	}
+
+	// Version 8: a provider's display name (CMFSetProviderName), else CMFTidyName of its folder name.
+	public function SetProviderName(provider : string, displayName : string)
+	{
+		var i : int;
+		i = nameProviders.FindFirst(provider);
+		if (i < 0)
+		{
+			nameProviders.PushBack(provider);
+			nameTexts.PushBack(displayName);
+		}
+		else
+		{
+			nameTexts[i] = displayName;
+		}
+	}
+
+	public function ProviderName(provider : string) : string
+	{
+		var i : int;
+		i = nameProviders.FindFirst(provider);
+		if (i >= 0 && nameTexts[i] != "")
+		{
+			return nameTexts[i];
+		}
+		return CMFTidyName(provider);
+	}
+
+	// Version 8: one line for the choices in force and one per answer that decides a choice; with CMFDebug or the
+	// menu's report row, one "wins" line per choice too.
+	private function ReportChoices()
+	{
+		var i, level, offered : int;
+		var winner, fall : string;
+		if (!choicesActive && menuOrder == "" && !menuPresent)
+		{
+			return;
+		}
+		fall = "next";
+		if (fallVanilla)
+		{
+			fall = "vanilla";
+		}
+		CMFLog("choices menu=" + CMFYesNo(menuPresent) + " order=" + menuOrder + " fallthrough=" + fall + " active=" +
+			CMFYesNo(choicesActive));
+		for (i = 0; i < choiceKeys.Size(); i += 1)
+		{
+			if (menuChoices[i] != "")
+			{
+				CMFLog("choice key=" + choiceKeys[i] + " value=" + menuChoices[i] + " level=in-game");
+			}
+			if (fileChoices[i] != "")
+			{
+				CMFLog("choice key=" + choiceKeys[i] + " value=" + fileChoices[i] + " level=file");
+			}
+		}
+		if (!menuReport && !CMFSettingsDebug())
+		{
+			return;
+		}
+		for (i = 0; i < choiceKeys.Size(); i += 1)
+		{
+			if (i == 6 || i == 10 || (i >= 36 && i <= 38) || i >= 56)
+			{
+				if (i == 6 || i == 10)
+				{
+					CMFLog("wins key=" + choiceKeys[i] + " applied=" + AllowedCount(i, offered) + " of=" + offered);
+				}
+				continue;
+			}
+			winner = WinnerOf(i, 0, level);
+			if (winner != "")
+			{
+				CMFLog("wins key=" + choiceKeys[i] + " winner=" + winner + " level=" + LevelName(level));
+			}
+		}
+	}
+
 	public function Prepare()
 	{
 		var i, w : int;
 		var found : bool;
 		providerOrder = CMFSettingsProviderOrder();
+		ReadChoices();
 		winners.Clear();
 		hideClaims.Clear();
 		tabHideClaims.Clear();
 		for (i = 0; i < claims.Size(); i += 1)
 		{
-			// Hide claims are never arbitrated: every eligible one applies.
+			// Hide claims are never arbitrated: every eligible one applies (version 8: unless the Hidden pins
+			// choice leaves its provider out; greyed pins follow the same choice).
 			if (claims[i].propertyId == CMFPropertyHidden())
 			{
-				if (CMFHasFlag(claims[i].number, 1))
+				if (CMFHasFlag(claims[i].number, 1) && AdditiveAllows(6, claims[i].provider))
 				{
 					hideClaims.PushBack(claims[i]);
 				}
@@ -895,10 +2032,14 @@ class CMFCore extends CObject
 			}
 			if (claims[i].propertyId == CMFPropertyTabHide())
 			{
-				if (claims[i].number != 0)
+				if (claims[i].number != 0 && AdditiveAllows(6, claims[i].provider))
 				{
 					tabHideClaims.PushBack(claims[i]);
 				}
+				continue;
+			}
+			if (claims[i].propertyId == CMFPropertyDisabled() && !AdditiveAllows(6, claims[i].provider))
+			{
 				continue;
 			}
 			// A withdrawn label hide or info box height leaves the slot to the next folder.
@@ -953,6 +2094,8 @@ class CMFCore extends CObject
 		}
 		CMFLog("prepared claims=" + claims.Size() + " winners=" + winners.Size() + " revision=" + revision);
 		ReportProviders();
+		PrepareOffers();
+		ReportChoices();
 		PrepareLegend();
 		for (i = 0; i < hideClaims.Size(); i += 1)
 		{
@@ -1334,6 +2477,7 @@ class CMFCore extends CObject
 			return;
 		}
 		OnMapReady(menuFlash);
+		mapSeen = true;
 		if (dirty)
 		{
 			Prepare();
@@ -1773,12 +2917,33 @@ class CMFCore extends CObject
 		}
 	}
 
-	// Most specific prepared winner for this pin, considering levels up to maxLevel.
+	// Most specific prepared winner for this pin, considering levels up to maxLevel. Version 8: through the choice of
+	// the pin's piece (PropertyChoice): Vanilla finds nothing; a chosen mod's claim wins at any level of detail, and
+	// when it has none the most specific other claim does, or nothing when the General row says Vanilla.
 	private function Find(propertyId : int, pinType : string, pinTag : name, maxLevel : int, out result : SCMFClaim) : bool
 	{
-		var i, best : int;
+		var i, best, picked, choice : int;
 		var matches : bool;
+		var answer : string;
 		best = -1;
+		picked = -1;
+		answer = "";
+		if (choicesActive)
+		{
+			choice = PropertyChoice(propertyId, pinType);
+			if (choice >= 0)
+			{
+				answer = decideAnswer[choice];
+				if (answer == "vanilla")
+				{
+					return false;
+				}
+				if (answer == "@order")
+				{
+					answer = "";
+				}
+			}
+		}
 		for (i = 0; i < winners.Size(); i += 1)
 		{
 			matches = winners[i].propertyId == propertyId && winners[i].level <= maxLevel;
@@ -1795,8 +2960,18 @@ class CMFCore extends CObject
 			{
 				best = i;
 			}
+			if (matches && answer != "" && winners[i].provider == answer &&
+				(picked < 0 || winners[i].level > winners[picked].level))
+			{
+				picked = i;
+			}
 		}
-		if (best < 0)
+		if (picked >= 0)
+		{
+			result = winners[picked];
+			return true;
+		}
+		if (best < 0 || (answer != "" && fallVanilla))
 		{
 			return false;
 		}
@@ -1810,11 +2985,16 @@ class CMFCore extends CObject
 			a.mapContext == b.mapContext;
 	}
 
-	// Earlier provider wins (ProviderBeats); then registration order.
+	// Earlier provider wins (ProviderBeats; version 8: PieceBeats for the claim's choice when a choice is set); then
+	// registration order.
 	private function Beats(a : SCMFClaim, b : SCMFClaim) : bool
 	{
 		if (a.provider != b.provider)
 		{
+			if (choicesActive)
+			{
+				return PieceBeats(PropertyChoice(a.propertyId, NameToString(a.pinType)), a.provider, b.provider);
+			}
 			return ProviderBeats(a.provider, b.provider);
 		}
 		return a.order < b.order;
@@ -1823,9 +3003,15 @@ class CMFCore extends CObject
 	// True when provider a comes before b: providers listed in the CMFProviderOrder setting come first, in
 	// its order, ahead of every unlisted one; otherwise folder name ignoring case, then exact. The setting is
 	// read when winners are prepared, so one map opening uses one order throughout. Arbitration only.
+	// Version 8: the menu add-on's in-game Mod order comes before the setting, the same way.
 	public function ProviderBeats(a : string, b : string) : bool
 	{
 		var rankA, rankB : int;
+		var result : bool;
+		if (OrderDecides(menuOrder, a, b, result))
+		{
+			return result;
+		}
 		rankA = CMFSettingsProviderRank(providerOrder, a);
 		rankB = CMFSettingsProviderRank(providerOrder, b);
 		if (rankA != rankB)
@@ -1852,6 +3038,7 @@ class CMFCore extends CObject
 		var owner : string;
 		var flags : int;
 		var tabs : string;
+		var choice : int;
 		// Version 6: clicks, hints and buttons have their own rules (StyleClick).
 		if (CMFIsClickProperty(propertyId))
 		{
@@ -1891,10 +3078,17 @@ class CMFCore extends CObject
 			NoteStyleRejected(provider, propertyId, "text");
 			return false;
 		}
+		// Version 8: the Hidden pins choice can leave a provider's hides out.
+		if ((propertyId == CMFPropertyTabHide() || propertyId == CMFPropertyHidden()) && !AdditiveAllows(6, provider))
+		{
+			NoteStyleRejected(provider, propertyId, "choice");
+			return false;
+		}
 		// Tab hides merge like hides: no loser.
 		if (propertyId == CMFPropertyTabHide())
 		{
 			MergeTabHide(dataObject, provider, tabs);
+			NoteStyledOffer(6, provider);
 			return true;
 		}
 		// Hiding one pin: every hide applies, so there is no loser; the earlier folder is recorded.
@@ -1916,12 +3110,21 @@ class CMFCore extends CObject
 				return false;
 			}
 			MarkHidden(dataObject, provider);
+			NoteStyledOffer(6, provider);
 			return true;
+		}
+		// Version 8: the piece's choice (StyleAllowed), then PieceBeats between two providers styling one pin.
+		choice = PropertyChoice(propertyId, dataObject.GetMemberFlashString("type"));
+		NoteStyledOffer(choice, provider);
+		if (!StyleAllowed(choice, provider, dataObject, propertyId, ownerField))
+		{
+			NoteStyleRejected(provider, propertyId, "choice");
+			return false;
 		}
 		owner = CMFPinOwner(dataObject, ownerField);
 		if (owner != "" && owner != provider)
 		{
-			if (CMFProviderBeats(owner, provider))
+			if (PieceBeats(choice, owner, provider))
 			{
 				NoteStyleShadow(provider, owner, dataObject, propertyId);
 				return false;
@@ -2131,10 +3334,17 @@ class CMFCore extends CObject
 			NoteStyleRejected(provider, propertyId, "text");
 			return false;
 		}
+		// Version 8: the Pin clicks choice.
+		NoteStyledOffer(32, provider);
+		if (!StyleAllowed(32, provider, dataObject, propertyId, "cmfClickBy"))
+		{
+			NoteStyleRejected(provider, propertyId, "choice");
+			return false;
+		}
 		owner = CMFPinOwner(dataObject, "cmfClickBy");
 		if (owner != "" && owner != provider)
 		{
-			if (dataObject.GetMemberFlashBool("cmfClickPin") && CMFProviderBeats(owner, provider))
+			if (dataObject.GetMemberFlashBool("cmfClickPin") && PieceBeats(32, owner, provider))
 			{
 				NoteClickShadow(provider, owner);
 				return false;
@@ -2265,6 +3475,15 @@ class CMFCore extends CObject
 		CMFLog(kind + " provider=" + claim.provider + " property=" + claim.propertyId + " level=" + claim.level +
 			" type=" + NameToString(claim.pinType) + " tag=" + NameToString(claim.pinTag) + " context=" + NameToString(claim.mapContext));
 	}
+}
+
+function CMFYesNo(value : bool) : string
+{
+	if (value)
+	{
+		return "yes";
+	}
+	return "no";
 }
 
 function CMFLog(message : string)
@@ -2638,6 +3857,28 @@ function CMFRequireVersion(provider : string, minVersion : int) : bool
 function CMFReleaseProvider(provider : string)
 {
 	theGame.CMFGetCore().ReleaseProvider(provider);
+}
+
+// Version 8: the name CMF's in-game menu shows for a provider (for example "Ink and Iron"); without it the menu
+// shows the folder name tidied (CMFTidyName). Call it once, where the provider registers its claims.
+function CMFSetProviderName(provider : string, displayName : string) : bool
+{
+	if (provider == "" || displayName == "")
+	{
+		CMFLog("rejected provider=" + provider + " name=" + displayName + " reason=empty");
+		return false;
+	}
+	theGame.CMFGetCore().SetProviderName(provider, displayName);
+	return true;
+}
+
+// Version 8: a per-feature choice changed (the menu add-on calls it when a row changes): CMF prepares its winners
+// again before the next lookup, so the map shows the new winners when it next opens and the minimap add-on
+// follows on its next frame. Choices are read only while winners are prepared.
+function CMFChoicesChanged()
+{
+	CMFLog("choices changed");
+	theGame.CMFGetCore().RequestRefresh();
 }
 
 // Version 5: the map theme. Scripts cannot draw into the map: a mod describes what it wants with these calls,

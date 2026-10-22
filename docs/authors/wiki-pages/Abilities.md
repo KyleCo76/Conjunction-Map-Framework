@@ -52,8 +52,9 @@ Find what your mod wants to do on the map, then follow the page. Every call take
 | Check the installed CMF is new enough | `CMFRequireVersion`, `CMFHasProperty`, `CMFHasAbility`, `CMFGetVersion` | [Writing your script](page:Writing-Your-Script) |
 | Switch your whole mod off from its own setting | `CMFReleaseProvider` | [Shipping your mod](page:Shipping-Your-Mod) |
 | Give your mod an options page under CMF's entry | your own menu file at `Mods.cmf_menu.<your slug>` | [Shipping your mod](page:Shipping-Your-Mod) |
+| Show your mod under its own name in CMF's in-game menu | `CMFSetProviderName` (API version 8) | [Players' choices](page:Who-Wins-Each-Feature) |
 | See whether it worked | the script log's `CMF ...` lines | [Install and test](page:Install-and-Test) |
 
-## What CMF 1.0.0 does not do
+## What CMF does not do yet
 
 Some things are not in this version: new pin types of CMF's own, the player arrow, the world-select map, tooltip text, images as drawings, and clicks on drawings on the map itself. [Limits](page:Limits) lists them.

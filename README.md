@@ -6,7 +6,7 @@
 
 [![Latest release](https://img.shields.io/github/v/release/KyleCo76/Conjunction-Map-Framework?label=release)](https://github.com/KyleCo76/Conjunction-Map-Framework/releases/latest)
 ![The Witcher 3 Remastered 5.01](https://img.shields.io/badge/The%20Witcher%203-Remastered%205.01-8b0000)
-![CMF API version 7](https://img.shields.io/badge/CMF%20API-version%207-2f6f4f)
+![CMF API version 8](https://img.shields.io/badge/CMF%20API-version%208-2f6f4f)
 ![Windows and Linux](https://img.shields.io/badge/tested%20on-Windows%20%7C%20Linux%20%28Proton%29-555)
 [![Licence CC BY-NC 4.0](https://img.shields.io/badge/licence-CC%20BY--NC%204.0-lightgrey)](LICENSE)
 
@@ -37,8 +37,17 @@ flowchart LR
 > [!NOTE]
 > **On its own, CMF changes nothing you can see.** With only CMF installed, the map looks exactly like the game's own. What it becomes depends on the CMF-ready mods and adapters you install beside it.
 
+## Why CMF
+
+Other map compatibility tools solve the same problem in their own ways, and many players have used them happily. CMF takes a different route.
+
+- **Mix and match, feature by feature.** With the optional [in-game menu add-on](#good-to-know) you choose in Options which of your map mods wins each feature: pin icons from one mod, pin colours from another, the map's look from a third. Change your mind at any time, with nothing to reinstall.
+- **Updates need no rebuild.** CMF builds nothing ahead of time. Each map mod tells CMF what it wants shown when your game loads, so when one of your map mods updates, you install the update and play. There is no combined map to rebuild. At most, a mod that uses a CMF adapter may get an updated adapter, and once its author supports CMF directly, the adapter goes away.
+- **Mods stay as their authors ship them.** CMF changes no other mod's files, and its adapters contain none of the mod they adapt.
+
 ## Contents
 
+- [Why CMF](#why-cmf)
 - [For players](#for-players)
   - [What you need](#what-you-need)
   - [What to download](#what-to-download)
@@ -71,7 +80,8 @@ CMF comes as separate archives. You always need CMF itself; take the rest only f
 
 | Archive | What it is | When to install it |
 | --- | --- | --- |
-| `mod0000_ConjunctionMapFramework` | CMF itself (1.1.0) | **Always** |
+| `mod0000_ConjunctionMapFramework` | CMF itself (1.2.0) | **Always** |
+| `modCMFInGameMenu` | In-game menu add-on (1.0.0): choose in Options which map mod wins each feature | Optional. See [Good to know](#good-to-know) |
 | `modCMFMinimapPanel` | Minimap add-on (2.1.0): your icon packs' icons and colours on the HUD minimap too, on top of whichever minimap you have | Optional. See [Good to know](#good-to-know) for the minimap and HUD mods it was tested with |
 | `modCMFExampleIconPack` | Sample icon pack: a small example for pack authors | Optional |
 | `modCMFAdapter…` (12 archives) | Adapters for 12 map mods that don't support CMF yet | Only for those mods you use, and only until the mod's author updates it for CMF. See [Supported map mods](#supported-map-mods) |
@@ -81,10 +91,10 @@ CMF comes as separate archives. You always need CMF itself; take the rest only f
 1. Install CMF: copy its `Mods` and `bin` folders into your game folder and let Windows merge them.
 2. Install your map mods as their authors describe.
 3. If one of those mods is in the adapter list below, add its adapter's `Mods` folder. Many map mods need no adapter at all, and an adapter is only needed until that mod's author updates it for CMF.
-4. Optionally add the minimap add-on. It replaces no game file, so it goes in beside your HUD or minimap mod.
+4. Optionally add the in-game menu add-on (its `Mods` and `bin` folders) and the minimap add-on. Neither replaces a game file, so the minimap add-on goes in beside your HUD or minimap mod.
 5. Start the game. The first start recompiles scripts and takes a little longer.
 
-Every archive has a `README.txt` with its full install, update and removal steps. To remove CMF later, take out adapters and packs first, then the minimap add-on, then CMF. CMF writes nothing into your saves.
+Every archive has a `README.txt` with its full install, update and removal steps. To remove CMF later, take out adapters and packs first, then the menu and minimap add-ons, then CMF. CMF writes nothing into your saves.
 
 ### Supported map mods
 
@@ -106,7 +116,7 @@ Two exceptions:
 | Map Pin Teleport | 1.2.2 | 1.0.0 | Teleporting from your own map pins |
 | Map Quest Insight | 1.6.1 | **1.0.1** | Quest icons by type (main quest, contract and Gwent quest icons in its author's own art), coloured level labels, its info box, spreading stacked markers |
 | The Stable - Roach-Horse Customization | 2.2.1 | 1.0.0 | Its Stables row on the map |
-| UI Remastered Edition | 1.00 | **1.0.0** | Clean quest titles: its quest level text on its own line under the objective, instead of a stray "#UHL#" marker and the level inside the title |
+| UI Remastered Edition | 1.00 | **1.0.1** | Clean quest titles: its quest level text on its own line under the objective, instead of a stray "#UHL#" marker and the level inside the title |
 | Witcher Upgrade Gear Map | 1.0.1 | **1.0.1** | Its diagram markers, in its author's own art and school colours, its "Witcher Gear" tab and legend row |
 | Witcher's Path | 1.0.3 | 1.0.0 | Its travel route drawn on the map, and its buttons |
 
@@ -132,6 +142,7 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 - **Fog of War's clouds** do not draw on CMF's map until Fog of War supports CMF; the hiding works.
 - **Map Remastered's** own region emblems on the world overview do not show; its redrawn terrain does.
 - **Witcher's Path:** its speed setting does nothing under CMF.
+- **World Map Merger** has not been tried with CMF. Its merged map file loads ahead of CMF's, which would switch CMF's map off.
 - **Map Pin Teleport:** the "Go Now" texts are English, as in the mod itself.
 - **UI Remastered Edition:** the adapter puts the quest level line under the objective in the info box; UI Remastered's own map shows it in its own tooltip.
 - Per-mod details are in each adapter's `README.txt` and in the release's `test-notes.md`.
@@ -140,7 +151,13 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 
 ### Good to know
 
-- **When two mods want the same spot**, a "hide" always wins; otherwise the mod whose folder name sorts first wins. Your mod manager's load order does not change this. To pick a winner yourself, list folder names in `Documents\The Witcher 3\dx12user.settings` (details in the [author guide, section 11](docs/authors/icon-pack-guide.md#11-for-players-installing-cmf-icon-packs-and-other-map-mods)):
+- **The in-game menu add-on (1.0.0) is optional.** With `modCMFInGameMenu` installed, Options > Mods > Conjunction Map Framework lets you choose which of your map mods wins each feature.
+  - **Mod order** ranks your map mods once; **Basic choices** has one row per feature (pin icons, pin colours, legend, map look, map movement and more); **Advanced choices** splits a feature further, such as quest icons from one mod and shop icons from another; **Status** shows which mod wins each piece now, and why.
+  - Every row starts on **Automatic**, which keeps CMF's usual winner and names it in brackets. **Vanilla** uses the game's own look; or pick one of your loaded map mods.
+  - The more specific choice wins: Advanced beats Basic, and Basic beats Mod order. No restart is needed: the minimap add-on follows as soon as Options closes, and the world map the next time you open it.
+  - Hidden pins add up: every mod's hides apply, unless you keep only one mod's, none (Vanilla), or leave out up to three mods.
+  - Without the add-on every choice is Automatic, and choices it left behind are ignored. The same choices can also go into `dx12user.settings` by hand, with the game closed: `CMFFile_…` lines under a `[CMFSettings]` heading (add the heading if it is missing), listed in CMF's `README.txt`.
+- **When two mods want the same spot**, a "hide" beats any icon or colour; otherwise, with nothing chosen, the mod whose folder name sorts first wins. Your mod manager's load order does not change this. To pick a winner without the menu add-on, list folder names in `Documents\The Witcher 3\dx12user.settings` (details in the [author guide, section 11](docs/authors/icon-pack-guide.md#11-for-players-installing-cmf-icon-packs-and-other-map-mods)):
   ```ini
   [CMFSettings]
   CMFProviderOrder1=modMyFavouritePack
@@ -156,7 +173,7 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 - **The map moves at 60 frames per second** by default.
 
 > [!IMPORTANT]
-> **Not tested:** controllers and the Steam Deck. CMF 1.0.0 and 1.1.0 were tested on Windows with keyboard and mouse, both with the files copied in by hand and installed with RMMR in a full, everyday game setup. On Linux (Steam with Proton, keyboard and mouse) MateusAnd, the Gwent Players Map author, tested CMF 1.0.0 with the Gwent Players Map, Witcher Gear Map and Map Pin Teleport adapters: scripts compiled, the game started, and every adapter feature worked.
+> **Not tested:** controllers and the Steam Deck. CMF 1.0.0 and 1.1.0 were tested on Windows with keyboard and mouse, both with the files copied in by hand and installed with RMMR in a full, everyday game setup. CMF 1.2.0 and the in-game menu add-on were tested on Windows with keyboard and mouse with Ink and Iron, Map Quest Insight, Coloured Map Markers, Gwent Players Map and Witcher Gear Map and their adapters, not yet in a full everyday setup. On Linux (Steam with Proton, keyboard and mouse) MateusAnd, the Gwent Players Map author, tested CMF 1.0.0 with the Gwent Players Map, Witcher Gear Map and Map Pin Teleport adapters: scripts compiled, the game started, and every adapter feature worked.
 
 ---
 
@@ -167,8 +184,8 @@ CMF lets your mod change the world map **without shipping a map file**: no decom
 Three rules shape everything CMF offers:
 
 1. **Abilities, not special cases.** Every ability is one general call that takes its target as an argument. CMF has no calls made for one particular mod, and names (pin types, tags, tab ids, folder names) are open, so your mod can style a pin another mod added.
-2. **Clear winners.** When two mods ask for the same thing, a hide wins; otherwise the folder name that sorts first wins, unless the player sets an order. CMF settles this once per game load.
-3. **The version number is a promise.** `CMFGetVersion()` returns CMF's script interface version (**7** in 1.1.0), not a release number. Nothing is removed from 1.0.0 on; later versions only add.
+2. **Clear winners.** When two mods ask for the same thing, a hide wins; otherwise the folder name that sorts first wins, unless the player picks a winner, for a whole mod or one feature at a time. CMF settles this when the game loads, and again when the player changes a choice.
+3. **The version number is a promise.** `CMFGetVersion()` returns CMF's script interface version (**8** in 1.2.0), not a release number. Nothing is removed from 1.0.0 on; later versions only add.
 
 ### What CMF can do for your mod
 
@@ -189,6 +206,7 @@ Three rules shape everything CMF offers:
 | Smooth map movement | 6 | [Smooth map movement](docs/authors/icon-pack-guide.md#smooth-map-movement-api-version-6) |
 | Spreading stacked pins apart | 6 | [Spreading stacked pins](docs/authors/icon-pack-guide.md#spreading-stacked-pins-api-version-6) |
 | Drawing lines and images on the map itself | 6 | [Drawing on the map](docs/authors/icon-pack-guide.md#drawing-on-the-map-itself-api-version-6) |
+| A tidy name for your mod in the player's in-game menu (`CMFSetProviderName`) | 8 | [API reference](docs/wiki/API-Reference.md) |
 
 A minimal pack, the whole script:
 
@@ -269,6 +287,7 @@ The Coloured Map Markers adapter has no porting page: that mod has no scripts, s
 | `source/core` | CMF's scripts (`cmfCore.ws`, `cmfSettings.ws`) |
 | `source/settings`, `source/strings.json` | CMF's menu file and the source of its string tables |
 | `source/panel` | the edit sets CMF applies to the game's world map panel, and CMF's own ActionScript classes |
+| `source/menu` | the in-game menu add-on: its script, menu file and string source |
 | `source/minimap` | the minimap add-on: its script and its own HUD part's ActionScript class |
 | `source/adapters` | the 12 adapters, one folder each, with a developer `README.md` and the shipped pack folder |
 | `examples/modCMFExampleIconPack` | the sample icon pack, to copy from |
@@ -314,7 +333,7 @@ Each version has a [GitHub Release](https://github.com/KyleCo76/Conjunction-Map-
 To check a download in PowerShell, in the folder with the archive:
 
 ```powershell
-Get-FileHash .\mod0000_ConjunctionMapFramework-1.1.0.zip -Algorithm SHA256
+Get-FileHash .\mod0000_ConjunctionMapFramework-1.2.0.zip -Algorithm SHA256
 ```
 
 The result must equal that file's line in `SHA256SUMS`.

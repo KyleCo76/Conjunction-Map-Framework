@@ -216,4 +216,4 @@ Types with no legend tab of their own (they appear under "All" only, or have no 
 
 ---
 
-[Previous: API reference](API-Reference.md) · [Contents](Home.md) · [Next: What CMF does not do yet](Limits.md)
+[Previous: API reference](API-Reference.md) · [Contents](Home.md) · [Next: Settings file keys](Settings-File-Keys.md)

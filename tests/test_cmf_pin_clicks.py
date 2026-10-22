@@ -45,7 +45,7 @@ def replaced(cls):
 class ApiTests(unittest.TestCase):
     def test_version6_calls(self):
         core = CORE.read_text(encoding='ascii')
-        for line in ('function CMFGetVersion() : int { return 7; }',
+        for line in ('function CMFGetVersion() : int { return 8; }',
                      'function CMFPropertyPinClick() : int { return 16; }',
                      'function CMFPropertyPinClickHint() : int { return 20; }',
                      'function CMFPropertyPinClickButton() : int { return 21; }'):
@@ -123,7 +123,8 @@ class CoreTests(unittest.TestCase):
         style = body(self.core, '\tpublic function StylePin(')
         self.assertLess(style.index('return StyleClick('), style.index('ownerField = CMFOwnerField(propertyId);'))
         click = body(self.core, '\tprivate function StyleClick(')
-        self.assertIn('if (dataObject.GetMemberFlashBool("cmfClickPin") && CMFProviderBeats(owner, provider))', click)
+        # Version 8: the Pin clicks choice ranks two providers (PieceBeats with no choice set is ProviderBeats).
+        self.assertIn('if (dataObject.GetMemberFlashBool("cmfClickPin") && PieceBeats(32, owner, provider))', click)
         self.assertIn('dataObject.SetMemberFlashBool("cmfClickPin", true);', click)
         self.assertIn('owner == CMFPinOwner(dataObject, "cmfClickBy")', click)
         self.assertIn('dataObject.GetMemberFlashBool("cmfClickPin")', body(self.core, '\tprivate function WriteClickFields('))

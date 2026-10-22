@@ -34,4 +34,4 @@ function OnGameStarted(restored : bool)
 
 ---
 
-[Previous: Shipping your mod](Shipping-Your-Mod.md) · [Contents](Home.md) · [Next: Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md)
+[Previous: Players' choices: who wins each feature](Who-Wins-Each-Feature.md) · [Contents](Home.md) · [Next: Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md)

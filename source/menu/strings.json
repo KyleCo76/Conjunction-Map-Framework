@@ -1,0 +1,30 @@
+{
+  "mod": "modCMFInGameMenu",
+  "idBase": 2000200100,
+  "strings": [
+    {"id": 2000200101, "key": "panel_cmf_order", "text": {"en": "Mod order"}},
+    {"id": 2000200102, "key": "panel_cmf_basic", "text": {"en": "Basic choices"}},
+    {"id": 2000200103, "key": "panel_cmf_advanced", "text": {"en": "Advanced choices"}},
+    {"id": 2000200104, "key": "panel_cmf_adv_icons", "text": {"en": "Pin icons"}},
+    {"id": 2000200105, "key": "panel_cmf_adv_colours", "text": {"en": "Pin colours"}},
+    {"id": 2000200106, "key": "panel_cmf_adv_size", "text": {"en": "Pin size and labels"}},
+    {"id": 2000200107, "key": "panel_cmf_adv_legend", "text": {"en": "Legend and filters"}},
+    {"id": 2000200108, "key": "panel_cmf_adv_look", "text": {"en": "Map look"}},
+    {"id": 2000200109, "key": "panel_cmf_adv_movement", "text": {"en": "Map movement"}},
+    {"id": 2000200110, "key": "panel_cmf_adv_painting", "text": {"en": "Map painting"}},
+    {"id": 2000200111, "key": "panel_cmf_adv_clicks", "text": {"en": "Clicks and drawings"}},
+    {"id": 2000200112, "key": "panel_cmf_general", "text": {"en": "General"}},
+    {"id": 2000200113, "key": "panel_cmf_status", "text": {"en": "Status"}},
+    {"id": 2000200114, "key": "panel_cmf_status_mods", "text": {"en": "Loaded map mods"}},
+    {"id": 2000200115, "key": "panel_cmf_win_icons", "text": {"en": "Who wins: pin icons"}},
+    {"id": 2000200116, "key": "panel_cmf_win_colours", "text": {"en": "Who wins: pin colours"}},
+    {"id": 2000200117, "key": "panel_cmf_win_size", "text": {"en": "Who wins: pin size and labels"}},
+    {"id": 2000200118, "key": "panel_cmf_win_legend", "text": {"en": "Who wins: legend and filters"}},
+    {"id": 2000200119, "key": "panel_cmf_win_look", "text": {"en": "Who wins: map look"}},
+    {"id": 2000200120, "key": "panel_cmf_win_movement", "text": {"en": "Who wins: map movement"}},
+    {"id": 2000200121, "key": "panel_cmf_win_painting", "text": {"en": "Who wins: map painting"}},
+    {"id": 2000200122, "key": "panel_cmf_win_clicks", "text": {"en": "Who wins: clicks and drawings"}},
+    {"id": 2000200123, "key": "cmf_menu_rule_box", "text": {"en": "════════════"}},
+    {"id": 2000200124, "key": "cmf_menu_rule_dash", "text": {"en": "————————————"}}
+  ]
+}

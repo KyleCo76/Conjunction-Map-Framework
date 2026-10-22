@@ -95,7 +95,7 @@ class UIRemasteredAdapterTests(unittest.TestCase):
         self.assertIn('ONLY together with UI Remastered Edition', readme)
         # CMF 1.0.0 is API 6, above the API 4 that OnPinReady and OnMapReady need.
         self.assertIn('Conjunction Map Framework 1.0.0 or later', readme)
-        self.assertIn('Version 1.0.0', readme)
+        self.assertRegex(readme, r'Version 1\.0\.\d+\n')
 
 
 if __name__ == '__main__':
