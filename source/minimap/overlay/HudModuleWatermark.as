@@ -19,9 +19,10 @@ package red.game.witcher3.hud.modules
 
    // CMF minimap add-on. This movie is the game's unused watermark movie, shipped as the HUD's unused
    // hud_pickeditemsinfo slot, so it replaces no file. It draws nothing itself: it finds whichever minimap
-   // is loaded, reads each pin's type from its PinIcon class, and adds CMF art or tint to claimed pins only.
-   // It never moves, scales or hides the minimap, and touches only what it adds (its own layer inside a
-   // claimed pin, PinIcon.mask and PinIcon's colour multipliers), restoring them when a claim goes away.
+   // is loaded, reads each pin's type from its PinIcon class, and adds CMF art or tint to claimed pins only,
+   // or masks the icon of a type CMF hides. It never moves, scales or hides the minimap, and touches only
+   // what it adds (its own layer inside a claimed pin, PinIcon.mask and PinIcon's colour multipliers),
+   // restoring them when a claim goes away.
    [SWF(width="600", height="70", backgroundColor="#000000", frameRate="24")]
    public class HudModuleWatermark extends HudModuleBase
    {
@@ -85,6 +86,17 @@ package red.game.witcher3.hud.modules
             "iconPath":param2,
             "tint":uint(param3),
             "tintEnabled":param4
+         };
+      }
+
+      // A hidden type: its icon is masked; glow, radius ring and arrows stay as the minimap draws them.
+      public function CMFSetTypeHidden(param1:String) : *
+      {
+         this.cmfStyles[param1] = {
+            "iconPath":"",
+            "tint":0,
+            "tintEnabled":false,
+            "hidden":true
          };
       }
 
@@ -301,6 +313,24 @@ package red.game.witcher3.hud.modules
             return _loc4_;
          }
          _loc4_.type = _loc5_;
+         if(_loc6_.hidden)
+         {
+            _loc4_.layer = new Sprite();
+            _loc4_.layer.mouseEnabled = false;
+            _loc4_.layer.mouseChildren = false;
+            _loc4_.mask = new Shape();
+            _loc4_.mask.graphics.beginFill(0,0);
+            _loc4_.mask.graphics.drawRect(-100000,-100000,1,1);
+            _loc4_.mask.graphics.endFill();
+            _loc4_.layer.addChild(_loc4_.mask);
+            param1.addChild(_loc4_.layer);
+            if(param2.mask == null)
+            {
+               param2.mask = _loc4_.mask;
+               _loc4_.masked = true;
+            }
+            return _loc4_;
+         }
          if(_loc6_.tintEnabled)
          {
             _loc7_ = param2.transform.colorTransform;

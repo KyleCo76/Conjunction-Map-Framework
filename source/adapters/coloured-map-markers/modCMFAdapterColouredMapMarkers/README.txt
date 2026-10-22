@@ -1,5 +1,5 @@
 Coloured Map Markers adapter for Conjunction Map Framework
-Version 1.0.0
+Version 1.0.1
 
 Brings Coloured Map Markers' coloured world map icons back while Conjunction Map Framework
 (CMF) draws the world map. The art is Coloured Map Markers' own, by DJ_Kovrik, used with
@@ -21,8 +21,9 @@ REQUIREMENTS
 - Conjunction Map Framework version 1 or later.
 - Coloured Map Markers (recommended, not required). Keep it installed: CMF's map is the
   world map the game loads, so this adapter shows its icons there, and Coloured Map
-  Markers keeps colouring the minimap as before (unless you also use CMF's minimap
-  add-on, which draws its own minimap).
+  Markers keeps colouring the minimap as before. With CMF's minimap add-on 2.0.0 or
+  later also installed, the add-on draws this adapter's icons on the pin types it
+  claims, on top of that minimap.
 
 PIN TYPES THIS ADAPTER CHANGES (new icon; the legend row uses the same picture)
 - Merchants and services: Shopkeeper, Blacksmith, Armorer, Alchemic, Herbalist,

@@ -2,7 +2,7 @@
 
 # What CMF does not do yet
 
-- **Hiding is one-way.** A hide claim cannot be overruled by another pack's "show" claim, and the HUD minimap still shows hidden pins. Text another mod writes into a tooltip (such as Map Quest Insight's "Also here") can still name a hidden pin.
+- **Hiding is one-way.** A hide claim cannot be overruled by another pack's "show" claim, and the HUD minimap still shows hidden pins, except a type hidden everywhere when the player has the minimap add-on 2.1.0 (below). Text another mod writes into a tooltip (such as Map Quest Insight's "Also here") can still name a hidden pin.
 
 - **Conflicts follow folder names, or CMF's own order setting.** The load order a player sets in a mod manager or `mods.settings` does not change which pack wins inside CMF. Names are compared ignoring capital letters, like the game's own folder order. A player can put packs first by name in CMF's settings ([section 11](For-Players.md)). This ran in game on 2026-10-20.
 - **CMF does not watch the options menu.** When a mod's own setting changes, the mod registers again at the next map opening, as [section 9](Shipping-Your-Mod.md#9-ship-it) shows under [Packs with settings or text](Shipping-Your-Mod.md#packs-with-settings-or-text). CMF prepares its winners again only when a registration actually changed. A change made while the map is open applies at the next opening. The settings launch (2026-10-19) ran this: the test pack's toggle followed at the next map opening.

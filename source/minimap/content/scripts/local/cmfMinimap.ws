@@ -2,7 +2,8 @@
 // own HUD part, which styles claimed pins of whichever minimap is loaded and replaces no game file.
 // The part fills the HUD's unused PickedItemsInfoModule slot (hud_pickeditemsinfo); the game never creates it.
 // The engine adds minimap pins itself, so styling is per pin type; single-pin claims stay off the minimap.
-// Needs mod0000_ConjunctionMapFramework (CMFCore.GetRevision and FindTypeWinner).
+// A type every one of whose pins CMF hides on the world map has its minimap icon masked too.
+// Needs mod0000_ConjunctionMapFramework (CMFCore.GetRevision, FindTypeWinner and its hide claims).
 
 @wrapMethod(CR4ScriptedHud)
 function OnConfigUI()
@@ -31,6 +32,9 @@ var cmfClearStylesSFF : CScriptedFlashFunction;
 var cmfSetStyleSFF : CScriptedFlashFunction;
 
 @addField(CR4HudModulePickedItemsInfo)
+var cmfSetHiddenSFF : CScriptedFlashFunction;
+
+@addField(CR4HudModulePickedItemsInfo)
 var cmfApplyStylesSFF : CScriptedFlashFunction;
 
 @addField(CR4HudModulePickedItemsInfo)
@@ -49,6 +53,7 @@ function OnConfigUI()
 	result = wrappedMethod();
 	cmfClearStylesSFF = NULL;
 	cmfSetStyleSFF = NULL;
+	cmfSetHiddenSFF = NULL;
 	cmfApplyStylesSFF = NULL;
 	cmfTickSFF = NULL;
 	cmfStylesSent = false;
@@ -105,7 +110,7 @@ public function CMFPushMinimapStyles()
 	var iconPath : string;
 	var tint : int;
 	var tinted : bool;
-	var revision, i, sent : int;
+	var revision, i, sent, hidden : int;
 	core = theGame.CMFGetCore();
 	revision = core.GetRevision();
 	if (cmfStylesSent && revision == cmfSentRevision)
@@ -121,18 +126,27 @@ public function CMFPushMinimapStyles()
 		}
 		cmfClearStylesSFF = flashModule.GetMemberFlashFunction("CMFClearTypeStyles");
 		cmfSetStyleSFF = flashModule.GetMemberFlashFunction("CMFSetTypeStyle");
+		cmfSetHiddenSFF = flashModule.GetMemberFlashFunction("CMFSetTypeHidden");
 		cmfApplyStylesSFF = flashModule.GetMemberFlashFunction("CMFApplyTypeStyles");
 		cmfTickSFF = flashModule.GetMemberFlashFunction("CMFTick");
 	}
-	if (!cmfClearStylesSFF || !cmfSetStyleSFF || !cmfApplyStylesSFF)
+	if (!cmfClearStylesSFF || !cmfSetStyleSFF || !cmfSetHiddenSFF || !cmfApplyStylesSFF)
 	{
 		return;
 	}
 	cmfClearStylesSFF.InvokeSelf();
 	CMFMinimapPinTypes(types);
 	sent = 0;
+	hidden = 0;
 	for (i = 0; i < types.Size(); i += 1)
 	{
+		// A hide wins over every other property, as on the world map.
+		if (core.CMFMinimapHidesType(types[i]))
+		{
+			cmfSetHiddenSFF.InvokeSelfOneArg(FlashArgString(NameToString(types[i])));
+			hidden += 1;
+			continue;
+		}
 		iconPath = "";
 		tint = 0;
 		tinted = false;
@@ -155,7 +169,44 @@ public function CMFPushMinimapStyles()
 	cmfApplyStylesSFF.InvokeSelf();
 	cmfSentRevision = revision;
 	cmfStylesSent = true;
-	CMFLog("minimap styles revision=" + revision + " types=" + sent);
+	CMFLog("minimap styles revision=" + revision + " types=" + sent + " hidden=" + hidden);
+}
+
+// True when a type-level hide claim (CMF 3) covers every minimap pin of this type: it names the type itself,
+// holds for every map context, and carries no exemption that a pin of this type could meet (fast travel:
+// RoadSign, Harbor and Transport, as the game's map sets isFastTravel; quest and tracked: any type the game
+// calls a quest pin type, any type named ...Quest..., and the races, which the game's map tracks like quest
+// objectives; erring towards showing the pin). The minimap shows a pin's
+// type only, so a hide that spares some pins of a type, by tag, by one pin or by an exemption, stays
+// world-map only, and the pin keeps showing.
+@addMethod(CMFCore)
+public function CMFMinimapHidesType(pinType : name) : bool
+{
+	var i : int;
+	var flags : int;
+	var questType : bool;
+	var travelType : bool;
+	questType = theGame.GetCommonMapManager().IsQuestPinType(pinType) ||
+		StrFindFirst(NameToString(pinType), "Quest") >= 0 || pinType == 'HorseRace' || pinType == 'BoatRace';
+	travelType = pinType == 'RoadSign' || pinType == 'Harbor' || pinType == 'Transport';
+	for (i = 0; i < hideClaims.Size(); i += 1)
+	{
+		if (hideClaims[i].level != 1 || hideClaims[i].pinType != pinType || IsNameValid(hideClaims[i].mapContext))
+		{
+			continue;
+		}
+		flags = hideClaims[i].number;
+		if (questType && (CMFHasFlag(flags, CMFExemptQuest()) || CMFHasFlag(flags, CMFExemptTracked())))
+		{
+			continue;
+		}
+		if (travelType && CMFHasFlag(flags, CMFExemptFastTravel()))
+		{
+			continue;
+		}
+		return true;
+	}
+	return false;
 }
 
 // Base names of the vanilla 5.01 minimap's class<Type> pin symbols (the add-on also matches the _1 to _3

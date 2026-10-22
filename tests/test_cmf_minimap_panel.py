@@ -46,11 +46,33 @@ class SourceTests(unittest.TestCase):
 
     def test_movie_defines_every_function_the_script_calls(self):
         names = re.findall(r'GetMemberFlashFunction\("([A-Za-z]+)"\)', self.script)
-        self.assertEqual(sorted(names), ['CMFApplyTypeStyles', 'CMFClearTypeStyles', 'CMFSetTypeStyle', 'CMFTick'])
+        self.assertEqual(sorted(names), ['CMFApplyTypeStyles', 'CMFClearTypeStyles', 'CMFSetTypeHidden', 'CMFSetTypeStyle',
+                                        'CMFTick'])
         for name in names:
             self.assertIn('public function %s(' % name, self.movie)
         for event in re.findall(r'GameEvent\.CALL,"(\w+)"', self.movie):
             self.assertTrue(event == 'OnConfigUI' or ('event %s(' % event) in self.script, event)
+
+    def test_hides_only_types_whose_every_pin_is_hidden(self):
+        body = self.script[self.script.index('public function CMFMinimapHidesType('):]
+        body = body[:body.index('\n}\n')]
+        # Type claims only, on the type itself, for every map context.
+        self.assertIn("hideClaims[i].level != 1 || hideClaims[i].pinType != pinType || "
+                      "IsNameValid(hideClaims[i].mapContext)", body)
+        # An exemption a pin of this type could meet keeps the pin showing.
+        self.assertIn('CMFExemptQuest()', body)
+        self.assertIn('CMFExemptTracked()', body)
+        self.assertIn('CMFExemptFastTravel()', body)
+        self.assertIn("pinType == 'RoadSign' || pinType == 'Harbor' || pinType == 'Transport'", body)
+        # A hide wins: the type gets no icon or tint after it.
+        loop = self.script[self.script.index('core.CMFMinimapHidesType(types[i])'):]
+        self.assertLess(loop.index('continue;'), loop.index('FindTypeWinner(CMFPropertyIcon()'))
+        # The movie masks a hidden type's icon with its own shape, as it does under loaded art.
+        apply = self.movie[self.movie.index('private function cmfApplyPin('):self.movie.index('private function cmfRecordOfLoader(')]
+        hide = apply[apply.index('if(_loc6_.hidden)'):apply.index('if(_loc6_.tintEnabled)')]
+        self.assertIn('param2.mask = _loc4_.mask;', hide)
+        self.assertIn('if(param2.mask == null)', hide)
+        self.assertNotIn('Loader', hide)
 
     def test_movie_touches_only_what_it_adds(self):
         # On a pin's own icon the add-on writes only its mask and colour transform; everything else it
