@@ -576,6 +576,8 @@ class CMFCore extends CObject
 	private var decideAnswer : array<string>;
 	private var decideLevel : array<int>;
 	private var offerProviders : array<string>;
+	private var hiddenAsked : string;
+	private var hiddenOffered : bool;
 	private var offerFlags : array<bool>;
 	private var styledOffers : array<string>;
 	private var lastStyledOffer : string;
@@ -1183,6 +1185,7 @@ class CMFCore extends CObject
 		menuOrder = "";
 		menuPresent = false;
 		menuFall = "";
+		hiddenAsked = "";
 		menuReport = false;
 		fallVanilla = false;
 		config = theGame.GetInGameConfigWrapper();
@@ -1572,6 +1575,7 @@ class CMFCore extends CObject
 	private function AdditiveAllows(feature : int, provider : string) : bool
 	{
 		var slot : int;
+		var basic : string;
 		if (!choicesActive)
 		{
 			return true;
@@ -1581,14 +1585,53 @@ class CMFCore extends CObject
 		{
 			slot = 56; // Drawings_Ignore1
 		}
-		if (menuChoices[feature] != "" || menuChoices[slot] != "" || menuChoices[slot + 1] != "" ||
-			menuChoices[slot + 2] != "")
+		basic = AdditiveBasic(feature, menuChoices[feature]);
+		if (basic != "" || menuChoices[slot] != "" || menuChoices[slot + 1] != "" || menuChoices[slot + 2] != "")
 		{
-			return ChoiceAllows(menuChoices[feature], menuChoices[slot], menuChoices[slot + 1], menuChoices[slot + 2],
-				provider);
+			return ChoiceAllows(basic, menuChoices[slot], menuChoices[slot + 1], menuChoices[slot + 2], provider);
 		}
-		return ChoiceAllows(fileChoices[feature], fileChoices[slot], fileChoices[slot + 1], fileChoices[slot + 2],
-			provider);
+		return ChoiceAllows(AdditiveBasic(feature, fileChoices[feature]), fileChoices[slot], fileChoices[slot + 1],
+			fileChoices[slot + 2], provider);
+	}
+
+	// A mod named for an added-together feature counts only while it sends CMF something for that feature: a choice
+	// left over from a mod since removed (or one with nothing for it) reads Automatic, so the next level decides
+	// (Kyle 2026-10-22: a saved Drawings pick of a removed mod left out every Ink & Iron drawing).
+	private function AdditiveBasic(feature : int, value : string) : string
+	{
+		var i : int;
+		if (value == "" || value == "vanilla")
+		{
+			return value;
+		}
+		if (feature == 10)
+		{
+			for (i = 0; i < themeEntries.Size(); i += 1)
+			{
+				if (themeEntries[i].kind != 1 && themeEntries[i].provider == value)
+				{
+					return value;
+				}
+			}
+			return "";
+		}
+		// Hidden pins: the answer for one name is kept until the next preparation (ReadChoices), since Prepare asks
+		// once per hide claim.
+		if (value != hiddenAsked)
+		{
+			hiddenAsked = value;
+			hiddenOffered = false;
+			for (i = 0; i < claims.Size() && !hiddenOffered; i += 1)
+			{
+				hiddenOffered = claims[i].provider == value && (claims[i].propertyId == CMFPropertyHidden() ||
+					claims[i].propertyId == CMFPropertyTabHide() || claims[i].propertyId == CMFPropertyDisabled());
+			}
+		}
+		if (hiddenOffered)
+		{
+			return value;
+		}
+		return "";
 	}
 
 	private function ChoiceAllows(basic : string, ignore1 : string, ignore2 : string, ignore3 : string,

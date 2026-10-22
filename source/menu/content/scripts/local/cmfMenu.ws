@@ -745,6 +745,7 @@ function CMFMenuValueChanged(varName : name, value : string)
 	}
 	if (varText == "CMFReset")
 	{
+		CMFLog("menu change var=CMFReset value=" + value);
 		if (value == "1")
 		{
 			CMFMenuReset();
@@ -773,8 +774,12 @@ function CMFMenuValueChanged(varName : name, value : string)
 	}
 	if (nameVar == '' || !theGame.CMFMenuGetState().Answer(varName, StringToInt(value), answer))
 	{
+		CMFLog("menu change var=" + varText + " position=" + value + " kept (row not built this session)");
 		return;
 	}
+	// 1.0.1: one line per stored change, to trace stray picks seen after a visit at the title screen (Kyle
+	// 2026-10-22 07:48Z).
+	CMFLog("menu change var=" + varText + " position=" + value + " answer=" + answer);
 	config = theGame.GetInGameConfigWrapper();
 	config.SetVarValue(groupName, nameVar, answer);
 	CMFChoicesChanged();
