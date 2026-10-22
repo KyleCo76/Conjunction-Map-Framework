@@ -2,7 +2,7 @@
 
 # Conjunction Map Framework
 
-**One world map for The Witcher 3 that map mods can share.**
+**One world map for The Witcher 3 that map mods can share, and that you can build your own way.**
 
 [![Latest release](https://img.shields.io/github/v/release/KyleCo76/Conjunction-Map-Framework?label=release)](https://github.com/KyleCo76/Conjunction-Map-Framework/releases/latest)
 ![The Witcher 3 Remastered 5.01](https://img.shields.io/badge/The%20Witcher%203-Remastered%205.01-8b0000)
@@ -21,6 +21,8 @@
 In The Witcher 3 only **one** mod's world map file can load at a time. Map mods used to ship their own copy of that file, so whichever copy won switched off the map features of every other map mod: quest markers from one mod, Gwent pins from another and a travel route from a third could never all show together.
 
 **Conjunction Map Framework (CMF)** becomes the game's one map. Other mods no longer replace the map; they tell CMF what they want shown. CMF settles once, when your game loads, whose icon, colour or legend row wins each spot, and draws the result every time you open the map.
+
+**From 1.2.0, CMF does more than make map mods work together: you build your own map setup from the best parts of each mod.** Take the quest icons from one mod, the shop colours from another and the map's look from a third, and change your mind whenever you like.
 
 > [!TIP]
 > **Ink & Iron on CMF's map.** Ink & Iron's full map look, its "Lv N" quest tags and its smooth map movement all run on CMF's map. The same goes for the other mods under [Supported map mods](#supported-map-mods), including Map Quest Insight, Witcher's Path, Gwent Players Map, All Quest Objectives and Map Remastered. CMF's own adapters do the proof-of-concept work, so none of these mods needed work from their authors for initial compatibility. The final check ran on a 175-mod everyday game, installed with RMMR.
@@ -41,7 +43,7 @@ flowchart LR
 
 Other map compatibility tools solve the same problem in their own ways, and many players have used them happily. CMF takes a different route.
 
-- **Mix and match, feature by feature.** With the optional [in-game menu add-on](#good-to-know) you choose in Options which of your map mods wins each feature: pin icons from one mod, pin colours from another, the map's look from a third. Change your mind at any time, with nothing to reinstall.
+- **Build your own setup, feature by feature.** With the optional [in-game menu add-on](#good-to-know) you choose in Options which of your map mods wins each feature: pin icons from one mod, pin colours from another, the map's look from a third. Change your mind at any time, with nothing to reinstall.
 - **Updates need no rebuild.** CMF builds nothing ahead of time. Each map mod tells CMF what it wants shown when your game loads, so when one of your map mods updates, you install the update and play. There is no combined map to rebuild. At most, a mod that uses a CMF adapter may get an updated adapter, and once its author supports CMF directly, the adapter goes away.
 - **Mods stay as their authors ship them.** CMF changes no other mod's files, and its adapters contain none of the mod they adapt.
 
