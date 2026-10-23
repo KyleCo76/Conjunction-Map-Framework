@@ -2,13 +2,13 @@
 
 # API reference
 
-Every function, property id, hook and map event CMF offers to mods (API version 8). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
+Every function, property id, hook and map event CMF offers to mods (API version 9). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
 
 ## Functions
 
 | Function | Since | What it does | Explained on |
 | --- | --- | --- | --- |
-| `CMFGetVersion() : int` | 1 | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0). | [Getting started](Getting-Started.md), [Writing your script](Writing-Your-Script.md) |
+| `CMFGetVersion() : int` | 1 | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0, `9` in 1.3.0). | [Getting started](Getting-Started.md), [Writing your script](Writing-Your-Script.md) |
 | `CMFHasProperty(propertyId : int) : bool` | 1 | `true` when the installed CMF understands that property id. | [Writing your script](Writing-Your-Script.md), [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md), [Hiding pins](Hiding-Pins.md) |
 | `CMFRegister(provider : string, propertyId : int, target : name, mapContext : name, text : string, number : int) : bool` | 1 | One claim for a pin type (a map area for property 4). | [Writing your script](Writing-Your-Script.md), [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Pin clicks](Pin-Clicks.md) |
 | `CMFRegisterBackground(provider : string, area : name, imageRoot : string)` | 1 | Replaces the map image of one area, such as `'AN_NMLandNovigrad'` (Velen and Novigrad). | [Writing your script](Writing-Your-Script.md) |
@@ -64,7 +64,19 @@ Every function, property id, hook and map event CMF offers to mods (API version 
 | `CMFPropertyPinClickHint() : int` | 6 | Returns property id `20`. | [Pin clicks](Pin-Clicks.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Pin Teleport](Adapter-Map-Pin-Teleport.md) |
 | `CMFPropertySpreadRank() : int` | 6 | Returns property id `22`. | [Spreading stacked pins](Spreading-Stacked-Pins.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Quest Insight](Adapter-Map-Quest-Insight.md) |
 | `CMFChoicesChanged()` | 8 | Tells CMF that a player's choice changed, so it prepares its winners again before the next lookup. | [Writing your script](Writing-Your-Script.md), [Players' choices: who wins each feature](Who-Wins-Each-Feature.md) |
-| `CMFSetProviderName(provider : string, displayName : string) : bool` | 8 | The name CMF's in-game menu shows for your mod, for example `"Acme Icons"`; without it the menu shows your folder name tidied. | [Players' choices: who wins each feature](Who-Wins-Each-Feature.md), [Writing your script](Writing-Your-Script.md) |
+| `CMFSetProviderName(provider : string, displayName : string) : bool` | 8 | The name CMF's in-game menu shows for your mod, for example `"Acme Icons"`; without it the menu shows your folder name tidied. | [Players' choices: who wins each feature](Who-Wins-Each-Feature.md), [Writing your script](Writing-Your-Script.md), [Adapter: Ink and Iron](Adapter-Ink-and-Iron.md) |
+| `CMFRegisterButtonPicture(provider : string, family : name, button : string, url : string) : bool` | 9 | Your picture for one controller button of one family on the map. | [Writing your script](Writing-Your-Script.md), [Controller button pictures](Controller-Button-Pictures.md), [Adapter: Ink and Iron](Adapter-Ink-and-Iron.md) |
+| `CMFRegisterChoiceOnly(provider : string, choiceKey : string) : bool` | 9 | Your claims for that feature or piece apply only when the player picks your mod for it. | [Choice-only claims](Choice-Only-Claims.md), [Writing your script](Writing-Your-Script.md), [Adapter: Ink and Iron](Adapter-Ink-and-Iron.md) |
+| `CMFRegisterWorldCrest(provider : string, region : name, url : string) : bool` | 9 | Your picture for one region's crest on the world overview. | [Writing your script](Writing-Your-Script.md), [World overview pictures](World-Overview-Pictures.md), [Choice-only claims](Choice-Only-Claims.md) |
+| `CMFRegisterWorldMarker(provider : string, marker : name, url : string) : bool` | 9 | Your picture for the overview's `'player'` or `'quest'` marker. | [Writing your script](Writing-Your-Script.md), [World overview pictures](World-Overview-Pictures.md) |
+| `CMFRegisterWorldPainting(provider : string, url : string) : bool` | 9 | Your picture for the world overview's painting. | [Writing your script](Writing-Your-Script.md), [World overview pictures](World-Overview-Pictures.md), [Adapter: Ink and Iron](Adapter-Ink-and-Iron.md) |
+| `CMFRegisterWorldPaintingTiles(provider : string, url : string, columns : int, rows : int) : bool` | 9 | The painting as `columns` x `rows` tiles, each 1 to 8; the path holds `{x}` and `{y}`. | [Writing your script](Writing-Your-Script.md), [World overview pictures](World-Overview-Pictures.md) |
+| `CMFSetOpeningView(provider : string, area : name, x : float, y : float, zoom : float, keepPlace : bool) : bool` | 9 | The view a region map opens with, called from an `OnMapOpening` wrapper. | [The map's view](Map-View.md), [Writing your script](Writing-Your-Script.md), [Adapter: Annoying Map](Adapter-Annoying-Map.md) |
+| `CMFSetOpeningWorld(provider : string, area : name, worldX : float, worldY : float, zoom : float) : bool` | 9 | As `CMFSetOpeningView`, with the place given in world coordinates (for example Geralt's position): the region map opens centred there. | [The map's view](Map-View.md), [Writing your script](Writing-Your-Script.md) |
+| `CMFPropertyButtonPicture() : int` | 9 | Returns property id `26`. | [Writing your script](Writing-Your-Script.md) |
+| `CMFPropertyWorldCrest() : int` | 9 | Returns property id `25`. | [Writing your script](Writing-Your-Script.md), [World overview pictures](World-Overview-Pictures.md) |
+| `CMFPropertyWorldMarker() : int` | 9 | Returns property id `27`. | [Writing your script](Writing-Your-Script.md), [World overview pictures](World-Overview-Pictures.md) |
+| `CMFPropertyWorldPainting() : int` | 9 | Returns property id `24`. | [Writing your script](Writing-Your-Script.md), [World overview pictures](World-Overview-Pictures.md) |
 
 ## Property ids
 
@@ -93,6 +105,10 @@ The generic calls `CMFRegister`, `CMFRegisterForTag` and `CMFStylePin` take one 
 | `21` | `CMFPropertyPinClickButton()` | 6 | [Pin clicks](Pin-Clicks.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Pin Teleport](Adapter-Map-Pin-Teleport.md) |
 | `22` | `CMFPropertySpreadRank()` | 6 | [Spreading stacked pins](Spreading-Stacked-Pins.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Quest Insight](Adapter-Map-Quest-Insight.md) |
 | `23` | `CMFPropertyCategoryNoDefault()` | 6 | [Writing your script](Writing-Your-Script.md) |
+| `24` | `CMFPropertyWorldPainting()` | 9 | [Writing your script](Writing-Your-Script.md), [World overview pictures](World-Overview-Pictures.md) |
+| `25` | `CMFPropertyWorldCrest()` | 9 | [Writing your script](Writing-Your-Script.md), [World overview pictures](World-Overview-Pictures.md) |
+| `26` | `CMFPropertyButtonPicture()` | 9 | [Writing your script](Writing-Your-Script.md) |
+| `27` | `CMFPropertyWorldMarker()` | 9 | [Writing your script](Writing-Your-Script.md), [World overview pictures](World-Overview-Pictures.md) |
 
 ## Hooks
 
@@ -105,6 +121,8 @@ Wrap these methods of `CMFCore` with `@wrapMethod(CMFCore)` and always call `wra
 | `OnPinClicked(menu : CR4MapMenu, provider : string, pinTag : name, pinId : int, pinType : string, input : string, value : int) : bool` | 6 | [Pin clicks](Pin-Clicks.md), [Drawing on the map itself](Drawing-on-the-Map.md), [Adapter: All Quest Objectives](Adapter-All-Quest-Objectives.md) |
 | `OnDrawingClicked(menu : CR4MapMenu, provider : string, id : name, input : string, value : int) : bool` | 6 | [Drawing on the map itself](Drawing-on-the-Map.md), [Map theme parts and keys](Theme-Parts-and-Keys.md), [Adapter: Witcher's Path](Adapter-Witchers-Path.md) |
 | `OnMapListening(menu : CR4MapMenu, keys : string)` | 6 | [Drawing on the map itself](Drawing-on-the-Map.md), [Adapter: Witcher's Path](Adapter-Witchers-Path.md) |
+| `OnMapView(menu : CR4MapMenu, area : name, x : float, y : float, worldX : float, worldY : float, zoom : float, reason : name)` | 9 | [The map's view](Map-View.md), [Adapter: Annoying Map](Adapter-Annoying-Map.md) |
+| `OnMapOpening(menu : CR4MapMenu, area : name, mapContext : name)` | 9 | [The map's view](Map-View.md), [Writing your script](Writing-Your-Script.md), [Adapter: Annoying Map](Adapter-Annoying-Map.md) |
 
 ## Map events
 
@@ -125,7 +143,8 @@ CMF's map calls these events on `CR4MapMenu` under CMF's own names. Add one with
 - **6**: `CMFDrawSetList`, `CMFMapRefresh`, `CMFPropertyCategoryNoDefault`, `CMFPropertyPinClick`, `CMFPropertyPinClickButton`, `CMFPropertyPinClickHint`, `CMFPropertySpreadRank`, `CMFRegisterCategoryNoDefault`, hook `OnPinClicked`, hook `OnDrawingClicked`, hook `OnMapListening`
 - **7**: no new calls (new theme keys only)
 - **8**: `CMFChoicesChanged`, `CMFSetProviderName`
+- **9**: `CMFPropertyButtonPicture`, `CMFPropertyWorldCrest`, `CMFPropertyWorldMarker`, `CMFPropertyWorldPainting`, `CMFRegisterButtonPicture`, `CMFRegisterChoiceOnly`, `CMFRegisterWorldCrest`, `CMFRegisterWorldMarker`, `CMFRegisterWorldPainting`, `CMFRegisterWorldPaintingTiles`, `CMFSetOpeningView`, `CMFSetOpeningWorld`, hook `OnMapView`, hook `OnMapOpening`
 
 ---
 
-[Previous: Adapter: Witcher's Path](Adapter-Witchers-Path.md) · [Contents](Home.md) · [Next: Pin types for icon packs](Pin-Types.md)
+[Previous: Adapter: Annoying Map](Adapter-Annoying-Map.md) · [Contents](Home.md) · [Next: Pin types for icon packs](Pin-Types.md)

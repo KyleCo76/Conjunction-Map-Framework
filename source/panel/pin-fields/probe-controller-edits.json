@@ -1,0 +1,23 @@
+{
+ "schema": "cmf-panel-edits-1",
+ "description": "PROBE ONLY, never in a release build. Applied on top of edits.json only by tools/cmf_pin_panel.py --probe-controller. Makes the map treat input as an Xbox pad for button pictures, so the hint row shows controller buttons (and their CMF button pictures) while the tester uses the mouse: every InputFeedbackButton is set up as a gamepad button, draws its Xbox picture clip, and the picture family in use reads xbox. The game's own versions stay in the class under the names getCurrentPadIconGame and cmfPadFamilyGame, unused.",
+ "classes": {
+  "red/game/witcher3/controls/InputFeedbackButton.as": [
+   {
+    "find": "         this._bindingData = param1;\n         if(param3)\n",
+    "replace": "         param2 = true;\n         this._bindingData = param1;\n         if(param3)\n",
+    "count": 1
+   },
+   {
+    "find": "      protected function getCurrentPadIcon() : MovieClip\n      {\n",
+    "replace": "      protected function getCurrentPadIcon() : MovieClip\n      {\n         return this.mcIconXbox;\n      }\n      \n      protected function getCurrentPadIconGame() : MovieClip\n      {\n",
+    "count": 1
+   },
+   {
+    "find": "      public static function cmfPadFamily() : String\n      {\n",
+    "replace": "      public static function cmfPadFamily() : String\n      {\n         return \"xbox\";\n      }\n\n      public static function cmfPadFamilyGame() : String\n      {\n",
+    "count": 1
+   }
+  ]
+ }
+}

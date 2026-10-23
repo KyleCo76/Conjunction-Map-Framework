@@ -95,7 +95,9 @@ PAGES = [
     ('CMFMenuAdvMovement', 'cmf_advanced.cmf_adv_movement', 'Map movement', [
         ('pick', 'Movement_Area', 'Map area'),
         ('pick', 'Movement_Pan', 'Pan and zoom'),
-        ('pick', 'Movement_Opening', 'Opening and closing')]),
+        ('pick', 'Movement_Opening', 'Opening and closing'),
+        # Menu add-on 1.2.0 (CMF API 9): the script hides this row and the two picture rows on an older CMF.
+        ('pick', 'Movement_View', 'Opening view')]),
     ('CMFMenuAdvPainting', 'cmf_advanced.cmf_adv_painting', 'Map painting', [
         ('pick', 'Painting_WhiteOrchard', 'White Orchard'),
         ('pick', 'Painting_WhiteOrchardWinter', 'White Orchard (winter)'),
@@ -105,7 +107,9 @@ PAGES = [
         ('pick', 'Painting_Vizima', 'Vizima'),
         ('pick', 'Painting_IsleOfMists', 'Isle of Mists'),
         ('pick', 'Painting_Spiral', 'The Spiral'),
-        ('pick', 'Painting_Toussaint', 'Toussaint')]),
+        ('pick', 'Painting_Toussaint', 'Toussaint'),
+        ('pick', 'Painting_World', 'World overview'),
+        ('pick', 'Painting_Crests', 'Region crests and markers')]),
     ('CMFMenuAdvClicks', 'cmf_advanced.cmf_adv_clicks', 'Clicks and drawings', [
         ('pick', 'Clicks_Pins', 'Pin clicks'),
         ('pick', 'Drawings_Ignore1', 'Leave out drawings from (1st)'),
@@ -142,7 +146,8 @@ PAGES = [
     ('CMFMenuWinMovement', 'cmf_status.cmf_win_movement', 'Who wins: map movement', [
         ('win', 'Movement_Area', 'Map area'),
         ('win', 'Movement_Pan', 'Pan and zoom'),
-        ('win', 'Movement_Opening', 'Opening and closing')]),
+        ('win', 'Movement_Opening', 'Opening and closing'),
+        ('win', 'Movement_View', 'Opening view')]),
     ('CMFMenuWinPainting', 'cmf_status.cmf_win_painting', 'Who wins: map painting', [
         ('win', 'Painting_WhiteOrchard', 'White Orchard'),
         ('win', 'Painting_WhiteOrchardWinter', 'White Orchard (winter)'),
@@ -152,7 +157,9 @@ PAGES = [
         ('win', 'Painting_Vizima', 'Vizima'),
         ('win', 'Painting_IsleOfMists', 'Isle of Mists'),
         ('win', 'Painting_Spiral', 'The Spiral'),
-        ('win', 'Painting_Toussaint', 'Toussaint')]),
+        ('win', 'Painting_Toussaint', 'Toussaint'),
+        ('win', 'Painting_World', 'World overview'),
+        ('win', 'Painting_Crests', 'Region crests and markers')]),
     ('CMFMenuWinClicks', 'cmf_status.cmf_win_clicks', 'Who wins: clicks and drawings', [
         ('win', 'Clicks_Pins', 'Pin clicks'),
         ('win', 'Drawings', 'Drawings on the map')]),

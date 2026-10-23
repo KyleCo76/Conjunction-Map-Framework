@@ -83,4 +83,4 @@ Log lines: `space sent area= entries= values=`, `panel space drawn area= drawing
 
 ---
 
-[Previous: Smooth map movement](Map-Movement.md) · [Contents](Home.md) · [Next: Porting a map mod](Porting-a-Map-Mod.md)
+[Previous: Smooth map movement](Map-Movement.md) · [Contents](Home.md) · [Next: World overview pictures](World-Overview-Pictures.md)

@@ -146,6 +146,15 @@ if (CMFHasAbility('navigation', 'frameRate'))
 
 You change nothing in how the map opens or closes and draw no button beside a pin, so you need no `opening` key and no `pinButton` style. The author guide's "Smooth map movement" (section 5 of [`icon-pack-guide.md`](icon-pack-guide.md)) lists every key.
 
+## Your gold buttons and World Map overview (adapter 1.2.0)
+
+Two parts of Ink and Iron's look were pictures inside your map files, which CMF's map replaces. CMF 1.3.0 (API version 9) adds general calls for both, which any mod can use, and since adapter 1.2.0 the adapter brings both back with your own art, with your permission and credited to you. They only ever show with Ink and Iron installed.
+
+- **Gold controller buttons, on by default.** All 143 buttons of the five controller families, cut from your All In One map file's two re-drawn button sheets by `tools/cmf_button_sheet.py cut` (the adapter's copy: `tools/cmf_ink_and_iron_art.py buttons`), one `CMFRegisterButtonPicture` line each. Every player of the adapter has the All In One, so they are not choice-only; they belong to the Map look's Hints choice (`Look_Hints`). They were seen in game through a test copy of the map, not yet with a real controller. Your other screens keep their gold buttons, because those screens are your own files.
+- **World overview, choice-only.** The engraved painting and the seven region crests of your optional World Map file (0.9.0), through `CMFRegisterWorldPainting` and `CMFRegisterWorldCrest`. A script cannot tell whether that file is installed, so the adapter makes both pieces choice-only (`CMFRegisterChoiceOnly` with `"Painting_World"` and `"Painting_Crests"`). They show only when a player picks Ink and Iron on the menu add-on's World overview and Region crests and markers rows (or the Basic Painting row), or names it in the settings file (`CMFFile_Painting_World=modInkAndIronUI`, `CMFFile_Painting_Crests=modInkAndIronUI`); everyone else sees the game's overview, as your own map shows it without the World Map file.
+
+`CMFSetProviderName("modInkAndIronUI", "Ink and Iron")` gives your mod its name on those rows. The author guide's "Controller button pictures", "World overview pictures" and "Choice-only claims" explain the calls. Adapter 1.2.0 needs CMF 1.3.0 to compile; players on an older CMF keep adapter 1.1.0. The overview pictures ran in game in the CMF 1.3.0 launch (2026-10-23).
+
 ## The change for you
 
 You can make the adapter unnecessary with an optional "CMF support" folder of your own:

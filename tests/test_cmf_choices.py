@@ -68,8 +68,8 @@ def pin_group(pin_type, lists):
 class ChoiceKeyTests(unittest.TestCase):
     def test_keys_are_features_then_pieces(self):
         keys = choice_keys()
-        self.assertEqual(len(keys), 59)
-        self.assertEqual(len(set(keys)), 59)
+        self.assertEqual(len(keys), 62)
+        self.assertEqual(len(set(keys)), 62)
         self.assertEqual(keys[:11], FEATURES)
         for key in keys[11:]:
             self.assertIn(key.split('_')[0], FEATURES, key)
@@ -77,7 +77,9 @@ class ChoiceKeyTests(unittest.TestCase):
         self.assertEqual(keys[11:19], ['Icons_' + k for k, _ in addon.GROUP_NAMES])
         self.assertEqual(keys[19:27], ['Colours_' + k for k, _ in addon.GROUP_NAMES])
         self.assertEqual(keys[36:39], ['Hidden_Ignore1', 'Hidden_Ignore2', 'Hidden_Ignore3'])
-        self.assertEqual(keys[56:], ['Drawings_Ignore1', 'Drawings_Ignore2', 'Drawings_Ignore3'])
+        self.assertEqual(keys[56:59], ['Drawings_Ignore1', 'Drawings_Ignore2', 'Drawings_Ignore3'])
+        # Version 9 appends its pieces; every older index stays.
+        self.assertEqual(keys[59:], ['Painting_World', 'Painting_Crests', 'Movement_View'])
 
     def test_index_comments_name_the_right_keys(self):
         keys = choice_keys()
@@ -95,7 +97,7 @@ class ChoiceKeyTests(unittest.TestCase):
     def test_ignore_slot_and_painting_indices(self):
         keys = choice_keys()
         text = core_text()
-        self.assertIn('(choice >= 36 && choice <= 38) || choice >= 56', function_body(
+        self.assertIn('(choice >= 36 && choice <= 38) || (choice >= 56 && choice <= 58)', function_body(
             text, 'public function Offers(choice : int, provider : string) : bool'))
         painting = function_body(text, 'function CMFPaintingChoice(area : string) : int')
         for number in re.findall(r'return (\d+);', painting):

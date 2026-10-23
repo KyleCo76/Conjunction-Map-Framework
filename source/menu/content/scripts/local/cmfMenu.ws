@@ -1,8 +1,10 @@
 // CMF In-Game Menu (modCMFInGameMenu): the optional Options > Mods > Conjunction Map Framework entry for CMF 1.2.0
-// and later (CMFGetVersion 8). Its menu file declares every row with spare placeholder choices; while the game builds
-// a page, this script replaces them with the loaded map mods and remembers which folder name each position stands
-// for. A chosen row keeps the folder name in a hidden name var beside it (CMFName_<key>, CMFOrderName<n>), so a
-// choice survives mods being added or removed. CMF reads the rows each time it prepares winners (ReadMenuChoices).
+// and later (CMFGetVersion 8). 1.2.0 adds the World overview, Region crests and markers, and Opening view rows, which
+// need CMF 1.3.0 (CMFGetVersion 9); on an older CMF the page leaves out every row whose choice key that CMF does not
+// know, so the add-on works there as 1.1.1. Its menu file declares every row with spare placeholder choices; while
+// the game builds a page, this script replaces them with the loaded map mods and remembers which folder name each
+// position stands for. A chosen row keeps the folder name in a hidden name var beside it (CMFName_<key>,
+// CMFOrderName<n>), so a choice survives mods being added or removed. CMF reads the rows each time it prepares winners (ReadMenuChoices).
 // Without this add-on every in-game level reads Automatic.
 
 // The positions each live row showed when its page was built: one comma-joined list of answers per row var ("" is
@@ -388,7 +390,11 @@ function CMFMenuFillPage(storage : CScriptedFlashValueStorage, groupName : name,
 		}
 		else if (StrBeginsWith(varText, "CMFPick_"))
 		{
-			CMFMenuFillPick(storage, row, groupName, varName, StrAfterFirst(varText, "CMFPick_"), providers, remembered);
+			if (!CMFMenuFillPick(storage, row, groupName, varName, StrAfterFirst(varText, "CMFPick_"), providers,
+				remembered))
+			{
+				rows.RemoveElement(i);
+			}
 		}
 		else if (StrBeginsWith(varText, "CMFOrder"))
 		{
@@ -408,7 +414,10 @@ function CMFMenuFillPage(storage : CScriptedFlashValueStorage, groupName : name,
 		}
 		else if (StrBeginsWith(varText, "CMFWin_"))
 		{
-			CMFMenuFillWin(storage, row, StrAfterFirst(varText, "CMFWin_"), providers, remembered);
+			if (!CMFMenuFillWin(storage, row, StrAfterFirst(varText, "CMFWin_"), providers, remembered))
+			{
+				rows.RemoveElement(i);
+			}
 		}
 	}
 }
@@ -513,9 +522,10 @@ function CMFMenuFit(before : string, modName : string, after : string) : string
 
 // A choice row: Automatic (with who wins without this row), Vanilla, then map mods (on Basic and the leave-out slots
 // only those that offer the piece; on Advanced every loaded map mod, since some offers show only after the map has
-// been opened). A leave-out slot of Hidden pins or Drawings reads Nobody / each mod that offers it.
+// been opened). A leave-out slot of Hidden pins or Drawings reads Nobody / each mod that offers it. 1.2.0: false for a
+// key the installed CMF does not know (a row newer than that CMF), which the page then leaves out.
 function CMFMenuFillPick(storage : CScriptedFlashValueStorage, row : CScriptedFlashObject, groupName : name,
-	varName : name, key : string, providers : array<string>, remembered : bool)
+	varName : name, key : string, providers : array<string>, remembered : bool) : bool
 {
 	var core : CMFCore;
 	var config : CInGameConfigWrapper;
@@ -529,7 +539,7 @@ function CMFMenuFillPick(storage : CScriptedFlashValueStorage, row : CScriptedFl
 	choice = core.ChoiceIndex(key);
 	if (choice < 0)
 	{
-		return;
+		return false;
 	}
 	feature = core.ChoiceFeature(choice);
 	basic = choice == feature;
@@ -628,6 +638,7 @@ function CMFMenuFillPick(storage : CScriptedFlashValueStorage, row : CScriptedFl
 	{
 		config.SetVarValue(groupName, varName, IntToString(current));
 	}
+	return true;
 }
 
 // A Mod order row: Automatic, then every map mod; greyed at the title screen (1.1.1).
@@ -727,9 +738,10 @@ function CMFMenuFillMod(storage : CScriptedFlashValueStorage, row : CScriptedFla
 	return true;
 }
 
-// One Who wins row: the winner and the level that decided it; hides and drawings say how many mods' apply.
+// One Who wins row: the winner and the level that decided it; hides and drawings say how many mods' apply. 1.2.0:
+// false for a key the installed CMF does not know, which the page then leaves out.
 function CMFMenuFillWin(storage : CScriptedFlashValueStorage, row : CScriptedFlashObject, key : string,
-	providers : array<string>, remembered : bool)
+	providers : array<string>, remembered : bool) : bool
 {
 	var core : CMFCore;
 	var labels : array<string>;
@@ -740,7 +752,7 @@ function CMFMenuFillWin(storage : CScriptedFlashValueStorage, row : CScriptedFla
 	choice = core.ChoiceIndex(key);
 	if (choice < 0)
 	{
-		return;
+		return false;
 	}
 	greyed = false;
 	if (remembered)
@@ -782,6 +794,7 @@ function CMFMenuFillWin(storage : CScriptedFlashValueStorage, row : CScriptedFla
 	}
 	labels.PushBack(text);
 	CMFMenuSetChoices(storage, row, labels, 0, greyed);
+	return true;
 }
 
 // 1.1.0: the help line of a choice row. It names every loaded map mod that offers the piece, in order; before the
@@ -997,10 +1010,11 @@ function CMFMenuFillReset(row : CScriptedFlashObject)
 		{
 			varName = config.GetVarNameByGroupName(groups[g], i);
 			varText = NameToString(varName);
+			// 1.2.0: a row newer than the installed CMF (its key unknown there) hands over nothing.
 			if (StrBeginsWith(varText, "CMFName_"))
 			{
 				value = config.GetVarValue(groups[g], varName);
-				if (value != "")
+				if (value != "" && ChoiceIndex(StrAfterFirst(varText, "CMFName_")) >= 0)
 				{
 					SetMenuChoice(StrAfterFirst(varText, "CMFName_"), value);
 				}

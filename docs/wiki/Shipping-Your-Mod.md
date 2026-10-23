@@ -34,7 +34,7 @@ The pack tool carries `content/*.w3strings` and the menu XML into the build. CMF
 
 ### Names CMF answers
 
-CMF's own script functions all start with `CMF`, and CMF's map reads only CMF's own pin fields and talks to scripts only under CMF's names: `OnCMFArtFailed`, `OnCMFMapFilter`, `"cmf.map.hints"`, `OnCMFMapHintsReady`, from API version 5 `"cmf.map.theme"` and `OnCMFMapThemeReady`, and from API version 6 `OnCMFPinClicked` ([section 5](Writing-Your-Script.md#5-write-your-script)). CMF answers no other mod's names. A map mod that used its own names moves onto CMF through these and the general calls, as the adapters in [section 12](Porting-a-Map-Mod.md#12-teaching-examples-moving-a-map-mod-onto-cmf) show.
+CMF's own script functions all start with `CMF`, and CMF's map reads only CMF's own pin fields and talks to scripts only under CMF's names: `OnCMFArtFailed`, `OnCMFMapFilter`, `"cmf.map.hints"`, `OnCMFMapHintsReady`, from API version 5 `"cmf.map.theme"` and `OnCMFMapThemeReady`, from API version 6 `OnCMFPinClicked` ([section 5](Writing-Your-Script.md#5-write-your-script)), and from API version 9 `"cmf.map.world"`, `"cmf.map.view"`, `OnCMFMapView`, `OnCMFMapOpening` and `OnCMFPictureNote`. CMF answers no other mod's names. A map mod that used its own names moves onto CMF through these and the general calls, as the adapters in [section 12](Porting-a-Map-Mod.md#12-teaching-examples-moving-a-map-mod-onto-cmf) show.
 
 One exception keeps existing mods' values readable for their adapters: the game builds pin objects from the map's pin class and drops any field that class does not declare, so CMF's map declares these pin fields of other mods as compatibility names. CMF itself reads none of them; only the named adapters do.
 
@@ -42,7 +42,6 @@ One exception keeps existing mods' values readable for their adapters: the game 
 | --- | --- | --- |
 | `qmiLevelText`, `qmiIconScale`, `qmiIconTop`, `qmiIconKind`, `qmiNoCrosshairLabel`, `qmiIconTint` | Map Quest Insight 1.5.0 | its adapter |
 | `iaiLv`, `iaiDiff` | Ink and Iron 0.8.7 and 0.8.8 | its adapter |
-| `uireScale`, `uireHideLabel`, `uireLevelLabel`, `uireLevel`, `uireLevelColor` | UI Remastered | declared as names only; CMF ships no adapter for it |
 
 CMF itself ships no art from other mods. An adapter carries its own placeholder pictures, or a mod author's art only with that author's permission, credited: the Gwent Players Map and Witcher Gear Map adapters carry their author MateusAnd's art since 1.0.1, and the Map Quest Insight adapter carries its author Wolfer's quest icons since 1.0.1. Authors supply their own art and effects through the calls above.
 

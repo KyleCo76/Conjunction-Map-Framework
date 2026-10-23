@@ -39,4 +39,4 @@ Settings values hold one word each and never a comma: the game ends a value at i
 
 ---
 
-[Previous: Shipping your mod](Shipping-Your-Mod.md) · [Contents](Home.md) · [Next: Greying pins](Greying-Pins.md)
+[Previous: Shipping your mod](Shipping-Your-Mod.md) · [Contents](Home.md) · [Next: Choice-only claims](Choice-Only-Claims.md)

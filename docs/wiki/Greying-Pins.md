@@ -34,4 +34,4 @@ function OnGameStarted(restored : bool)
 
 ---
 
-[Previous: Players' choices: who wins each feature](Who-Wins-Each-Feature.md) · [Contents](Home.md) · [Next: Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md)
+[Previous: Choice-only claims](Choice-Only-Claims.md) · [Contents](Home.md) · [Next: Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md)

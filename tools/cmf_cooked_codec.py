@@ -44,11 +44,17 @@ def encode_bc3(rgba, width, height):
         raise ValueError('RGBA8 dimensions must be positive multiples of four with exact bytes')
     if not isinstance(rgba, (bytes, bytearray)):
         raise ValueError('RGBA8 must be bytes')
-    view = memoryview(rgba)
+    view = bytes(rgba)
     out = bytearray()
+    # Blocks repeat a lot in flat art (a large picture is mostly a few colours), so each distinct block is encoded once.
+    done = {}
+    row = width * 4
     for by in range(0, height, 4):
         for bx in range(0, width, 4):
-            pixels = [tuple(view[((by + dy) * width + bx + dx) * 4:((by + dy) * width + bx + dx) * 4 + 4])
-                      for dy in range(4) for dx in range(4)]
-            out.extend(_block(pixels))
+            start = by * row + bx * 4
+            key = b''.join(view[start + dy * row:start + dy * row + 16] for dy in range(4))
+            block = done.get(key)
+            if block is None:
+                block = done[key] = _block([tuple(key[i:i + 4]) for i in range(0, 64, 4)])
+            out.extend(block)
     return bytes(out)

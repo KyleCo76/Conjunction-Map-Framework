@@ -4,7 +4,7 @@ Conjunction Map Framework (CMF) is a single world map that map mods can share. C
 
 An **icon pack** is the simplest kind of CMF mod. It changes how existing map pins look on the full-screen world map: their icon, their legend icon and their colour. It does not add or move pins; from API version 3 any CMF mod can also hide pins, and from API version 4 resize pins and change their labels (section 5). You do not edit any map file and you do not need Script Merger, FFDec, REDkit or WolvenKit.
 
-This guide is for someone who has made a Witcher 3 mod before but has never seen CMF. Everything it describes is in CMF 1.2.0, which is API version 8 (`CMFGetVersion()` returns `8`; this is the version of CMF's script interface, not a release number). Calls and sections marked API version 2 to 8 need that version or later; the rest works from API version 1 on. Parts that have not yet run in game say so. Section 12 shows how existing map mods move onto CMF. A finished example is in [`examples/modCMFExampleIconPack`](../../examples/modCMFExampleIconPack/).
+This guide is for someone who has made a Witcher 3 mod before but has never seen CMF. Everything it describes is in CMF 1.3.0, which is API version 9 (`CMFGetVersion()` returns `9`; this is the version of CMF's script interface, not a release number). Calls and sections marked API version 2 to 9 need that version or later; the rest works from API version 1 on. Parts that have not yet run in game say so. Section 12 shows how existing map mods move onto CMF. A finished example is in [`examples/modCMFExampleIconPack`](../../examples/modCMFExampleIconPack/).
 
 ## 1. What you need
 
@@ -112,8 +112,12 @@ API version 2 adds legend rows, filter tabs and per-pin styling to the API versi
 | `21` `CMFPropertyPinClickButton()` (API version 6) | none | the words on the pin's button | nonzero; `0` withdraws |
 | `22` `CMFPropertySpreadRank()` (API version 6) | none | unused | which pin of a spread stack is selected first, `0` to `1000`, highest first |
 | `23` `CMFPropertyCategoryNoDefault()` (API version 6; target is your category id) | `CMFRegisterCategoryNoDefault` | unused | nonzero keeps the tab's rows out of Default; `0` lists them there |
+| `24` `CMFPropertyWorldPainting()` (API version 9; target `'painting'`, `CMFRegister` only) | `CMFRegisterWorldPainting`, `CMFRegisterWorldPaintingTiles` | image path, `""` withdraws | `0` for one picture, or columns x 10 + rows for tiles, each 1 to 8 |
+| `25` `CMFPropertyWorldCrest()` (API version 9; target is a region name) | `CMFRegisterWorldCrest` | image path, `""` withdraws | unused |
+| `26` `CMFPropertyButtonPicture()` (API version 9; target `'family_button'`, for example `'xbox_gamepad_Y'`, with a dash in the map's name written as `_`: `'xbox_enter_gamepad_A'`) | `CMFRegisterButtonPicture` | image path, `""` withdraws | unused |
+| `27` `CMFPropertyWorldMarker()` (API version 9; target `'player'` or `'quest'`) | `CMFRegisterWorldMarker` | image path, `""` withdraws | unused |
 
-Section "Pin size, labels and the info box" below explains 10 to 15, "Pin clicks" explains 16, 20 and 21, "Spreading stacked pins" explains 22, and "Legend rows and filter tabs" explains 23.
+Section "Pin size, labels and the info box" below explains 10 to 15, "Pin clicks" explains 16, 20 and 21, "Spreading stacked pins" explains 22, "Legend rows and filter tabs" explains 23, and "World overview pictures" and "Controller button pictures" explain 24 to 27.
 
 ```
 if (CMFHasProperty(3))
@@ -152,9 +156,17 @@ Write a property newer than the CMF version you require as its number, not as it
 | `CMFRegisterBackground(provider : string, area : name, imageRoot : string)` | Replaces the map image of one area, such as `'AN_NMLandNovigrad'` (Velen and Novigrad). The tiles live in your pack's texture cache at `gameplay\gui_new\maps\<imageRoot>\level<L>\tile<X>x<Y>.jpg`, with the same tile size, level range and tile count as the area's vanilla image; CMF logs those values per area (`background area=...`) the first time the map shows it. The map draws level 0 as its background layer, then the area's own levels. |
 | `CMFRequireVersion(provider : string, minVersion : int) : bool` | Returns `false` and logs a line when the installed CMF is older than `minVersion`. Wrap your calls in it as above. |
 | `CMFReleaseProvider(provider : string)` | Withdraws everything your pack registered. Only needed if your pack can be switched off without being uninstalled. |
-| `CMFGetVersion() : int` | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0). |
+| `CMFGetVersion() : int` | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0, `9` in 1.3.0). |
 | `CMFSetProviderName(provider : string, displayName : string) : bool` | API version 8. The name CMF's in-game menu shows for your mod, for example `"Acme Icons"`; without it the menu shows your folder name tidied. Returns `false` and logs for an empty provider or name. See [Players' choices](icon-pack-guide.md#players-choices-who-wins-each-feature-api-version-8). |
 | `CMFChoicesChanged()` | API version 8. Tells CMF that a player's choice changed, so it prepares its winners again before the next lookup. CMF's menu add-on calls it; a pack never needs to. |
+| `CMFRegisterWorldPainting(provider : string, url : string) : bool` | API version 9. Your picture for the world overview's painting. See "World overview pictures" below. |
+| `CMFRegisterWorldPaintingTiles(provider : string, url : string, columns : int, rows : int) : bool` | API version 9. The painting as `columns` x `rows` tiles, each 1 to 8; the path holds `{x}` and `{y}`. Out of range returns `false` and logs `reason=range`. |
+| `CMFRegisterWorldCrest(provider : string, region : name, url : string) : bool` | API version 9. Your picture for one region's crest on the world overview. |
+| `CMFRegisterWorldMarker(provider : string, marker : name, url : string) : bool` | API version 9. Your picture for the overview's `'player'` or `'quest'` marker. |
+| `CMFRegisterButtonPicture(provider : string, family : name, button : string, url : string) : bool` | API version 9. Your picture for one controller button of one family on the map. See "Controller button pictures" below. |
+| `CMFRegisterChoiceOnly(provider : string, choiceKey : string) : bool` | API version 9. Your claims for that feature or piece apply only when the player picks your mod for it. See "Choice-only claims" below. |
+| `CMFSetOpeningView(provider : string, area : name, x : float, y : float, zoom : float, keepPlace : bool) : bool` | API version 9. The view a region map opens with, called from an `OnMapOpening` wrapper. See "The map's view" below. |
+| `CMFSetOpeningWorld(provider : string, area : name, worldX : float, worldY : float, zoom : float) : bool` | API version 9. As `CMFSetOpeningView`, with the place given in world coordinates (for example Geralt's position): the region map opens centred there. See "The map's view" below. |
 
 Behaviour you can rely on:
 
@@ -265,7 +277,7 @@ if (CMFHasProperty(9))
 - **Three levels and one per-pin call.** Every pin (target `''`), one pin type (matches a pin's own `type` or its `filteredType`, so `'WitcherGear'` hides every Gear variant), one pin by its tag (`CMFRegisterForTag`, property 9; a game pin, or from API version 4 a pin another mod pushes with its id set to `NameToFlashUInt(tag)`), or one pin object while the map builds (`CMFHidePin`, from an `AddPinTypeData` or `UpdateEntityPins` wrapper, or on your own pin object before you push it).
 - **Map context** works as for greying: `'FastTravel'`, `'Boat'`, `'GlobalMap'`, or `''` for every context.
 - **Exemptions belong to each claim.** `tracked` keeps the followed quest's pins, `quest` keeps every quest pin, `fasttravel` keeps signposts, harbours and other travel points. Write them separated by commas or spaces; case does not matter. An unknown word rejects the whole claim (`reason=exemption`), so a typo never hides more than you meant. Another pack's claim is never an exemption. Use `tracked` unless hiding the followed quest is the point.
-- **Never hidden:** Geralt's marker and the player's own pins. A per-pin call on either returns `false` (`reason=user`).
+- **Geralt's marker is never hidden unless a pack names it.** From API version 9 a type claim on exactly `'Player'`, such as `CMFRegisterHidden("modAcmeTidyMap", 'Player', 'GlobalMap', "", true)`, hides it in that context, and the log shows `hide player provider= context=` once per map build; an every-pin claim, a tag claim and exemptions never touch it. The player's own pins are never hidden. A per-pin call on either returns `false` (`reason=user`).
 - **Too late:** a per-pin call after CMF has sent the list (for example in an `UpdateUserMapPins` wrapper whose file sorts after CMF's) returns `false` and logs `reason=late` once; that pin stays. Make the call in `OnPinReady` instead, which also sees pins added in such a wrapper.
 - **Hide with a claim, not by removing pins yourself.** A removal in your own wrapper reaches only the pins that wrapper can see. Not pushing your own pins at all is still fine and needs no claim.
 - **Withdraw** by registering the same claim with `0` (or `hide` `false`); release everything with `CMFReleaseProvider`. Changes made while the map is open apply the next time it builds its list (reopen it or switch area), as for every other property.
@@ -652,6 +664,146 @@ A call to a function CMF does not have stops the game at the script compile scre
 
 Settings values hold one word each and never a comma: the game ends a value at its first comma.
 
+### World overview pictures (API version 9)
+
+API version 9 is CMF 1.3.0. Everything in this section and the three after it ran in game in the CMF 1.3.0 launch (2026-10-23), with test packs and the Ink and Iron and Annoying Map adapters, except the overview's quest marker, which no pack drew there. Controller button pictures were seen only through a test copy of the map, never with a real controller.
+
+The world overview (Space on the region map) shows a painting of the whole world, a crest on each region, and a player and quest marker on the regions they apply to. From API version 9 a pack can give its own picture for each of these slots. CMF's map draws the pack's picture over the game's at run time, in the game's place and size, and keeps the game's animation; the game's picture stays until the pack's has loaded, so a slow or failed load never shows a blank.
+
+| Slot | Call | Property id, target | The game's picture |
+| --- | --- | --- | --- |
+| The painting | `CMFRegisterWorldPainting(provider, url)`, or `CMFRegisterWorldPaintingTiles(provider, url, columns, rows)` | `24` `CMFPropertyWorldPainting()`, `'painting'` | 2100 x 1380 px; any size with the same 105:69 shape works |
+| One region's crest | `CMFRegisterWorldCrest(provider, region, url)` | `25` `CMFPropertyWorldCrest()`, the region's name (below) | the sizes below |
+| The player or quest marker | `CMFRegisterWorldMarker(provider, marker, url)` | `27` `CMFPropertyWorldMarker()`, `'player'` or `'quest'` | |
+
+```
+if (CMFRequireVersion("modAcmeWorld", 9))
+{
+	CMFRegisterWorldPainting("modAcmeWorld", "img://icons/modacmeworld/world/painting.png");
+	CMFRegisterWorldCrest("modAcmeWorld", 'skellige', "img://icons/modacmeworld/world/crest_skellige.png");
+	CMFRegisterWorldMarker("modAcmeWorld", 'player', "img://icons/modacmeworld/world/marker_player.png");
+}
+```
+
+The crests, by the names the overview itself uses:
+
+| Region (name to use) | Crest | Size in the game, px |
+| --- | --- | --- |
+| `kaer_morhen` | the wolf medallion | 135 x 130 |
+| `skellige` | the longship | 135 x 116 |
+| `novigrad` | the city arms | 135 x 116 |
+| `no_mans_land` | Velen's tree and lily | 135 x 116 |
+| `prolog_village` | White Orchard's tree | 135 x 116 |
+| `wyzima_castle` | the Nilfgaardian sun | 135 x 116 |
+| `bob` | Toussaint's knight | 135 x 116 |
+
+A region another mod adds goes by its area name; CMF keeps such a claim, because that mod may load later.
+
+- **Art.** Put these pictures in your pack's `art/world/` folder. Unlike pin icons they may have any shape, each side a multiple of 4 up to 4096 px (BC3 stores 4 x 4 blocks), so draw a 135 x 130 crest as 136 x 132: the map stretches every picture to the game's own rectangle. Keep transparency in crests and markers. The pack tool cooks them into your `texture.cache`; an image in `art/world/crest_skellige.png` of `modAcmeWorld` is `img://icons/modacmeworld/world/crest_skellige.png`.
+- **Tiles.** A painting larger than one texture goes in `columns` x `rows` tiles, each 1 to 8; the path holds `{x}` and `{y}`, which the map replaces with each tile's column and row counted from 0: `CMFRegisterWorldPaintingTiles("modAcmeWorld", "img://icons/modacmeworld/world/tile{x}x{y}.png", 2, 2)` uses `tile0x0.png` to `tile1x1.png`. The map shows the painting once every tile has loaded. Generic form: property 24 with `number` = columns x 10 + rows (`0` for one picture).
+- **The hover copy too.** Moving onto a region lights it up by drawing a second copy of the painting inside its outline; CMF draws your painting there as well. Crests and markers keep the game's grow and brighten animation.
+- **Who wins.** One winner per slot: the painting, and each region's crest and each marker on its own. The order is the one every claim follows (section "Players' choices"): the in-game menu's **World overview** row (`Painting_World`) for the painting and its **Region crests and markers** row (`Painting_Crests`) for crests and markers, then the Painting row, the Mod order, the settings file and folder order. A mod chosen on a row that has nothing for a slot passes that slot to the next mod. **Vanilla** on either row (or on Painting) shows the game's own pictures. Adapters claim under the adapted mod's folder name, as always.
+- **Withdraw** with an empty path (`""`), or everything with `CMFReleaseProvider`.
+- **The log** shows `world sent painting= crests= markers= buttons=` once per map opening, then per slot `world picture slot=painting provider= size=WxH` (or `slot=crest:skellige`, `slot=marker:player`), or `world picture failed slot= provider= url=` when the map could not load it.
+- **What a pack cannot change** (each needs a change to the map file itself): the places of regions, crests and labels; the overview's scroll limits; the region outlines that light up on hover, so a painting must keep the game's geography and layout; the thin gradient strip; the region names' font. A region the game hides or disables stays hidden. CMF never swaps the textures inside its own map file; it covers the game's pictures with yours.
+
+### Controller button pictures (API version 9)
+
+With a controller, every button prompt on the map (the hint row at the bottom, the custom marker panel and the other button spots) shows a picture of the button. From API version 9 a pack can give its own picture per button, per controller family. The map draws it in the game's picture's place and size; the hold ring and the prompt's width stay the game's, so the text after the button does not move. Buttons you give no picture keep the game's.
+
+```
+if (CMFRequireVersion("modAcmeButtons", 9))
+{
+	CMFRegisterButtonPicture("modAcmeButtons", 'xbox', "gamepad_Y", "img://icons/modacmebuttons/buttons/xbox_gamepad_y.png");
+}
+```
+
+- **Families:** `xbox`, `ps4` (PlayStation 4), `ps5`, `steam` (Steam Deck) and `switch`. The map uses the family of the controller in use.
+- **Button names** (the map's own names, written in Xbox terms; each family draws its own picture for the same name; pass the button as text in double quotes, since a name literal in single quotes cannot hold a dash): `gamepad_X`, `enter-gamepad_A`, `escape-gamepad_B`, `gamepad_Y`, `gamepad_L1`, `gamepad_R1`, `gamepad_L2`, `gamepad_R2`, `gamepad_L3`, `gamepad_R3`, `gamepad_RTLT`, `gamepad_RBLB`, `dpad_up`, `double_dpad_up`, `dpad_down`, `dpad_right`, `dpad_left`, `gamepad_dpad_lr`, `start`, `back`, `gamepad_R_Tab`, `gamepad_R_Scroll`, `gamepad_L_Hold`, `gamepad_R_Hold`, `gamepad_L_Tab`, `gamepad_L_Scroll`, `gamepad_R_down`, `gamepad_dpad_up_down`, `gamepad_dpad_all`. `steam` has all but the last two. The game's "swap accept and cancel" option is applied before the picture is chosen, so a pack never handles it. A family or name the map has no picture for is refused and logged (`button picture unknown family= button= provider=`).
+- **Sizes.** 64 x 64 px is the game's button box, 128 x 128 the cap. Two pictures are wider: `gamepad_RTLT` and `gamepad_RBLB` show two buttons side by side, about 100 x 64. Button pictures go in `art/buttons/`, where any shape up to 128 px is allowed; the map stretches each to the rectangle the game's picture covers.
+- **Who wins.** Each button of each family on its own. Button pictures belong to the existing **Hints** row under Look (`Look_Hints`), so a player who picks a mod's hints gets its buttons too, and Vanilla there shows the game's.
+- **The log:** `button picture family= button= provider= size=WxH`, or `button picture failed family= button= provider= url=`.
+- **From two sheets: the sheet cutter.** The map draws its button pictures from cut-outs of two texture sheets in its own file, `_i49` (988 x 544) and the lower rows of `_i1` (1024 x 1020). If your art is a re-drawn copy of those sheets, `tools/cmf_button_sheet.py` cuts it into one picture per button with the matching lines:
+
+  ```
+  python tools/cmf_button_sheet.py cut --i49 my_i49.png --i1 my_i1.png --pack modAcmeButtons --out cut
+  ```
+
+  It writes `cut/art/buttons/<family>_<button>.png` for every family (or only those named with `--family xbox`) and `cut/register.ws` with one `CMFRegisterButtonPicture` line per picture. Copy the `buttons` folder into your pack's `art/` and the lines into your start-up wrapper. The cut-out places come from `tools/cmf_button_sheets.json`, which records geometry only, read once from the game's map file (`python tools/cmf_button_sheet.py map` on its FFDec XML); the tool never ships any art itself, it only cuts what you give it.
+- **Cannot change:** keyboard and mouse prompts (keys are text with a plate, styled by the `keyCap` theme part), button pictures outside the map, and which button does what or the hint texts.
+
+### The map's view (API version 9)
+
+CMF's map can tell your script where the player left the region map, and lets you choose the view a region map opens with. Both work only with CMF's map, so they never run when another map file loaded instead.
+
+**Where the player left it: `OnMapView`.** Wrap this `CMFCore` hook and always call `wrappedMethod` with every argument:
+
+```
+@wrapMethod(CMFCore)
+function OnMapView(menu : CR4MapMenu, area : name, x : float, y : float, worldX : float, worldY : float, zoom : float, reason : name)
+{
+	wrappedMethod(menu, area, x, y, worldX, worldY, zoom, reason);
+	// keep x, y and zoom for area
+}
+```
+
+- `area` is the map area shown, the name the `CMF background area=` line logs (for example `'AN_NMLandNovigrad'`).
+- `x`, `y` are the map's place in the units the game's `setDefaultPosition` takes; `worldX`, `worldY` the centre of the visible area in world metres (the units map-space drawings use); `zoom` the map's scale, in the units of the game's `SetMapZooms`.
+- `reason` is `'still'` when the player panned or zoomed and the map then stayed still for a quarter of a second, `'region'` when the map switches to another region (it reports the region being left, with that region's name and last view, so a pan just before the switch is not lost), and `'close'` when the map closes. CMF logs each report: `map view area= reason= x= y= zoom=`.
+
+**The view a region opens with: `OnMapOpening` and `CMFSetOpeningView`.** CMF calls the hook `OnMapOpening(menu : CR4MapMenu, area : name, mapContext : name)` each time its map shows a region map, at the opening and on every region switch, after the game's script has sent that region's zoom limits. Inside it you may send the limits again through the game's own calls, and call `CMFSetOpeningView`:
+
+```
+@wrapMethod(CMFCore)
+function OnMapOpening(menu : CR4MapMenu, area : name, mapContext : name)
+{
+	wrappedMethod(menu, area, mapContext);
+	CMFSetOpeningView("modAcmeView", area, keptX, keptY, keptZoom, false);
+}
+```
+
+- `CMFSetOpeningView(provider : string, area : name, x : float, y : float, zoom : float, keepPlace : bool) : bool` sets your view for one area, or for every area with `''`. `zoom` is clamped to the zoom limits in force when the map applies it (so limits you send inside `OnMapOpening` count); `keepPlace` `true` keeps the map's own place and sets only the zoom.
+- `CMFSetOpeningWorld(provider : string, area : name, worldX : float, worldY : float, zoom : float) : bool` sets the same view with its place in world coordinates, the units of a pin's position (for example `thePlayer.GetWorldPosition()`'s `X` and `Y`): the map opens centred on that spot. `zoom` works as above; `0` or less keeps the game's zoom. Use it to open on Geralt when a mod hides his marker (the game then falls back to the region's default spot), or on any place of your own:
+
+```
+@wrapMethod(CMFCore)
+function OnMapOpening(menu : CR4MapMenu, area : name, mapContext : name)
+{
+	var spot : Vector;
+	wrappedMethod(menu, area, mapContext);
+	if (menu && menu.IsCurrentAreaShown())
+	{
+		spot = thePlayer.GetWorldPosition();
+		CMFSetOpeningWorld("modAcmeView", area, spot.X, spot.Y, 0);
+	}
+	else
+	{
+		CMFSetOpeningView("modAcmeView", area, 0, 0, 0, true);
+	}
+}
+```
+
+- **Replace and withdraw.** A later call by the same provider for the same area replaces the earlier one. `keepPlace` `true` with a zoom of `0` or less withdraws your view for that area, since nothing is left to set. `CMFSetOpeningWorld` and `CMFSetOpeningView` replace each other, so `CMFSetOpeningView(provider, area, 0, 0, 0, true)` withdraws either.
+- **Who wins.** For the area shown, a view for that area beats an every-area view; between mods the menu's **Opening view** row (`Movement_View`, under the Movement feature) decides, then the Mod order, the settings file and folder order. Vanilla on the row (or on Movement) keeps the game's view.
+- **When it applies.** Only when the map opened on its usual place (the player, the default position or the middle) and the player has not moved it yet. An opening on a particular spot, such as a lonely fast-travel pin or "show on map" from the quest list, keeps the game's whole view, zoom included; a pack cannot change that in API version 9. Nothing waits for the view: the map opens as fast as before.
+- **The log** shows one line per region shown: `map opening area= context= view=<provider or none> x= y= zoom= keep= world=` (`world=1` for a `CMFSetOpeningWorld` view).
+
+### Choice-only claims (API version 9)
+
+Some pictures should show only when the player asks for them, for example art that matches an optional file of your mod that a script cannot detect. `CMFRegisterChoiceOnly(provider : string, choiceKey : string) : bool` makes one choice choice-only for your mod: your claims, theme part styles and opening views for that piece (or for every piece of a feature, when you give a feature key) are skipped unless the player picks your mod for that piece or its feature, on the in-game menu or in the settings file.
+
+```
+if (CMFRequireVersion("modAcmeWorld", 9))
+{
+	CMFRegisterChoiceOnly("modAcmeWorld", "Painting_Crests");
+	CMFRegisterWorldCrest("modAcmeWorld", 'skellige', "img://icons/modacmeworld/world/crest_skellige.png");
+}
+```
+
+- The key is a feature or piece key from [Settings file keys](settings-file-keys.md), such as `"Painting"` or `"Painting_Crests"`. An unknown key returns `false` and logs `choice only rejected provider= key= reason=key`; a known one logs `choice only provider= key=` once.
+- **Picked means** the Advanced or Basic in-game row, or `CMFFile_<Feature>_<Piece>` or `CMFFile_<Feature>` in the settings file, names your mod. Automatic, the Mod order and folder order never pick a choice-only claim.
+- The menu still lists your mod on that row, so players can pick it. Your provider line in the log adds `choiceonly=<n>` with the number of claims it skipped.
+
 ## 6. Choosing pin types
 
 [`pin-types.md`](pin-types.md) lists every name the 5.01 world map uses, generated from the map itself, with a column saying whether a claim on it does anything in API version 1. Things worth knowing before you choose:
@@ -661,7 +813,7 @@ Settings values hold one word each and never a comma: the game ends a value at i
 - **`NotDiscoveredPOI`** is the "?" on every undiscovered place. A claim on it changes all of them.
 - **`Herb`** has no legend row, and its tag is the herb kind, so a tag claim changes every pin of that herb.
 - **Pins other mods add themselves** take type-level icons, legend icons and tints by their type name too. From API version 4, tag claims reach such a pin when the mod that pushes it sets the pin's `id` to `NameToFlashUInt(tag)`, as the game does for its own pins; section 12 shows both sides. Witcher Gear Map and Gwent Players Map give their pins plain numeric ids, so their pins are reachable by type, or one by one in an `OnPinReady` wrapper, but not by tag. Not yet run in game.
-- **Not reachable in API version 1:** the player arrow (`Player`) and player-placed pins (`User1` to `User7`). From API version 6, click claims (and only they) reach player-placed pins (section 5, "Pin clicks").
+- **Not reachable in API version 1:** the player arrow (`Player`) and player-placed pins (`User1` to `User7`). From API version 6, click claims (and only they) reach player-placed pins (section 5, "Pin clicks"). From API version 9, a hide claim that names `'Player'` hides the player arrow (section 5, "Hiding pins").
 - **Finding a tag** for `CMFRegisterIconForTag`: register a type-level icon on that type first, open the map, and read the `CMF pin type=<type> tag=<tag>` lines in the script log (section 8). CMF logs up to 64 distinct type and tag pairs, and only for types that have a type-level icon.
 
 ## 7. Check and build
@@ -745,7 +897,7 @@ The pack tool carries `content/*.w3strings` and the menu XML into the build. CMF
 
 ### Names CMF answers
 
-CMF's own script functions all start with `CMF`, and CMF's map reads only CMF's own pin fields and talks to scripts only under CMF's names: `OnCMFArtFailed`, `OnCMFMapFilter`, `"cmf.map.hints"`, `OnCMFMapHintsReady`, from API version 5 `"cmf.map.theme"` and `OnCMFMapThemeReady`, and from API version 6 `OnCMFPinClicked` (section 5). CMF answers no other mod's names. A map mod that used its own names moves onto CMF through these and the general calls, as the adapters in section 12 show.
+CMF's own script functions all start with `CMF`, and CMF's map reads only CMF's own pin fields and talks to scripts only under CMF's names: `OnCMFArtFailed`, `OnCMFMapFilter`, `"cmf.map.hints"`, `OnCMFMapHintsReady`, from API version 5 `"cmf.map.theme"` and `OnCMFMapThemeReady`, from API version 6 `OnCMFPinClicked` (section 5), and from API version 9 `"cmf.map.world"`, `"cmf.map.view"`, `OnCMFMapView`, `OnCMFMapOpening` and `OnCMFPictureNote`. CMF answers no other mod's names. A map mod that used its own names moves onto CMF through these and the general calls, as the adapters in section 12 show.
 
 One exception keeps existing mods' values readable for their adapters: the game builds pin objects from the map's pin class and drops any field that class does not declare, so CMF's map declares these pin fields of other mods as compatibility names. CMF itself reads none of them; only the named adapters do.
 
@@ -753,7 +905,6 @@ One exception keeps existing mods' values readable for their adapters: the game 
 | --- | --- | --- |
 | `qmiLevelText`, `qmiIconScale`, `qmiIconTop`, `qmiIconKind`, `qmiNoCrosshairLabel`, `qmiIconTint` | Map Quest Insight 1.5.0 | its adapter |
 | `iaiLv`, `iaiDiff` | Ink and Iron 0.8.7 and 0.8.8 | its adapter |
-| `uireScale`, `uireHideLabel`, `uireLevelLabel`, `uireLevel`, `uireLevelColor` | UI Remastered | declared as names only; CMF ships no adapter for it |
 
 CMF itself ships no art from other mods. An adapter carries its own placeholder pictures, or a mod author's art only with that author's permission, credited: the Gwent Players Map and Witcher Gear Map adapters carry their author MateusAnd's art since 1.0.1, and the Map Quest Insight adapter carries its author Wolfer's quest icons since 1.0.1. Authors supply their own art and effects through the calls above.
 
@@ -768,7 +919,7 @@ CMF itself ships no art from other mods. An adapter carries its own placeholder 
 - **A legend row shared by several types** (quest pins) takes the first pin's tint, as it does the first pin's icon.
 - **Pins other mods push** (no `AddPinTypeData`) take their legend tint from the legend name (`filteredType`) only, unless the row's image came from the pin's own type.
 - **Level variants** (`_1` to `_3`) cannot have their own images; the base type's image covers them.
-- **No new pin types** (legend rows, row names and tabs come with API version 2, and pin labels with API version 4, section 5), and no changes to the player arrow, player-placed pins or the world-select map. Those come with later CMF stages. The HUD minimap shows your type-level icons and tints only when the player installs CMF's optional minimap add-on (section 11); tag claims stay off the minimap.
+- **No new pin types** (legend rows, row names and tabs come with API version 2, and pin labels with API version 4, section 5), and no changes to player-placed pins. The player arrow can only be hidden (API version 9), and the world overview takes new pictures but keeps its layout (API version 9, section 5, "World overview pictures"). The rest comes with later CMF stages. The HUD minimap shows your type-level icons and tints only when the player installs CMF's optional minimap add-on (section 11); tag claims stay off the minimap.
 
 ## 11. For players: installing CMF, icon packs and other map mods
 
@@ -785,7 +936,7 @@ CMF itself ships no art from other mods. An adapter carries its own placeholder 
 - **Choose who wins, feature by feature (CMF 1.2.0).** The optional in-game menu add-on, `modCMFInGameMenu`, lets you pick a mod, Vanilla or Automatic for each feature (pin icons, colours, size, labels, clicks, the legend, hidden pins, the map look, movement, painting and drawings) and for most of their pieces, under Options > Mods > Conjunction Map Framework. Without it, write the same choices into `dx12user.settings` under `[CMFSettings]`, one per line, for example `CMFFile_Icons=modCMFExampleIconPack` or `CMFFile_Painting_Skellige=Vanilla`. [Settings file keys](settings-file-keys.md) lists every key, and [Players' choices](icon-pack-guide.md#players-choices-who-wins-each-feature-api-version-8) explains which answer wins when several are set.
 - **A map mod not yet ported to CMF** ships its own copy of the map. CMF's map loads first, so that mod's own map-screen features (new pins or filter rows, colours, fog, faster scrolling) will not show until the mod is ported to CMF. Its scripts and menus keep working.
 - **Do not give another map mod a lower `Priority` than CMF in `mods.settings`** unless you mean to switch CMF's map off. If you do, CMF packs' icons disappear and nothing else breaks.
-- **Minimap icons are optional.** CMF's main folder leaves the HUD minimap stock. The separate `modCMFMinimapPanel` folder (2.1.0) adds its own HUD part on top of whichever minimap is installed and never moves or resizes that minimap, so it replaces no game file. It changes minimap pins by type only: type claims (an icon or tint per pin type) show on it, and a claim on one particular pin shows on the world map only. A pin type a pack hides everywhere is hidden on the minimap too: that takes a type hide (`CMFRegisterHidden`, not `CMFRegisterHiddenForTag`) on the exact pin type, for every map context (`mapContext` left empty), with no exemption a pin of that type could meet (the quest and tracked exemptions on quest types, the fast-travel exemption on `RoadSign`, `Harbor` and `Transport`). The add-on then masks that pin's icon, though a quest ring or glow the minimap draws round it can still show; as on the world map, a hide beats an icon or tint. Hides of single pins (tags), filtered types or map contexts, and hides with such an exemption, stay world-map only, and unclaimed pins look as the installed minimap draws them. Without the add-on the minimap shows every pin as before. It uses the HUD's unused `hud_pickeditemsinfo` slot, so a mod that fills that slot too would clash; none is known. It was tested with the game's own minimap, HUD Position Manager 1.0.0, Ink & Iron 0.8.10, Map Remastered 2.4.2, UI Remastered Edition 1.00 (navigation mode set to Minimap) and Coloured Map Markers 1.60 with its adapter; moving the minimap with HUD Position Manager, controllers and Proton are not yet tested.
+- **Minimap icons are optional.** CMF's main folder leaves the HUD minimap stock. The separate `modCMFMinimapPanel` folder (2.1.0) adds its own HUD part on top of whichever minimap is installed and never moves or resizes that minimap, so it replaces no game file. It changes minimap pins by type only: type claims (an icon or tint per pin type) show on it, and a claim on one particular pin shows on the world map only. A pin type a pack hides everywhere is hidden on the minimap too: that takes a type hide (`CMFRegisterHidden`, not `CMFRegisterHiddenForTag`) on the exact pin type, for every map context (`mapContext` left empty), with no exemption a pin of that type could meet (the quest and tracked exemptions on quest types, the fast-travel exemption on `RoadSign`, `Harbor` and `Transport`). The add-on then masks that pin's icon, though a quest ring or glow the minimap draws round it can still show; as on the world map, a hide beats an icon or tint. Hides of single pins (tags), filtered types or map contexts, and hides with such an exemption, stay world-map only, and unclaimed pins look as the installed minimap draws them. Without the add-on the minimap shows every pin as before. It uses the HUD's unused `hud_pickeditemsinfo` slot, so a mod that fills that slot too would clash; none is known. It was tested with the game's own minimap, HUD Position Manager 1.0.0, Ink & Iron 0.8.10, Map Remastered 2.4.2 and Coloured Map Markers 1.60 with its adapter; moving the minimap with HUD Position Manager, controllers and Proton are not yet tested.
 - **When a mod ships its own CMF support, uninstall CMF's adapter for it.** With both installed, the game stops at the script compile screen. Removing the adapter fixes it.
 - **Uninstall packs before CMF.** CMF and its packs write nothing into saves; removing them restores the stock map.
 
@@ -903,6 +1054,8 @@ st.SetFlashArray("cmf.map.hints", arr);
 and you answer `OnCMFMapHintsReady()` (on `CR4MapMenu`) by sending the list again. `CMFLevelLabel` gives the journal's colours; to keep your own tag colours, build your own HTML and pass it to `CMFStylePinLabel`. The adapter is `source/adapters/ink-and-iron`.
 
 **Your map's look (API version 5).** You used to draw your frames, fades, tag plates and key caps with code in your own map file (`MapMenu.iiFrame`, `HubMapContainer.inkEdge`, `StaticMapPinDescribed.iaiLvTab` and the others). Now the same values are `CMFStylePart`, `CMFDraw` and `CMFDrawSet` calls (section 5), and your tag colours are a `LabelColor` claim (property 17) per pin, so your level tag keeps its difficulty colour while the label text stays plain `"Lv "` and the level. The theme adapter lists every value with the member it came from.
+
+**Your gold buttons and World Map overview (API version 9).** Your map file re-drew the controller button sheets in gold, and your optional World Map file replaced the overview's painting and crests. Now they are pictures: `CMFRegisterButtonPicture` for each button of each controller family, and `CMFRegisterWorldPainting` and `CMFRegisterWorldCrest` for the overview, made choice-only with `CMFRegisterChoiceOnly("modInkAndIronUI", "Painting_World")` and `"Painting_Crests"` because a script cannot tell whether the World Map file is installed. Since adapter 1.2.0 the adapter carries your own art for both, with your permission and credited: the painting, the seven crests and all 143 buttons. The buttons show by default; the overview shows only when a player picks Ink and Iron for it.
 
 ### Witcher Gear Map
 
@@ -1027,7 +1180,7 @@ CMFRegisterTint("mod000CommunityPatch_WorldMap", 'Botanist', 16763904);	// gold 
 CMFRegister("mod000CommunityPatch_WorldMap", 6, 'Stables', '', "NPCs", 516);
 ```
 
-CMF's tabs show fast-travel pins, so an `OnPinReady` wrapper (API version 4) leaves every pin with `isFastTravel` out of your tab, the same test your map file made: `CMFStylePin("mod000CommunityPatch_WorldMap", dataObject, CMFPropertyTabHide(), "Botanist", 1)`. Smooth GUI changes nothing but the frame rate, so you send no other `navigation` key; if the game cannot change the rate while running, CMF answers `false` and the map stays at 24. The adapter is `source/adapters/community-patch`; its herb pictures are placeholders in its own texture cache, and [its author page](community-patch-adapter.md) has the whole change. In game on 2026-10-20, without Botanist installed, the log showed the 60 fps map, the Botanist tab and its rows, and the Stables row. The herb art and tints and keeping Botanist's rows out of Default were seen on 2026-10-21 through the Botanist adapter, which makes the same claims (Community Patch was out for that launch).
+CMF's tabs show fast-travel pins, so an `OnPinReady` wrapper (API version 4) leaves every pin with `isFastTravel` out of your tab, the same test your map file made: `CMFStylePin("mod000CommunityPatch_WorldMap", dataObject, CMFPropertyTabHide(), "Botanist", 1)`. Smooth GUI changes nothing but the frame rate, so you send no other `navigation` key; if the game cannot change the rate while running, CMF answers `false` and the map stays at 24. The adapter is `source/adapters/community-patch`; its herb pictures are placeholders in its own texture cache, and its author page has the whole change. In game on 2026-10-20, without Botanist installed, the log showed the 60 fps map, the Botanist tab and its rows, and the Stables row. The herb art and tints and keeping Botanist's rows out of Default were seen on 2026-10-21 through the Botanist adapter, which makes the same claims (Community Patch was out for that launch).
 
 ### Botanist (API version 6)
 
@@ -1069,3 +1222,31 @@ CMFDrawSetList("modWitchersPath", 'witchersPathRoute', 'colors', colors);	// foo
 ```
 
 Your boxes are `text` drawings that paint their own box, stacked upward from `legendTab` with `above` 6 and `widthShare` 1; "Erase path" and "Single color" take `click` 1 and 2 and the hover keys, and the distance box reads your two texts with `listen` and `listenFields` `"text=regionText|totalText"`. An `OnDrawingClicked` wrapper calls your two events on the map menu CMF passes, and after the switch redescribes the drawings and calls `CMFMapRefresh()`, which keeps the tab, pan and zoom. Your first send comes while the map is still opening, before CMF's map listens, and never arrives, so an `OnMapListening` wrapper calls your own `menu.WitchersPathSend(true)` once `keys` include `worldmap.witcherspath`. Your recorder, save data, region rules, distances, popup and saved choice stay yours, and after an erase or a region change the route redraws on its own because CMF listens to your key. Every call uses your folder name, so folder order stays as without CMF; the route's `order` 10 keeps it above a map-space drawing left at 0. The adapter is `modCMFAdapterWitchersPath` and its author page is [`witchers-path-adapter.md`](witchers-path-adapter.md). It ran in game on 2026-10-20 (launches D3 to D6): the route, the tab, the four boxes, their clicks and the legend.
+
+### Annoying Map (API version 9)
+
+Your map file used to report every pan (`OnPositionChanged(x, y)`) and every zoom (`OnZoomChanged`) to your script, which keeps them per region in the save, and to send `OnZoomMap` on the first zoom key, which puts back the real zoom limits that `AM_InitZoom` narrowed to the saved zoom. CMF's map loads instead of yours and sends none of them, so nothing new is remembered and a region with a saved zoom stays stuck at it. Now CMF's map reports the view and lets you choose the view a region opens with ("The map's view", section 5):
+
+```
+@wrapMethod(CMFCore)
+function OnMapView(menu : CR4MapMenu, area : name, x : float, y : float, worldX : float, worldY : float,
+	zoom : float, reason : name)
+{
+	wrappedMethod(menu, area, x, y, worldX, worldY, zoom, reason);
+	AMap().SetXY(x, y, AM_FilterArea(area));
+	AMapZoom().SetXY(zoom, zoom, AM_FilterArea(area));
+}
+
+@wrapMethod(CMFCore)
+function OnMapOpening(menu : CR4MapMenu, area : name, mapContext : name)
+{
+	wrappedMethod(menu, area, mapContext);
+	if (menu.am_maxZoom > 0)
+	{
+		menu.OnZoomMap();
+	}
+	CMFSetOpeningView("modAnnoyingMap", area, 0, 0, AmAdapterSavedZoom(area), true);
+}
+```
+
+`OnMapView`'s `x`, `y` and `zoom` are in the units your own reports used, so your storage takes them unchanged. Your saved place needs no call: your script still sends it through the game's own default-position call, which CMF's map uses, so `keepPlace` is `true`. Your other features (Geralt's marker, Roach and the boat only at signposts, no herbs) are in your own `mapMenu.ws` and work beside CMF without help. Every call uses your folder name. The adapter is `modCMFAdapterAnnoyingMap` and its author page is [`annoying-map-adapter.md`](annoying-map-adapter.md). It ran in game on 2026-10-23 (the CMF 1.3.0 launch): the map reopened at the place and zoom the player left, also after switching regions, and the whole zoom range stayed reachable.

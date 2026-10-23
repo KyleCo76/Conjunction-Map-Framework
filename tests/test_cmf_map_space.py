@@ -70,7 +70,7 @@ class CoreTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_stays_6(self):
-        self.assertIn('function CMFGetVersion() : int { return 8; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 9; }', self.core)
 
     def test_text_drawings_take_wrap_and_fit(self):
         self.assertIn('return text == "keep" || text == "none" || (part == \'\' && (text == "wrap" || text == "fit"));',

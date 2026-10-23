@@ -11,7 +11,7 @@
 - **A legend row shared by several types** (quest pins) takes the first pin's tint, as it does the first pin's icon.
 - **Pins other mods push** (no `AddPinTypeData`) take their legend tint from the legend name (`filteredType`) only, unless the row's image came from the pin's own type.
 - **Level variants** (`_1` to `_3`) cannot have their own images; the base type's image covers them.
-- **No new pin types** (legend rows, row names and tabs come with API version 2, and pin labels with API version 4, [section 5](Writing-Your-Script.md#5-write-your-script)), and no changes to the player arrow, player-placed pins or the world-select map. Those come with later CMF stages. The HUD minimap shows your type-level icons and tints only when the player installs CMF's optional minimap add-on ([section 11](For-Players.md)); tag claims stay off the minimap.
+- **No new pin types** (legend rows, row names and tabs come with API version 2, and pin labels with API version 4, [section 5](Writing-Your-Script.md#5-write-your-script)), and no changes to player-placed pins. The player arrow can only be hidden (API version 9), and the world overview takes new pictures but keeps its layout (API version 9, [section 5](Writing-Your-Script.md#5-write-your-script), [World overview pictures](World-Overview-Pictures.md)). The rest comes with later CMF stages. The HUD minimap shows your type-level icons and tints only when the player installs CMF's optional minimap add-on ([section 11](For-Players.md)); tag claims stay off the minimap.
 
 ---
 

@@ -13,6 +13,7 @@ Find what your mod wants to do on the map, then follow the page. Every call take
 | Colour pins | `CMFRegisterTint`, `CMFStylePinTint` | [Writing your script](Writing-Your-Script.md) |
 | Show pins greyed (still usable) | `CMFRegisterDisabled`, `CMFRegisterDisabledForTag` | [Greying pins](Greying-Pins.md) |
 | Hide pins, everywhere or in one map context | `CMFRegisterHidden`, `CMFRegisterHiddenForTag`, `CMFHidePin` | [Hiding pins](Hiding-Pins.md) |
+| Hide Geralt's marker | `CMFRegisterHidden` on the type `'Player'` (API version 9) | [Hiding pins](Hiding-Pins.md) |
 | Make pins bigger or smaller | property `10`, `CMFStylePinScale` | [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md) |
 | Write a label on a pin, move it or hide it | properties `11` to `13`, `CMFStylePinLabel`, `CMFLevelLabel` | [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md) |
 | Colour a pin's label | property `17` | [The map theme](Map-Theme.md) |
@@ -42,6 +43,10 @@ Find what your mod wants to do on the map, then follow the page. Every call take
 | Show your own key hints inside the map | `"cmf.map.hints"`, the event `OnCMFMapHintsReady` | [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
 | Replace the map image of an area | `CMFRegisterBackground` | [Writing your script](Writing-Your-Script.md) |
 | Change how the map pans, zooms, opens and closes | the `navigation` and `opening` parts | [Smooth map movement](Map-Movement.md) |
+| Know where the player left the region map | wrap `CMFCore.OnMapView` (API version 9) | [The map's view](Map-View.md) |
+| Choose the place and zoom a region map opens with | wrap `CMFCore.OnMapOpening`, `CMFSetOpeningView`, `CMFSetOpeningWorld` (API version 9) | [The map's view](Map-View.md) |
+| Give the world overview your own painting, crests or markers | `CMFRegisterWorldPainting`, `CMFRegisterWorldPaintingTiles`, `CMFRegisterWorldCrest`, `CMFRegisterWorldMarker` (API version 9) | [World overview pictures](World-Overview-Pictures.md) |
+| Give the map's controller buttons your own pictures | `CMFRegisterButtonPicture` (API version 9) | [Controller button pictures](Controller-Button-Pictures.md) |
 | Draw lines, text or your own movie on the map itself, in world metres | `CMFDraw` on `mapSpace`, `CMFDrawSetList`, `CMFMapRefresh` | [Drawing on the map itself](Drawing-on-the-Map.md) |
 | Show drawings only in one filter tab, even one with no pins | the drawing keys `tab`, `tabLabel` | [Drawing on the map itself](Drawing-on-the-Map.md) |
 | Clickable boxes on the screen | the drawing keys `click` and the hover keys, wrap `CMFCore.OnDrawingClicked` | [Drawing on the map itself](Drawing-on-the-Map.md) |
@@ -55,11 +60,12 @@ Find what your mod wants to do on the map, then follow the page. Every call take
 | Switch your whole mod off from its own setting | `CMFReleaseProvider` | [Shipping your mod](Shipping-Your-Mod.md) |
 | Give your mod an options page under CMF's entry | your own menu file at `Mods.cmf_menu.<your slug>` | [Shipping your mod](Shipping-Your-Mod.md) |
 | Show your mod under its own name in CMF's in-game menu | `CMFSetProviderName` (API version 8) | [Players' choices](Who-Wins-Each-Feature.md) |
+| Apply some claims only when the player picks your mod for them (art for an optional file a script cannot detect) | `CMFRegisterChoiceOnly` (API version 9) | [Choice-only claims](Choice-Only-Claims.md) |
 | See whether it worked | the script log's `CMF ...` lines | [Install and test](Install-and-Test.md) |
 
 ## What CMF does not do yet
 
-Some things are not in this version: new pin types of CMF's own, the player arrow, the world-select map, tooltip text, images as drawings, and clicks on drawings on the map itself. [Limits](Limits.md) lists them.
+Some things are not in this version: new pin types of CMF's own, changes to the player arrow other than hiding it, the world overview's layout, tooltip text, images as drawings, and clicks on drawings on the map itself. [Limits](Limits.md) lists them.
 
 ---
 

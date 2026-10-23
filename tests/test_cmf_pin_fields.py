@@ -126,11 +126,12 @@ class SettingsOverlayTests(unittest.TestCase):
 
 
 class SourceTests(unittest.TestCase):
-    def test_edits_cover_exactly_thirteen_classes(self):
-        # Smooth map movement (P6) adds UniverseMap and the tween library's GTween to the eleven.
+    def test_edits_cover_exactly_fourteen_classes(self):
+        # Smooth map movement (P6) adds UniverseMap and the tween library's GTween to the eleven; version 9 adds
+        # UniverseMapContainer (world overview pictures).
         edits = json.loads((ROOT/'source/panel/pin-fields/edits.json').read_text(encoding='utf-8'))
         self.assertEqual(edits['schema'], 'cmf-panel-edits-1')
-        self.assertEqual(len(edits['classes']), 13)
+        self.assertEqual(len(edits['classes']), 14)
         for path, changes in edits['classes'].items():
             self.assertTrue((path.startswith('red/game/witcher3/') or path == 'com/gskinner/motion/GTween.as') and
                             path.endswith('.as'), path)
@@ -181,6 +182,9 @@ class SourceTests(unittest.TestCase):
             '            this._selectedPinAvatar.UpdateMapPosition2(this.WorldXToMapX(_loc2_.x) * param1,this.WorldYToMapY'
             '(_loc2_.y) * param1);',
         }
+        # Blur at the opening (rerun 4): like the game's CenterOnPlayer, the default place and the middle ask for map
+        # squares only once the menu's opening animation is over.
+        changed |= {'         this.mcHubMapZoomContainer.mcHubMapContainer.ShowTilesFromCurrentLod();'}
         for edit in hub[1:] + menu[1:]:
             ops = difflib.SequenceMatcher(None, edit['find'].split('\n'), edit['replace'].split('\n')).get_opcodes()
             for tag, i1, i2, _j1, _j2 in ops:

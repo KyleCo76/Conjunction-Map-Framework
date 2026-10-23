@@ -1648,9 +1648,39 @@
 					<Option id="24" displayName="24"><Entry varId="CMFPick_Movement_Opening" value="24"/></Option>
 				</OptionsArray>
 			</Var>
+			<Var id="CMFPick_Movement_View" value="0" displayName="Opening view" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Movement_View" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Movement_View" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Movement_View" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Movement_View" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Movement_View" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Movement_View" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Movement_View" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Movement_View" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Movement_View" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Movement_View" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Movement_View" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Movement_View" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Movement_View" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Movement_View" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Movement_View" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Movement_View" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Movement_View" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Movement_View" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Movement_View" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Movement_View" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Movement_View" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Movement_View" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Movement_View" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Movement_View" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Movement_View" value="24"/></Option>
+				</OptionsArray>
+			</Var>
 			<Var id="CMFName_Movement_Area" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Movement_Pan" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Movement_Opening" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFName_Movement_View" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 		</VisibleVars>
 	</Group>
 	<Group id="CMFMenuAdvPainting" displayName="Mods.cmf_menu.cmf_advanced.cmf_adv_painting">
@@ -1916,6 +1946,64 @@
 					<Option id="24" displayName="24"><Entry varId="CMFPick_Painting_Toussaint" value="24"/></Option>
 				</OptionsArray>
 			</Var>
+			<Var id="CMFPick_Painting_World" value="0" displayName="World overview" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Painting_World" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Painting_World" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Painting_World" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Painting_World" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Painting_World" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Painting_World" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Painting_World" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Painting_World" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Painting_World" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Painting_World" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Painting_World" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Painting_World" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Painting_World" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Painting_World" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Painting_World" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Painting_World" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Painting_World" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Painting_World" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Painting_World" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Painting_World" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Painting_World" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Painting_World" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Painting_World" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Painting_World" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Painting_World" value="24"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFPick_Painting_Crests" value="0" displayName="Region crests and markers" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Painting_Crests" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Painting_Crests" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Painting_Crests" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Painting_Crests" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Painting_Crests" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Painting_Crests" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Painting_Crests" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Painting_Crests" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Painting_Crests" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Painting_Crests" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Painting_Crests" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Painting_Crests" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Painting_Crests" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Painting_Crests" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Painting_Crests" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Painting_Crests" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Painting_Crests" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Painting_Crests" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Painting_Crests" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Painting_Crests" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Painting_Crests" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Painting_Crests" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Painting_Crests" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Painting_Crests" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Painting_Crests" value="24"/></Option>
+				</OptionsArray>
+			</Var>
 			<Var id="CMFName_Painting_WhiteOrchard" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Painting_WhiteOrchardWinter" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Painting_Velen" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
@@ -1925,6 +2013,8 @@
 			<Var id="CMFName_Painting_IsleOfMists" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Painting_Spiral" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Painting_Toussaint" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFName_Painting_World" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFName_Painting_Crests" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 		</VisibleVars>
 	</Group>
 	<Group id="CMFMenuAdvClicks" displayName="Mods.cmf_menu.cmf_advanced.cmf_adv_clicks">
@@ -2394,6 +2484,12 @@
 					<Option id="1" displayName="-"><Entry varId="CMFWin_Movement_Opening" value="1"/></Option>
 				</OptionsArray>
 			</Var>
+			<Var id="CMFWin_Movement_View" value="0" displayName="Opening view" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="-"><Entry varId="CMFWin_Movement_View" value="0"/></Option>
+					<Option id="1" displayName="-"><Entry varId="CMFWin_Movement_View" value="1"/></Option>
+				</OptionsArray>
+			</Var>
 		</VisibleVars>
 	</Group>
 	<Group id="CMFMenuWinPainting" displayName="Mods.cmf_menu.cmf_status.cmf_win_painting">
@@ -2450,6 +2546,18 @@
 				<OptionsArray>
 					<Option id="0" displayName="-"><Entry varId="CMFWin_Painting_Toussaint" value="0"/></Option>
 					<Option id="1" displayName="-"><Entry varId="CMFWin_Painting_Toussaint" value="1"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFWin_Painting_World" value="0" displayName="World overview" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="-"><Entry varId="CMFWin_Painting_World" value="0"/></Option>
+					<Option id="1" displayName="-"><Entry varId="CMFWin_Painting_World" value="1"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFWin_Painting_Crests" value="0" displayName="Region crests and markers" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="-"><Entry varId="CMFWin_Painting_Crests" value="0"/></Option>
+					<Option id="1" displayName="-"><Entry varId="CMFWin_Painting_Crests" value="1"/></Option>
 				</OptionsArray>
 			</Var>
 		</VisibleVars>

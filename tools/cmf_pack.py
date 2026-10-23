@@ -4,6 +4,8 @@ A pack source folder is named exactly like the pack (that name is also its provi
 
   modMyIconPack/
     art/<name>.png                         one square PNG per image (optional for tint-only packs)
+    art/world/<name>.png                   world overview pictures, any shape (CMF 9)
+    art/buttons/<name>.png                 controller button pictures, any shape up to 128 (CMF 9)
     content/scripts/local/<name>.ws        the start-up wrapper that calls CMFRegister...
     content/<lang>.w3strings               optional, only for a pack with its own menu
     bin/config/r4game/user_config_matrix/pc/<name>.xml   optional menu
@@ -16,7 +18,8 @@ A pack source folder is named exactly like the pack (that name is also its provi
 Images are cooked into the pack's own content/texture.cache as single-mip BC3 with
 tools/cmf_cooked_codec.py and tools/cmf_texture_cache.py, under the key
 gameplay\\gui_new\\icons\\<pack lower case>\\<name>.png, which the map loads as
-img://icons/<pack lower case>/<name>.png. Needs only the Python standard library.
+img://icons/<pack lower case>/<name>.png (art/world/ and art/buttons/ pictures: img://icons/<pack lower
+case>/world/<name>.png and .../buttons/<name>.png). Needs only the Python standard library.
 """
 import argparse
 import hashlib
@@ -53,7 +56,12 @@ API = {'CMFRegisterIcon', 'CMFRegisterLegendIcon', 'CMFRegisterTint', 'CMFRegist
        'CMFPropertyPinClick', 'CMFPropertyPinClickHint', 'CMFPropertyPinClickButton', 'CMFPropertySpreadRank',
        'CMFPropertyCategoryNoDefault', 'CMFRegisterCategoryNoDefault', 'CMFDrawSetList', 'CMFMapRefresh',
        # Version 8: the provider's name in CMF's in-game menu, and a changed player choice.
-       'CMFSetProviderName', 'CMFChoicesChanged'}
+       'CMFSetProviderName', 'CMFChoicesChanged',
+       # Version 9: world overview and button pictures, choice-only claims and the opening view.
+       'CMFPropertyWorldPainting', 'CMFPropertyWorldCrest', 'CMFPropertyButtonPicture', 'CMFPropertyWorldMarker',
+       'CMFRegisterWorldPainting', 'CMFRegisterWorldPaintingTiles', 'CMFRegisterWorldCrest', 'CMFRegisterWorldMarker',
+       'CMFRegisterButtonPicture', 'CMFRegisterChoiceOnly', 'CMFSetOpeningView',
+       'CMFSetOpeningWorld'}
 # Categories the vanilla legend defines; a pack's own category id may not reuse one (CMF compares ignoring case).
 VANILLA_CATEGORIES = ('All', 'Default', 'General', 'Quests', 'Exploration', 'NPCs', 'Buffs')
 # Calls that need CMF 2; a pack using them should check CMFRequireVersion(pack, 2) or CMFHasProperty(8).
@@ -76,6 +84,25 @@ VERSION6 = {'CMFPropertyPinClick', 'CMFPropertyPinClickHint', 'CMFPropertyPinCli
 # should check CMFRequireVersion(pack, 8), and compiles only with CMF 8 or later.
 VERSION7 = set()
 VERSION8 = {'CMFSetProviderName', 'CMFChoicesChanged'}
+# Calls that need CMF 9 (1.3.0: pictures, choice-only claims, the opening view); a pack using them should check
+# CMFRequireVersion(pack, 9), and compiles only with CMF 9 or later (the generic CMFRegister ids 24 to 27 behind
+# CMFHasProperty(24) still compile on CMF 1).
+VERSION9 = {'CMFPropertyWorldPainting', 'CMFPropertyWorldCrest', 'CMFPropertyButtonPicture', 'CMFPropertyWorldMarker',
+            'CMFRegisterWorldPainting', 'CMFRegisterWorldPaintingTiles', 'CMFRegisterWorldCrest',
+            'CMFRegisterWorldMarker', 'CMFRegisterButtonPicture', 'CMFRegisterChoiceOnly', 'CMFSetOpeningView',
+            'CMFSetOpeningWorld'}
+# The world overview's crest names (UniverseMapContainer.configUI); a region another mod adds goes by its area name.
+WORLD_REGIONS = ('kaer_morhen', 'skellige', 'novigrad', 'no_mans_land', 'prolog_village', 'wyzima_castle', 'bob')
+WORLD_MARKERS = ('player', 'quest')
+# The button names the map's button pictures have (the frame labels of the map file's mcIconXbox, mcIconPS4,
+# mcIconPS5, mcIconSteam and mcIconSwitch; tools/cmf_button_sheets.json records them per family).
+BUTTON_NAMES = ('gamepad_X', 'enter-gamepad_A', 'escape-gamepad_B', 'gamepad_Y', 'gamepad_L1', 'gamepad_R1',
+                'gamepad_L2', 'gamepad_R2', 'gamepad_L3', 'gamepad_R3', 'gamepad_RTLT', 'gamepad_RBLB', 'dpad_up',
+                'double_dpad_up', 'dpad_down', 'dpad_right', 'dpad_left', 'gamepad_dpad_lr', 'start', 'back',
+                'gamepad_R_Tab', 'gamepad_R_Scroll', 'gamepad_L_Hold', 'gamepad_R_Hold', 'gamepad_L_Tab',
+                'gamepad_L_Scroll', 'gamepad_R_down', 'gamepad_dpad_up_down', 'gamepad_dpad_all')
+# Steam's clip has no frame for these two.
+BUTTON_NAMES_NOT_STEAM = ('gamepad_dpad_up_down', 'gamepad_dpad_all')
 # The map theme's fixed names and keys, as cmfCore.ws lists them (CMFThemeParts, CMFThemePartKeys and the rest;
 # tests/test_cmf_pack.py keeps the two in step).
 THEME_GLOW = ('glow1Color', 'glow1Alpha', 'glow1Blur', 'glow1Strength', 'glow2Color', 'glow2Alpha', 'glow2Blur',
@@ -140,10 +167,11 @@ THEME_SPACE_KINDS = ('line', 'text', 'movie')
 # CMFDrawSet("provider", 'id', 'key', ...): literal names only; values are often computed.
 THEME_PART = re.compile(r'\s*"([^"]*)"\s*,\s*\'([^\']*)\'\s*,\s*\'([^\']*)\'')
 THEME_DRAW = re.compile(r'\s*"([^"]*)"\s*,\s*\'([^\']*)\'\s*,\s*\'([^\']*)\'\s*,\s*\'([^\']*)\'\s*\)')
-# CMFCore methods a pack or adapter may wrap with @wrapMethod(CMFCore) (version 4 hooks, and OnPinClicked,
-# OnDrawingClicked and OnMapListening from version 6).
-HOOKS = ('OnPinReady', 'OnMapReady', 'OnPinClicked', 'OnDrawingClicked', 'OnMapListening')
+# CMFCore methods a pack or adapter may wrap with @wrapMethod(CMFCore) (version 4 hooks, OnPinClicked,
+# OnDrawingClicked and OnMapListening from version 6, and OnMapView and OnMapOpening from version 9).
+HOOKS = ('OnPinReady', 'OnMapReady', 'OnPinClicked', 'OnDrawingClicked', 'OnMapListening', 'OnMapView', 'OnMapOpening')
 HOOKS6 = ('OnPinClicked', 'OnDrawingClicked', 'OnMapListening')
+HOOKS9 = ('OnMapView', 'OnMapOpening')
 # Input words a PinClick claim accepts (commas or spaces between them, case ignored).
 CLICK_WORDS = ('use', 'doubleclick', 'button')
 # Label words a LabelHide claim accepts (commas or spaces between them, case ignored).
@@ -157,6 +185,10 @@ RESERVED = {'entry', 'state', 'statemachine', 'latent', 'exec', 'quest', 'timer'
             'hint', 'cleanup', 'reward', 'storyscene', 'import', 'event', 'out', 'optional', 'default',
             'defaults', 'parent', 'super', 'this', 'in', 'new', 'delete', 'final', 'abstract'}
 MIN_SIZE, MAX_SIZE, BEST_SIZE, MARGIN = 32, 128, 96, 4
+# The largest side of an art/world/ picture (the game's painting is 2100 x 1380; tiles go past one texture).
+WORLD_MAX = 4096
+# Folders of art/ whose pictures may have any shape (version 9): the world overview and controller buttons.
+PICTURE_FOLDERS = ('world', 'buttons')
 PNG_SIGNATURE = b'\x89PNG\r\n\x1a\n'
 
 
@@ -324,6 +356,31 @@ def check_art(name, data, report):
     return width, height, stream
 
 
+def check_picture_art(folder, name, data, report):
+    """Validate one picture of art/world/ (world overview painting, tiles, crests and markers) or art/buttons/
+    (controller button pictures, version 9): any shape, each side a multiple of 4 up to WORLD_MAX, or 128 for a
+    button; return (width, height, BC3 stream) or None."""
+    where = 'art/%s/%s' % (folder, name)
+    largest = MAX_SIZE if folder == 'buttons' else WORLD_MAX
+    if not re.fullmatch(r'[a-z0-9_]+\.png', name):
+        report.error(where, 'file names must be lower-case letters, digits and _ only, ending in .png '
+                            '(the name becomes the image key, and keys are lower case)')
+        return None
+    try:
+        width, height, rgba = read_png(data)
+    except (ValueError, zlib.error) as problem:
+        report.error(where, 'cannot read PNG: %s' % problem)
+        return None
+    if width % 4 or height % 4 or not (4 <= width <= largest and 4 <= height <= largest):
+        report.error(where, 'image is %dx%d; each side must be a multiple of 4 up to %d (the map stretches the '
+                            'picture to the game\'s own size, so 136x132 for a 135x130 crest is fine)'
+                     % (width, height, largest))
+        return None
+    if not any(rgba[3::4]):
+        report.warn(where, 'image is fully transparent')
+    return width, height, cmf_cooked_codec.encode_bc3(rgba, width, height)
+
+
 # --- script checks -----------------------------------------------------------------------
 
 def strip_comments(text):
@@ -363,15 +420,32 @@ PROPERTY_IDS = {'CMFPropertyIcon': 1, 'CMFPropertyLegendIcon': 2, 'CMFPropertyTi
                 'CMFPropertyLabelPlace': 11, 'CMFPropertyLabelText': 12, 'CMFPropertyLabelHide': 13,
                 'CMFPropertyInfoBoxHeight': 14, 'CMFPropertyTabHide': 15, 'CMFPropertyLabelColor': 17,
                 'CMFPropertyPinClick': 16, 'CMFPropertyPinClickHint': 20, 'CMFPropertyPinClickButton': 21,
-                'CMFPropertySpreadRank': 22, 'CMFPropertyCategoryNoDefault': 23}
+                'CMFPropertySpreadRank': 22, 'CMFPropertyCategoryNoDefault': 23, 'CMFPropertyWorldPainting': 24,
+                'CMFPropertyWorldCrest': 25, 'CMFPropertyButtonPicture': 26, 'CMFPropertyWorldMarker': 27}
 # Property ids this CMF accepts (18 and 19 are kept for tooltip slots).
-KNOWN_PROPERTIES = set(range(1, 18)) | {20, 21, 22, 23}
+KNOWN_PROPERTIES = set(range(1, 18)) | {20, 21, 22, 23} | set(range(24, 28))
+# Version 9: the controller families a button picture (26) may name.
+BUTTON_FAMILIES = ('xbox', 'ps4', 'ps5', 'steam', 'switch')
 GENERIC_KINDS = {1: 'icon', 2: 'legend', 3: 'tint'}
 LITERAL_PROVIDER = re.compile(r'\s*"([^"]*)"\s*[,)]')
 # CMFRegisterLegendRow("provider", 'filteredType', 'category', priority) and
 # CMFRegisterLegendCategory("provider", 'category', "label", priority)
 LEGEND_ROW = re.compile(r'\s*"([^"]*)"\s*,\s*\'([^\']*)\'\s*,\s*\'([^\']*)\'\s*,\s*(-?\d+)\s*\)')
 LEGEND_TEXT = re.compile(r'\s*"([^"]*)"\s*,\s*\'([^\']*)\'\s*,\s*"([^"]*)"\s*[,)]')
+# Version 9 picture calls: CMFRegisterWorldPainting("provider", "url"),
+# CMFRegisterWorldPaintingTiles("provider", "url", columns, rows), CMFRegisterWorldCrest("provider", 'region', "url"),
+# CMFRegisterWorldMarker("provider", 'marker', "url") and CMFRegisterButtonPicture("provider", 'family', "button", "url")
+# (the button is text: a name literal cannot hold the dash in names such as "enter-gamepad_A").
+PICTURE_CALLS = {
+    'CMFRegisterWorldPainting': ('painting', re.compile(r'\s*"([^"]*)"\s*,\s*()"([^"]*)"\s*\)')),
+    'CMFRegisterWorldPaintingTiles': ('tiles', re.compile(r'\s*"([^"]*)"\s*,\s*()"([^"]*)"\s*,\s*(-?\d+)\s*,'
+                                                          r'\s*(-?\d+)\s*\)')),
+    'CMFRegisterWorldCrest': ('crest', re.compile(r'\s*"([^"]*)"\s*,\s*\'([^\']*)\'\s*,\s*"([^"]*)"\s*\)')),
+    'CMFRegisterWorldMarker': ('marker', re.compile(r'\s*"([^"]*)"\s*,\s*\'([^\']*)\'\s*,\s*"([^"]*)"\s*\)')),
+    'CMFRegisterButtonPicture': ('button', re.compile(r'\s*"([^"]*)"\s*,\s*\'([^\']*)\'\s*,\s*"([^"]*)"\s*,'
+                                                      r'\s*"([^"]*)"\s*\)')),
+}
+PICTURE_KINDS = ('painting', 'tiles', 'crest', 'marker', 'button')
 # CMFRegisterHidden / CMFRegisterHiddenForTag("provider", 'target', 'context', "exemptions", hide)
 HIDDEN_CLAIM = re.compile(r'\s*"([^"]*)"\s*,\s*\'([^\']*)\'\s*,\s*\'([^\']*)\'\s*,\s*"([^"]*)"\s*,\s*(true|false)\s*\)')
 
@@ -411,6 +485,58 @@ def n4_issues(prop_id, text_value, number):
     if prop_id == 22 and not 0 <= number <= 1000:
         return ['spread rank %d is outside 0 to 1000; CMF rejects the claim' % number]
     return []
+
+
+def picture_issues(prop_id, target, text_value, number):
+    """Errors CMF's core would reject for a version 9 picture claim (ids 24 to 27); text "" withdraws."""
+    number = int(number, 16) if number.lower().startswith('0x') else int(number)
+    if prop_id == 24 and target != 'painting':
+        return ['the world painting\'s target must be \'painting\'; CMF rejects the claim']
+    if prop_id == 25 and not target:
+        return ['empty region name; CMF rejects the claim']
+    if prop_id == 26 and ('_' not in target or target.split('_', 1)[0] not in BUTTON_FAMILIES
+                          or not target.split('_', 1)[1]):
+        return ['button picture target "%s" must be family_button (for example xbox_gamepad_Y) with the family one of '
+                '%s; CMF rejects the claim' % (target, ', '.join(BUTTON_FAMILIES))]
+    if prop_id == 27 and target not in ('player', 'quest'):
+        return ['world marker target "%s" must be player or quest; CMF rejects the claim' % target]
+    if not text_value:
+        return []
+    if prop_id == 24 and number != 0 and not (1 <= number // 10 <= 8 and 1 <= number % 10 <= 8):
+        return ['painting number %d is not 0 or columns * 10 + rows (each 1 to 8); CMF rejects the claim' % number]
+    if prop_id != 24 and number != 0:
+        return ['picture number %d must be 0; CMF rejects the claim' % number]
+    return []
+
+
+def named_picture_issues(kind, target, columns=0, rows=0):
+    """(errors, warnings) for a named version 9 picture call: kind is painting, tiles, crest, marker or button."""
+    errors, warnings = [], []
+    if kind == 'tiles' and not (1 <= columns <= 8 and 1 <= rows <= 8):
+        errors.append('tiles %d x %d: columns and rows must each be 1 to 8; CMF refuses the call' % (columns, rows))
+    elif kind == 'crest':
+        if not target:
+            errors.append('empty region name; CMF rejects the claim')
+        elif target not in WORLD_REGIONS:
+            close = [r for r in WORLD_REGIONS if r.lower() == target.lower()]
+            warnings.append("'%s' is not one of the overview's regions (%s)%s; CMF keeps it for a region another mod "
+                            "adds (by its area name)" % (target, ', '.join(WORLD_REGIONS),
+                                                         '; did you mean \'%s\'?' % close[0] if close else ''))
+    elif kind == 'marker' and target not in WORLD_MARKERS:
+        errors.append("world marker target \"%s\" must be player or quest; CMF rejects the claim" % target)
+    elif kind == 'button':
+        family, _, button = target.partition(':')
+        if family not in BUTTON_FAMILIES:
+            errors.append("'%s' is not a controller family (%s); CMF rejects the claim"
+                          % (family, ', '.join(BUTTON_FAMILIES)))
+        elif button not in BUTTON_NAMES:
+            close = [b for b in BUTTON_NAMES if b.lower() == button.lower()]
+            errors.append("'%s' is not a button name the map has a picture for%s; CMF logs \"button picture "
+                          "unknown\" and refuses the call" % (button, '; did you mean \'%s\'?' % close[0] if close else ''))
+        elif family == 'steam' and button in BUTTON_NAMES_NOT_STEAM:
+            errors.append("the steam family has no '%s' picture; CMF logs \"button picture unknown\" and refuses the "
+                          "call" % button)
+    return errors, warnings
 
 
 def legend_issues(prop_id, target, text_value):
@@ -494,8 +620,13 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
                 report.error(where, issue)
             for issue in exemption_issues(text_value) if prop_id == 9 else []:
                 report.error(where, issue)
-            for issue in n4_issues(prop_id, text_value, number) if prop_id >= 10 else []:
+            for issue in n4_issues(prop_id, text_value, number) if 10 <= prop_id <= 23 else []:
                 report.error(where, issue)
+            if 24 <= prop_id <= 27 and name == 'CMFRegisterForTag':
+                report.error(where, 'pictures are type claims: use CMFRegister or the named picture calls')
+            elif 24 <= prop_id <= 27:
+                for issue in picture_issues(prop_id, target, text_value, number):
+                    report.error(where, issue)
             if prop_id == 14 and (target or name == 'CMFRegisterForTag'):
                 report.error(where, 'the info box height applies to the whole map: use CMFRegister with target \'\'')
                 continue
@@ -528,6 +659,37 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
             prop_id = {'CMFRegisterLegendRow': 6, 'CMFRegisterLegendLabel': 7, 'CMFRegisterLegendCategory': 8}[name]
             for issue in legend_issues(prop_id, target, text_value):
                 report.error(where, issue)
+        elif name in PICTURE_CALLS:
+            kind, pattern = PICTURE_CALLS[name]
+            literal = pattern.match(rest)
+            if not literal:
+                report.warn(where, '%s uses non-literal arguments, so the pack tool cannot check it' % name)
+                continue
+            if kind == 'button':
+                provider, family, button, url = literal.groups()
+                target = family + ':' + button
+            else:
+                provider, target, url = literal.group(1), literal.group(2) or 'painting', literal.group(3)
+            columns, rows = (int(literal.group(4)), int(literal.group(5))) if kind == 'tiles' else (0, 0)
+            errors, warnings = named_picture_issues(kind, target, columns, rows)
+            for issue in errors:
+                report.error(where, issue)
+            for issue in warnings:
+                report.warn(where, issue)
+            if kind == 'tiles' and url and not ('{x}' in url and '{y}' in url):
+                report.error(where, 'a tile path must hold {x} and {y} (counted from 0), e.g. '
+                                    '"img://icons/%s/world/tile{x}x{y}.png"' % pack.lower())
+            claims.append({'call': name, 'kind': kind, 'provider': provider, 'target': target,
+                           'value': '"%s"' % url, 'columns': columns, 'rows': rows, 'where': where})
+        elif name in ('CMFRegisterChoiceOnly', 'CMFSetOpeningView', 'CMFSetOpeningWorld'):
+            literal = LITERAL_PROVIDER.match(rest)
+            if literal and literal.group(1) != provider_name:
+                report.error(where, '%s names provider "%s"; it must be %s "%s"'
+                             % (name, literal.group(1), owner, provider_name))
+            key = re.match(r'\s*"[^"]*"\s*,\s*"([^"]*)"\s*\)', rest) if name == 'CMFRegisterChoiceOnly' else None
+            if key and not re.fullmatch(r'[A-Z][A-Za-z]*(_[A-Z][A-Za-z]*)?', key.group(1)):
+                report.error(where, '"%s" is not a choice key (a feature such as "Painting" or a piece such as '
+                                    '"Painting_Crests"); CMF rejects the call (reason=key)' % key.group(1))
         elif name in ('CMFRegisterHidden', 'CMFRegisterHiddenForTag'):
             literal = HIDDEN_CLAIM.match(rest)
             if not literal:
@@ -608,7 +770,7 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
         if match.group(1) not in HOOKS:
             report.error('%s:%d' % (path_label, line_of(match.start())), 'wrap only the CMFCore hooks %s; other '
                          'CMFCore methods are not part of the API and may change' % ', '.join(HOOKS))
-        elif match.group(1) not in HOOKS6:
+        elif match.group(1) not in HOOKS6 + HOOKS9:
             needs4 = sorted(set(needs4) | {'CMFCore.' + match.group(1)})
     if needs4:
         report.note(path_label, 'uses %s, so the pack compiles only with CMF 4 or later; say so in its README '
@@ -631,6 +793,14 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
     if needs8:
         report.note(path_label, 'calls %s, so the pack compiles only with CMF 8 (1.2.0) or later; say so in its README'
                     % ', '.join(needs8))
+    needs9 = sorted(set(m.group(1) for m in CALL.finditer(code)) & VERSION9)
+    for hook in HOOKS9:
+        if re.search(r'@wrapMethod\(\s*CMFCore\s*\)\s*function\s+%s\s*\(' % hook, code):
+            needs9 = sorted(set(needs9) | {'CMFCore.' + hook})
+    if needs9:
+        report.note(path_label, 'uses %s, so the pack compiles only with CMF 9 (1.3.0) or later; say so in its README '
+                                '(the generic CMFRegister ids 24 to 27 behind CMFHasProperty(24) still compile on CMF 1)'
+                    % ', '.join(needs9))
     hooked = re.search(r'@wrapMethod\(\s*CMFCore\s*\)\s*function\s+(%s)\s*\(' % '|'.join(HOOKS), code)
     if (not re.search(r'@wrapMethod\(\s*CR4Game\s*\)\s*function\s+OnGameStarted\s*\(', code) and not hooked
             and CALL.search(code)):
@@ -647,6 +817,32 @@ def check_claims(pack, claims, images, report, types, provider=None, literal=())
         where, kind, target, value = claim['where'], claim['kind'], claim['target'], claim['value']
         if claim['provider'] != provider:
             report.error(where, 'provider "%s" must be %s "%s", exactly' % (claim['provider'], owner, provider))
+        if kind in PICTURE_KINDS:
+            url = claim['url'] = value[1:-1]
+            if not url:
+                pass  # "" withdraws the claim
+            elif url.startswith(prefix):
+                names = [url[len(prefix):]]
+                if kind == 'tiles':
+                    names = [names[0].replace('{x}', str(x)).replace('{y}', str(y))
+                             for y in range(claim['rows']) for x in range(claim['columns'])]
+                for image in names:
+                    used.add(image)
+                    if image not in images:
+                        report.error(where, '%s%s has no image in art/ (the map would keep the game\'s picture)'
+                                     % (prefix, image))
+            elif url.startswith('img://'):
+                report.warn(where, '%s is not in this pack\'s cache; it shows only if another installed cache '
+                                   'holds that image' % url)
+            else:
+                report.error(where, 'image paths start with img:// (%s...)' % prefix)
+            slot = ('painting' if kind == 'tiles' else kind, target)
+            if slot in seen and seen[slot] != value:
+                report.warn(where, 'the %s for %s was already set at %s; the last call wins'
+                            % (slot[0], target, first[slot]))
+            seen[slot] = value
+            first.setdefault(slot, where)
+            continue
         if not target:
             report.error(where, 'empty pin %s; CMF rejects the claim' % ('tag' if kind == 'tag icon' else 'type'))
         if kind == 'tint':
@@ -737,6 +933,17 @@ def check_pack(source, adapts=None):
                 images[path.name] = result
         elif path.is_file():
             report.warn('art/' + path.name, 'ignored; only .png files are cooked')
+        elif path.is_dir() and path.name not in PICTURE_FOLDERS:
+            report.warn('art/' + path.name, 'ignored; only %s hold pictures in a folder'
+                        % ' and '.join('art/%s/' % f for f in PICTURE_FOLDERS))
+    for folder in PICTURE_FOLDERS:
+        for path in sorted((art/folder).iterdir()) if (art/folder).is_dir() else []:
+            if path.is_file() and path.suffix.lower() == '.png':
+                result = check_picture_art(folder, path.name, path.read_bytes(), report)
+                if result:
+                    images[folder + '/' + path.name] = result
+            else:
+                report.warn('art/%s/%s' % (folder, path.name), 'ignored; only .png files are cooked')
     scripts = sorted(p for p in (source/'content').rglob('*.ws')) if (source/'content').is_dir() else []
     claims, calls, literal = [], set(), set()
     for path in scripts:
@@ -755,7 +962,8 @@ def check_pack(source, adapts=None):
         check_script(label, text, pack, report, claims, calls, adapts)
         # An image named in any string literal counts as used, so art a script picks per pin (for example
         # through CMFStylePinIcon) is not reported as unused.
-        literal |= set(re.findall(r'"img://icons/%s/([^"]+)"' % re.escape(pack.lower()), strip_comments(text)))
+        literal |= set(name for name in re.findall(r'"img://icons/%s/([^"]+)"' % re.escape(pack.lower()),
+                                                   strip_comments(text)) if '{' not in name)
         files['content/' + path.relative_to(source/'content').as_posix()] = data
     if not scripts:
         report.error('content/scripts/local', 'no .ws script; the pack registers nothing without one')
@@ -777,8 +985,8 @@ def check_pack(source, adapts=None):
     if scripts and 'CMFRequireVersion' not in calls:
         report.note('script', 'consider guarding the calls with CMFRequireVersion("%s", 1)' % (adapts or pack))
     if images:
-        entries = [('gameplay\\gui_new\\icons\\%s\\%s' % (pack.lower(), name), w, h, cache.frame_bc3(stream))
-                   for name, (w, h, stream) in images.items()]
+        entries = [('gameplay\\gui_new\\icons\\%s\\%s' % (pack.lower(), name.replace('/', '\\')), w, h,
+                    cache.frame_bc3(stream)) for name, (w, h, stream) in images.items()]
         try:
             data = cache.build_cache(entries)
             keys = [(e[0], e[1], e[2]) for e in cache.read_entries(data)]
@@ -788,7 +996,7 @@ def check_pack(source, adapts=None):
         except ValueError as problem:
             report.error('content/texture.cache', str(problem))
     plan = {'pack': pack, 'provider': adapts or pack, 'files': files, 'claims': claims,
-            'images': {name: {'key': 'gameplay\\gui_new\\icons\\%s\\%s' % (pack.lower(), name),
+            'images': {name: {'key': 'gameplay\\gui_new\\icons\\%s\\%s' % (pack.lower(), name.replace('/', '\\')),
                               'url': 'img://icons/%s/%s' % (pack.lower(), name), 'size': [w, h]}
                        for name, (w, h, _) in images.items()}}
     return report, plan

@@ -84,6 +84,7 @@ PAGES = [
      [guide('9. Ship it'), guide('Packs with settings or text'), guide('Names CMF answers')]),
     ('Who-Wins-Each-Feature', None, 'Start here',
      [guide("Players' choices: who wins each feature (API version 8)")]),
+    ('Choice-Only-Claims', None, 'Start here', [guide('Choice-only claims (API version 9)')]),
     ('Greying-Pins', None, 'Pins and the legend', [guide('Greying pins (API version 1)')]),
     ('Legend-Rows-and-Filter-Tabs', None, 'Pins and the legend',
      [guide('Legend rows and filter tabs (API version 2)')]),
@@ -101,6 +102,11 @@ PAGES = [
     ('Map-Movement', None, "The map's look and behaviour", [guide('Smooth map movement (API version 6)')]),
     ('Drawing-on-the-Map', None, "The map's look and behaviour",
      [guide('Drawing on the map itself (API version 6)')]),
+    ('World-Overview-Pictures', None, "The map's look and behaviour",
+     [guide('World overview pictures (API version 9)')]),
+    ('Controller-Button-Pictures', None, "The map's look and behaviour",
+     [guide('Controller button pictures (API version 9)')]),
+    ('Map-View', None, "The map's look and behaviour", [guide("The map's view (API version 9)")]),
     ('Porting-a-Map-Mod', 'Porting a map mod', 'Moving a map mod onto CMF',
      [guide('12. Teaching examples: moving a map mod onto CMF'), guide('One mod, with and without CMF'),
       guide('The adapter identity rule'),
@@ -118,6 +124,7 @@ PAGES = [
     adapter('Adapter-Botanist', 'Botanist (API version 6)', 'docs/authors/botanist-adapter.md'),
     adapter('Adapter-The-Stable', 'The Stable (API version 2)', 'docs/authors/the-stable-adapter.md'),
     adapter('Adapter-Witchers-Path', "Witcher's Path (API version 6)", 'docs/authors/witchers-path-adapter.md'),
+    adapter('Adapter-Annoying-Map', 'Annoying Map (API version 9)', 'docs/authors/annoying-map-adapter.md'),
     ('API-Reference', 'API reference', 'Reference', []),
     ('Pin-Types', None, 'Reference', [page_file('docs/authors/pin-types.md')]),
     ('Settings-File-Keys', None, 'Reference', [page_file(SETTINGS)]),
@@ -173,10 +180,16 @@ def strip_title(text):
 
 def property_since(number):
     """The API version that added a property id."""
-    for since, ids in ((1, range(1, 6)), (2, range(6, 9)), (3, (9,)), (4, range(10, 16)), (5, (17,))):
+    for since, ids in ((1, range(1, 6)), (2, range(6, 9)), (3, (9,)), (4, range(10, 16)), (5, (17,)),
+                       (9, range(24, 28))):
         if number in ids:
             return since
     return 6
+
+
+def hook_since(hook):
+    """The API version that added a CMFCore hook."""
+    return 9 if hook in cmf_pack.HOOKS9 else 6 if hook in cmf_pack.HOOKS6 else 4
 
 
 def first_sentence(text):
@@ -498,7 +511,7 @@ class Build:
                 continue
             if not re.search(r'\b%s\b' % hook, guide_text):
                 self.errors.append('the guide never names the hook %s' % hook)
-            since = 6 if hook in cmf_pack.HOOKS6 else 4
+            since = hook_since(hook)
             lines.append('| `%s` | %d | %s |' % (hooks[hook], since, self.mentions(hook, texts)))
         lines += ['', '## Map events', '',
                   'CMF\'s map calls these events on `CR4MapMenu` under CMF\'s own names. Add one with '
@@ -512,7 +525,7 @@ class Build:
         lines += ['', '## What each API version added', '']
         for number in range(1, self.api() + 1):
             added = sorted(c for c in cmf_pack.API if self.version(c) == number)
-            hooks_added = [h for h in cmf_pack.HOOKS if (6 if h in cmf_pack.HOOKS6 else 4) == number]
+            hooks_added = [h for h in cmf_pack.HOOKS if hook_since(h) == number]
             names = ['`%s`' % c for c in added] + ['hook `%s`' % h for h in hooks_added]
             lines.append('- **%d**: %s' % (number, ', '.join(names) or 'no new calls (new theme keys only)'))
         return lines

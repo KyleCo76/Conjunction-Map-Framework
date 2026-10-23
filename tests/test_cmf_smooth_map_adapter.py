@@ -57,7 +57,7 @@ class SmoothMapAdapterTests(unittest.TestCase):
 
     def test_every_key_is_one_cmf_takes_in_range(self):
         core = CORE.read_text(encoding='ascii')
-        self.assertIn('function CMFGetVersion() : int { return 8; }', core)
+        self.assertIn('function CMFGetVersion() : int { return 9; }', core)
         for (part, key), number in SMOOTH_MAP.items():
             self.assertIn(key, cmf_pack.THEME_PART_KEYS[part])
             low, high = RANGES[key]

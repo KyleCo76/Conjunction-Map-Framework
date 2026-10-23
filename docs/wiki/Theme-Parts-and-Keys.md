@@ -53,7 +53,7 @@ Every name here is a general piece of the game's world map, not of any mod. A ke
 | `opening` | how the map opens and closes (API version 6) |
 | `spread` | how stacked pins fan out into a row (API version 6) |
 
-Not reachable through any part: the game's top bar and its own key-hint row (they belong to the common menu, not the map), the world view's painting and region shields, and the HUD minimap.
+Not reachable through any part: the game's top bar and its own key-hint row (they belong to the common menu, not the map), and the HUD minimap. The world overview's painting, region crests and markers, and the map's controller button pictures are not parts either: from API version 9 (CMF 1.3.0) a pack gives them pictures with their own calls, described in the author guide's [World overview pictures](World-Overview-Pictures.md) and [Controller button pictures](Controller-Button-Pictures.md). What no call reaches there: the places of regions, crests and labels, the overview's scroll limits, the region outlines that light up on hover, and keyboard and mouse prompts, which stay text on the `keyCap` part.
 
 ## Style keys
 

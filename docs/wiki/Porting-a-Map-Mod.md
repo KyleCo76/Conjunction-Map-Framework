@@ -74,4 +74,4 @@ CMF matches a tag claim to a pushed pin when the pin's `id` equals `NameToFlashU
 
 ---
 
-[Previous: Drawing on the map itself](Drawing-on-the-Map.md) · [Contents](Home.md) · [Next: Adapter: Map Quest Insight](Adapter-Map-Quest-Insight.md)
+[Previous: The map's view](Map-View.md) · [Contents](Home.md) · [Next: Adapter: Map Quest Insight](Adapter-Map-Quest-Insight.md)

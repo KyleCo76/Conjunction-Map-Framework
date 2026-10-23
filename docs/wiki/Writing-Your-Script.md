@@ -52,8 +52,12 @@ API version 2 adds legend rows, filter tabs and per-pin styling to the API versi
 | `21` `CMFPropertyPinClickButton()` (API version 6) | none | the words on the pin's button | nonzero; `0` withdraws |
 | `22` `CMFPropertySpreadRank()` (API version 6) | none | unused | which pin of a spread stack is selected first, `0` to `1000`, highest first |
 | `23` `CMFPropertyCategoryNoDefault()` (API version 6; target is your category id) | `CMFRegisterCategoryNoDefault` | unused | nonzero keeps the tab's rows out of Default; `0` lists them there |
+| `24` `CMFPropertyWorldPainting()` (API version 9; target `'painting'`, `CMFRegister` only) | `CMFRegisterWorldPainting`, `CMFRegisterWorldPaintingTiles` | image path, `""` withdraws | `0` for one picture, or columns x 10 + rows for tiles, each 1 to 8 |
+| `25` `CMFPropertyWorldCrest()` (API version 9; target is a region name) | `CMFRegisterWorldCrest` | image path, `""` withdraws | unused |
+| `26` `CMFPropertyButtonPicture()` (API version 9; target `'family_button'`, for example `'xbox_gamepad_Y'`, with a dash in the map's name written as `_`: `'xbox_enter_gamepad_A'`) | `CMFRegisterButtonPicture` | image path, `""` withdraws | unused |
+| `27` `CMFPropertyWorldMarker()` (API version 9; target `'player'` or `'quest'`) | `CMFRegisterWorldMarker` | image path, `""` withdraws | unused |
 
-Section [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md) explains 10 to 15, [Pin clicks](Pin-Clicks.md) explains 16, 20 and 21, [Spreading stacked pins](Spreading-Stacked-Pins.md) explains 22, and [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md) explains 23.
+Section [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md) explains 10 to 15, [Pin clicks](Pin-Clicks.md) explains 16, 20 and 21, [Spreading stacked pins](Spreading-Stacked-Pins.md) explains 22, [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md) explains 23, and [World overview pictures](World-Overview-Pictures.md) and [Controller button pictures](Controller-Button-Pictures.md) explain 24 to 27.
 
 ```
 if (CMFHasProperty(3))
@@ -92,9 +96,17 @@ Write a property newer than the CMF version you require as its number, not as it
 | `CMFRegisterBackground(provider : string, area : name, imageRoot : string)` | Replaces the map image of one area, such as `'AN_NMLandNovigrad'` (Velen and Novigrad). The tiles live in your pack's texture cache at `gameplay\gui_new\maps\<imageRoot>\level<L>\tile<X>x<Y>.jpg`, with the same tile size, level range and tile count as the area's vanilla image; CMF logs those values per area (`background area=...`) the first time the map shows it. The map draws level 0 as its background layer, then the area's own levels. |
 | `CMFRequireVersion(provider : string, minVersion : int) : bool` | Returns `false` and logs a line when the installed CMF is older than `minVersion`. Wrap your calls in it as above. |
 | `CMFReleaseProvider(provider : string)` | Withdraws everything your pack registered. Only needed if your pack can be switched off without being uninstalled. |
-| `CMFGetVersion() : int` | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0). |
+| `CMFGetVersion() : int` | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0, `9` in 1.3.0). |
 | `CMFSetProviderName(provider : string, displayName : string) : bool` | API version 8. The name CMF's in-game menu shows for your mod, for example `"Acme Icons"`; without it the menu shows your folder name tidied. Returns `false` and logs for an empty provider or name. See [Players' choices](Who-Wins-Each-Feature.md). |
 | `CMFChoicesChanged()` | API version 8. Tells CMF that a player's choice changed, so it prepares its winners again before the next lookup. CMF's menu add-on calls it; a pack never needs to. |
+| `CMFRegisterWorldPainting(provider : string, url : string) : bool` | API version 9. Your picture for the world overview's painting. See [World overview pictures](World-Overview-Pictures.md). |
+| `CMFRegisterWorldPaintingTiles(provider : string, url : string, columns : int, rows : int) : bool` | API version 9. The painting as `columns` x `rows` tiles, each 1 to 8; the path holds `{x}` and `{y}`. Out of range returns `false` and logs `reason=range`. |
+| `CMFRegisterWorldCrest(provider : string, region : name, url : string) : bool` | API version 9. Your picture for one region's crest on the world overview. |
+| `CMFRegisterWorldMarker(provider : string, marker : name, url : string) : bool` | API version 9. Your picture for the overview's `'player'` or `'quest'` marker. |
+| `CMFRegisterButtonPicture(provider : string, family : name, button : string, url : string) : bool` | API version 9. Your picture for one controller button of one family on the map. See [Controller button pictures](Controller-Button-Pictures.md). |
+| `CMFRegisterChoiceOnly(provider : string, choiceKey : string) : bool` | API version 9. Your claims for that feature or piece apply only when the player picks your mod for it. See [Choice-only claims](Choice-Only-Claims.md). |
+| `CMFSetOpeningView(provider : string, area : name, x : float, y : float, zoom : float, keepPlace : bool) : bool` | API version 9. The view a region map opens with, called from an `OnMapOpening` wrapper. See [The map's view](Map-View.md). |
+| `CMFSetOpeningWorld(provider : string, area : name, worldX : float, worldY : float, zoom : float) : bool` | API version 9. As `CMFSetOpeningView`, with the place given in world coordinates (for example Geralt's position): the region map opens centred there. See [The map's view](Map-View.md). |
 
 Behaviour you can rely on:
 

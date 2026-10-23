@@ -85,6 +85,9 @@ CMFFile_Painting_Skellige=Vanilla
 | `CMFFile_Drawings_Ignore1` | Drawings on the map | Advanced choices > Clicks and drawings | Leave out drawings from (1st) |
 | `CMFFile_Drawings_Ignore2` | Drawings on the map | Advanced choices > Clicks and drawings | Leave out drawings from (2nd) |
 | `CMFFile_Drawings_Ignore3` | Drawings on the map | Advanced choices > Clicks and drawings | Leave out drawings from (3rd) |
+| `CMFFile_Painting_World` | Map painting | Advanced choices > Map painting | World overview |
+| `CMFFile_Painting_Crests` | Map painting | Advanced choices > Map painting | Region crests and markers |
+| `CMFFile_Movement_View` | Map movement | Advanced choices > Map movement | Opening view |
 | `CMFFile_Fallthrough` | every feature | General | If the chosen mod has nothing for a pin |
 | `CMFDebug` | the log | General | Write the who-wins report to the log |
 | `CMFProviderOrder1` | the Mod order | Mod order | 1st |

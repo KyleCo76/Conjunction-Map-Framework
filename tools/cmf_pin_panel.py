@@ -6,6 +6,8 @@ the movie into the CR2W resource, package it, then gate the result:
   * a full re-export may differ from vanilla only in the edited classes;
   * tools/cmf_panel.py read_cr2w / compare_cr2w / read_package must pass;
   * the bundle must extract back to the exact resource.
+--probe-controller also applies source/panel/pin-fields/probe-controller-edits.json on top (a probe-only
+build that treats input as an Xbox pad for button pictures; never used for a release).
 Never deploys or launches anything.
 """
 import argparse
@@ -22,6 +24,7 @@ import cmf_panel
 
 ROOT = Path(__file__).resolve().parents[1]
 EDITS = ROOT/'source/panel/pin-fields/edits.json'
+PROBE_CONTROLLER = ROOT/'source/panel/pin-fields/probe-controller-edits.json'
 
 
 def sha(data):
@@ -37,11 +40,14 @@ def text(path):
     return path.read_text(encoding='utf-8').replace('\r\n', '\n')
 
 
-def apply_edits(export_root, edits, out_root):
-    """Write each edited class under out_root; every find must match exactly 'count' times."""
-    for relative, changes in edits['classes'].items():
+def apply_edits(export_root, edits, out_root, overlay=None):
+    """Write each edited class under out_root; every find must match exactly 'count' times.
+
+    The overlay's changes (if any) apply after the class's own edits."""
+    extra = overlay['classes'] if overlay else {}
+    for relative in list(edits['classes']) + [c for c in extra if c not in edits['classes']]:
         source = text(export_root/relative)
-        for change in changes:
+        for change in edits['classes'].get(relative, []) + extra.get(relative, []):
             found = source.count(change['find'])
             need(found == change['count'], '%s: expected %d match(es), found %d for %r'
                  % (relative, change['count'], found, change['find'][:60]))
@@ -65,10 +71,12 @@ def changed_classes(before, after):
     return sorted(n for n in names if text(before/n) != text(after/n))
 
 
-def build(vanilla, java, jar, out):
+def build(vanilla, java, jar, out, probe_controller=False):
     out = Path(out)
     need(not out.exists(), 'output directory already exists')
     edits = json.loads(EDITS.read_text(encoding='utf-8'))
+    overlay = json.loads(PROBE_CONTROLLER.read_text(encoding='utf-8')) if probe_controller else None
+    expected = sorted(set(edits['classes']) | set(overlay['classes'] if overlay else ()))
     original = Path(vanilla).read_bytes()
     need(sha(original) == edits['vanillaRedswfSha256'], 'vanilla resource hash mismatch')
     before = cmf_panel.read_cr2w(original)
@@ -78,14 +86,14 @@ def build(vanilla, java, jar, out):
     work.mkdir(parents=True)
     (work/'vanilla.gfx').write_bytes(movie)
     ffdec(java, jar, '-export', 'script', work/'export-vanilla', work/'vanilla.gfx')
-    apply_edits(work/'export-vanilla'/'scripts', edits, work/'src')
+    apply_edits(work/'export-vanilla'/'scripts', edits, work/'src', overlay)
     ffdec(java, jar, '-onerror', 'abort', '-importScript', work/'vanilla.gfx', work/'compiled.gfx', work/'src')
     candidate = cmf_panel.restore_opaque_tail(movie, (work/'compiled.gfx').read_bytes())
     cmf_panel.compare_movies(cmf_panel.read_movie(movie), cmf_panel.read_movie(candidate), True)
     (work/'panel.gfx').write_bytes(candidate)
     ffdec(java, jar, '-export', 'script', work/'export-panel', work/'panel.gfx')
     changed = changed_classes(work/'export-vanilla'/'scripts', work/'export-panel'/'scripts')
-    need(changed == sorted(edits['classes']), 'unexpected changed classes: %s' % changed)
+    need(changed == expected, 'unexpected changed classes: %s' % changed)
     resource = cmf_package.swap_movie(original, candidate)
     cmf_panel.compare_cr2w(before, cmf_panel.read_cr2w(resource), candidate)
     bundle = cmf_package.make_bundle(resource)
@@ -101,6 +109,8 @@ def build(vanilla, java, jar, out):
     report = {'schema': 'cmf-pin-panel-build-1', 'edits': sha(EDITS.read_bytes()), 'vanillaRedswf': sha(original),
               'movie': sha(candidate), 'resource': sha(resource), 'bundle': sha(bundle), 'metadata': sha(metadata),
               'changedClasses': changed, 'layout': layout['layout']}
+    if overlay:
+        report['probeController'] = sha(PROBE_CONTROLLER.read_bytes())
     (out/'build.json').write_text(json.dumps(report, indent=1) + '\n', encoding='utf-8')
     return report
 
@@ -111,8 +121,10 @@ def main():
     parser.add_argument('--java', required=True)
     parser.add_argument('--ffdec', required=True, help='FFDec 26.3.0 ffdec.jar (with flashlib beside it)')
     parser.add_argument('--out', required=True, help='new output directory')
+    parser.add_argument('--probe-controller', action='store_true',
+                        help='probe build only: also apply probe-controller-edits.json (never for a release)')
     args = parser.parse_args()
-    print(json.dumps(build(args.vanilla, args.java, args.ffdec, args.out), indent=1))
+    print(json.dumps(build(args.vanilla, args.java, args.ffdec, args.out, args.probe_controller), indent=1))
 
 
 if __name__ == '__main__':

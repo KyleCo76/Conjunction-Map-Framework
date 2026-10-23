@@ -23,6 +23,8 @@ and you answer `OnCMFMapHintsReady()` (on `CR4MapMenu`) by sending the list agai
 
 **Your map's look (API version 5).** You used to draw your frames, fades, tag plates and key caps with code in your own map file (`MapMenu.iiFrame`, `HubMapContainer.inkEdge`, `StaticMapPinDescribed.iaiLvTab` and the others). Now the same values are `CMFStylePart`, `CMFDraw` and `CMFDrawSet` calls ([section 5](Writing-Your-Script.md#5-write-your-script)), and your tag colours are a `LabelColor` claim (property 17) per pin, so your level tag keeps its difficulty colour while the label text stays plain `"Lv "` and the level. The theme adapter lists every value with the member it came from.
 
+**Your gold buttons and World Map overview (API version 9).** Your map file re-drew the controller button sheets in gold, and your optional World Map file replaced the overview's painting and crests. Now they are pictures: `CMFRegisterButtonPicture` for each button of each controller family, and `CMFRegisterWorldPainting` and `CMFRegisterWorldCrest` for the overview, made choice-only with `CMFRegisterChoiceOnly("modInkAndIronUI", "Painting_World")` and `"Painting_Crests"` because a script cannot tell whether the World Map file is installed. Since adapter 1.2.0 the adapter carries your own art for both, with your permission and credited: the painting, the seven crests and all 143 buttons. The buttons show by default; the overview shows only when a player picks Ink and Iron for it.
+
 ## The whole change, for its author
 
 This note is for the author of Ink and Iron. It shows how Ink and Iron's map comes back on Conjunction Map Framework's (CMF) world map through CMF's general calls. The worked example is the adapter CMF ships, [`source/adapters/ink-and-iron/modCMFAdapterInkAndIron`](../../source/adapters/ink-and-iron/modCMFAdapterInkAndIron/).
@@ -170,6 +172,15 @@ if (CMFHasAbility('navigation', 'frameRate'))
 `zoomTimed` 0 (one zoom step per `stepMs`) and `padHoldMs` 0 (each stick reading used once) are the game's values, but they are your choices too, so send them: each movement key is won on its own by the earliest folder that sets it, and a key you leave unset can be taken by a later smooth-map mod. Your controller crosshair (`inkSafe`, `inkPan`, `inkRingGo`) is the keys `crosshairRoam`, `safeLeft`, `safeTop`, `safeRight`, `safeBottom`, `snapSeconds` and `centerSeconds`.
 
 You change nothing in how the map opens or closes and draw no button beside a pin, so you need no `opening` key and no `pinButton` style. The author guide's [Smooth map movement](Map-Movement.md) ([section 5](Writing-Your-Script.md#5-write-your-script) of [`icon-pack-guide.md`](Getting-Started.md)) lists every key.
+
+### Your gold buttons and World Map overview (adapter 1.2.0)
+
+Two parts of Ink and Iron's look were pictures inside your map files, which CMF's map replaces. CMF 1.3.0 (API version 9) adds general calls for both, which any mod can use, and since adapter 1.2.0 the adapter brings both back with your own art, with your permission and credited to you. They only ever show with Ink and Iron installed.
+
+- **Gold controller buttons, on by default.** All 143 buttons of the five controller families, cut from your All In One map file's two re-drawn button sheets by `tools/cmf_button_sheet.py cut` (the adapter's copy: `tools/cmf_ink_and_iron_art.py buttons`), one `CMFRegisterButtonPicture` line each. Every player of the adapter has the All In One, so they are not choice-only; they belong to the Map look's Hints choice (`Look_Hints`). They were seen in game through a test copy of the map, not yet with a real controller. Your other screens keep their gold buttons, because those screens are your own files.
+- **World overview, choice-only.** The engraved painting and the seven region crests of your optional World Map file (0.9.0), through `CMFRegisterWorldPainting` and `CMFRegisterWorldCrest`. A script cannot tell whether that file is installed, so the adapter makes both pieces choice-only (`CMFRegisterChoiceOnly` with `"Painting_World"` and `"Painting_Crests"`). They show only when a player picks Ink and Iron on the menu add-on's World overview and Region crests and markers rows (or the Basic Painting row), or names it in the settings file (`CMFFile_Painting_World=modInkAndIronUI`, `CMFFile_Painting_Crests=modInkAndIronUI`); everyone else sees the game's overview, as your own map shows it without the World Map file.
+
+`CMFSetProviderName("modInkAndIronUI", "Ink and Iron")` gives your mod its name on those rows. The author guide's [Controller button pictures](Controller-Button-Pictures.md), [World overview pictures](World-Overview-Pictures.md) and [Choice-only claims](Choice-Only-Claims.md) explain the calls. Adapter 1.2.0 needs CMF 1.3.0 to compile; players on an older CMF keep adapter 1.1.0. The overview pictures ran in game in the CMF 1.3.0 launch (2026-10-23).
 
 ### The change for you
 

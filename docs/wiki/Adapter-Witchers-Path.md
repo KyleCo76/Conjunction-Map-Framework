@@ -164,4 +164,4 @@ Mods/
 
 ---
 
-[Previous: Adapter: The Stable](Adapter-The-Stable.md) · [Contents](Home.md) · [Next: API reference](API-Reference.md)
+[Previous: Adapter: The Stable](Adapter-The-Stable.md) · [Contents](Home.md) · [Next: Adapter: Annoying Map](Adapter-Annoying-Map.md)

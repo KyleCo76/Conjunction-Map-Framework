@@ -16,7 +16,7 @@ All on 2026-10-21, on Kyle's test copy:
 - **CMF removed (M5b):** the same mods without CMF; the game starts and runs. Passed.
 - **Ink and Iron (M2):** Kyle's own Ink and Iron setup with its adapter; Ink and Iron's look and movement on CMF's map, its HUD and menus unchanged. Passed.
 - **Minimap and Fog of War (M3):** the minimap add-on and the sample icon pack (same icons on map and minimap), Map Quest Insight, Witcher Gear Map and Gwent Players Map, and Fog of War hiding and restoring other mods' icons. Passed.
-- **A map mod not yet ported (M4):** UI Remastered Edition with CMF; its HUD, menus and hint row work, CMF's map opens. Passed.
+- **A map mod not yet ported (M4):** a HUD and menu mod with its own map file, with CMF; its HUD, menus and hint row work, CMF's map opens. Passed.
 - **Native plugins (M6):** Apocrypha Menu Framework 1.0.6 and HUD Position Manager 1.0.0 (an ASI loader beside W3LoadFix); both plugins load, the HUD draws, CMF's map opens. Passed.
 - **An everyday game (live field test):** Kyle's own game with about 175 mods, CMF and the Ink and Iron and Map Quest Insight adapters installed from these archives through RMMR 2.5, with Map Quest Insight 1.6.1 and a mod drawing on CMF's map. Scripts compile; Ink and Iron's look, Map Quest Insight's labels and the other mod's tab and markers show; the map opens in about 2 seconds with 1,696 pins and moves at 60 frames per second. Passed.
 

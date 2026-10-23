@@ -7,10 +7,13 @@
 // map-space drawing: the mapSpace anchor, the line, text and movie kinds, CMFDrawSetList, CMFMapRefresh,
 // drawing tabs, clicks and the OnDrawingClicked and OnMapListening hooks; version 7: the tall info box;
 // version 8: per-feature choices (which mod wins each feature and piece, Vanilla, the order of authority),
-// tidy provider names and the menu add-on's hook and calls).
+// tidy provider names and the menu add-on's hook and calls; version 9: world overview pictures (the painting, region
+// crests and the player and quest markers), controller button pictures, choice-only claims, the player marker as a
+// hide target, and the map's view: the OnMapView and OnMapOpening hooks, CMFSetOpeningView and
+// CMFSetOpeningWorld).
 // Never remove a call once published.
 
-function CMFGetVersion() : int { return 8; }
+function CMFGetVersion() : int { return 9; }
 
 function CMFPropertyIcon() : int { return 1; }
 function CMFPropertyLegendIcon() : int { return 2; }
@@ -49,6 +52,17 @@ function CMFPropertySpreadRank() : int { return 22; }
 // Version 6: keep the rows of a CMF tab out of Default (target = the category id, number nonzero; 0 withdraws).
 // Without it a CMF tab's rows also list in Default, as General's do.
 function CMFPropertyCategoryNoDefault() : int { return 23; }
+// Version 9: pictures for the world overview and the button bar, all type claims (level 1) whose text is the
+// picture's url; text "" withdraws. WorldPainting (24) target 'painting' only, number 0 for one picture or
+// columns * 10 + rows (each 1 to 8) for a tile url holding {x} and {y}; WorldCrest (25) target = a region's
+// overview name (kaer_morhen, skellige, novigrad, no_mans_land, prolog_village, wyzima_castle, bob, or a region
+// another mod adds); ButtonPicture (26) target = family_button (CMFButtonTarget, for example 'xbox_gamepad_Y'), the
+// family one of xbox, ps4, ps5, steam or switch, sent to the map as family:button;
+// WorldMarker (27) target 'player' or 'quest'.
+function CMFPropertyWorldPainting() : int { return 24; }
+function CMFPropertyWorldCrest() : int { return 25; }
+function CMFPropertyButtonPicture() : int { return 26; }
+function CMFPropertyWorldMarker() : int { return 27; }
 
 // Exemption flags of a hide claim, as stored in its number.
 function CMFExemptTracked() : int { return 2; }
@@ -293,6 +307,42 @@ function CMFIsClickProperty(propertyId : int) : bool
 		propertyId == CMFPropertyPinClickButton();
 }
 
+// Version 9: the picture properties (24 to 27), whose claims the map panel receives in cmf.map.world.
+function CMFIsPictureProperty(propertyId : int) : bool
+{
+	return propertyId >= CMFPropertyWorldPainting() && propertyId <= CMFPropertyWorldMarker();
+}
+
+// Version 9: true when a picture claim's target fits its property: 'painting' for the painting, any region name for
+// a crest, family_button with a known family for a button picture (CMFButtonTarget), 'player' or 'quest' for a marker.
+function CMFPictureTargetOk(propertyId : int, target : string) : bool
+{
+	var family : string;
+	switch (propertyId)
+	{
+		case 24:
+			return target == "painting";
+		case 25:
+			return target != "";
+		case 26:
+			if (StrFindFirst(target, "_") <= 0)
+			{
+				return false;
+			}
+			family = StrBeforeFirst(target, "_");
+			return StrAfterFirst(target, "_") != "" && CMFListHas("xbox,ps4,ps5,steam,switch", family);
+		case 27:
+			return target == "player" || target == "quest";
+	}
+	return false;
+}
+
+// Version 9: a painting's number, 0 for one picture or columns * 10 + rows with each 1 to 8.
+function CMFPaintingTilesOk(number : int) : bool
+{
+	return number == 0 || (number / 10 >= 1 && number / 10 <= 8 && number % 10 >= 1 && number % 10 <= 8);
+}
+
 // The pin field that records which provider styled this property of one pin (CMFStylePin), or "" when
 // the property cannot be styled per pin.
 function CMFOwnerField(propertyId : int) : string
@@ -341,7 +391,8 @@ function CMFIsVanillaCategory(category : string, ignoreCase : bool) : bool
 // splits most of them into pieces (its Advanced rows), written Feature_Piece. The menu add-on's rows and the
 // [CMFSettings] file values CMFFile_<key> use these keys. Hidden and Drawings are added together (every mod's
 // applies), so their pieces are three slots that each leave one mod out. CMFCore keeps the order as indices:
-// 0 to 10 are the features in this order, then the pieces.
+// 0 to 10 are the features in this order, then the pieces. Version 9 appends Painting_World (59),
+// Painting_Crests (60) and Movement_View (61); every older index stays.
 function CMFChoiceKeys() : string
 {
 	return "Icons,Colours,Size,Labels,Clicks,Legend,Hidden,Look,Movement,Painting,Drawings," +
@@ -351,7 +402,8 @@ function CMFChoiceKeys() : string
 		"Legend_Tabs,Hidden_Ignore1,Hidden_Ignore2,Hidden_Ignore3,Look_Frames,Look_Legend,Look_InfoBox,Look_Hints," +
 		"Look_PinText,Movement_Area,Movement_Pan,Movement_Opening,Painting_WhiteOrchard,Painting_WhiteOrchardWinter," +
 		"Painting_Velen,Painting_Skellige,Painting_KaerMorhen,Painting_Vizima,Painting_IsleOfMists,Painting_Spiral," +
-		"Painting_Toussaint,Drawings_Ignore1,Drawings_Ignore2,Drawings_Ignore3";
+		"Painting_Toussaint,Drawings_Ignore1,Drawings_Ignore2,Drawings_Ignore3,Painting_World,Painting_Crests," +
+		"Movement_View";
 }
 
 // Version 8: the pin group of a pin type for the Advanced icon and colour rows, as an offset from Icons_General:
@@ -539,6 +591,19 @@ struct SCMFClaim
 	var order : int;
 }
 
+// Version 9: one provider's opening view for one map area ('' = every area), as CMFSetOpeningView or
+// CMFSetOpeningWorld stored it (worldPlace: x and y are world coordinates).
+struct SCMFOpeningView
+{
+	var provider : string;
+	var area : name;
+	var x : float;
+	var y : float;
+	var zoom : float;
+	var keepPlace : bool;
+	var worldPlace : bool;
+}
+
 class CMFCore extends CObject
 {
 	private var claims : array<SCMFClaim>;
@@ -586,6 +651,12 @@ class CMFCore extends CObject
 	private var groupCacheType : string;
 	private var groupCacheValue : int;
 	private var mapSeen : bool;
+	// Version 9: choice-only registrations (CMFRegisterChoiceOnly) as a provider and a choice index each, the providers
+	// of the claims they left out at the last preparation (one entry per claim), and the opening views.
+	private var choiceOnlyProviders : array<string>;
+	private var choiceOnlyChoices : array<int>;
+	private var choiceOnlySkipped : array<string>;
+	private var openingViews : array<SCMFOpeningView>;
 
 	public function RequestRefresh()
 	{
@@ -674,6 +745,34 @@ class CMFCore extends CObject
 			CMFLog("rejected provider=" + incoming.provider + " property=" + incoming.propertyId + " reason=range");
 			return false;
 		}
+		// Version 9: a picture claim's target and tile count; text "" withdraws the provider's claim for that slot.
+		if (CMFIsPictureProperty(incoming.propertyId))
+		{
+			if (incoming.level != 1 || !CMFPictureTargetOk(incoming.propertyId, NameToString(incoming.pinType)))
+			{
+				CMFLog("rejected provider=" + incoming.provider + " property=" + incoming.propertyId + " reason=target");
+				return false;
+			}
+			if (incoming.text == "")
+			{
+				for (i = claims.Size() - 1; i >= 0; i -= 1)
+				{
+					if (claims[i].provider == incoming.provider && SameSlot(claims[i], incoming))
+					{
+						claims.Erase(i);
+						dirty = true;
+						Report("picture withdrawn", incoming);
+					}
+				}
+				return true;
+			}
+			if ((incoming.propertyId == CMFPropertyWorldPainting() && !CMFPaintingTilesOk(incoming.number)) ||
+				(incoming.propertyId != CMFPropertyWorldPainting() && incoming.number != 0))
+			{
+				CMFLog("rejected provider=" + incoming.provider + " property=" + incoming.propertyId + " reason=range");
+				return false;
+			}
+		}
 		// An empty legend row category means All only; a hide claim needs no text.
 		if (incoming.provider == "" || (!CMFPropertyTextFree(incoming.propertyId) && incoming.text == "") ||
 			(incoming.level == 1 && !IsNameValid(incoming.pinType)) || (incoming.level == 2 && !IsNameValid(incoming.pinTag)))
@@ -722,6 +821,25 @@ class CMFCore extends CObject
 			{
 				themeEntries.Erase(i);
 				released += 1;
+			}
+		}
+		// Version 9: its opening views and choice-only registrations go too.
+		for (i = openingViews.Size() - 1; i >= 0; i -= 1)
+		{
+			if (openingViews[i].provider == provider)
+			{
+				openingViews.Erase(i);
+				released += 1;
+				dirty = true;
+			}
+		}
+		for (i = choiceOnlyProviders.Size() - 1; i >= 0; i -= 1)
+		{
+			if (choiceOnlyProviders[i] == provider)
+			{
+				choiceOnlyProviders.Erase(i);
+				choiceOnlyChoices.Erase(i);
+				dirty = true;
 			}
 		}
 		CMFLog("released provider=" + provider + " claims=" + released);
@@ -793,7 +911,8 @@ class CMFCore extends CObject
 	// The provider that owns a part's style keys (the earliest folder that styled the part), or for the
 	// behaviour parts map, navigation, opening and spread the owner of that one key.
 	// Version 8: through the part's choice (PartChoice): Vanilla gives no owner, a chosen mod that styled the part
-	// owns it, and otherwise the next level decides (none when the General row says Vanilla).
+	// owns it, and otherwise the next level decides (none when the General row says Vanilla). Version 9: a provider
+	// that made the part's choice choice-only (CMFRegisterChoiceOnly) owns it only when picked.
 	private function ThemeStyleOwner(part : name, key : name) : string
 	{
 		var i, choice : int;
@@ -821,7 +940,8 @@ class CMFCore extends CObject
 		}
 		for (i = 0; i < themeEntries.Size(); i += 1)
 		{
-			if (themeEntries[i].kind == 1 && themeEntries[i].target == part && (!perKey || themeEntries[i].key == key))
+			if (themeEntries[i].kind == 1 && themeEntries[i].target == part && (!perKey || themeEntries[i].key == key) &&
+				!ChoiceOnlySkips(PartChoice(part), themeEntries[i].provider))
 			{
 				if (answer != "" && themeEntries[i].provider == answer)
 				{
@@ -1001,6 +1121,82 @@ class CMFCore extends CObject
 		ownMotion = SendDefaultMotion(storage, flashArray);
 		storage.SetFlashArray("cmf.map.theme", flashArray);
 		NoteTheme("theme sent entries=" + sent + " of=" + themeEntries.Size() + " cmfMotion=" + ownMotion);
+		SendWorld(storage);
+	}
+
+	// Version 9: sends the winning picture claims (24 to 27, through the choices as Find) under "cmf.map.world",
+	// right after the theme: one object per winning claim with t ("painting", "crest", "marker" or "button"), y (the
+	// target), s (the url), c and r (tile columns and rows, 1 and 1 for one picture) and p (the provider). An empty
+	// array is sent when nothing wins, so a refresh clears old pictures.
+	private function SendWorld(storage : CScriptedFlashValueStorage)
+	{
+		var flashArray : CScriptedFlashArray;
+		var item : CScriptedFlashObject;
+		var claim : SCMFClaim;
+		var kind : string;
+		var i, columns, rows, painting, crests, markers, buttons : int;
+		if (dirty)
+		{
+			Prepare();
+		}
+		flashArray = storage.CreateTempFlashArray();
+		painting = 0;
+		crests = 0;
+		markers = 0;
+		buttons = 0;
+		for (i = 0; i < winners.Size(); i += 1)
+		{
+			if (!CMFIsPictureProperty(winners[i].propertyId) ||
+				!Find(winners[i].propertyId, NameToString(winners[i].pinType), '', 1, claim) ||
+				claim.provider != winners[i].provider)
+			{
+				continue;
+			}
+			columns = 1;
+			rows = 1;
+			if (claim.propertyId == CMFPropertyWorldPainting())
+			{
+				kind = "painting";
+				painting = 1;
+				if (claim.number > 0)
+				{
+					columns = claim.number / 10;
+					rows = claim.number % 10;
+				}
+			}
+			else if (claim.propertyId == CMFPropertyWorldCrest())
+			{
+				kind = "crest";
+				crests += 1;
+			}
+			else if (claim.propertyId == CMFPropertyButtonPicture())
+			{
+				kind = "button";
+				buttons += 1;
+			}
+			else
+			{
+				kind = "marker";
+				markers += 1;
+			}
+			item = storage.CreateTempFlashObject();
+			item.SetMemberFlashString("t", kind);
+			if (kind == "button")
+			{
+				item.SetMemberFlashString("y", CMFButtonPanelKey(NameToString(claim.pinType)));
+			}
+			else
+			{
+				item.SetMemberFlashString("y", NameToString(claim.pinType));
+			}
+			item.SetMemberFlashString("s", claim.text);
+			item.SetMemberFlashInt("c", columns);
+			item.SetMemberFlashInt("r", rows);
+			item.SetMemberFlashString("p", claim.provider);
+			flashArray.PushBackFlashObject(item);
+		}
+		storage.SetFlashArray("cmf.map.world", flashArray);
+		CMFLog("world sent painting=" + painting + " crests=" + crests + " markers=" + markers + " buttons=" + buttons);
 	}
 
 	// CMF's own movement (1.0.0): the map runs at 60 frames a second and moves by the time since the last
@@ -1515,6 +1711,13 @@ class CMFCore extends CObject
 			case 20:
 			case 21:
 				return 32; // Clicks_Pins
+			case 24:
+				return 59; // Painting_World
+			case 25:
+			case 27:
+				return 60; // Painting_Crests
+			case 26:
+				return 42; // Look_Hints
 		}
 		return -1;
 	}
@@ -1711,6 +1914,11 @@ class CMFCore extends CObject
 		{
 			NoteOfferFor(StringToInt(StrBeforeFirst(styledOffers[i], "/")), StrAfterFirst(styledOffers[i], "/"));
 		}
+		// Version 9: an opening view offers Movement_View.
+		for (i = 0; i < openingViews.Size(); i += 1)
+		{
+			NoteOfferFor(61, openingViews[i].provider);
+		}
 	}
 
 	private function NoteOfferFor(choice : int, provider : string)
@@ -1820,7 +2028,7 @@ class CMFCore extends CObject
 		{
 			return false;
 		}
-		if ((choice >= 36 && choice <= 38) || choice >= 56)
+		if ((choice >= 36 && choice <= 38) || (choice >= 56 && choice <= 58))
 		{
 			choice = choiceFeature[choice];
 		}
@@ -2036,7 +2244,7 @@ class CMFCore extends CObject
 		}
 		for (i = 0; i < choiceKeys.Size(); i += 1)
 		{
-			if (i == 6 || i == 10 || (i >= 36 && i <= 38) || i >= 56)
+			if (i == 6 || i == 10 || (i >= 36 && i <= 38) || (i >= 56 && i <= 58))
 			{
 				if (i == 6 || i == 10)
 				{
@@ -2061,8 +2269,15 @@ class CMFCore extends CObject
 		winners.Clear();
 		hideClaims.Clear();
 		tabHideClaims.Clear();
+		choiceOnlySkipped.Clear();
 		for (i = 0; i < claims.Size(); i += 1)
 		{
+			// Version 9: a claim whose choice its provider made choice-only waits until that provider is picked.
+			if (ChoiceOnlySkips(PropertyChoice(claims[i].propertyId, NameToString(claims[i].pinType)), claims[i].provider))
+			{
+				choiceOnlySkipped.PushBack(claims[i].provider);
+				continue;
+			}
 			// Hide claims are never arbitrated: every eligible one applies (version 8: unless the Hidden pins
 			// choice leaves its provider out; greyed pins follow the same choice).
 			if (claims[i].propertyId == CMFPropertyHidden())
@@ -2224,7 +2439,8 @@ class CMFCore extends CObject
 	private function ReportProviders()
 	{
 		var providers : array<string>;
-		var i, p, total, won, hides : int;
+		var i, p, total, won, hides, skipped : int;
+		var choiceOnly : string;
 		for (i = 0; i < claims.Size(); i += 1)
 		{
 			if (!providers.Contains(claims[i].provider))
@@ -2256,14 +2472,29 @@ class CMFCore extends CObject
 					won += 1;
 				}
 			}
+			// Version 9: claims left out because their choice is choice-only and the provider is not picked.
+			skipped = 0;
+			for (i = 0; i < choiceOnlySkipped.Size(); i += 1)
+			{
+				if (choiceOnlySkipped[i] == providers[p])
+				{
+					skipped += 1;
+				}
+			}
+			choiceOnly = "";
+			if (skipped > 0)
+			{
+				choiceOnly = " choiceonly=" + skipped;
+			}
 			if (hides > 0)
 			{
 				CMFLog("provider=" + providers[p] + " claims=" + total + " won=" + won + " shadowed=" + (total - won) +
-					" hides=" + hides);
+					" hides=" + hides + choiceOnly);
 			}
 			else
 			{
-				CMFLog("provider=" + providers[p] + " claims=" + total + " won=" + won + " shadowed=" + (total - won));
+				CMFLog("provider=" + providers[p] + " claims=" + total + " won=" + won + " shadowed=" + (total - won) +
+					choiceOnly);
 			}
 		}
 	}
@@ -2456,7 +2687,7 @@ class CMFCore extends CObject
 		}
 		if (fullList)
 		{
-			RemoveHiddenPins(flashArray, area);
+			RemoveHiddenPins(flashArray, area, mapContext);
 		}
 		listOpen = false;
 	}
@@ -2708,14 +2939,34 @@ class CMFCore extends CObject
 		}
 	}
 
+	// Version 9: the earliest provider (folder order) whose hide claim targets exactly 'Player' in this map context,
+	// or "". Exemptions do not apply to the player marker.
+	private function PlayerHideOwner(mapContext : name) : string
+	{
+		var owner : string;
+		var i : int;
+		owner = "";
+		for (i = 0; i < hideClaims.Size(); i += 1)
+		{
+			if (hideClaims[i].level == 1 && hideClaims[i].pinType == 'Player' &&
+				(!IsNameValid(hideClaims[i].mapContext) || hideClaims[i].mapContext == mapContext) &&
+				(owner == "" || CMFProviderBeats(hideClaims[i].provider, owner)))
+			{
+				owner = hideClaims[i].provider;
+			}
+		}
+		return owner;
+	}
+
 	// Removes every marked pin from the finished list (backwards, so a removal shifts only later pins) and
-	// logs per build how many pins each hiding provider removed.
-	private function RemoveHiddenPins(flashArray : CScriptedFlashArray, area : name)
+	// logs per build how many pins each hiding provider removed. Version 9: a hide claim targeting 'Player' removes
+	// the player marker in its contexts; every-pin and tag hides never do.
+	private function RemoveHiddenPins(flashArray : CScriptedFlashArray, area : name, mapContext : name)
 	{
 		var dataObject : CScriptedFlashObject;
 		var providers : array<string>;
 		var counts : array<int>;
-		var owner : string;
+		var owner, playerOwner : string;
 		var i, p, removed : int;
 		for (i = 0; i < hideClaims.Size(); i += 1)
 		{
@@ -2725,11 +2976,29 @@ class CMFCore extends CObject
 				counts.PushBack(0);
 			}
 		}
+		playerOwner = "";
+		if (hideClaims.Size() > 0)
+		{
+			playerOwner = PlayerHideOwner(mapContext);
+		}
 		removed = 0;
 		for (i = flashArray.GetLength() - 1; i >= 0; i -= 1)
 		{
 			dataObject = flashArray.GetElementFlashObject(i);
-			if (dataObject && !dataObject.GetMemberFlashBool("isPlayer") && !dataObject.GetMemberFlashBool("isUserPin"))
+			if (dataObject && playerOwner != "" && dataObject.GetMemberFlashBool("isPlayer") &&
+				!dataObject.GetMemberFlashBool("isUserPin"))
+			{
+				flashArray.RemoveElement(i);
+				removed += 1;
+				p = providers.FindFirst(playerOwner);
+				if (p >= 0)
+				{
+					counts[p] += 1;
+				}
+				CMFLog("hide player provider=" + playerOwner + " context=" + NameToString(mapContext));
+				playerOwner = "";
+			}
+			else if (dataObject && !dataObject.GetMemberFlashBool("isPlayer") && !dataObject.GetMemberFlashBool("isUserPin"))
 			{
 				owner = CMFPinOwner(dataObject, "cmfHiddenBy");
 				if (owner != "")
@@ -3513,6 +3782,264 @@ class CMFCore extends CObject
 	{
 	}
 
+	// Version 9 (CMFRegisterChoiceOnly): stores one provider's choice-only choice. False (logged) for an unknown key.
+	public function RegisterChoiceOnly(provider : string, choiceKey : string) : bool
+	{
+		var i, choice : int;
+		EnsureChoices();
+		choice = choiceKeys.FindFirst(choiceKey);
+		if (provider == "" || choice < 0)
+		{
+			CMFLog("choice only rejected provider=" + provider + " key=" + choiceKey + " reason=key");
+			return false;
+		}
+		for (i = 0; i < choiceOnlyProviders.Size(); i += 1)
+		{
+			if (choiceOnlyProviders[i] == provider && choiceOnlyChoices[i] == choice)
+			{
+				CMFLog("choice only provider=" + provider + " key=" + choiceKey);
+				return true;
+			}
+		}
+		choiceOnlyProviders.PushBack(provider);
+		choiceOnlyChoices.PushBack(choice);
+		dirty = true;
+		CMFLog("choice only provider=" + provider + " key=" + choiceKey);
+		return true;
+	}
+
+	// Version 9: true when this provider's claim, part style or opening view for choice `choice` waits: the provider
+	// made the choice or its feature choice-only, and no in-game or file row of the choice or its feature picks it.
+	private function ChoiceOnlySkips(choice : int, provider : string) : bool
+	{
+		var i, feature : int;
+		var listed : bool;
+		if (choice < 0 || choiceOnlyProviders.Size() == 0)
+		{
+			return false;
+		}
+		EnsureChoices();
+		if (choice >= choiceKeys.Size())
+		{
+			return false;
+		}
+		feature = choiceFeature[choice];
+		listed = false;
+		for (i = 0; i < choiceOnlyProviders.Size() && !listed; i += 1)
+		{
+			listed = choiceOnlyProviders[i] == provider && (choiceOnlyChoices[i] == choice || choiceOnlyChoices[i] == feature);
+		}
+		if (!listed)
+		{
+			return false;
+		}
+		return menuChoices[choice] != provider && menuChoices[feature] != provider && fileChoices[choice] != provider &&
+			fileChoices[feature] != provider;
+	}
+
+	// Version 9 (CMFSetOpeningView): stores, replaces or withdraws one provider's opening view for one area.
+	public function SetOpeningView(provider : string, area : name, x : float, y : float, zoom : float,
+		keepPlace : bool) : bool
+	{
+		return StoreOpeningView(provider, area, x, y, zoom, keepPlace, false);
+	}
+
+	// Version 9 (CMFSetOpeningWorld): the same with the place in world coordinates; it replaces either kind.
+	public function SetOpeningWorld(provider : string, area : name, worldX : float, worldY : float,
+		zoom : float) : bool
+	{
+		return StoreOpeningView(provider, area, worldX, worldY, zoom, false, true);
+	}
+
+	private function StoreOpeningView(provider : string, area : name, x : float, y : float, zoom : float,
+		keepPlace : bool, worldPlace : bool) : bool
+	{
+		var view : SCMFOpeningView;
+		var i : int;
+		var hadAny : bool;
+		if (provider == "")
+		{
+			CMFLog("opening view rejected provider= area=" + NameToString(area) + " reason=empty");
+			return false;
+		}
+		hadAny = HasOpeningView(provider);
+		for (i = openingViews.Size() - 1; i >= 0; i -= 1)
+		{
+			if (openingViews[i].provider == provider && openingViews[i].area == area)
+			{
+				openingViews.Erase(i);
+			}
+		}
+		if (!keepPlace || zoom > 0)
+		{
+			view.provider = provider;
+			view.area = area;
+			view.x = x;
+			view.y = y;
+			view.zoom = zoom;
+			view.keepPlace = keepPlace;
+			view.worldPlace = worldPlace;
+			openingViews.PushBack(view);
+		}
+		// The menu's Opening view row lists the provider from the next preparation.
+		if (hadAny != HasOpeningView(provider))
+		{
+			dirty = true;
+		}
+		return true;
+	}
+
+	private function HasOpeningView(provider : string) : bool
+	{
+		var i : int;
+		for (i = 0; i < openingViews.Size(); i += 1)
+		{
+			if (openingViews[i].provider == provider)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// Version 9: the opening view for the shown area, through Movement_View (61) as Find goes through a claim's
+	// choice: Vanilla gives none; a chosen mod's view wins (its view for the area before its every-area view); else
+	// a view for the area beats an every-area view, then PieceBeats decides between providers, or none when the
+	// chosen mod has no view and the General row says Vanilla. Choice-only views wait until picked.
+	private function OpeningViewWinner(area : name, out result : SCMFOpeningView) : bool
+	{
+		var i, best, picked : int;
+		var answer : string;
+		best = -1;
+		picked = -1;
+		answer = "";
+		if (choicesActive)
+		{
+			answer = decideAnswer[61];
+			if (answer == "vanilla")
+			{
+				return false;
+			}
+			if (answer == "@order")
+			{
+				answer = "";
+			}
+		}
+		for (i = 0; i < openingViews.Size(); i += 1)
+		{
+			if ((IsNameValid(openingViews[i].area) && openingViews[i].area != area) ||
+				ChoiceOnlySkips(61, openingViews[i].provider))
+			{
+				continue;
+			}
+			if (best < 0 || OpeningViewBeats(openingViews[i], openingViews[best]))
+			{
+				best = i;
+			}
+			if (answer != "" && openingViews[i].provider == answer &&
+				(picked < 0 || IsNameValid(openingViews[i].area)))
+			{
+				picked = i;
+			}
+		}
+		if (picked >= 0)
+		{
+			result = openingViews[picked];
+			return true;
+		}
+		if (best < 0 || (answer != "" && fallVanilla))
+		{
+			return false;
+		}
+		result = openingViews[best];
+		return true;
+	}
+
+	private function OpeningViewBeats(a : SCMFOpeningView, b : SCMFOpeningView) : bool
+	{
+		if (IsNameValid(a.area) != IsNameValid(b.area))
+		{
+			return IsNameValid(a.area);
+		}
+		return PieceBeats(61, a.provider, b.provider);
+	}
+
+	// Version 9 hook, called when CMF's map reports the region map's view: reason 'still' (the player panned or
+	// zoomed and the map then stayed still), 'region' (the map is switching away from area: its last view) or
+	// 'close' (the map is closing). area is the shown map area (m_shownArea, as the "CMF background area=" line
+	// names it); x and y are the map's place in the units setDefaultPosition takes, worldX and worldY the centre of
+	// the visible area in world metres, zoom the map's scale (the units of SetMapZooms). Only CMF's map reports. A
+	// mod wraps it (@wrapMethod(CMFCore)) and calls wrappedMethod with every argument; it does nothing by itself.
+	public function OnMapView(menu : CR4MapMenu, area : name, x : float, y : float, worldX : float, worldY : float,
+		zoom : float, reason : name)
+	{
+	}
+
+	// Version 9 hook, called each time CMF's map shows a region map (the opening and every region switch), after the
+	// game script sent that region's zoom limits. A mod may send the limits again through the game's own calls and
+	// call CMFSetOpeningView here; the map applies the view after this returns. It does nothing by itself.
+	public function OnMapOpening(menu : CR4MapMenu, area : name, mapContext : name)
+	{
+	}
+
+	// Version 9: logs one view report and runs the OnMapView hook.
+	public function MapView(menu : CR4MapMenu, area : name, x : float, y : float, worldX : float, worldY : float,
+		zoom : float, reason : name)
+	{
+		CMFLog("map view area=" + NameToString(area) + " reason=" + NameToString(reason) + " x=" + FloatToString(x) +
+			" y=" + FloatToString(y) + " zoom=" + FloatToString(zoom));
+		OnMapView(menu, area, x, y, worldX, worldY, zoom, reason);
+	}
+
+	// Version 9: runs the OnMapOpening hook, then writes the winning opening view for the shown area to the map as
+	// "cmf.map.view": s (1 = a view, 0 = none), x, y, z (the zoom, 0 keeps the game's), k (1 = keep the map's
+	// place) and w (1 = x and y are world coordinates).
+	public function MapOpening(menu : CR4MapMenu, area : name, mapContext : name, storage : CScriptedFlashValueStorage)
+	{
+		var view : SCMFOpeningView;
+		var item : CScriptedFlashObject;
+		var found : bool;
+		var shown, keep, inWorld : int;
+		var provider : string;
+		OnMapOpening(menu, area, mapContext);
+		if (dirty)
+		{
+			Prepare();
+		}
+		found = OpeningViewWinner(area, view);
+		shown = 0;
+		keep = 0;
+		inWorld = 0;
+		provider = "none";
+		if (found)
+		{
+			shown = 1;
+			provider = view.provider;
+			if (view.keepPlace)
+			{
+				keep = 1;
+			}
+			if (view.worldPlace)
+			{
+				inWorld = 1;
+			}
+		}
+		if (storage)
+		{
+			item = storage.CreateTempFlashObject();
+			item.SetMemberFlashInt("s", shown);
+			item.SetMemberFlashNumber("x", view.x);
+			item.SetMemberFlashNumber("y", view.y);
+			item.SetMemberFlashNumber("z", view.zoom);
+			item.SetMemberFlashInt("k", keep);
+			item.SetMemberFlashInt("w", inWorld);
+			storage.SetFlashObject("cmf.map.view", item);
+		}
+		CMFLog("map opening area=" + NameToString(area) + " context=" + NameToString(mapContext) + " view=" + provider +
+			" x=" + FloatToString(view.x) + " y=" + FloatToString(view.y) + " zoom=" + FloatToString(view.zoom) +
+			" keep=" + keep + " world=" + inWorld);
+	}
+
 	private function Report(kind : string, claim : SCMFClaim)
 	{
 		CMFLog(kind + " provider=" + claim.provider + " property=" + claim.propertyId + " level=" + claim.level +
@@ -3602,7 +4129,8 @@ public function CMFGetCore() : CMFCore
 function CMFHasProperty(propertyId : int) : bool
 {
 	return (propertyId >= CMFPropertyIcon() && propertyId <= CMFPropertyTabHide()) || propertyId == CMFPropertyLabelColor() ||
-		propertyId == CMFPropertyCategoryNoDefault() || propertyId == CMFPropertySpreadRank() || CMFIsClickProperty(propertyId);
+		propertyId == CMFPropertyCategoryNoDefault() || CMFIsPictureProperty(propertyId) ||
+		propertyId == CMFPropertySpreadRank() || CMFIsClickProperty(propertyId);
 }
 
 // One pin type (a map area for CMFPropertyBackground, a filteredType for the legend row and label, a
@@ -3621,7 +4149,9 @@ function CMFHasProperty(propertyId : int) : bool
 // withdraws); CMFPropertyPinClickHint and CMFPropertyPinClickButton text = the words to show, number nonzero (0
 // withdraws). A click claim on a user pin type reaches the pins the player places. CMFPropertySpreadRank number =
 // the pin's rank in a spread stack (0-1000, highest selected first). CMFPropertyCategoryNoDefault target = a CMF
-// category id and number nonzero: that tab's rows stay out of Default (0 withdraws).
+// category id and number nonzero: that tab's rows stay out of Default (0 withdraws). Version 9: the picture
+// properties (24 to 27) take the target their property names, text = the picture's url ("" withdraws) and number 0,
+// or for CMFPropertyWorldPainting columns * 10 + rows of a tile url.
 // Returns false and logs when the claim is not accepted.
 function CMFRegister(provider : string, propertyId : int, target : name, mapContext : name, text : string,
 	number : int) : bool
@@ -3854,7 +4384,8 @@ function CMFLevelLabel(level : int, difficulty : int) : string
 // Version 3. Hides every pin of one type or filteredType ('' = every pin) in one map context
 // ('' = every context). exemptions: "" or any of "tracked", "quest", "fasttravel", separated by commas or
 // spaces. hide=false withdraws the claim. A hide beats every other claim on the pin; the player marker
-// and user pins are never hidden. Takes effect the next time the map builds its pin list.
+// and user pins are never hidden. Takes effect the next time the map builds its pin list. Version 9: pinType
+// 'Player' hides the player marker in that context (exemptions do not apply to it); user pins stay.
 function CMFRegisterHidden(provider : string, pinType : name, mapContext : name, exemptions : string, hide : bool)
 {
 	var number : int;
@@ -3876,6 +4407,261 @@ function CMFRegisterHiddenForTag(provider : string, pinTag : name, mapContext : 
 		number = 1;
 	}
 	CMFRegisterForTag(provider, CMFPropertyHidden(), pinTag, mapContext, exemptions, number);
+}
+
+// Version 9. The world overview's painting as one picture (an image url, as pin art takes); url "" withdraws.
+function CMFRegisterWorldPainting(provider : string, url : string) : bool
+{
+	return CMFRegister(provider, CMFPropertyWorldPainting(), 'painting', '', url, 0);
+}
+
+// Version 9. The painting as columns x rows tiles (each 1 to 8): url holds {x} and {y}, which the map replaces
+// with each tile's column and row. Anything else is logged and refused.
+function CMFRegisterWorldPaintingTiles(provider : string, url : string, columns : int, rows : int) : bool
+{
+	if (columns < 1 || columns > 8 || rows < 1 || rows > 8)
+	{
+		CMFLog("rejected provider=" + provider + " property=" + CMFPropertyWorldPainting() + " reason=range");
+		return false;
+	}
+	return CMFRegister(provider, CMFPropertyWorldPainting(), 'painting', '', url, columns * 10 + rows);
+}
+
+// Version 9. One region's crest on the world overview, by its overview name ('kaer_morhen', 'skellige',
+// 'novigrad', 'no_mans_land', 'prolog_village', 'wyzima_castle', 'bob', or a region another mod adds).
+function CMFRegisterWorldCrest(provider : string, region : name, url : string) : bool
+{
+	return CMFRegister(provider, CMFPropertyWorldCrest(), region, '', url, 0);
+}
+
+// Version 9. The world overview's player ('player') or quest ('quest') marker.
+function CMFRegisterWorldMarker(provider : string, marker : name, url : string) : bool
+{
+	return CMFRegister(provider, CMFPropertyWorldMarker(), marker, '', url, 0);
+}
+
+// Version 9: the button picture slot for a family and the map's button name, a name literal per pair since the game
+// has no text-to-name call and a name literal holds only letters, digits and _: 'xbox_gamepad_Y', and the map's
+// dashed names with _ ('xbox_enter_gamepad_A'). None for a family or button the map does not have.
+function CMFButtonTarget(family : name, button : string) : name
+{
+	switch (family)
+	{
+		case 'xbox':
+			if (button == "gamepad_X") { return 'xbox_gamepad_X'; }
+			else if (button == "enter-gamepad_A") { return 'xbox_enter_gamepad_A'; }
+			else if (button == "escape-gamepad_B") { return 'xbox_escape_gamepad_B'; }
+			else if (button == "gamepad_Y") { return 'xbox_gamepad_Y'; }
+			else if (button == "gamepad_L1") { return 'xbox_gamepad_L1'; }
+			else if (button == "gamepad_R1") { return 'xbox_gamepad_R1'; }
+			else if (button == "gamepad_L2") { return 'xbox_gamepad_L2'; }
+			else if (button == "gamepad_R2") { return 'xbox_gamepad_R2'; }
+			else if (button == "gamepad_L3") { return 'xbox_gamepad_L3'; }
+			else if (button == "gamepad_R3") { return 'xbox_gamepad_R3'; }
+			else if (button == "gamepad_RTLT") { return 'xbox_gamepad_RTLT'; }
+			else if (button == "gamepad_RBLB") { return 'xbox_gamepad_RBLB'; }
+			else if (button == "dpad_up") { return 'xbox_dpad_up'; }
+			else if (button == "double_dpad_up") { return 'xbox_double_dpad_up'; }
+			else if (button == "dpad_down") { return 'xbox_dpad_down'; }
+			else if (button == "dpad_right") { return 'xbox_dpad_right'; }
+			else if (button == "dpad_left") { return 'xbox_dpad_left'; }
+			else if (button == "gamepad_dpad_lr") { return 'xbox_gamepad_dpad_lr'; }
+			else if (button == "start") { return 'xbox_start'; }
+			else if (button == "back") { return 'xbox_back'; }
+			else if (button == "gamepad_R_Tab") { return 'xbox_gamepad_R_Tab'; }
+			else if (button == "gamepad_R_Scroll") { return 'xbox_gamepad_R_Scroll'; }
+			else if (button == "gamepad_L_Hold") { return 'xbox_gamepad_L_Hold'; }
+			else if (button == "gamepad_R_Hold") { return 'xbox_gamepad_R_Hold'; }
+			else if (button == "gamepad_L_Tab") { return 'xbox_gamepad_L_Tab'; }
+			else if (button == "gamepad_L_Scroll") { return 'xbox_gamepad_L_Scroll'; }
+			else if (button == "gamepad_R_down") { return 'xbox_gamepad_R_down'; }
+			else if (button == "gamepad_dpad_up_down") { return 'xbox_gamepad_dpad_up_down'; }
+			else if (button == "gamepad_dpad_all") { return 'xbox_gamepad_dpad_all'; }
+			break;
+		case 'ps4':
+			if (button == "gamepad_X") { return 'ps4_gamepad_X'; }
+			else if (button == "enter-gamepad_A") { return 'ps4_enter_gamepad_A'; }
+			else if (button == "escape-gamepad_B") { return 'ps4_escape_gamepad_B'; }
+			else if (button == "gamepad_Y") { return 'ps4_gamepad_Y'; }
+			else if (button == "gamepad_L1") { return 'ps4_gamepad_L1'; }
+			else if (button == "gamepad_R1") { return 'ps4_gamepad_R1'; }
+			else if (button == "gamepad_L2") { return 'ps4_gamepad_L2'; }
+			else if (button == "gamepad_R2") { return 'ps4_gamepad_R2'; }
+			else if (button == "gamepad_L3") { return 'ps4_gamepad_L3'; }
+			else if (button == "gamepad_R3") { return 'ps4_gamepad_R3'; }
+			else if (button == "gamepad_RTLT") { return 'ps4_gamepad_RTLT'; }
+			else if (button == "gamepad_RBLB") { return 'ps4_gamepad_RBLB'; }
+			else if (button == "dpad_up") { return 'ps4_dpad_up'; }
+			else if (button == "double_dpad_up") { return 'ps4_double_dpad_up'; }
+			else if (button == "dpad_down") { return 'ps4_dpad_down'; }
+			else if (button == "dpad_right") { return 'ps4_dpad_right'; }
+			else if (button == "dpad_left") { return 'ps4_dpad_left'; }
+			else if (button == "gamepad_dpad_lr") { return 'ps4_gamepad_dpad_lr'; }
+			else if (button == "start") { return 'ps4_start'; }
+			else if (button == "back") { return 'ps4_back'; }
+			else if (button == "gamepad_R_Tab") { return 'ps4_gamepad_R_Tab'; }
+			else if (button == "gamepad_R_Scroll") { return 'ps4_gamepad_R_Scroll'; }
+			else if (button == "gamepad_L_Hold") { return 'ps4_gamepad_L_Hold'; }
+			else if (button == "gamepad_R_Hold") { return 'ps4_gamepad_R_Hold'; }
+			else if (button == "gamepad_L_Tab") { return 'ps4_gamepad_L_Tab'; }
+			else if (button == "gamepad_L_Scroll") { return 'ps4_gamepad_L_Scroll'; }
+			else if (button == "gamepad_R_down") { return 'ps4_gamepad_R_down'; }
+			else if (button == "gamepad_dpad_up_down") { return 'ps4_gamepad_dpad_up_down'; }
+			else if (button == "gamepad_dpad_all") { return 'ps4_gamepad_dpad_all'; }
+			break;
+		case 'ps5':
+			if (button == "gamepad_X") { return 'ps5_gamepad_X'; }
+			else if (button == "enter-gamepad_A") { return 'ps5_enter_gamepad_A'; }
+			else if (button == "escape-gamepad_B") { return 'ps5_escape_gamepad_B'; }
+			else if (button == "gamepad_Y") { return 'ps5_gamepad_Y'; }
+			else if (button == "gamepad_L1") { return 'ps5_gamepad_L1'; }
+			else if (button == "gamepad_R1") { return 'ps5_gamepad_R1'; }
+			else if (button == "gamepad_L2") { return 'ps5_gamepad_L2'; }
+			else if (button == "gamepad_R2") { return 'ps5_gamepad_R2'; }
+			else if (button == "gamepad_L3") { return 'ps5_gamepad_L3'; }
+			else if (button == "gamepad_R3") { return 'ps5_gamepad_R3'; }
+			else if (button == "gamepad_RTLT") { return 'ps5_gamepad_RTLT'; }
+			else if (button == "gamepad_RBLB") { return 'ps5_gamepad_RBLB'; }
+			else if (button == "dpad_up") { return 'ps5_dpad_up'; }
+			else if (button == "double_dpad_up") { return 'ps5_double_dpad_up'; }
+			else if (button == "dpad_down") { return 'ps5_dpad_down'; }
+			else if (button == "dpad_right") { return 'ps5_dpad_right'; }
+			else if (button == "dpad_left") { return 'ps5_dpad_left'; }
+			else if (button == "gamepad_dpad_lr") { return 'ps5_gamepad_dpad_lr'; }
+			else if (button == "start") { return 'ps5_start'; }
+			else if (button == "back") { return 'ps5_back'; }
+			else if (button == "gamepad_R_Tab") { return 'ps5_gamepad_R_Tab'; }
+			else if (button == "gamepad_R_Scroll") { return 'ps5_gamepad_R_Scroll'; }
+			else if (button == "gamepad_L_Hold") { return 'ps5_gamepad_L_Hold'; }
+			else if (button == "gamepad_R_Hold") { return 'ps5_gamepad_R_Hold'; }
+			else if (button == "gamepad_L_Tab") { return 'ps5_gamepad_L_Tab'; }
+			else if (button == "gamepad_L_Scroll") { return 'ps5_gamepad_L_Scroll'; }
+			else if (button == "gamepad_R_down") { return 'ps5_gamepad_R_down'; }
+			else if (button == "gamepad_dpad_up_down") { return 'ps5_gamepad_dpad_up_down'; }
+			else if (button == "gamepad_dpad_all") { return 'ps5_gamepad_dpad_all'; }
+			break;
+		case 'steam':
+			if (button == "gamepad_X") { return 'steam_gamepad_X'; }
+			else if (button == "enter-gamepad_A") { return 'steam_enter_gamepad_A'; }
+			else if (button == "escape-gamepad_B") { return 'steam_escape_gamepad_B'; }
+			else if (button == "gamepad_Y") { return 'steam_gamepad_Y'; }
+			else if (button == "gamepad_L1") { return 'steam_gamepad_L1'; }
+			else if (button == "gamepad_R1") { return 'steam_gamepad_R1'; }
+			else if (button == "gamepad_L2") { return 'steam_gamepad_L2'; }
+			else if (button == "gamepad_R2") { return 'steam_gamepad_R2'; }
+			else if (button == "gamepad_L3") { return 'steam_gamepad_L3'; }
+			else if (button == "gamepad_R3") { return 'steam_gamepad_R3'; }
+			else if (button == "gamepad_RTLT") { return 'steam_gamepad_RTLT'; }
+			else if (button == "gamepad_RBLB") { return 'steam_gamepad_RBLB'; }
+			else if (button == "dpad_up") { return 'steam_dpad_up'; }
+			else if (button == "double_dpad_up") { return 'steam_double_dpad_up'; }
+			else if (button == "dpad_down") { return 'steam_dpad_down'; }
+			else if (button == "dpad_right") { return 'steam_dpad_right'; }
+			else if (button == "dpad_left") { return 'steam_dpad_left'; }
+			else if (button == "gamepad_dpad_lr") { return 'steam_gamepad_dpad_lr'; }
+			else if (button == "start") { return 'steam_start'; }
+			else if (button == "back") { return 'steam_back'; }
+			else if (button == "gamepad_R_Tab") { return 'steam_gamepad_R_Tab'; }
+			else if (button == "gamepad_R_Scroll") { return 'steam_gamepad_R_Scroll'; }
+			else if (button == "gamepad_L_Hold") { return 'steam_gamepad_L_Hold'; }
+			else if (button == "gamepad_R_Hold") { return 'steam_gamepad_R_Hold'; }
+			else if (button == "gamepad_L_Tab") { return 'steam_gamepad_L_Tab'; }
+			else if (button == "gamepad_L_Scroll") { return 'steam_gamepad_L_Scroll'; }
+			else if (button == "gamepad_R_down") { return 'steam_gamepad_R_down'; }
+			break;
+		case 'switch':
+			if (button == "gamepad_X") { return 'switch_gamepad_X'; }
+			else if (button == "enter-gamepad_A") { return 'switch_enter_gamepad_A'; }
+			else if (button == "escape-gamepad_B") { return 'switch_escape_gamepad_B'; }
+			else if (button == "gamepad_Y") { return 'switch_gamepad_Y'; }
+			else if (button == "gamepad_L1") { return 'switch_gamepad_L1'; }
+			else if (button == "gamepad_R1") { return 'switch_gamepad_R1'; }
+			else if (button == "gamepad_L2") { return 'switch_gamepad_L2'; }
+			else if (button == "gamepad_R2") { return 'switch_gamepad_R2'; }
+			else if (button == "gamepad_L3") { return 'switch_gamepad_L3'; }
+			else if (button == "gamepad_R3") { return 'switch_gamepad_R3'; }
+			else if (button == "gamepad_RTLT") { return 'switch_gamepad_RTLT'; }
+			else if (button == "gamepad_RBLB") { return 'switch_gamepad_RBLB'; }
+			else if (button == "dpad_up") { return 'switch_dpad_up'; }
+			else if (button == "double_dpad_up") { return 'switch_double_dpad_up'; }
+			else if (button == "dpad_down") { return 'switch_dpad_down'; }
+			else if (button == "dpad_right") { return 'switch_dpad_right'; }
+			else if (button == "dpad_left") { return 'switch_dpad_left'; }
+			else if (button == "gamepad_dpad_lr") { return 'switch_gamepad_dpad_lr'; }
+			else if (button == "start") { return 'switch_start'; }
+			else if (button == "back") { return 'switch_back'; }
+			else if (button == "gamepad_R_Tab") { return 'switch_gamepad_R_Tab'; }
+			else if (button == "gamepad_R_Scroll") { return 'switch_gamepad_R_Scroll'; }
+			else if (button == "gamepad_L_Hold") { return 'switch_gamepad_L_Hold'; }
+			else if (button == "gamepad_R_Hold") { return 'switch_gamepad_R_Hold'; }
+			else if (button == "gamepad_L_Tab") { return 'switch_gamepad_L_Tab'; }
+			else if (button == "gamepad_L_Scroll") { return 'switch_gamepad_L_Scroll'; }
+			else if (button == "gamepad_R_down") { return 'switch_gamepad_R_down'; }
+			else if (button == "gamepad_dpad_up_down") { return 'switch_gamepad_dpad_up_down'; }
+			else if (button == "gamepad_dpad_all") { return 'switch_gamepad_dpad_all'; }
+			break;
+	}
+	return '';
+}
+
+// Version 9: the panel's family:button text for a button picture slot ('xbox_enter_gamepad_A' -> xbox:enter-gamepad_A).
+function CMFButtonPanelKey(target : string) : string
+{
+	var button : string;
+	button = StrAfterFirst(target, "_");
+	if (button == "enter_gamepad_A")
+	{
+		button = "enter-gamepad_A";
+	}
+	else if (button == "escape_gamepad_B")
+	{
+		button = "escape-gamepad_B";
+	}
+	return StrBeforeFirst(target, "_") + ":" + button;
+}
+
+// Version 9. A controller button's picture in the map's button bar: family 'xbox', 'ps4', 'ps5', 'steam' or
+// 'switch', button the map's name for it as text (for example "gamepad_Y" or "enter-gamepad_A": text, since a name
+// literal cannot hold a dash). A family or button the map does not have is logged and refused.
+function CMFRegisterButtonPicture(provider : string, family : name, button : string, url : string) : bool
+{
+	var target : name;
+	target = CMFButtonTarget(family, button);
+	if (!IsNameValid(target))
+	{
+		CMFLog("button picture unknown family=" + NameToString(family) + " button=" + button + " provider=" + provider);
+		return false;
+	}
+	return CMFRegister(provider, CMFPropertyButtonPicture(), target, '', url, 0);
+}
+
+// Version 9. Makes one choice (a CMFChoiceKeys key, such as "Painting_Crests"; a feature key covers its pieces)
+// choice-only for this provider: its claims, part styles and opening views for that choice apply only while the
+// in-game menu or a file setting picks it there. The menu still lists it. False (logged) for an unknown key.
+function CMFRegisterChoiceOnly(provider : string, choiceKey : string) : bool
+{
+	return theGame.CMFGetCore().RegisterChoiceOnly(provider, choiceKey);
+}
+
+// Version 9. The view CMF's map opens a region map with: area as the "CMF background area=" line names it ('' =
+// every area; a view for the area beats an every-area one), x and y the map's place in the units the game's
+// setDefaultPosition takes, zoom the map's scale (clamped to the zoom limits in force; 0 or less keeps the game's),
+// keepPlace true to keep the map's own place. A later call for the same area replaces the earlier one; keepPlace true
+// with zoom 0 or less withdraws it. Call it in an OnMapOpening wrapper or earlier. The map applies it only when it
+// opened on its usual place and the player has not moved it yet; an opening on a particular spot keeps the game's
+// view. Answers the menu's Opening view row.
+function CMFSetOpeningView(provider : string, area : name, x : float, y : float, zoom : float, keepPlace : bool) : bool
+{
+	return theGame.CMFGetCore().SetOpeningView(provider, area, x, y, zoom, keepPlace);
+}
+
+// Version 9. As CMFSetOpeningView, with the place in world coordinates (the units of a pin's position, for example
+// thePlayer.GetWorldPosition().X and .Y): the region map opens centred there. zoom as for CMFSetOpeningView (0 or
+// less keeps the game's). It replaces this provider's CMFSetOpeningView for the same area and the other way round;
+// CMFSetOpeningView(provider, area, 0, 0, 0, true) withdraws either. Answers the menu's Opening view row.
+function CMFSetOpeningWorld(provider : string, area : name, worldX : float, worldY : float, zoom : float) : bool
+{
+	return theGame.CMFGetCore().SetOpeningWorld(provider, area, worldX, worldY, zoom);
 }
 
 // Version 3. Hides this one pin for this map build. Call it in an AddPinTypeData or UpdateEntityPins
@@ -4635,6 +5421,70 @@ event OnCMFListenReady(keys : string)
 event OnCMFMapSpaceReady()
 {
 	theGame.CMFGetCore().SpaceListenerReady(this);
+}
+
+// Version 9: the map panel reports how a world overview or button picture loaded (one line per slot per opening).
+@addMethod(CR4MapMenu)
+event OnCMFPictureNote(line : string)
+{
+	CMFLog(line);
+}
+
+// Version 9: the map panel reports the region map's view once it has stayed still after the player panned or
+// zoomed.
+@addMethod(CR4MapMenu)
+event OnCMFMapView(x : float, y : float, worldX : float, worldY : float, zoom : float)
+{
+	theGame.CMFGetCore().MapView(this, m_shownArea, x, y, worldX, worldY, zoom, 'still');
+}
+
+// Version 9: the map panel has the region's settings (the opening and every region switch): run OnMapOpening and
+// answer with the opening view.
+@addMethod(CR4MapMenu)
+event OnCMFMapOpening()
+{
+	theGame.CMFGetCore().MapOpening(this, m_shownArea, CMFMapContext(), GetMenuFlashValueStorage());
+}
+
+// Version 9: reports the shown region map's view as the panel keeps it on the menu (cmfViewOk and the cmfView
+// members, set only by CMF's map once a region map is placed).
+@addMethod(CR4MapMenu)
+function CMFReportView(reason : name)
+{
+	var menuFlash : CScriptedFlashSprite;
+	menuFlash = GetMenuFlash();
+	if (!menuFlash || !IsNameValid(m_shownArea) || !menuFlash.GetMemberFlashBool("cmfViewOk"))
+	{
+		return;
+	}
+	theGame.CMFGetCore().MapView(this, m_shownArea, menuFlash.GetMemberFlashNumber("cmfViewX"),
+		menuFlash.GetMemberFlashNumber("cmfViewY"), menuFlash.GetMemberFlashNumber("cmfViewWX"),
+		menuFlash.GetMemberFlashNumber("cmfViewWY"), menuFlash.GetMemberFlashNumber("cmfViewZoom"), reason);
+}
+
+// Version 9: before the map switches to another region, the region being left reports its last view.
+@wrapMethod(CR4MapMenu)
+function SwitchToHubMap(area : name, onStartup : bool)
+{
+	var shown : name;
+	shown = area;
+	if (shown == 'AN_Velen')
+	{
+		shown = 'AN_NMLandNovigrad';
+	}
+	if (IsNameValid(shown) && shown != 'AN_Undefined' && shown != m_shownArea)
+	{
+		CMFReportView('region');
+	}
+	wrappedMethod(area, onStartup);
+}
+
+// Version 9: the map is closing: the shown region reports its last view.
+@wrapMethod(CR4MapMenu)
+function OnClosingMenu()
+{
+	CMFReportView('close');
+	return wrappedMethod();
 }
 
 // Version 6: a button bar label that starts with "cmf:" is shown as the literal text after it (a pin's click

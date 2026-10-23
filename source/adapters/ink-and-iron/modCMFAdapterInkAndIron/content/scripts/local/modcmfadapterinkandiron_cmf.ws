@@ -1,5 +1,5 @@
-// Ink and Iron adapter for Conjunction Map Framework. Requires CMF 5 or later (the map movement needs CMF 6, the
-// tall info box's backing and placement CMF 7) and Ink and Iron 0.8.7 to 0.8.10, which stays unchanged: the
+// Ink and Iron adapter for Conjunction Map Framework. Requires CMF 9 (CMF 1.3.0) to compile, for the world
+// overview pictures and the provider's menu name, and Ink and Iron 0.8.7 to 0.9.0, which stays unchanged: the
 // separate modInkAndIronUI folder or the All In One file's modInkAndIron folder. Install and remove the two
 // together: this file calls Ink and Iron's own functions, so the game stops at the script compile screen when
 // Ink and Iron is missing.
@@ -21,10 +21,16 @@
 //   glows (MapMenu.ink*, iiFrame, HubMapContainer.inkEdge, TooltipMap, InputFeedbackButton.inkSyncCap,
 //   KeyboardButtonIcon, StaticMapPinDescribed.iaiLvTab, HubMap and UniverseMap navigation). The same values
 //   are registered here with CMFStylePart, CMFDraw and CMFDrawSet; the member each value was read from is
-//   named next to it. Nothing of Ink and Iron's code or art is copied.
+//   named next to it. No code of Ink and Iron's is copied.
 // - The movement. Ink and Iron's map moves by the time since the last drawn frame, so held keys and the
 //   sticks glide at any frame rate, and its movie runs at 60 frames a second. These are navigation keys
 //   (InkAdapterLookNavigation); CMF's map acts on them from CMF 6.
+// - The world overview pictures of Ink and Iron's optional World Map file (0.9.0): its engraved painting and
+//   seven region crests, carried in this adapter's texture.cache with WinterElfeas's permission (2026-10-23,
+//   "You can go ahead to carry it in the CMF pack"), cut unchanged from that file by
+//   tools/cmf_ink_and_iron_art.py. A script cannot tell whether that optional file is installed, so they are
+//   choice-only (InkAdapterWorldOverview): they show only when the player picks Ink and Iron on CMF's World
+//   overview and Region crests and markers rows, and everyone else keeps the game's overview, as without CMF.
 // Two of Ink and Iron's glitches are not copied (Kyle, 2026-10-20: "Don't copy a broken function"): its
 // region title is cut at a word ("VELEN - NO") because its field keeps the game's line wrap, so here the
 // title stays on one line (wrap none); and the legend frame always wraps every row it shows.
@@ -135,8 +141,30 @@ function OnGameStarted(restored : bool)
 		InkAdapterLookLevelTag();
 		InkAdapterLookMarkerPanel();
 		InkAdapterLookNavigation();
+		CMFSetProviderName("modInkAndIronUI", "Ink and Iron");
+		InkAdapterWorldOverview();
 	}
 	return result;
+}
+
+// Ink and Iron's optional World Map file (mod0InkAndIron_WorldMap, 0.9.0) ships its own copy of the map file
+// with two pictures swapped: the overview painting (_i313, 2100 x 1380) and the region crests (cut-outs of _i1,
+// Kaer Morhen's wolf medallion 135 x 130, the rest 135 x 116). CMF's map replaces that file, so the pictures
+// come back through CMF 9's world overview calls, choice-only because the file is optional: Painting_World and
+// Painting_Crests apply only while the player picks Ink and Iron there (menu add-on, or CMFFile_Painting_World
+// and CMFFile_Painting_Crests in the settings file).
+function InkAdapterWorldOverview()
+{
+	CMFRegisterChoiceOnly("modInkAndIronUI", "Painting_World");
+	CMFRegisterChoiceOnly("modInkAndIronUI", "Painting_Crests");
+	CMFRegisterWorldPainting("modInkAndIronUI", "img://icons/modcmfadapterinkandiron/world/painting.png");
+	CMFRegisterWorldCrest("modInkAndIronUI", 'kaer_morhen', "img://icons/modcmfadapterinkandiron/world/crest_kaer_morhen.png");
+	CMFRegisterWorldCrest("modInkAndIronUI", 'skellige', "img://icons/modcmfadapterinkandiron/world/crest_skellige.png");
+	CMFRegisterWorldCrest("modInkAndIronUI", 'novigrad', "img://icons/modcmfadapterinkandiron/world/crest_novigrad.png");
+	CMFRegisterWorldCrest("modInkAndIronUI", 'no_mans_land', "img://icons/modcmfadapterinkandiron/world/crest_no_mans_land.png");
+	CMFRegisterWorldCrest("modInkAndIronUI", 'wyzima_castle', "img://icons/modcmfadapterinkandiron/world/crest_wyzima_castle.png");
+	CMFRegisterWorldCrest("modInkAndIronUI", 'bob', "img://icons/modcmfadapterinkandiron/world/crest_bob.png");
+	CMFRegisterWorldCrest("modInkAndIronUI", 'prolog_village', "img://icons/modcmfadapterinkandiron/world/crest_prolog_village.png");
 }
 
 // The map runs from under the menu bar to the bottom of the screen over an ink backdrop, panning stops at

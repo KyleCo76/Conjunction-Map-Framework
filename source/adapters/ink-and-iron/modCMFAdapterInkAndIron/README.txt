@@ -1,22 +1,23 @@
 Ink and Iron adapter for Conjunction Map Framework
-Version 1.1.0 (script only, no art)
+Version 1.2.0 (carries Ink and Iron's world overview and controller button art, with its
+author's permission)
 
 With Conjunction Map Framework installed, CMF's world map replaces Ink and Iron's
 world map; Ink and Iron's HUD, compass and menus load as normal. This adapter brings
 Ink and Iron's map back on CMF's map: its look, its quest-level tags, its key-hint
-row and the way its map moves. Ink and Iron stays exactly as its author ships it.
+row, the way its map moves, its gold controller buttons, and the engraved world
+overview of its optional World Map file. Ink and Iron stays exactly as its author ships it.
 
 REQUIREMENTS
-- Conjunction Map Framework version 5 or later. Ink and Iron's map movement needs
-  version 6, and the darker backing and new place of a long info box need version 7
-  (CMF 1.1.0); on an older version everything else works.
-- Ink and Iron 0.8.7 to 0.8.10: the All In One file (its modInkAndIron folder) or
+- Conjunction Map Framework 1.3.0 (version 9) or later. On an older CMF the game
+  stops at the script compile screen: keep adapter 1.1.0 until you update CMF.
+- Ink and Iron 0.8.7 to 0.9.0: the All In One file (its modInkAndIron folder) or
   the separate modInkAndIronUI folder. The parts this adapter uses are the same in
   each. This adapter calls Ink and Iron's own functions: without Ink and Iron the
   game stops at the script compile screen.
 
 INSTALL AND REMOVE THEM TOGETHER
-- Install this adapter only while Ink and Iron and CMF 5 are installed.
+- Install this adapter only while Ink and Iron and CMF 1.3.0 are installed.
 - Remove this adapter BEFORE removing Ink and Iron or Conjunction Map Framework.
   If either is removed first, the game stops at the script compile screen until this
   adapter is removed too.
@@ -37,9 +38,26 @@ WHAT YOU SEE
   option off, nothing is added.
 - Ink and Iron's key-hint row at the bottom of the map. It only shows the keys; the
   game's menu still handles every key.
+- With a controller: Ink and Iron's gold-outlined button pictures in the map's
+  button row, for every controller type the game supports.
 - Ink and Iron's map movement: holding W A S D (or a stick) glides the map evenly at
   any frame rate, zoom with Z and C keeps the game's pace, and the map's animations
   run at 60 frames a second.
+
+INK AND IRON'S WORLD MAP FILE (OPTIONAL)
+Ink and Iron's optional World Map file repaints the world overview (press Space on
+the map) as an engraving, with engraved region crests. With CMF that file cannot
+load, because CMF's map takes its place, so this adapter carries the same pictures.
+The game cannot tell whether you installed that optional file, so the pictures show
+only when you pick them:
+- With CMF's in-game menu add-on: Options > Mods > Conjunction Map Framework, set
+  "World overview" and "Region crests and markers" to Ink and Iron.
+- Without it: close the game, open Documents\The Witcher 3\dx12user.settings and
+  add these two lines under [CMFSettings]:
+    CMFFile_Painting_World=modInkAndIronUI
+    CMFFile_Painting_Crests=modInkAndIronUI
+If you do not use the World Map file, change nothing: you keep the game's painted
+overview, exactly as Ink and Iron shows it without CMF.
 
 TWO SMALL DIFFERENCES, ON PURPOSE
 - Ink and Iron's own map cuts a long region name short ("VELEN - NO"). Here the
@@ -49,11 +67,12 @@ TWO SMALL DIFFERENCES, ON PURPOSE
 KNOWN LIMITS
 - If another CMF pack styles the same part of the map, the pack whose folder name
   sorts first wins. This adapter counts as Ink and Iron's folder (modInkAndIronUI,
-  for either folder name).
+  for either folder name), and CMF's in-game menu lists it as "Ink and Iron".
   For the map's movement each setting is decided on its own the same way, so with
   another smooth-map mod installed, the settings Ink and Iron does not decide (for
   example how fast the map opens) can come from that mod.
-- The controller crosshair has not been tried: no test so far used a controller.
+- The controller crosshair and the button pictures have not been tried with a real
+  controller.
 - With Ink and Iron 0.8.9 or earlier the info box is framed on the region and interior
   maps too, as Ink and Iron 0.8.10 does.
 
@@ -62,5 +81,8 @@ Extract the archive into your The Witcher 3 game folder, or install it with a mo
 manager. It lands in Mods\modCMFAdapterInkAndIron. No Script Merger is needed.
 
 CREDITS
-Ink and Iron is by its own author; this adapter copies none of its code or art and
-only calls functions and reads values it already offers.
+Ink and Iron is by WinterElfeas. The world overview painting and the seven region
+crests (from Ink and Iron's World Map file 0.9.0) and the gold controller button
+pictures (from its All In One file 0.9.0) in this adapter are WinterElfeas's art,
+carried unchanged with the author's permission. The adapter copies none of
+Ink and Iron's code: it calls functions and reads values Ink and Iron already offers.
