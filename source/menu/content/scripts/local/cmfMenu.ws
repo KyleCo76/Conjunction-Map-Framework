@@ -14,6 +14,7 @@ class CMFMenuState extends CObject
 	private var helpVars : array<name>;
 	private var helpTexts : array<string>;
 	private var boxShown : bool;
+	private var titleScreen : bool;
 
 	// 1.1.0: the help line of a choice row ("Offered by: ..."), made when its page is built.
 	public function RememberHelp(varName : name, text : string)
@@ -53,6 +54,17 @@ class CMFMenuState extends CObject
 	public function BoxShown() : bool
 	{
 		return boxShown;
+	}
+
+	// 1.1.1: whether the pages were last built from the remembered list (the title screen, no save loaded).
+	public function SetTitleScreen(shown : bool)
+	{
+		titleScreen = shown;
+	}
+
+	public function TitleScreen() : bool
+	{
+		return titleScreen;
 	}
 
 	public function Remember(varName : name, answers : string)
@@ -354,6 +366,7 @@ function CMFMenuFillPage(storage : CScriptedFlashValueStorage, groupName : name,
 	var i : int;
 	config = theGame.GetInGameConfigWrapper();
 	remembered = CMFMenuProviders(providers);
+	theGame.CMFMenuGetState().SetTitleScreen(remembered);
 	rows = groupRootObject.GetMemberFlashArray("subElements");
 	for (i = rows.GetLength() - 1; i >= 0; i -= 1)
 	{
@@ -379,7 +392,7 @@ function CMFMenuFillPage(storage : CScriptedFlashValueStorage, groupName : name,
 		}
 		else if (StrBeginsWith(varText, "CMFOrder"))
 		{
-			CMFMenuFillOrder(storage, row, varName, StrAfterFirst(varText, "CMFOrder"), providers);
+			CMFMenuFillOrder(storage, row, varName, StrAfterFirst(varText, "CMFOrder"), providers, remembered);
 		}
 		else if (StrBeginsWith(varText, "CMFStatusMod"))
 		{
@@ -606,7 +619,9 @@ function CMFMenuFillPick(storage : CScriptedFlashValueStorage, row : CScriptedFl
 		stored = config.GetVarValue(groupName, nameVar);
 	}
 	current = CMFMenuPlaceStored(stored, labels, answers, 25, providers);
-	CMFMenuSetChoices(storage, row, labels, current, !offeredAny && stored == "");
+	// 1.1.1: greyed at the title screen, where the list is last time's and a slipped click would store a pick
+	// (reviews/2026-10-23-menu-title-screen-picks.md; Kyle's "Grey out", 2026-10-23 00:41Z).
+	CMFMenuSetChoices(storage, row, labels, current, remembered || (!offeredAny && stored == ""));
 	theGame.CMFMenuGetState().Remember(varName, CMFMenuJoin(answers));
 	theGame.CMFMenuGetState().RememberHelp(varName, CMFMenuHelpText(choice, providers, remembered, seen));
 	if (config.GetVarValue(groupName, varName) != IntToString(current))
@@ -615,9 +630,9 @@ function CMFMenuFillPick(storage : CScriptedFlashValueStorage, row : CScriptedFl
 	}
 }
 
-// A Mod order row: Automatic, then every map mod.
+// A Mod order row: Automatic, then every map mod; greyed at the title screen (1.1.1).
 function CMFMenuFillOrder(storage : CScriptedFlashValueStorage, row : CScriptedFlashObject, varName : name,
-	position : string, providers : array<string>)
+	position : string, providers : array<string>, remembered : bool)
 {
 	var config : CInGameConfigWrapper;
 	var labels, answers : array<string>;
@@ -639,7 +654,7 @@ function CMFMenuFillOrder(storage : CScriptedFlashValueStorage, row : CScriptedF
 		stored = config.GetVarValue('CMFMenuOrder', nameVar);
 	}
 	current = CMFMenuPlaceStored(stored, labels, answers, 25, providers);
-	CMFMenuSetChoices(storage, row, labels, current, false);
+	CMFMenuSetChoices(storage, row, labels, current, remembered);
 	theGame.CMFMenuGetState().Remember(varName, CMFMenuJoin(answers));
 	if (config.GetVarValue('CMFMenuOrder', varName) != IntToString(current))
 	{
@@ -779,7 +794,7 @@ function CMFMenuHelpText(choice : int, providers : array<string>, remembered : b
 	var i, shown : int;
 	if (remembered)
 	{
-		return "Load a save to see which mods offer this";
+		return "Load a save to change this";
 	}
 	core = theGame.CMFGetCore();
 	text = "";
@@ -892,6 +907,13 @@ function CMFMenuValueChanged(varName : name, value : string)
 	}
 	else
 	{
+		return;
+	}
+	// 1.1.1: backstop for a change the game still reports on a greyed title-screen row; the next page build puts
+	// the row back to the stored pick.
+	if (theGame.CMFMenuGetState().TitleScreen())
+	{
+		CMFLog("menu change var=" + varText + " position=" + value + " kept (title screen)");
 		return;
 	}
 	if (nameVar == '' || !theGame.CMFMenuGetState().Answer(varName, StringToInt(value), answer))

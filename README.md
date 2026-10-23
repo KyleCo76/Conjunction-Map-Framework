@@ -83,7 +83,7 @@ CMF comes as separate archives. You always need CMF itself; take the rest only f
 | Archive | What it is | When to install it |
 | --- | --- | --- |
 | `mod0000_ConjunctionMapFramework` | CMF itself (1.2.1) | **Always** |
-| `modCMFInGameMenu` | In-game menu add-on (1.1.0): choose in Options which map mod wins each feature | Optional. See [Good to know](#good-to-know) |
+| `modCMFInGameMenu` | In-game menu add-on (1.1.1): choose in Options which map mod wins each feature | Optional. See [Good to know](#good-to-know) |
 | `modCMFMinimapPanel` | Minimap add-on (2.1.0): your icon packs' icons and colours on the HUD minimap too, on top of whichever minimap you have | Optional. See [Good to know](#good-to-know) for the minimap and HUD mods it was tested with |
 | `modCMFExampleIconPack` | Sample icon pack: a small example for pack authors | Optional |
 | `modCMFAdapter…` (11 archives) | Adapters for 11 map mods that don't support CMF yet | Only for those mods you use, and only until the mod's author updates it for CMF. See [Supported map mods](#supported-map-mods) |
@@ -123,7 +123,7 @@ One exception: the **Coloured Map Markers** adapter also shows its icons without
 
 <br/>
 
-**Tested, no adapter needed:** Map Remastered 2.4.2, All Quest Markers, Wild Monster Hunt, Wolf's Bearing, Apocrypha Menu Framework 1.0.6, HUD Position Manager 1.0.0.
+**Tested, no adapter needed:** Map Remastered 2.4.2, All Quest Markers, Wild Monster Hunt, Wolf's Bearing, Apocrypha Menu Framework 1.0.6, HUD Position Manager 1.0.0, Reveal Map POI, Reveal Map Icons - Remastered (to see their icons, set the map's legend filter to All or Exploration).
 
 **Not supported yet (needs its author's update):** some map mods keep their map features, and often their icon art, inside their own copy of the world map file. CMF never copies another mod's art or files unless its author permits it, so those features stay hidden under CMF until the author updates the mod for CMF or gives permission for an adapter to use them. The mod's scripts and menus keep working meanwhile. UI Remastered Edition is in this group: its HUD and menus work and CMF's map opens, but its own map look (its quest icons, legend counts and journal on the map) does not show under CMF. Its CMF adapter was removed after word from the mod's author. Without it, quest titles in CMF's info box show UI Remastered's raw "#UHL#" level marker again. Smooth Map and Community Patch - World Map are in the same group: everything they change lives in their own map file, so 1.0.0 has no adapter for them.
 
@@ -140,7 +140,7 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 - **Fog of War's clouds** do not draw on CMF's map until Fog of War supports CMF; the hiding works.
 - **Map Remastered's** own region emblems on the world overview do not show; its redrawn terrain does.
 - **Witcher's Path:** its speed setting does nothing under CMF.
-- **World Map Merger** has not been tried with CMF. Its merged map file loads ahead of CMF's, which would switch CMF's map off.
+- **World Map Merger** is not compatible with CMF, by design: it merges map mods into a map file of its own, which loads in place of CMF's map. Use one or the other.
 - **Map Pin Teleport:** the "Go Now" texts are English, as in the mod itself.
 - Per-mod details are in each adapter's `README.txt` and in the release's `test-notes.md`.
 
@@ -148,10 +148,11 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 
 ### Good to know
 
-- **The in-game menu add-on (1.1.0) is optional.** With `modCMFInGameMenu` installed, Options > Mods > Conjunction Map Framework lets you choose which of your map mods wins each feature.
+- **The in-game menu add-on (1.1.1) is optional.** With `modCMFInGameMenu` installed, Options > Mods > Conjunction Map Framework lets you choose which of your map mods wins each feature.
   - **Mod order** ranks your map mods once; **Basic choices** has one row per feature (pin icons, pin colours, legend, map look, map movement and more); **Advanced choices** splits a feature further, such as quest icons from one mod and shop icons from another; **Status** shows which mod wins each piece now, and why.
   - Every row starts on **Automatic**, which keeps CMF's usual winner and names it in brackets. **Vanilla** uses the game's own look; or pick one of your loaded map mods.
   - Highlight a row and the help box at the bottom of the screen names every loaded map mod that offers it, for example "Offered by: Botanist, Map Quest Insight". Some offers are known only after the world map has been opened once in a session, and the box says so until then.
+  - At the title screen, before a save is loaded, the choice rows and Mod order rows show your choices greyed and cannot be changed. Load a save to change them. Reset on the General page still works there.
   - The more specific choice wins: Advanced beats Basic, and Basic beats Mod order. No restart is needed: the minimap add-on follows as soon as Options closes, and the world map the next time you open it.
   - Hidden pins add up: every mod's hides apply, unless you keep only one mod's, none (Vanilla), or leave out up to three mods.
   - Without the add-on every choice is Automatic, and choices it left behind are ignored. The same choices can also go into `dx12user.settings` by hand, with the game closed: `CMFFile_…` lines under a `[CMFSettings]` heading (add the heading if it is missing), listed in CMF's `README.txt`.

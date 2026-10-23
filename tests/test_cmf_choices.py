@@ -552,6 +552,26 @@ class MenuScriptTests(unittest.TestCase):
             if any(row[0] == 'pick' for row in rows):
                 self.assertEqual({row[0] for row in rows}, {'pick'}, group)
 
+    def test_title_screen_rows_are_greyed_and_store_nothing(self):
+        # Kyle 2026-10-23 00:41Z ("Grey out"): at the title screen the rows list last time's mods, so a slipped click
+        # stored stray picks (reviews/2026-10-23-menu-title-screen-picks.md). Choice and Mod order rows are greyed
+        # there, and a change the game still reports is kept out; the General page (Reset) is left alone.
+        text = self.script()
+        page = function_body(text, 'function CMFMenuFillPage(storage : CScriptedFlashValueStorage, groupName : name, groupRootObject : CScriptedFlashObject)')
+        self.assertIn('theGame.CMFMenuGetState().SetTitleScreen(remembered);', page)
+        self.assertIn('providers, remembered);', page.split('CMFMenuFillOrder(')[1].split('\n')[0])
+        self.assertIn('remembered || (!offeredAny && stored == "")', text)
+        order = function_body(text, 'function CMFMenuFillOrder(storage : CScriptedFlashValueStorage, row : CScriptedFlashObject, varName : name,\n\tposition : string, providers : array<string>, remembered : bool)')
+        self.assertIn('CMFMenuSetChoices(storage, row, labels, current, remembered);', order)
+        self.assertIn('return "Load a save to change this";', text)
+        changed = function_body(text, 'function CMFMenuValueChanged(varName : name, value : string)')
+        backstop = changed.index('TitleScreen()')
+        self.assertIn('kept (title screen)', changed)
+        # Reset, fall-through and Report are handled before the backstop, so they still work at the title screen.
+        for still in ('"CMFReset"', '"CMFFallthrough"'):
+            self.assertLess(changed.index(still), backstop)
+        self.assertLess(backstop, changed.index('config.SetVarValue(groupName, nameVar, answer);'))
+
     def test_stored_pick_of_a_loaded_mod_says_offers_none(self):
         body = function_body(self.script(), 'function CMFMenuPlaceStored(stored : string, out labels : array<string>, out answers : array<string>, room : int,\n\tproviders : array<string>) : int')
         self.assertIn('after = " (offers none)";', body)
