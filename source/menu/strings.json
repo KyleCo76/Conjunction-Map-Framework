@@ -27,6 +27,7 @@
     {"id": 2000200123, "key": "cmf_menu_rule_box", "text": {"en": "════════════"}},
     {"id": 2000200124, "key": "cmf_menu_rule_dash", "text": {"en": "————————————"}},
     {"id": 2000200125, "key": "panel_cmf_adv_behaviour", "text": {"en": "Map behaviour"}},
-    {"id": 2000200126, "key": "panel_cmf_win_behaviour", "text": {"en": "Who wins: map behaviour"}}
+    {"id": 2000200126, "key": "panel_cmf_win_behaviour", "text": {"en": "Who wins: map behaviour"}},
+    {"id": 2000200127, "key": "cmf_menu_support_present", "text": {"en": "CMF support present"}}
   ]
 }

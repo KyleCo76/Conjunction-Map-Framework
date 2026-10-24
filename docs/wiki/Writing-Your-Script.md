@@ -26,6 +26,25 @@ function OnGameStarted(restored : bool)
 
 This is the same plug-in pattern Map Quest Insight and Witcher Gear Map use: a new script file with an annotation wrapper, so nothing needs merging. The game runs every mod's `OnGameStarted` wrapper on each new game and each loaded save, and it does not matter whether yours runs before or after CMF's.
 
+### Tell CMF you are here (API version 11)
+
+Call `CMFDeclareProvider("modAcmeIcons")` once from your `OnGameStarted` wrapper to tell CMF that your mod supplies CMF support. `CMFDeclareProvider(provider : string) : bool` returns false for an empty provider. Every other provider-naming submission counts too, even a rejected payload or a withdrawal; pure queries do not. Declare from your mod's own script, or from an adapter whose existing dependency or presence check establishes that its source mod is installed. A separate untied adapter cannot establish that simply by being installed.
+
+`CMFPropertyPresent()` returns property id 38. Authors keeping an older minimum CMF can use the generic form, which compiles on CMF 1 and is skipped there:
+
+```
+if (CMFHasProperty(38))
+{
+	CMFRegister("modAcmeIcons", 38, '', '', "", 1);
+}
+```
+
+The named calls require API 11. `CMFProviderPresent(provider : string) : bool` asks whether a nonempty provider has submitted anything this session, ignoring case; asking never declares it. The first spelling is retained for display, and `CMF present provider=<name>` is logged once. `CMFReleaseProvider` withdraws contributions while session presence remains.
+
+Queries such as `CMFProviderPresent`, `CMFGetVersion` and `CMFHasProperty` never declare a provider. Use a declaration only when your mod itself is present; do not move a declaration into an untied adapter merely to quiet a warning.
+
+Presence adds no feature offers, priority or selectable choices. The updated menu's Loaded map mods page includes declaration-only providers as "CMF support present", using separate title-screen memory. Presence records provider activity: an untied art adapter's presence does not prove that its source mod is installed. The optional CMF Adapter Check can use the declaration to recognize a mod that now supplies its own CMF support. Engine and gameplay validation of these new API 11 calls is pending.
+
 ### The CMF calls
 
 API version 2 adds legend rows, filter tabs and per-pin styling to the API version 1 calls, API version 3 adds hiding pins, and API version 4 adds pin size, labels, the info box and hiding pins in filter tabs; nothing earlier was removed. Two generic calls take a property id, so later CMF versions can add properties without adding functions. A pack that uses only `CMFRegister`, `CMFRegisterForTag` and `CMFHasProperty` compiles against any CMF from 1 on and skips what the installed CMF lacks. A call to a function CMF does not have stops the game at the script compile screen, which `CMFRequireVersion` cannot prevent. The named calls further down are shorthand for the generic ones.
@@ -45,9 +64,11 @@ API version 2 adds legend rows, filter tabs and per-pin styling to the API versi
 | `11` `CMFPropertyLabelPlace()` (API version 4) | none | unused | tenths of a pin unit from the pin centre, `0` to `10000` (`0` = the game's place) |
 | `12` `CMFPropertyLabelText()` (API version 4) | `CMFStylePinLabel` (one pin) | the label, HTML, not empty | unused |
 | `13` `CMFPropertyLabelHide()` (API version 4) | none | `"pin"`, `"crosshair"` or both | nonzero hides, `0` withdraws |
-| `14` `CMFPropertyInfoBoxHeight()` (API version 4; target `''` only, `CMFRegister` only) | none | unused | px, `100` to `1080`; `0` withdraws |
+| `14` `CMFPropertyInfoBoxHeight()` (API version 4; target `''`; from API version 11 also a type, a tag, a place or one pin) | none | unused | px, `100` to `1080`; `0` withdraws |
 | `15` `CMFPropertyTabHide()` (API version 4; target `''` means every pin) | none | filter tab names | nonzero hides, `0` withdraws |
 | `16` `CMFPropertyPinClick()` (API version 6) | none | inputs: any of `use`, `doubleClick`, `button` | nonzero, handed back with each click; `0` withdraws |
+| `18` `CMFPropertyInfoTitle()` (API version 11) | none | the info box title, HTML, not empty | `0` (`CMFInfoReplace()`) replaces the game's title, `1` (`CMFInfoAdd()`) adds a line below it |
+| `19` `CMFPropertyInfoText()` (API version 11) | none | the info box text, HTML, not empty | `0` (`CMFInfoReplace()`) replaces the game's text, `1` (`CMFInfoAdd()`) adds lines below it |
 | `20` `CMFPropertyPinClickHint()` (API version 6) | none | the button bar's words for the click | nonzero; `0` withdraws |
 | `21` `CMFPropertyPinClickButton()` (API version 6) | none | the words on the pin's button | nonzero; `0` withdraws |
 | `22` `CMFPropertySpreadRank()` (API version 6) | none | unused | which pin of a spread stack is selected first, `0` to `1000`, highest first |
@@ -57,8 +78,11 @@ API version 2 adds legend rows, filter tabs and per-pin styling to the API versi
 | `26` `CMFPropertyButtonPicture()` (API version 9; target `'family_button'`, for example `'xbox_gamepad_Y'`, with a dash in the map's name written as `_`: `'xbox_enter_gamepad_A'`) | `CMFRegisterButtonPicture` | image path, `""` withdraws | unused |
 | `27` `CMFPropertyWorldMarker()` (API version 9; target `'player'` or `'quest'`) | `CMFRegisterWorldMarker` | image path, `""` withdraws | unused |
 | `28` `CMFPropertyHoverName()` (API version 10; target `''` means every pin) | none | unused | bits: `1` the label line only on the hovered pin, `2` the name on the hovered pin; `0` as the game shows it |
+| `29` `CMFPropertyIconUndiscovered()` (API version 11; target is the pin's real type, such as `'RoadSign'`) | none | image path or `frame:<label>`, art while the pin is an undiscovered "?" | unused |
+| `30` `CMFPropertyIconCompleted()` (API version 11; target is the pin's real type) | none | image path or `frame:<label>`, art while the pin is completed (greyed) | unused |
+| `37` `CMFPropertyTabHidden()` (API version 11; target is a filter tab name or id, `CMFRegister` only) | none | unused | nonzero hides the whole tab, `0` withdraws |
 
-Section [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md) explains 10 to 15, [Pin clicks](Pin-Clicks.md) explains 16, 20 and 21, [Spreading stacked pins](Spreading-Stacked-Pins.md) explains 22, [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md) explains 23, [World overview pictures](World-Overview-Pictures.md) and [Controller button pictures](Controller-Button-Pictures.md) explain 24 to 27, and [Names only on hover](Names-Only-on-Hover.md) explains 28.
+Section [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md) explains 10 to 15, [Pin clicks](Pin-Clicks.md) explains 16, 20 and 21, [Spreading stacked pins](Spreading-Stacked-Pins.md) explains 22, [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md) explains 23, [World overview pictures](World-Overview-Pictures.md) and [Controller button pictures](Controller-Button-Pictures.md) explain 24 to 27, and [Names only on hover](Names-Only-on-Hover.md) explains 28, and [Changing one pin](Changing-One-Pin.md) explains 14 for one pin, 18, 19, 29, 30 and 37.
 
 ```
 if (CMFHasProperty(3))
@@ -73,12 +97,13 @@ Write a property newer than the CMF version you require as its number, not as it
 | --- | --- |
 | `CMFHasProperty(propertyId : int) : bool` | `true` when the installed CMF understands that property id. Test an id before registering it, above all an id newer than API version 1. |
 | `CMFRegister(provider : string, propertyId : int, target : name, mapContext : name, text : string, number : int) : bool` | One claim for a pin type (a map area for property 4). `mapContext` is `''` except for properties 5 and 9. Returns `false` and logs `rejected ... reason=unknown`, `reason=context`, `reason=empty` or `reason=exemption` when CMF does not accept the claim. |
-| `CMFRegisterForTag(provider : string, propertyId : int, pinTag : name, mapContext : name, text : string, number : int) : bool` | The same for one pin by its tag; accepts properties 1, 5, 9, (API version 4) 10 to 13 and 15, (API version 5) 17, (API version 6) 16, 20, 21 and 22 and (API version 10) 28 (`reason=level` otherwise). The game's own pins carry their tag; from API version 4 a pin another mod pushes is reached when that mod set its id to `NameToFlashUInt(tag)` ([section 6](Choosing-Pin-Types.md)). |
+| `CMFRegisterForTag(provider : string, propertyId : int, pinTag : name, mapContext : name, text : string, number : int) : bool` | The same for one pin by its tag; accepts properties 1, 5, 9, (API version 4) 10 to 13 and 15, (API version 5) 17, (API version 6) 16, 20, 21 and 22, (API version 10) 28 and (API version 11) 3, 14, 18, 19, 29 and 30 (`reason=level` otherwise). The game's own pins carry their tag; from API version 4 a pin another mod pushes is reached when that mod set its id to `NameToFlashUInt(tag)` ([section 6](Choosing-Pin-Types.md)). |
+| `CMFRegisterForPlace(provider : string, propertyId : int, pinType : name, x : float, y : float, text : string, number : int) : bool` | API version 11. The same for the one pin of that type within `CMFPlaceRadius()` (2 metres) of the world position `x`, `y`, for a pin with no tag; takes the properties `CMFRegisterForTag` takes. See [Changing one pin](Changing-One-Pin.md). |
 | `CMFRegisterLegendRow(provider : string, filteredType : name, category : name, priority : int)` | API version 2. Places a legend row in a filter tab; see [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md). |
 | `CMFRegisterLegendLabel(provider : string, filteredType : name, label : string)` | API version 2. Names a legend row. |
 | `CMFRegisterLegendCategory(provider : string, category : name, label : string, priority : int)` | API version 2. Declares a filter tab after the vanilla tabs. |
 | `CMFRegisterCategoryNoDefault(provider : string, category : name, noDefault : bool)` | API version 6. Keeps the rows of your tab out of Default (`true`), or lists them there again (`false`). |
-| `CMFStylePin(provider : string, dataObject : CScriptedFlashObject, propertyId : int, text : string, number : int) : bool` | API version 2. Styles one pin object for this map opening; properties 1, 3 and 9, (API version 4) 10 to 13 and 15, (API version 5) 17, (API version 6) 16, 20 and 21 and (API version 10) 28. See [Styling one pin](Styling-One-Pin.md). |
+| `CMFStylePin(provider : string, dataObject : CScriptedFlashObject, propertyId : int, text : string, number : int) : bool` | API version 2. Styles one pin object for this map opening; properties 1, 3 and 9, (API version 4) 10 to 13 and 15, (API version 5) 17, (API version 6) 16, 20 and 21, (API version 10) 28 and (API version 11) 14, 18, 19, 29 and 30. See [Styling one pin](Styling-One-Pin.md). |
 | `CMFStylePinIcon(provider : string, dataObject : CScriptedFlashObject, url : string) : bool` | API version 2. `CMFStylePin` with property 1. |
 | `CMFStylePinTint(provider : string, dataObject : CScriptedFlashObject, rgb : int) : bool` | API version 2. `CMFStylePin` with property 3. |
 | `CMFRegisterHidden(provider : string, pinType : name, mapContext : name, exemptions : string, hide : bool)` | API version 3. Hides every pin of a type or `filteredType` (`''` for every pin) in one map context (`''` for every context); `hide` `false` withdraws. See [Hiding pins](Hiding-Pins.md). |
@@ -97,7 +122,7 @@ Write a property newer than the CMF version you require as its number, not as it
 | `CMFRegisterBackground(provider : string, area : name, imageRoot : string)` | Replaces the map image of one area, such as `'AN_NMLandNovigrad'` (Velen and Novigrad). The tiles live in your pack's texture cache at `gameplay\gui_new\maps\<imageRoot>\level<L>\tile<X>x<Y>.jpg`, with the same tile size, level range and tile count as the area's vanilla image; CMF logs those values per area (`background area=...`) the first time the map shows it. The map draws level 0 as its background layer, then the area's own levels. |
 | `CMFRequireVersion(provider : string, minVersion : int) : bool` | Returns `false` and logs a line when the installed CMF is older than `minVersion`. Wrap your calls in it as above. |
 | `CMFReleaseProvider(provider : string)` | Withdraws everything your pack registered. Only needed if your pack can be switched off without being uninstalled. |
-| `CMFGetVersion() : int` | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0, `9` in 1.3.0, `10` in 1.4.1). |
+| `CMFGetVersion() : int` | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0, `9` in 1.3.0, `10` in 1.4.1, `11` in 1.5.0). |
 | `CMFSetProviderName(provider : string, displayName : string) : bool` | API version 8. The name CMF's in-game menu shows for your mod, for example `"Acme Icons"`; without it the menu shows your folder name tidied. Returns `false` and logs for an empty provider or name. See [Players' choices](Who-Wins-Each-Feature.md). |
 | `CMFChoicesChanged()` | API version 8. Tells CMF that a player's choice changed, so it prepares its winners again before the next lookup. CMF's menu add-on calls it; a pack never needs to. |
 | `CMFRegisterWorldPainting(provider : string, url : string) : bool` | API version 9. Your picture for the world overview's painting. See [World overview pictures](World-Overview-Pictures.md). |
@@ -108,6 +133,7 @@ Write a property newer than the CMF version you require as its number, not as it
 | `CMFRegisterChoiceOnly(provider : string, choiceKey : string) : bool` | API version 9. Your claims for that feature or piece apply only when the player picks your mod for it. See [Choice-only claims](Choice-Only-Claims.md). |
 | `CMFSetOpeningView(provider : string, area : name, x : float, y : float, zoom : float, keepPlace : bool) : bool` | API version 9. The view a region map opens with, called from an `OnMapOpening` wrapper. See [The map's view](Map-View.md). |
 | `CMFSetOpeningWorld(provider : string, area : name, worldX : float, worldY : float, zoom : float) : bool` | API version 9. As `CMFSetOpeningView`, with the place given in world coordinates (for example Geralt's position): the region map opens centred there. See [The map's view](Map-View.md). |
+| `CMFSetLogPins(on : bool)` | API version 11. Turns the pin list log on or off for this game session, for your own test pack. See [Changing one pin](Changing-One-Pin.md). |
 | `CMFScreenWidth() : float`, `CMFScreenHeight() : float` | API version 10. The screen the map last opened on, in map units: 1920 x 1080 on a 16:9 screen, 2580 x 1080 on a 3440 x 1440 one, 1920 x 1200 on a 16:10 one; `0` before the first opening. See [Wide and tall screens](Wide-Screens.md). |
 
 Behaviour you can rely on:
@@ -120,7 +146,7 @@ Behaviour you can rely on:
 Rules:
 
 - Do not define functions or globals whose names start with `CMF`; that prefix is CMF's. Use your own short prefix.
-- Do not write CMF's pin fields (`cmfIconPath`, `cmfLegendIconPath`, `cmfIconTint`, `cmfIconBy`, `cmfTintBy`, `cmfLegend...`, `cmfCategory...`, `cmfRowHide`, `cmfHiddenBy`, and from API version 4 `cmfIconScale`, `cmfLabelText`, `cmfLabelPlace`, `cmfLabelHide`, `cmfTabHide` and their `...By` fields, and from API version 6 `cmfClick...` and `cmfSpreadRank...`) yourself, and wrap `CR4MapMenu.AddPinTypeData` or `CMFCore.OnPinReady` only to call `CMFStylePin`, its shorthands or `CMFHidePin`. CMF cannot see other changes made there, so it cannot resolve them against other packs.
+- Do not write CMF's pin fields (`cmfIconPath`, `cmfLegendIconPath`, `cmfIconTint`, `cmfIconBy`, `cmfTintBy`, `cmfLegend...`, `cmfCategory...`, `cmfRowHide`, `cmfHiddenBy`, and from API version 4 `cmfIconScale`, `cmfLabelText`, `cmfLabelPlace`, `cmfLabelHide`, `cmfTabHide` and their `...By` fields, from API version 6 `cmfClick...` and `cmfSpreadRank...`, and from API version 11 `cmfDescMaxH`, `cmfDescMaxHBy`, `cmfInfoTitleBy` and `cmfInfoTextBy`) yourself, and wrap `CR4MapMenu.AddPinTypeData` or `CMFCore.OnPinReady` only to call `CMFStylePin`, its shorthands or `CMFHidePin`. CMF cannot see other changes made there, so it cannot resolve them against other packs.
 - Do not name a variable `entry`, `state`, `quest`, `timer` or another WitcherScript keyword; the compile fails.
 - Write arguments as literals, as above, so the pack tool can check them.
 

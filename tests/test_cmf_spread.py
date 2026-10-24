@@ -105,8 +105,9 @@ class CoreTests(unittest.TestCase):
         # Accepted by CMFRegister, CMFRegisterForTag and CMFStylePin like ids 10-17, with no text.
         self.assertIn('propertyId == CMFPropertySpreadRank() || CMFIsClickProperty(propertyId)',
                       body(self.core, 'function CMFHasProperty(propertyId : int) : bool'))
-        self.assertIn('propertyId != CMFPropertySpreadRank()',
-                      body(self.core, 'function CMFRegisterForTag('))
+        # Version 11: CMFRegisterForTag takes every one-pin property (CMFOnePinProperty).
+        self.assertIn('propertyId == CMFPropertySpreadRank()',
+                      body(self.core, 'function CMFOnePinProperty('))
         self.assertIn('propertyId == CMFPropertySpreadRank()', body(self.core, 'function CMFPropertyTextFree('))
         self.assertIn('case 22:\n\t\t\treturn "cmfSpreadRankBy";', body(self.core, 'function CMFOwnerField('))
         self.assertIn('WriteSlot(dataObject, CMFPropertySpreadRank(), pinKey, legendKey, pinTag, maxLevel);', self.core)
@@ -141,7 +142,7 @@ class CoreTests(unittest.TestCase):
             self.assertTrue(value in (0, 1) if expected == 'switch' else expected[0] <= value <= expected[1], key)
 
     def test_version_stays_six(self):
-        self.assertIn('function CMFGetVersion() : int { return 10; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 11; }', self.core)
 
 
 class PanelTests(unittest.TestCase):

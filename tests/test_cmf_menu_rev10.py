@@ -78,7 +78,10 @@ class TableTests(unittest.TestCase):
                    'panel_cmf_win_painting', 'panel_cmf_win_clicks', 'cmf_menu_rule_box', 'cmf_menu_rule_dash',
                    'panel_cmf_adv_behaviour', 'panel_cmf_win_behaviour']
         ids = {s['key']: s['id'] for s in addon.catalog()['strings']}
-        self.assertEqual(ids, {key: addon.ID_BASE + 1 + i for i, key in enumerate(shipped)})
+        self.assertEqual({key: ids[key] for key in shipped},
+                         {key: addon.ID_BASE + 1 + i for i, key in enumerate(shipped)})
+        self.assertEqual(set(ids) - set(shipped), {'cmf_menu_support_present'})
+        self.assertEqual(ids['cmf_menu_support_present'], 2000200127)
         texts = {s['key']: s['text']['en'] for s in addon.catalog()['strings']}
         self.assertEqual(texts['panel_cmf_adv_behaviour'], 'Map behaviour')
         self.assertEqual(texts['panel_cmf_win_behaviour'], 'Who wins: map behaviour')

@@ -1,3 +1,4 @@
+// CMF In-Game Menu 1.5.0 requires CMF API 11: PresentProviders is a direct compile-time dependency.
 // CMF In-Game Menu (modCMFInGameMenu): the optional Options > Mods > Conjunction Map Framework entry for CMF 1.2.0
 // and later (CMFGetVersion 8). 1.2.0 adds the World overview, Region crests and markers, and Opening view rows, which
 // need CMF 1.3.0 (CMFGetVersion 9); on an older CMF the page leaves out every row whose choice key that CMF does not
@@ -85,7 +86,7 @@ class CMFMenuState extends CObject
 		return boxHomeKnown;
 	}
 
-	// 1.1.1: whether the pages were last built from the remembered list (the title screen, no save loaded).
+	// Whether pages were built outside an active game, independently of remembered-list availability.
 	public function SetTitleScreen(shown : bool)
 	{
 		titleScreen = shown;
@@ -415,6 +416,71 @@ function CMFMenuProviders(out providers : array<string>) : bool
 	return true;
 }
 
+// Loaded map mods alone includes presence. Picks and order keep the separate offer-provider list above.
+// An empty live session clears stale status memory; only the title screen reads remembered status.
+function CMFMenuStatusProviders(out providers : array<string>) : bool
+{
+	var core : CMFCore;
+	var config : CInGameConfigWrapper;
+	var present, combined, identities : array<string>;
+	var varName : name;
+	var value, identity : string;
+	var i, count : int;
+	var changed : bool;
+	core = theGame.CMFGetCore();
+	config = theGame.GetInGameConfigWrapper();
+	count = config.GetVarsNumByGroupName('CMFMenuKnownPresent');
+	providers.Clear();
+	if (theGame.IsActive())
+	{
+		core.Providers(providers);
+		core.PresentProviders(present);
+		for (i = 0; i < present.Size(); i += 1)
+		{
+			providers.PushBack(present[i]);
+		}
+		for (i = 0; i < providers.Size(); i += 1)
+		{
+			identity = StrLower(providers[i]);
+			if (!identities.Contains(identity))
+			{
+				identities.PushBack(identity);
+				combined.PushBack(providers[i]);
+			}
+		}
+		providers = combined;
+		changed = false;
+		for (i = 0; i < count; i += 1)
+		{
+			varName = config.GetVarNameByGroupName('CMFMenuKnownPresent', i);
+			value = "";
+			if (i < providers.Size())
+			{
+				value = providers[i];
+			}
+			if (config.GetVarValue('CMFMenuKnownPresent', varName) != value)
+			{
+				config.SetVarValue('CMFMenuKnownPresent', varName, value);
+				changed = true;
+			}
+		}
+		if (changed)
+		{
+			theGame.SaveUserSettings();
+		}
+		return false;
+	}
+	for (i = 0; i < count; i += 1)
+	{
+		value = config.GetVarValue('CMFMenuKnownPresent', config.GetVarNameByGroupName('CMFMenuKnownPresent', i));
+		if (value != "")
+		{
+			providers.PushBack(value);
+		}
+	}
+	return providers.Size() > 0;
+}
+
 // Called by the game for each Options page it builds. CMF's pages get their live rows; every other page is left
 // exactly as built.
 @wrapMethod function IngameMenu_FillSubMenuOptionsList(flashStorageUtility : CScriptedFlashValueStorage, groupID : int,
@@ -445,8 +511,15 @@ function CMFMenuFillPage(storage : CScriptedFlashValueStorage, groupName : name,
 	var varText : string;
 	var i : int;
 	config = theGame.GetInGameConfigWrapper();
-	remembered = CMFMenuProviders(providers);
-	theGame.CMFMenuGetState().SetTitleScreen(remembered);
+	if (groupName == 'CMFMenuStatusMods')
+	{
+		remembered = CMFMenuStatusProviders(providers);
+	}
+	else
+	{
+		remembered = CMFMenuProviders(providers);
+	}
+	theGame.CMFMenuGetState().SetTitleScreen(!theGame.IsActive());
 	rows = groupRootObject.GetMemberFlashArray("subElements");
 	for (i = rows.GetLength() - 1; i >= 0; i -= 1)
 	{
@@ -835,7 +908,7 @@ function CMFMenuFillMod(storage : CScriptedFlashValueStorage, row : CScriptedFla
 		}
 		if (text == "")
 		{
-			text = "Nothing yet (open the map)";
+			text = GetLocStringByKeyExt("cmf_menu_support_present");
 		}
 	}
 	labels.PushBack(text);
@@ -1056,6 +1129,8 @@ function CMFMenuDescription(varName : name) : string
 			return "Changes the pictures on the pins for beds, herbs, stables, caves, enemies and your own map markers.";
 		case 'CMFPick_Icons_Added':
 			return "Changes the pictures on the pins for pins that mods add to the map, which the game itself does not have.";
+		case 'CMFPick_Icons_Undiscovered':
+			return "Changes the pictures on the question-mark pins for places you have not discovered yet.";
 		case 'CMFPick_Colours_General':
 			return "Tints the pins for signposts, harbours, notice boards, your stash and Roach.";
 		case 'CMFPick_Colours_Quests':
@@ -1090,6 +1165,8 @@ function CMFMenuDescription(varName : name) : string
 			return "Restyles the list of pin types beside the map: its fonts, colours and backgrounds.";
 		case 'CMFPick_Look_InfoBox':
 			return "Restyles the box that describes a pin when you point at it: its fonts, colours and backing.";
+		case 'CMFPick_Look_InfoText':
+			return "Changes the title and text in the box that describes a pin when you point at it, or adds lines below them.";
 		case 'CMFPick_Look_Hints':
 			return "Restyles the row of key hints on the map and the key pictures in it.";
 		case 'CMFPick_Look_PinText':

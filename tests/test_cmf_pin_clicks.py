@@ -45,21 +45,21 @@ def replaced(cls):
 class ApiTests(unittest.TestCase):
     def test_version6_calls(self):
         core = CORE.read_text(encoding='ascii')
-        for line in ('function CMFGetVersion() : int { return 10; }',
+        for line in ('function CMFGetVersion() : int { return 11; }',
                      'function CMFPropertyPinClick() : int { return 16; }',
                      'function CMFPropertyPinClickHint() : int { return 20; }',
                      'function CMFPropertyPinClickButton() : int { return 21; }'):
             self.assertIn(line, core)
         self.assertIn('CMFIsClickProperty(propertyId)', body(core, 'function CMFHasProperty('))
-        self.assertIn('!CMFIsClickProperty(propertyId)', body(core, 'function CMFRegisterForTag('))
+        self.assertIn('CMFIsClickProperty(propertyId)', body(core, 'function CMFOnePinProperty('))
         click = body(core, 'function CMFIsClickProperty(')
         for name in ('CMFPropertyPinClick()', 'CMFPropertyPinClickHint()', 'CMFPropertyPinClickButton()'):
             self.assertIn(name, click)
-        # Earlier calls stay; ids 18 and 19 stay free for tooltip slots.
+        # Earlier calls stay; ids 18 and 19 stayed free until version 11 used them for the info box text.
         for name in ('CMFStylePart', 'CMFPropertyLabelColor', 'CMFPropertyTabHide', 'CMFRegisterHidden'):
             self.assertIn('function %s(' % name, core)
-        self.assertNotIn('return 18;', core)
-        self.assertNotIn('return 19;', core)
+        self.assertIn('function CMFPropertyInfoTitle() : int { return 18; }', core)
+        self.assertIn('function CMFPropertyInfoText() : int { return 19; }', core)
 
     def test_inputs_are_checked_like_label_hide_words(self):
         core = CORE.read_text(encoding='ascii')
@@ -111,8 +111,9 @@ class CoreTests(unittest.TestCase):
 
     def test_user_pins_get_clicks_on_every_pass(self):
         fill = body(self.core, '\tpublic function FillMissingPinFields(')
-        user = fill[fill.index('if (dataObject && dataObject.GetMemberFlashBool("isUserPin") && '
-                               '!dataObject.GetMemberFlashBool("isPlayer")'):]
+        # Rev 11 follow-up: the kind flags are read once per pin (isPlayer, isUser).
+        self.assertIn('isUser = dataObject.GetMemberFlashBool("isUserPin");', fill)
+        user = fill[fill.index('if (isUser && !isPlayer && winners.Size() > 0)'):]
         user = user[:user.index('// Every mod has added its pins')]
         # Outside the full-list test, so the one-pin update after placing a pin gets its button too.
         self.assertNotIn('fullList', user)

@@ -81,7 +81,7 @@ class DescriptionTests(unittest.TestCase):
         self.assertEqual(text.count('CMFMenuPlaceBox(m_flashModule, false)'), 2)
 
     def test_version(self):
-        self.assertEqual(addon.VERSION, '1.4.0')
+        self.assertEqual(addon.VERSION, '1.5.0')
 
 
 if __name__ == '__main__':

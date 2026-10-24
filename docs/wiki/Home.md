@@ -56,6 +56,7 @@ CMF, its adapters and its example icon pack are published under the Creative Com
 - [The pin hook: `OnPinReady`](Pin-Hook-OnPinReady.md)
 - [Pin clicks](Pin-Clicks.md)
 - [Names only on hover](Names-Only-on-Hover.md)
+- [Changing one pin](Changing-One-Pin.md)
 - [Spreading stacked pins](Spreading-Stacked-Pins.md)
 
 **The map's look and behaviour**

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>CMF adapter list checker</title>
+<style>
+:root {color-scheme:light dark; --bg:#f6f5f1; --card:#fff; --ink:#242b2b; --muted:#465853; --line:#a0afa9; --link:#165b50;}
+@media (prefers-color-scheme:dark) {:root {--bg:#171c1d; --card:#20292a; --ink:#f0f1e9; --muted:#becbc4; --line:#60746e; --link:#9adbc4;}}
+* {box-sizing:border-box;} body {margin:0; background:var(--bg); color:var(--ink); font:1rem/1.55 system-ui,sans-serif;}
+main {max-width:58rem; margin:auto; padding:clamp(1rem,4vw,3rem);} h1 {line-height:1.15; font-size:clamp(1.8rem,5vw,2.8rem); margin:.5rem 0 1rem;}
+h2 {font-size:1.3rem;} h3 {margin:0 0 .4rem;} p {margin:.5rem 0 1rem;} .eyebrow {color:var(--muted); font-size:.85rem; letter-spacing:.08em;}
+label {display:block; font-weight:650; margin:1.5rem 0 .5rem;} textarea {width:100%; min-width:0; min-height:14rem; padding:.8rem; resize:vertical; border:1px solid var(--line); border-radius:.4rem; color:var(--ink); background:var(--card); font: .95rem/1.5 ui-monospace,monospace;}
+textarea:focus {outline:3px solid var(--link); outline-offset:2px;} article {padding:1rem; border:1px solid var(--line); border-radius:.4rem; margin:1rem 0; background:var(--card); overflow-wrap:anywhere;}
+a {color:var(--link); display:block; width:fit-content; margin:.4rem 0; overflow-wrap:anywhere;} code {overflow-wrap:anywhere;} .limit {color:var(--muted);} footer {border-top:1px solid var(--line); margin-top:2rem; padding-top:1rem;}
+</style>
+</head>
+<body><main>
+<p class="eyebrow">CONJUNCTION MAP FRAMEWORK</p>
+<h1>Check your map mod list</h1>
+<p>Find CMF adapter guidance from names in your Mods folder list, mods.settings, Vortex list or Mod Organizer 2 list. Paste text below; results update as you type.</p>
+<p>In Windows, open a terminal in the game's Mods folder and run <code>cmd /c dir /b /ad</code>. Copy the folder names here. You can also paste quoted paths or your mod manager's display names.</p>
+<p class="limit">Results are names found in pasted text, not proof that mods or adapters are enabled or loading. Disabled lines (including <code>Enabled=0</code> and MO2's minus prefix) still count. This page cannot read installed versions or your game. Unknown names are not assessed.</p>
+<label for="mod-list">Your mod list</label>
+<textarea id="mod-list" spellcheck="false" autocomplete="off" placeholder="modMapQuestInsight&#10;modCMFAdapterMapQuestInsight"></textarea>
+<h2>Names found and guidance</h2>
+<div id="results" aria-live="polite" aria-atomic="true"></div>
+<footer><p class="limit">Offline and private: pasted text stays in this page. It makes no network requests. Nexus links open only when you click them. Guidance reflects the catalogue checked on October 24, 2026; tested versions in the notes are the versions tested by CMF's maintainer.</p></footer>
+</main>
+<script id="cmf-page-script">
+"use strict";
+const entries = [{"name":"Map Quest Insight","nexus":14219,"folders":["modMapQuestInsight"],"providers":["modMapQuestInsight"],"groups":["qmiPins","qmiColors","qmiBox","qmiHide","qmiWide"],"textKeys":["panel_qmiPins"],"adapter":{"folder":"modCMFAdapterMapQuestInsight","file":"CMF Adapter - Map Quest Insight"},"status":"adapter","note":"The adapter restores this mod's map features under CMF.","minAdapter":"1.1.1","guidance":"Map Quest Insight: install or update CMF Adapter - Map Quest Insight (version 1.1.1 or newer). Get it from the CMF page on Nexus Mods (Miscellaneous files)."},{"name":"Gwent Players Map","nexus":13755,"folders":["modGwentPlayersMap"],"providers":["modGwentPlayersMap"],"groups":["GwentPlayersMap"],"textKeys":["gwm_label_gwent_player"],"adapter":{"folder":"modCMFAdapterGwentPlayersMap","file":"CMF Adapter - Gwent Players Map"},"status":"adapter","note":"The adapter restores this mod's map features under CMF.","guidance":"Gwent Players Map: install CMF Adapter - Gwent Players Map to keep its map features. Get it from the CMF page on Nexus Mods (Miscellaneous files)."},{"name":"Witcher Gear Map","nexus":14157,"folders":["modWitcherGearMap"],"providers":["modWitcherGearMap"],"groups":["wgm_Settings"],"textKeys":["wgm_legendary"],"adapter":{"folder":"modCMFAdapterWitcherGearMap","file":"CMF Adapter - Witcher Gear Map"},"status":"adapter","note":"The adapter restores this mod's map features under CMF.","guidance":"Witcher Gear Map: install CMF Adapter - Witcher Gear Map to keep its map features. Get it from the CMF page on Nexus Mods (Miscellaneous files)."},{"name":"Fog of War","nexus":13627,"folders":["modFogOfWar"],"providers":["modFogOfWar"],"groups":["FogOfWar"],"textKeys":["option_fow_enabled"],"adapter":{"folder":"modCMFAdapterFogOfWar","file":"CMF Adapter - Fog of War"},"status":"adapter","note":"The adapter restores this mod's map features under CMF.","minAdapter":"1.0.1","guidance":"Fog of War: install or update CMF Adapter - Fog of War (version 1.0.1 or newer). Get it from the CMF page on Nexus Mods (Miscellaneous files)."},{"name":"Witcher's Path","nexus":13423,"folders":["modWitchersPath"],"providers":["modWitchersPath"],"groups":["WitchersPath"],"textKeys":["option_wp_enabled"],"adapter":{"folder":"modCMFAdapterWitchersPath","file":"CMF Adapter - Witcher's Path"},"status":"adapter","note":"The adapter restores this mod's map features under CMF.","guidance":"Witcher's Path: install CMF Adapter - Witcher's Path to keep its map features. Get it from the CMF page on Nexus Mods (Miscellaneous files)."},{"name":"Botanist","nexus":8260,"folders":["modBotanist"],"providers":["modBotanist"],"groups":["Botanist_GeneralSettings"],"textKeys":["BT_HerbMapPinInfo"],"adapter":{"folder":"modCMFAdapterBotanist","file":"CMF Adapter - Botanist"},"status":"adapter","note":"The adapter restores this mod's map features under CMF.","guidance":"Botanist: install CMF Adapter - Botanist to keep its map features. Get it from the CMF page on Nexus Mods (Miscellaneous files)."},{"name":"Ink and Iron","nexus":13111,"folders":["modInkAndIron","modInkAndIronUI"],"providers":["modInkAndIronUI"],"groups":["InkAndIronOptions"],"textKeys":["panel_InkAndIron"],"adapter":{"folder":"modCMFAdapterInkAndIron","file":"CMF Adapter - Ink and Iron"},"status":"adapter","note":"The adapter restores this mod's map features under CMF.","guidance":"Ink and Iron: install CMF Adapter - Ink and Iron to keep its map features. Get it from the CMF page on Nexus Mods (Miscellaneous files)."},{"name":"The Stable","nexus":6132,"folders":["modArdDhuStable"],"providers":["modArdDhuStable"],"groups":[],"textKeys":["map_location_arddhustable"],"adapter":{"folder":"modCMFAdapterTheStable","file":"CMF Adapter - The Stable"},"status":"adapter","note":"The adapter restores this mod's map features under CMF.","guidance":"The Stable: install CMF Adapter - The Stable to keep its map features. Get it from the CMF page on Nexus Mods (Miscellaneous files)."},{"name":"All Quest Objectives","nexus":14319,"folders":["modAQOOMRemastered"],"providers":["modAQOOMRemastered"],"groups":[],"textKeys":[],"adapter":{"folder":"modCMFAdapterAllQuestObjectives","file":"CMF Adapter - All Quest Objectives"},"status":"adapter","note":"Needs its CMF adapter; this mod has no reliable in-game detector, so use this paste page.","guidance":"All Quest Objectives: install CMF Adapter - All Quest Objectives to keep its map features. Get it from the CMF page on Nexus Mods (Miscellaneous files)."},{"name":"Map Pin Teleport","nexus":13541,"folders":["modMapPinTeleport"],"providers":["modMapPinTeleport"],"groups":[],"textKeys":[],"adapter":{"folder":"modCMFAdapterMapPinTeleport","file":"CMF Adapter - Map Pin Teleport"},"status":"adapter","note":"Needs its CMF adapter; this mod has no reliable in-game detector, so use this paste page.","guidance":"Map Pin Teleport: install CMF Adapter - Map Pin Teleport to keep its map features. Get it from the CMF page on Nexus Mods (Miscellaneous files)."},{"name":"Annoying Map","nexus":6140,"folders":["modAnnoyingMap"],"providers":["modAnnoyingMap"],"groups":[],"textKeys":[],"adapter":{"folder":"modCMFAdapterAnnoyingMap","file":"CMF Adapter - Annoying Map"},"status":"adapter","note":"Needs its CMF adapter; this mod has no reliable in-game detector, so use this paste page.","guidance":"Annoying Map: install CMF Adapter - Annoying Map to keep its map features. Get it from the CMF page on Nexus Mods (Miscellaneous files)."},{"name":"Coloured Map Markers","nexus":938,"folders":["modcoloured_map_marker"],"providers":["modcoloured_map_marker"],"groups":[],"textKeys":[],"adapter":{"folder":"modCMFAdapterColouredMapMarkers","file":"CMF Adapter - Coloured Map Markers"},"status":"adapter","note":"Needs its CMF adapter; this mod has no reliable in-game detector, so use this paste page.","guidance":"Coloured Map Markers: install CMF Adapter - Coloured Map Markers to keep its map features. Get it from the CMF page on Nexus Mods (Miscellaneous files)."},{"name":"Smooth Map","nexus":13530,"folders":["modSmoothMap"],"providers":["modSmoothMap"],"groups":[],"textKeys":[],"adapter":null,"status":"author","note":"Smooth Map 1.1 needs its CMF-ready update from its author; with it, Smooth Map's timing works under CMF.","guidance":"Smooth Map: Smooth Map 1.1 needs its CMF-ready update from its author; with it, Smooth Map's timing works under CMF."},{"name":"Community Patch - World Map","nexus":8259,"folders":["mod000CommunityPatch_WorldMap"],"providers":["mod000CommunityPatch_WorldMap"],"groups":[],"textKeys":[],"adapter":null,"status":"author","note":"Needs an author-provided CMF-ready update. The source example is not a distributed adapter.","guidance":"Community Patch - World Map: Needs an author-provided CMF-ready update. The source example is not a distributed adapter."},{"name":"Map Icons Remastered","nexus":14490,"folders":["mod000MapIconsRemastered"],"providers":[],"groups":[],"textKeys":[],"adapter":null,"status":"author","note":"Needs its author's CMF-ready update to restore its map icons.","guidance":"Map Icons Remastered: Needs its author's CMF-ready update to restore its map icons."},{"name":"Map Remastered","nexus":13347,"folders":["modmapredraw"],"providers":[],"groups":[],"textKeys":[],"adapter":null,"status":"works","note":"Tested with CMF at version 2.4.2; works without an adapter.","guidance":"Map Remastered: Tested with CMF at version 2.4.2; works without an adapter."},{"name":"All Quest Markers","nexus":13087,"folders":["modAllQuestMarkersOnMapRemaster"],"providers":[],"groups":[],"textKeys":[],"adapter":null,"status":"works","note":"Tested with CMF at version 1.7.1; works without an adapter.","guidance":"All Quest Markers: Tested with CMF at version 1.7.1; works without an adapter."},{"name":"Quest Levels on Map","nexus":13691,"folders":["modMapQuestLevels"],"providers":[],"groups":[],"textKeys":[],"adapter":null,"status":"works","note":"Tested with CMF at version 1; works without an adapter.","guidance":"Quest Levels on Map: Tested with CMF at version 1; works without an adapter."},{"name":"Useful Place of Power Map Pin","nexus":11300,"folders":["modUsefulPOPMapPin"],"providers":[],"groups":[],"textKeys":[],"adapter":null,"status":"works","note":"Tested with CMF at version 1.2; works without an adapter.","guidance":"Useful Place of Power Map Pin: Tested with CMF at version 1.2; works without an adapter."},{"name":"True Map POIs","nexus":13213,"folders":["modtruemappois"],"providers":[],"groups":[],"textKeys":[],"adapter":null,"status":"works","note":"Tested with CMF at version 1.0.3; works without an adapter.","guidance":"True Map POIs: Tested with CMF at version 1.0.3; works without an adapter."},{"name":"RevealMapPOI","nexus":13140,"folders":["modRevealMapPOI"],"providers":[],"groups":[],"textKeys":[],"adapter":null,"status":"works","note":"Tested with CMF at version 1.0.4; works without an adapter. Select the All or Exploration filter.","guidance":"RevealMapPOI: Tested with CMF at version 1.0.4; works without an adapter. Select the All or Exploration filter."},{"name":"Reveal Map Icons - Remastered","nexus":13516,"folders":["modRevealMapIcons"],"providers":[],"groups":[],"textKeys":[],"adapter":null,"status":"works","note":"Tested with CMF at version 1.0.1; works without an adapter. Select the All or Exploration filter.","guidance":"Reveal Map Icons - Remastered: Tested with CMF at version 1.0.1; works without an adapter. Select the All or Exploration filter."},{"name":"Wolf's Bearing","nexus":14546,"folders":["modWolfsBearing"],"providers":[],"groups":[],"textKeys":[],"adapter":null,"status":"works","note":"Tested with CMF at version 1.0; works without an adapter. Version 1.1 is code checked only.","guidance":"Wolf's Bearing: Tested with CMF at version 1.0; works without an adapter. Version 1.1 is code checked only."},{"name":"Wild Monster Hunt","nexus":9426,"folders":["modwild_monster_hunt"],"providers":[],"groups":[],"textKeys":[],"adapter":null,"status":"works","note":"Tested with CMF at version 2.1; works without an adapter.","guidance":"Wild Monster Hunt: Tested with CMF at version 2.1; works without an adapter."},{"name":"Apocrypha Menu Framework","nexus":13656,"folders":["modApocryphaMenuFramework"],"providers":[],"groups":[],"textKeys":[],"adapter":null,"status":"works","note":"Tested with CMF at version 1.0.6; works without an adapter.","guidance":"Apocrypha Menu Framework: Tested with CMF at version 1.0.6; works without an adapter."},{"name":"HUD Position Manager","nexus":14337,"folders":["modHUDPositionManager"],"providers":[],"groups":[],"textKeys":[],"adapter":null,"status":"works","note":"Tested with CMF at version 1.0.0; works without an adapter.","guidance":"HUD Position Manager: Tested with CMF at version 1.0.0; works without an adapter."},{"name":"World Map Merger","nexus":null,"folders":[],"providers":[],"groups":[],"textKeys":[],"adapter":null,"status":"incompatible","note":"Combines replacement map files, so it cannot work with CMF by design.","guidance":"World Map Merger: Combines replacement map files, so it cannot work with CMF by design."}];
+function tokenPattern(token) {
+    return new RegExp("(?<![A-Za-z0-9_])" + token.replace(/[.*+?^{}()|[\]\\$]/g, "\\$&") + "(?![A-Za-z0-9_])", "gi");
+}
+function spans(text, token) {
+    return Array.from(text.matchAll(tokenPattern(token)), match => ({start: match.index, end: match.index + match[0].length}));
+}
+function adapterSpans(text, rows) {
+    return rows.flatMap(row => row.adapter ? [row.adapter.folder, row.adapter.file].flatMap(alias => spans(text, alias)) : []);
+}
+function matchMods(text, rows) {
+    // Mask adapter tokens first: their download names contain source mod names.
+    const original = String(text);
+    const masked = original.split("");
+    for (const span of adapterSpans(original, rows)) {
+        for (let i = span.start; i < span.end; i++) masked[i] = " ";
+    }
+    const source = masked.join("");
+    const candidates = [];
+    rows.forEach((entry, index) => {
+        for (const alias of [entry.name, ...entry.folders]) {
+            for (const span of spans(source, alias)) candidates.push({...span, index});
+        }
+    });
+    // Longest alias owns overlapping text; separate occurrences still match.
+    candidates.sort((a, b) => (b.end - b.start) - (a.end - a.start) || a.start - b.start || a.index - b.index);
+    const accepted = [], found = new Set();
+    for (const candidate of candidates) {
+        if (accepted.some(other => candidate.start < other.end && candidate.end > other.start)) continue;
+        accepted.push(candidate);
+        found.add(candidate.index);
+    }
+    return rows.flatMap((entry, index) => found.has(index) ? [{entry, adapterFound: !!entry.adapter &&
+        [entry.adapter.folder, entry.adapter.file].some(alias => spans(original, alias).length > 0)}] : []);
+}
+function renderResults(text, rows, container, doc) {
+    container.replaceChildren();
+    const matches = matchMods(text, rows);
+    const count = doc.createElement("p");
+    count.textContent = matches.length ? matches.length + " known mod names found in pasted text." : "No known mod names found in pasted text.";
+    container.appendChild(count);
+    for (const {entry, adapterFound} of matches) {
+        const card = doc.createElement("article");
+        const heading = doc.createElement("h3");
+        heading.textContent = entry.name;
+        card.appendChild(heading);
+        const result = doc.createElement("p");
+        if (entry.status === "adapter") {
+            result.textContent = adapterFound ? "Adapter name also found. This cannot confirm that it is enabled, loads, or meets the recommended version." : entry.guidance;
+        } else {
+            const labels = {works: "Works without an adapter. ", author: "Needs its author's CMF-ready update. ", incompatible: "Incompatible by design. "};
+            result.textContent = labels[entry.status] + entry.note;
+        }
+        card.appendChild(result);
+        if (entry.status === "adapter") {
+            const note = doc.createElement("p");
+            note.textContent = entry.note;
+            card.appendChild(note);
+            if (adapterFound && entry.minAdapter) {
+                const minimum = doc.createElement("p");
+                minimum.textContent = "Recommended minimum adapter download: " + entry.minAdapter + ". Check your installed version yourself.";
+                card.appendChild(minimum);
+            }
+            const files = doc.createElement("a");
+            files.textContent = "CMF adapter files on Nexus Mods";
+            files.href = "https://www.nexusmods.com/witcher3/mods/14693?tab=files";
+            files.rel = "noreferrer";
+            card.appendChild(files);
+        }
+        if (entry.nexus !== null) {
+            const link = doc.createElement("a");
+            link.textContent = "Original mod on Nexus Mods";
+            link.href = "https://www.nexusmods.com/witcher3/mods/" + entry.nexus;
+            link.rel = "noreferrer";
+            card.appendChild(link);
+        }
+        container.appendChild(card);
+    }
+}
+if (typeof module !== "undefined") module.exports = {matchMods, entries, renderResults};
+if (typeof document !== "undefined") {
+    const input = document.getElementById("mod-list");
+    const results = document.getElementById("results");
+    input.addEventListener("input", () => renderResults(input.value, entries, results, document));
+    renderResults("", entries, results, document);
+}
+</script>
+</body></html>

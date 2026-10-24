@@ -378,6 +378,11 @@ function InkAdapterFrameLegend()
 // interior maps only: a second dark fill under the frame (0x0B0A08 at 0.5455, about 90 percent dark with the
 // frame's own fill), and the box moved clear of the cursor and the panels (MapMenu.inkTipPlace: right of the
 // cursor first, inside 24 to 1896 by 104 to 1000 with the padding, so 44 to 1876 by 124 to 980 for the box).
+// CMF 11 or later also keeps inkTipPlace's larger area round the cursor clear (Ink and Iron 0.8.10 to 0.9.0, read
+// 2026-10-24): 70 px each way, a strip from 20 px above to 90 px below the cursor as wide as the box's title, 12 by
+// 20 px more on each side and a 6 px gap to the box's frame (28 px round the box), trying the right, left and
+// unchanged place against the unchanged, top, bottom and each panel's edges, the one covering least, the cursor
+// area counting 12 times a panel.
 function InkAdapterFrameTip()
 {
 	InkAdapterFrameShadow('tooltip', 'inkTipShadow', "", 0);
@@ -420,6 +425,43 @@ function InkAdapterFrameTip()
 		CMFStylePart("modInkAndIronUI", 'tooltip', 'clearTop', "", 124);
 		CMFStylePart("modInkAndIronUI", 'tooltip', 'clearRight', "", 1876);
 		CMFStylePart("modInkAndIronUI", 'tooltip', 'clearBottom', "", 980);
+		CMFStylePart("modInkAndIronUI", 'tooltip', 'clearCursor', "", 70);
+		if (CMFHasAbility('tooltip', 'clearCursorTitle'))
+		{
+			CMFStylePart("modInkAndIronUI", 'tooltip', 'clearCursorTitle', "", 1);
+		}
+		if (CMFHasAbility('tooltip', 'clearCursorAbove'))
+		{
+			CMFStylePart("modInkAndIronUI", 'tooltip', 'clearCursorAbove', "", 20);
+		}
+		if (CMFHasAbility('tooltip', 'clearCursorBelow'))
+		{
+			CMFStylePart("modInkAndIronUI", 'tooltip', 'clearCursorBelow', "", 90);
+		}
+		if (CMFHasAbility('tooltip', 'clearPadX'))
+		{
+			CMFStylePart("modInkAndIronUI", 'tooltip', 'clearPadX', "", 12);
+		}
+		if (CMFHasAbility('tooltip', 'clearPadY'))
+		{
+			CMFStylePart("modInkAndIronUI", 'tooltip', 'clearPadY', "", 20);
+		}
+		if (CMFHasAbility('tooltip', 'clearGap'))
+		{
+			CMFStylePart("modInkAndIronUI", 'tooltip', 'clearGap', "", 6);
+		}
+		if (CMFHasAbility('tooltip', 'clearBoxPad'))
+		{
+			CMFStylePart("modInkAndIronUI", 'tooltip', 'clearBoxPad', "", 28);
+		}
+		if (CMFHasAbility('tooltip', 'clearPick'))
+		{
+			CMFStylePart("modInkAndIronUI", 'tooltip', 'clearPick', "", 1);
+		}
+		if (CMFHasAbility('tooltip', 'clearCursorWeight'))
+		{
+			CMFStylePart("modInkAndIronUI", 'tooltip', 'clearCursorWeight', "", 12);
+		}
 	}
 }
 

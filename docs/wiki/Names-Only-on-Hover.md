@@ -25,4 +25,4 @@ if (CMFRequireVersion("modAcmeQuietMap", 10))
 
 ---
 
-[Previous: Pin clicks](Pin-Clicks.md) · [Contents](Home.md) · [Next: Spreading stacked pins](Spreading-Stacked-Pins.md)
+[Previous: Pin clicks](Pin-Clicks.md) · [Contents](Home.md) · [Next: Changing one pin](Changing-One-Pin.md)

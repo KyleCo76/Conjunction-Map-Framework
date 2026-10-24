@@ -308,7 +308,14 @@ class SourceTests(unittest.TestCase):
             self.assertIn(call, late)
         self.assertLess(late.index('LateTag(dataObject)'), late.index('OnPinReady(dataObject, mapContext)'))
         tag = core[core.index('private function LateTag'):core.index('public function OnPinReady')]
-        self.assertEqual(tag.count('NameToFlashUInt('), 3)
+        # Version 11 (opening speed): the tag claims' game ids are worked out once per preparation, from the winners,
+        # hides, tab hides and added info lines, in that order.
+        self.assertIn('tagIds[i] == id', tag)
+        lookups = core[core.index('private function NoteLookups'):core.index('private function PropertyWon')]
+        order = [lookups.index(f'{name}.Size()') for name in ('winners', 'hideClaims', 'tabHideClaims', 'infoAdds')]
+        self.assertEqual(order, sorted(order))
+        note = core[core.index('private function NoteLookupClaim'):core.index('// Version 11: keeps the info box add')]
+        self.assertIn('tagIds.PushBack(NameToFlashUInt(claim.pinTag));', note)
         self.assertIn('id = dataObject.GetMemberFlashUInt("id");', tag)
 
     def test_panel_names_no_other_mod_except_marked_compatibility_fields(self):

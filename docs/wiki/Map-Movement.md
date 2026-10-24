@@ -4,13 +4,13 @@
 
 *Needs CMF API version 6 or later.*
 
-Ran in game on 2026-10-20 through the Smooth Map and Map Quest Insight adapters (frame rate, pan and zoom timing, the opening slide, `zoomOutFit`). API version 6 makes the map's movement and opening themeable through the same `CMFStylePart` call: the `navigation` part gains keys and a new `opening` part arrives. They are behaviours, not looks, so each key is won on its own by the earliest folder that sets it, like `map` keys. A key nobody sets keeps the game's behaviour, except four that CMF sets itself: since 1.0.0 CMF's map runs at `frameRate` `60` with `frameTimed`, `zoomTimed` and `tweenEveryFrame` `1`, so it pans, zooms and fades at the game's speed but smoother. Any folder's own value for one of these keys wins over CMF's; send `frameRate` `24` and the other three as `0` to keep the game's movement exactly. The log names each key CMF set itself (`theme default part=navigation key=frameRate value=60`). The map reads the keys once per opening.
+Ran in game on 2026-10-20 through the Smooth Map and Map Quest Insight adapters (frame rate, pan and zoom timing, the opening slide, `zoomOutFit`). API version 6 makes the map's movement and opening themeable through the same `CMFStylePart` call: the `navigation` part gains keys and a new `opening` part arrives. They are behaviours, not looks, so each key is won on its own by the earliest folder that sets it, like `map` keys. A key nobody sets keeps the game's behaviour, except four that CMF sets itself: since 1.0.0 CMF's map runs at `frameRate` `60` with `frameTimed`, `zoomTimed` and `tweenEveryFrame` `1`, so it pans, zooms and fades at the game's speed but smoother. Before CMF 1.5.0 the pan distance was right but the map still moved in about 59 steps a second on the region map and 42 on the world view (see `frameTimed` below). Any folder's own value for one of these keys wins over CMF's; send `frameRate` `24` and the other three as `0` to keep the game's movement exactly. The log names each key CMF set itself (`theme default part=navigation key=frameRate value=60`). The map reads the keys once per opening.
 
 `navigation` (how the map moves). API version 5 already accepts `frameTimed`, `stepMs`, `worldStepMs`, `maxStepMs` and the controller crosshair keys; CMF's map now acts on the first four.
 
 | Key | Game | Range | What it does |
 | --- | --- | --- | --- |
-| `frameTimed` | `0` | `0`/`1` | `1` moves held-key and stick panning, key and stick zoom and the world view by the time since the last frame instead of a fixed step per timer tick; the step timers then run every frame. |
+| `frameTimed` | `0` | `0`/`1` | `1` moves held-key and stick panning, key and stick zoom and the world view by the time since the last frame instead of a fixed step per timer tick; from CMF 1.5.0 the step timers then run every frame. Earlier versions kept the 17 and 24 ms beat and scaled only the step. |
 | `stepMs` | `17` | `1` to `1000` | the region map's step: the game's speed is 15 px per `stepMs`. |
 | `worldStepMs` | `24` | `1` to `1000` | the same for the world view (10 px per step). |
 | `maxStepMs` | `100` | `1` to `1000` | the longest gap one frame counts, so a hitch does not throw the map. |
@@ -39,7 +39,7 @@ Ran in game on 2026-10-20 through the Smooth Map and Map Quest Insight adapters 
 - **`"unset"` withdraws one key** (API version 6, any part and key): `CMFStylePart(provider, part, key, "unset", 0)` removes your own value, so the next folder's value or the game's applies from the next opening. Use it for an on/off option.
 - **Frame rate** ran in game on 2026-10-21: the log showed `frameRate asked=60 now=60`. If the game could not change the rate, CMF would answer `false` and the map would stay at 24; `tweenEveryFrame` `1` still makes tweens smooth.
 - **Controller keys** (`padHoldMs`, the crosshair keys) are checked by value only; no launch has used a controller.
-- **Log.** Each opening writes `opening ms=N` (from the map's start to its first full pin build) and, with any key set, a line such as `nav frameTimed=1 step=17 world=24 max=100 zoomTimed=0 pad=0 tweens=frame frameRate asked=60 now=60 opening=slide:0.2/0 pins:120@1 ready=420ms`. Each held-key pan writes `nav pan ms=3010 ticks=431 px=2660`; with `zoomOutFit` the map writes `nav zoomOutFit min=0.66 game=1.6`.
+- **Log.** Each opening writes `opening ms=N` (from the map's start to its first full pin build) and, with any key set, a line such as `nav frameTimed=1 step=17 world=24 max=100 zoomTimed=0 pad=0 tweens=frame frameRate asked=60 now=60 opening=slide:0.2/0 pins:120@1 ready=420ms`. Each held-key pan writes a line such as `nav pan ms=<held time> ticks=<steps> px=<distance>`; with `zoomOutFit` the map writes `nav zoomOutFit min=0.66 game=1.6`.
 
 An on/off option, checked key by key so the pack still loads on an older CMF:
 

@@ -24,7 +24,7 @@ When two mods claim the same thing, a level decides between them only when it na
 
 - the `spread` part and property `22` (spreading and which pin leads) answer Map behaviour, not Pin size;
 - properties `11` and `13` and the `pinLabel` keys `rise`, `riseOffset`, `riseTracked`, `riseOffsetTracked` answer Label place and hiding, and the label's font stays with its look;
-- the tooltip's `clear` keys answer Info box moves out of the way, and property `14` answers Info box height and scrolling; the box's fonts, colours and plates stay on the Map look's Info box row;
+- the tooltip's `clear` keys, and from API version 11 its `x` and `y`, answer Info box moves out of the way, and property `14` answers Info box height and scrolling; the box's fonts, colours and plates stay on the Map look's Info box row;
 - the `navigation` keys `zoomOutFit` and `edgeOvershoot` answer Zoom out to the whole region, and the controller crosshair keys (`crosshairRoam`, the `safe` keys, `snapSeconds`, `centerSeconds`, `padHoldMs`) answer Controller crosshair;
 - the `map` part's `backdrop` colour is paint, so it answers the Map look's frames row.
 

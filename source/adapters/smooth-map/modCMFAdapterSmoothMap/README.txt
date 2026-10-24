@@ -1,5 +1,5 @@
 Smooth Map adapter for Conjunction Map Framework
-Version 0.1 (script only, no art)
+Version 0.1 (unreleased author template; script only, no art)
 
 PROOF-OF-CONCEPT EXAMPLE, NOT A RELEASED ADAPTER
 This adapter is not part of any Conjunction Map Framework release and is not on
@@ -21,17 +21,14 @@ REQUIREMENTS
   adapter carries Smooth Map 1.1's timing; other Smooth Map versions are not
   checked.
 
-INSTALL AND REMOVE THEM TOGETHER
-- Smooth Map has no scripts, so this adapter does not need its files to load. It
-  counts as Smooth Map, though: install it only while Smooth Map is installed, and
-  remove it when you remove Smooth Map.
-- Remove this adapter before removing Conjunction Map Framework. If CMF is removed
-  first, the game stops at the script compile screen until this adapter is removed
-  too.
-- When Smooth Map ships its own CMF support, uninstall this adapter. With both
-  installed, the game may stop at the script compile screen; removing this
-  adapter fixes it.
-- The adapter writes nothing into saves.
+AUTHOR TEMPLATE ONLY
+Ship this inside Smooth Map's own folder; a separate adapter folder must not declare, because it cannot tell whether Smooth Map is installed.
+- This source-only example is excluded from release specifications and the in-game
+  adapter table. It is not a separately distributed adapter.
+- After the API version 6 gate, it declares modSmoothMap with generic property 38
+  only when CMFHasProperty(38) succeeds. Older CMF retains the same behavior and
+  compile floor. The declaration precedes the timing submissions.
+- The template writes nothing into saves.
 
 WHAT YOU SEE
 - Holding W A S D, Z or C (or the sticks) moves and zooms the map at the same speed
@@ -49,9 +46,9 @@ WITH OTHER MAP MODS
   (modSmoothMap), so Ink and Iron and Map Quest Insight win the timings they set,
   as their own map files would; Smooth Map's other timings still apply.
 
-INSTALL
-Extract the archive into your The Witcher 3 game folder, or install it with a mod
-manager. It lands in Mods\modCMFAdapterSmoothMap. No Script Merger is needed.
+AUTHOR FIXTURE
+Copy the script into Mods\modSmoothMap\content\scripts\local for a controller
+fixture. Keep the declaration inside Smooth Map's own folder.
 
 CREDITS
 Smooth Map is by its own author; this adapter copies none of its code or files and

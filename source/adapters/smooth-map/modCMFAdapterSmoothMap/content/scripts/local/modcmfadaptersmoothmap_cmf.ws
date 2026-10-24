@@ -1,7 +1,8 @@
 // Proof-of-concept example for Smooth Map's author, not a released adapter; Smooth Map's values alone are not launch-checked.
 // Smooth Map adapter for Conjunction Map Framework. Requires CMF API version 6 (smooth map movement); with API
 // version 5 it sends nothing, and before 5 it does not compile (CMFStylePart). Smooth Map 1.1 (Nexus 13530) stays unchanged and has no script, so this file calls
-// none of its code and compiles with or without it: install it only together with Smooth Map.
+// none of its code and compiles with or without it. This is an unreleased author template.
+// Ship this inside Smooth Map's own folder; a separate adapter folder must not declare, because it cannot tell whether Smooth Map is installed.
 //
 // Smooth Map changes only its own copy of the map file, and only one copy loads; CMF's sorts first, so under
 // CMF its timing is lost. Its map moves on every drawn frame by the time since the last one instead of a fixed
@@ -14,8 +15,9 @@
 // Smooth Map's map file decides, including the ones equal to the game's value (stepMs 17, worldStepMs 24,
 // padHoldMs 0), so an earlier folder that set them otherwise does not win them by default; it sends none of the
 // keys Smooth Map leaves as the game's (the menu's slide and close, the frame rate, the zoom limit). With CMF API
-// version 10 it also sends readyAtFadeStart 1: Smooth Map's map takes input and shows its panels as soon as its
-// fade-in starts (handleShowTimer), which CMF 1.3.0 had no key for.
+// version 10 it also sends readyAtFadeStart 1 and revealEase 1: Smooth Map's map takes input and shows its panels
+// as soon as its fade-in starts (handleShowTimer), and the panels ease in like the map (Sine.easeIn), which CMF
+// 1.3.0 had no key for.
 //
 // Every key names Smooth Map's own folder, modSmoothMap, as its provider, so folder order between mods is the
 // same with CMF as without it: on a key that an earlier folder also sets (modInkAndIronUI, modMapQuestInsight)
@@ -28,6 +30,10 @@ function OnGameStarted(restored : bool)
 	result = wrappedMethod(restored);
 	if (CMFRequireVersion("modSmoothMap", 6))
 	{
+		if (CMFHasProperty(38))
+		{
+			CMFRegister("modSmoothMap", 38, '', '', "", 1);
+		}
 		SmoothMapAdapterSend();
 	}
 	return result;
@@ -55,11 +61,12 @@ function SmoothMapAdapterSend()
 	accepted += SmoothMapAdapterKey('opening', 'fadeSeconds', 0.2);
 	accepted += SmoothMapAdapterKey('opening', 'tileFadeSeconds', 0.2);
 	accepted += SmoothMapAdapterKey('opening', 'revealSeconds', 0.2);
-	// Version 10: ready for input, panels shown, when the fade-in starts.
+	// Version 10: ready for input, panels shown, when the fade-in starts; the panels' fade eases in like the map's.
 	if (CMFHasAbility('opening', 'readyAtFadeStart'))
 	{
-		keys += 1;
+		keys += 2;
 		accepted += SmoothMapAdapterKey('opening', 'readyAtFadeStart', 1);
+		accepted += SmoothMapAdapterKey('opening', 'revealEase', 1);
 	}
 	LogChannel('CMF', "CMF adapter provider=modSmoothMap keys=" + keys + " accepted=" + accepted);
 }

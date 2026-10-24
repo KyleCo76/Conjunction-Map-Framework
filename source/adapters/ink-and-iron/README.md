@@ -94,6 +94,8 @@ Build: `python tools/cmf_pack.py build source/adapters/ink-and-iron/modCMFAdapte
 
 ## Status
 
+Adapter 1.2.1 (2026-10-24) adds Ink and Iron's larger clear area round the cursor for a long info box (`MapMenu.inkTipPlace`, read from the 0.8.10 and 0.9.0 code; the separate-files setup read 2026-10-24), each key behind `CMFHasAbility`, so it still compiles and runs on CMF 9 and 10; it passed its launch on 2026-10-24 (revision 11 launch, start D).
+
 Adapter 1.2.0 (world overview and button art) passed its launch on CMF 1.3.0 on 2026-10-23 (revision 9 launch, start C, in `source/probes/rev9_launch/README.md`): the engraved overview and crests when picked, and the gold buttons, which were seen only through a test copy of CMF's map that shows controller buttons while the mouse is used, so not yet with a real controller.
 
 The look passed its launch on CMF 5. The movement (version 0.3) has static checks only: not yet compiled or run in game. Its launch is staged in a launch record kept in the private development repository. `frameRate` is the one unproven CMF key: if that launch logs `frameRate asked=60 now=24`, the game ignores it and CMF withdraws the key; the adapter's next revision then sends `tweenEveryFrame` 1 in its place (smooth map movement research, section 7.4), and only the speed of the map's small looping animations would differ from Ink and Iron's own map. The controller crosshair keys cannot be checked without a controller.

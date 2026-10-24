@@ -13,6 +13,19 @@
 // The file name starts with zz_ so it sorts after modFogOfWarMap.ws, questMapInfo.ws and wgm.ws:
 // wrappers nest by script file name, so this wrapper is outermost and sees every pushed pin.
 
+// Presence is independent of map settings; the existing source-mod compile dependency stays required.
+@wrapMethod(CR4Game)
+function OnGameStarted(restored : bool)
+{
+	var result : bool;
+	result = wrappedMethod(restored);
+	if (CMFHasProperty(38))
+	{
+		CMFRegister("modFogOfWar", 38, '', '', "", 1);
+	}
+	return result;
+}
+
 @wrapMethod(CR4MapMenu)
 function UpdateEntityPins(out flashArray : CScriptedFlashArray) : void
 {

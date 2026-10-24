@@ -86,12 +86,12 @@ class ApiTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_and_header(self):
-        self.assertIn('function CMFGetVersion() : int { return 10; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 11; }', self.core)
         self.assertRegex(self.core.split('function CMFGetVersion')[0], r'version 10: behaviour picked apart from art')
 
     def test_choice_keys_and_parents(self):
         keys = choice_keys(self.core)
-        self.assertEqual(keys[62:], NEW_KEYS)
+        self.assertEqual(keys[62:69], NEW_KEYS)
         self.assertNotIn('Movement_Reserved', keys)
         parent = body(self.core, 'function CMFChoiceParent(choice : int) : int')
         self.assertIn('if (choice == 28 || choice == 29 || choice == 31)\n\t{\n\t\treturn 62; // Behaviour', parent)
@@ -189,8 +189,11 @@ class ApiTests(unittest.TestCase):
         self.assertIn('function CMFPropertyHoverName() : int { return 28; }', self.core)
         self.assertIn('propertyId == CMFPropertyHoverName()', body(self.core, 'function CMFHasProperty('))
         self.assertIn('propertyId == CMFPropertyHoverName()', body(self.core, 'function CMFPropertyTextFree('))
-        self.assertIn('propertyId != CMFPropertyHoverName()', body(self.core, 'function CMFRegisterForTag('))
-        self.assertIn('propertyId == CMFPropertyHoverName()) && !IsNameValid(target)', body(self.core, 'function CMFRegister('))
+        # Version 11: CMFRegisterForTag takes every one-pin property (CMFOnePinProperty).
+        self.assertIn('!CMFOnePinProperty(propertyId)', body(self.core, 'function CMFRegisterForTag('))
+        self.assertIn('propertyId == CMFPropertyHoverName()', body(self.core, 'function CMFOnePinProperty('))
+        self.assertRegex(body(self.core, 'function CMFRegister('),
+                         r'propertyId == CMFPropertyHoverName\(\)[^{]*\) && !IsNameValid\(target\)')
         self.assertIn('case 28:\n\t\t\treturn "cmfHoverNameBy";', body(self.core, 'function CMFOwnerField('))
         self.assertIn('WriteSlot(dataObject, CMFPropertyHoverName(), pinKey, legendKey, pinTag, maxLevel);', self.core)
         self.assertIn('case 28:\n\t\t\t\tdataObject.SetMemberFlashInt("cmfHoverName", number);', self.core)

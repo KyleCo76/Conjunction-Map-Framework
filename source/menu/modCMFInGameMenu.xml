@@ -843,6 +843,35 @@
 					<Option id="24" displayName="24"><Entry varId="CMFPick_Icons_Added" value="24"/></Option>
 				</OptionsArray>
 			</Var>
+			<Var id="CMFPick_Icons_Undiscovered" value="0" displayName="Undiscovered places (?)" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Icons_Undiscovered" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Icons_Undiscovered" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Icons_Undiscovered" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Icons_Undiscovered" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Icons_Undiscovered" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Icons_Undiscovered" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Icons_Undiscovered" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Icons_Undiscovered" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Icons_Undiscovered" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Icons_Undiscovered" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Icons_Undiscovered" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Icons_Undiscovered" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Icons_Undiscovered" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Icons_Undiscovered" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Icons_Undiscovered" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Icons_Undiscovered" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Icons_Undiscovered" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Icons_Undiscovered" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Icons_Undiscovered" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Icons_Undiscovered" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Icons_Undiscovered" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Icons_Undiscovered" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Icons_Undiscovered" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Icons_Undiscovered" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Icons_Undiscovered" value="24"/></Option>
+				</OptionsArray>
+			</Var>
 			<Var id="CMFName_Icons_General" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Icons_Quests" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Icons_Places" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
@@ -851,6 +880,7 @@
 			<Var id="CMFName_Icons_Power" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Icons_Other" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Icons_Added" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFName_Icons_Undiscovered" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 		</VisibleVars>
 	</Group>
 	<Group id="CMFMenuAdvColours" displayName="Mods.cmf_menu.cmf_advanced.cmf_adv_colours">
@@ -1434,6 +1464,35 @@
 					<Option id="24" displayName="24"><Entry varId="CMFPick_Look_InfoBox" value="24"/></Option>
 				</OptionsArray>
 			</Var>
+			<Var id="CMFPick_Look_InfoText" value="0" displayName="Info box text" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Look_InfoText" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Look_InfoText" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Look_InfoText" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Look_InfoText" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Look_InfoText" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Look_InfoText" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Look_InfoText" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Look_InfoText" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Look_InfoText" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Look_InfoText" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Look_InfoText" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Look_InfoText" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Look_InfoText" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Look_InfoText" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Look_InfoText" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Look_InfoText" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Look_InfoText" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Look_InfoText" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Look_InfoText" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Look_InfoText" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Look_InfoText" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Look_InfoText" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Look_InfoText" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Look_InfoText" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Look_InfoText" value="24"/></Option>
+				</OptionsArray>
+			</Var>
 			<Var id="CMFPick_Look_Hints" value="0" displayName="Key hints" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
 				<OptionsArray>
 					<Option id="0" displayName="0"><Entry varId="CMFPick_Look_Hints" value="0"/></Option>
@@ -1495,6 +1554,7 @@
 			<Var id="CMFName_Look_Frames" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Look_Legend" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Look_InfoBox" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFName_Look_InfoText" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Look_Hints" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Look_PinText" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 		</VisibleVars>
@@ -2534,6 +2594,12 @@
 					<Option id="1" displayName="-"><Entry varId="CMFWin_Icons_Added" value="1"/></Option>
 				</OptionsArray>
 			</Var>
+			<Var id="CMFWin_Icons_Undiscovered" value="0" displayName="Undiscovered places (?)" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="-"><Entry varId="CMFWin_Icons_Undiscovered" value="0"/></Option>
+					<Option id="1" displayName="-"><Entry varId="CMFWin_Icons_Undiscovered" value="1"/></Option>
+				</OptionsArray>
+			</Var>
 		</VisibleVars>
 	</Group>
 	<Group id="CMFMenuWinColours" displayName="Mods.cmf_menu.cmf_status.cmf_win_colours">
@@ -2650,6 +2716,12 @@
 				<OptionsArray>
 					<Option id="0" displayName="-"><Entry varId="CMFWin_Look_InfoBox" value="0"/></Option>
 					<Option id="1" displayName="-"><Entry varId="CMFWin_Look_InfoBox" value="1"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFWin_Look_InfoText" value="0" displayName="Info box text" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="-"><Entry varId="CMFWin_Look_InfoText" value="0"/></Option>
+					<Option id="1" displayName="-"><Entry varId="CMFWin_Look_InfoText" value="1"/></Option>
 				</OptionsArray>
 			</Var>
 			<Var id="CMFWin_Look_Hints" value="0" displayName="Key hints" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
@@ -2864,6 +2936,34 @@
 			<Var id="CMFKnown22" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFKnown23" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFKnown24" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+		</VisibleVars>
+	</Group>
+	<Group id="CMFMenuKnownPresent" displayName="cmf_menu_known_present">
+		<VisibleVars>
+			<Var id="CMFKnownPresent1" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent2" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent3" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent4" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent5" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent6" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent7" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent8" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent9" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent10" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent11" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent12" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent13" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent14" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent15" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent16" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent17" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent18" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent19" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent20" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent21" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent22" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent23" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFKnownPresent24" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 		</VisibleVars>
 	</Group>
 </UserConfig>

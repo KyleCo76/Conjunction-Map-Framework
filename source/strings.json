@@ -9,6 +9,7 @@
     {"id": 2000200005, "key": "cmf_popup_duplicate_provider", "text": {"en": "A native map provider superseded its legacy adapter."}},
     {"id": 2000200006, "key": "cmf_region_unavailable", "text": {"en": "Map imagery unavailable. Close and reopen the map."}},
     {"id": 2000200007, "key": "panel_cmf_menu", "text": {"en": "Conjunction Map Framework"}},
-    {"id": 2000200008, "key": "cmf_map_level_prefix", "text": {"en": "Lv"}}
+    {"id": 2000200008, "key": "cmf_map_level_prefix", "text": {"en": "Lv"}},
+    {"id": 2000200009, "key": "cmf_map_check_warning", "text": {"en": "Another mod's map file is loading instead of CMF's, so CMF's map features are off. Put mod0000_ConjunctionMapFramework first in your load order, or see the CMF page on Nexus Mods."}}
   ]
 }

@@ -1,0 +1,452 @@
+[
+  {
+    "name": "Map Quest Insight",
+    "nexus": 14219,
+    "folders": [
+      "modMapQuestInsight"
+    ],
+    "providers": [
+      "modMapQuestInsight"
+    ],
+    "groups": [
+      "qmiPins",
+      "qmiColors",
+      "qmiBox",
+      "qmiHide",
+      "qmiWide"
+    ],
+    "textKeys": [
+      "panel_qmiPins"
+    ],
+    "adapter": {
+      "folder": "modCMFAdapterMapQuestInsight",
+      "file": "CMF Adapter - Map Quest Insight"
+    },
+    "status": "adapter",
+    "note": "The adapter restores this mod's map features under CMF.",
+    "minAdapter": "1.1.1"
+  },
+  {
+    "name": "Gwent Players Map",
+    "nexus": 13755,
+    "folders": [
+      "modGwentPlayersMap"
+    ],
+    "providers": [
+      "modGwentPlayersMap"
+    ],
+    "groups": [
+      "GwentPlayersMap"
+    ],
+    "textKeys": [
+      "gwm_label_gwent_player"
+    ],
+    "adapter": {
+      "folder": "modCMFAdapterGwentPlayersMap",
+      "file": "CMF Adapter - Gwent Players Map"
+    },
+    "status": "adapter",
+    "note": "The adapter restores this mod's map features under CMF."
+  },
+  {
+    "name": "Witcher Gear Map",
+    "nexus": 14157,
+    "folders": [
+      "modWitcherGearMap"
+    ],
+    "providers": [
+      "modWitcherGearMap"
+    ],
+    "groups": [
+      "wgm_Settings"
+    ],
+    "textKeys": [
+      "wgm_legendary"
+    ],
+    "adapter": {
+      "folder": "modCMFAdapterWitcherGearMap",
+      "file": "CMF Adapter - Witcher Gear Map"
+    },
+    "status": "adapter",
+    "note": "The adapter restores this mod's map features under CMF."
+  },
+  {
+    "name": "Fog of War",
+    "nexus": 13627,
+    "folders": [
+      "modFogOfWar"
+    ],
+    "providers": [
+      "modFogOfWar"
+    ],
+    "groups": [
+      "FogOfWar"
+    ],
+    "textKeys": [
+      "option_fow_enabled"
+    ],
+    "adapter": {
+      "folder": "modCMFAdapterFogOfWar",
+      "file": "CMF Adapter - Fog of War"
+    },
+    "status": "adapter",
+    "note": "The adapter restores this mod's map features under CMF.",
+    "minAdapter": "1.0.1"
+  },
+  {
+    "name": "Witcher's Path",
+    "nexus": 13423,
+    "folders": [
+      "modWitchersPath"
+    ],
+    "providers": [
+      "modWitchersPath"
+    ],
+    "groups": [
+      "WitchersPath"
+    ],
+    "textKeys": [
+      "option_wp_enabled"
+    ],
+    "adapter": {
+      "folder": "modCMFAdapterWitchersPath",
+      "file": "CMF Adapter - Witcher's Path"
+    },
+    "status": "adapter",
+    "note": "The adapter restores this mod's map features under CMF."
+  },
+  {
+    "name": "Botanist",
+    "nexus": 8260,
+    "folders": [
+      "modBotanist"
+    ],
+    "providers": [
+      "modBotanist"
+    ],
+    "groups": [
+      "Botanist_GeneralSettings"
+    ],
+    "textKeys": [
+      "BT_HerbMapPinInfo"
+    ],
+    "adapter": {
+      "folder": "modCMFAdapterBotanist",
+      "file": "CMF Adapter - Botanist"
+    },
+    "status": "adapter",
+    "note": "The adapter restores this mod's map features under CMF."
+  },
+  {
+    "name": "Ink and Iron",
+    "nexus": 13111,
+    "folders": [
+      "modInkAndIron",
+      "modInkAndIronUI"
+    ],
+    "providers": [
+      "modInkAndIronUI"
+    ],
+    "groups": [
+      "InkAndIronOptions"
+    ],
+    "textKeys": [
+      "panel_InkAndIron"
+    ],
+    "adapter": {
+      "folder": "modCMFAdapterInkAndIron",
+      "file": "CMF Adapter - Ink and Iron"
+    },
+    "status": "adapter",
+    "note": "The adapter restores this mod's map features under CMF."
+  },
+  {
+    "name": "The Stable",
+    "nexus": 6132,
+    "folders": [
+      "modArdDhuStable"
+    ],
+    "providers": [
+      "modArdDhuStable"
+    ],
+    "groups": [],
+    "textKeys": [
+      "map_location_arddhustable"
+    ],
+    "adapter": {
+      "folder": "modCMFAdapterTheStable",
+      "file": "CMF Adapter - The Stable"
+    },
+    "status": "adapter",
+    "note": "The adapter restores this mod's map features under CMF."
+  },
+  {
+    "name": "All Quest Objectives",
+    "nexus": 14319,
+    "folders": [
+      "modAQOOMRemastered"
+    ],
+    "providers": [
+      "modAQOOMRemastered"
+    ],
+    "groups": [],
+    "textKeys": [],
+    "adapter": {
+      "folder": "modCMFAdapterAllQuestObjectives",
+      "file": "CMF Adapter - All Quest Objectives"
+    },
+    "status": "adapter",
+    "note": "Needs its CMF adapter; this mod has no reliable in-game detector, so use this paste page."
+  },
+  {
+    "name": "Map Pin Teleport",
+    "nexus": 13541,
+    "folders": [
+      "modMapPinTeleport"
+    ],
+    "providers": [
+      "modMapPinTeleport"
+    ],
+    "groups": [],
+    "textKeys": [],
+    "adapter": {
+      "folder": "modCMFAdapterMapPinTeleport",
+      "file": "CMF Adapter - Map Pin Teleport"
+    },
+    "status": "adapter",
+    "note": "Needs its CMF adapter; this mod has no reliable in-game detector, so use this paste page."
+  },
+  {
+    "name": "Annoying Map",
+    "nexus": 6140,
+    "folders": [
+      "modAnnoyingMap"
+    ],
+    "providers": [
+      "modAnnoyingMap"
+    ],
+    "groups": [],
+    "textKeys": [],
+    "adapter": {
+      "folder": "modCMFAdapterAnnoyingMap",
+      "file": "CMF Adapter - Annoying Map"
+    },
+    "status": "adapter",
+    "note": "Needs its CMF adapter; this mod has no reliable in-game detector, so use this paste page."
+  },
+  {
+    "name": "Coloured Map Markers",
+    "nexus": 938,
+    "folders": [
+      "modcoloured_map_marker"
+    ],
+    "providers": [
+      "modcoloured_map_marker"
+    ],
+    "groups": [],
+    "textKeys": [],
+    "adapter": {
+      "folder": "modCMFAdapterColouredMapMarkers",
+      "file": "CMF Adapter - Coloured Map Markers"
+    },
+    "status": "adapter",
+    "note": "Needs its CMF adapter; this mod has no reliable in-game detector, so use this paste page."
+  },
+  {
+    "name": "Smooth Map",
+    "nexus": 13530,
+    "folders": [
+      "modSmoothMap"
+    ],
+    "providers": [
+      "modSmoothMap"
+    ],
+    "groups": [],
+    "textKeys": [],
+    "adapter": null,
+    "status": "author",
+    "note": "Smooth Map 1.1 needs its CMF-ready update from its author; with it, Smooth Map's timing works under CMF."
+  },
+  {
+    "name": "Community Patch - World Map",
+    "nexus": 8259,
+    "folders": [
+      "mod000CommunityPatch_WorldMap"
+    ],
+    "providers": [
+      "mod000CommunityPatch_WorldMap"
+    ],
+    "groups": [],
+    "textKeys": [],
+    "adapter": null,
+    "status": "author",
+    "note": "Needs an author-provided CMF-ready update. The source example is not a distributed adapter."
+  },
+  {
+    "name": "Map Icons Remastered",
+    "nexus": 14490,
+    "folders": [
+      "mod000MapIconsRemastered"
+    ],
+    "providers": [],
+    "groups": [],
+    "textKeys": [],
+    "adapter": null,
+    "status": "author",
+    "note": "Needs its author's CMF-ready update to restore its map icons."
+  },
+  {
+    "name": "Map Remastered",
+    "nexus": 13347,
+    "folders": [
+      "modmapredraw"
+    ],
+    "providers": [],
+    "groups": [],
+    "textKeys": [],
+    "adapter": null,
+    "status": "works",
+    "note": "Tested with CMF at version 2.4.2; works without an adapter."
+  },
+  {
+    "name": "All Quest Markers",
+    "nexus": 13087,
+    "folders": [
+      "modAllQuestMarkersOnMapRemaster"
+    ],
+    "providers": [],
+    "groups": [],
+    "textKeys": [],
+    "adapter": null,
+    "status": "works",
+    "note": "Tested with CMF at version 1.7.1; works without an adapter."
+  },
+  {
+    "name": "Quest Levels on Map",
+    "nexus": 13691,
+    "folders": [
+      "modMapQuestLevels"
+    ],
+    "providers": [],
+    "groups": [],
+    "textKeys": [],
+    "adapter": null,
+    "status": "works",
+    "note": "Tested with CMF at version 1; works without an adapter."
+  },
+  {
+    "name": "Useful Place of Power Map Pin",
+    "nexus": 11300,
+    "folders": [
+      "modUsefulPOPMapPin"
+    ],
+    "providers": [],
+    "groups": [],
+    "textKeys": [],
+    "adapter": null,
+    "status": "works",
+    "note": "Tested with CMF at version 1.2; works without an adapter."
+  },
+  {
+    "name": "True Map POIs",
+    "nexus": 13213,
+    "folders": [
+      "modtruemappois"
+    ],
+    "providers": [],
+    "groups": [],
+    "textKeys": [],
+    "adapter": null,
+    "status": "works",
+    "note": "Tested with CMF at version 1.0.3; works without an adapter."
+  },
+  {
+    "name": "RevealMapPOI",
+    "nexus": 13140,
+    "folders": [
+      "modRevealMapPOI"
+    ],
+    "providers": [],
+    "groups": [],
+    "textKeys": [],
+    "adapter": null,
+    "status": "works",
+    "note": "Tested with CMF at version 1.0.4; works without an adapter. Select the All or Exploration filter."
+  },
+  {
+    "name": "Reveal Map Icons - Remastered",
+    "nexus": 13516,
+    "folders": [
+      "modRevealMapIcons"
+    ],
+    "providers": [],
+    "groups": [],
+    "textKeys": [],
+    "adapter": null,
+    "status": "works",
+    "note": "Tested with CMF at version 1.0.1; works without an adapter. Select the All or Exploration filter."
+  },
+  {
+    "name": "Wolf's Bearing",
+    "nexus": 14546,
+    "folders": [
+      "modWolfsBearing"
+    ],
+    "providers": [],
+    "groups": [],
+    "textKeys": [],
+    "adapter": null,
+    "status": "works",
+    "note": "Tested with CMF at version 1.0; works without an adapter. Version 1.1 is code checked only."
+  },
+  {
+    "name": "Wild Monster Hunt",
+    "nexus": 9426,
+    "folders": [
+      "modwild_monster_hunt"
+    ],
+    "providers": [],
+    "groups": [],
+    "textKeys": [],
+    "adapter": null,
+    "status": "works",
+    "note": "Tested with CMF at version 2.1; works without an adapter."
+  },
+  {
+    "name": "Apocrypha Menu Framework",
+    "nexus": 13656,
+    "folders": [
+      "modApocryphaMenuFramework"
+    ],
+    "providers": [],
+    "groups": [],
+    "textKeys": [],
+    "adapter": null,
+    "status": "works",
+    "note": "Tested with CMF at version 1.0.6; works without an adapter."
+  },
+  {
+    "name": "HUD Position Manager",
+    "nexus": 14337,
+    "folders": [
+      "modHUDPositionManager"
+    ],
+    "providers": [],
+    "groups": [],
+    "textKeys": [],
+    "adapter": null,
+    "status": "works",
+    "note": "Tested with CMF at version 1.0.0; works without an adapter."
+  },
+  {
+    "name": "World Map Merger",
+    "nexus": null,
+    "folders": [],
+    "providers": [],
+    "groups": [],
+    "textKeys": [],
+    "adapter": null,
+    "status": "incompatible",
+    "note": "Combines replacement map files, so it cannot work with CMF by design."
+  }
+]

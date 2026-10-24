@@ -1,10 +1,14 @@
 Map Quest Insight adapter for Conjunction Map Framework
-Version 1.1.0 (quest icons by Wolfer, Map Quest Insight's author)
+Version 1.1.1 (quest icons by Wolfer, Map Quest Insight's author)
 
 Brings Map Quest Insight's world map features back on Conjunction Map Framework's
 world map. Map Quest Insight stays exactly as its author ships it. Map Quest Insight
 normally sends these features to its own map file; this adapter takes what it sends
 and hands it to CMF, which draws it.
+
+Version 1.1.1 tells CMF 1.5.0 or later that the adapter is installed as soon as the
+game starts, so CMF's optional adapter check can see it. It still works with the
+same CMF versions as before.
 
 REQUIREMENTS
 - Conjunction Map Framework version 6 with stacked-pin spreading, or later.

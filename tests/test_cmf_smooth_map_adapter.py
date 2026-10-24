@@ -26,7 +26,7 @@ SMOOTH_MAP = {
     ('opening', 'pinBatch'): 0, ('opening', 'pinBudgetMs'): 8, ('opening', 'showDelayMs'): 1,
     ('opening', 'fadeSeconds'): 0.2, ('opening', 'tileFadeSeconds'): 0.2, ('opening', 'revealSeconds'): 0.2,
     # API version 10 (readiness check 2026-10-24): ready and panels shown at the start of the fade-in.
-    ('opening', 'readyAtFadeStart'): 1,
+    ('opening', 'readyAtFadeStart'): 1, ('opening', 'revealEase'): 1,
 }
 # Keys Smooth Map leaves as the game's (the menu's slide and close, frame rate, zoom limit, controller crosshair).
 NOT_SENT = ['slideSeconds', 'slideOffset', 'closeSeconds', 'frameRate', 'zoomOutFit', 'edgeOvershoot',
@@ -37,6 +37,7 @@ RANGES = {
     'stepMs': (1, 1000), 'worldStepMs': (1, 1000), 'maxStepMs': (1, 1000), 'pinStepMs': (1, 1000),
     'padHoldMs': (0, 1000), 'pinBudgetMs': (0, 1000), 'showDelayMs': (0, 5000), 'pinBatch': (0, 100000),
     'fadeSeconds': (0, 5), 'tileFadeSeconds': (0, 5), 'revealSeconds': (0, 5), 'readyAtFadeStart': (0, 1),
+    'revealEase': (0, 1),
 }
 
 
@@ -47,22 +48,29 @@ def script():
 
 
 class SmoothMapAdapterTests(unittest.TestCase):
+    def test_private_author_declaration_example_matches_the_six_argument_template(self):
+        docs = (ROOT / 'docs/authors/smooth-map-adapter.md').read_text(encoding='utf-8')
+        example = re.search(r'CMFRegister\("modSmoothMap",[^;]+;', docs).group()
+        template = re.search(r'CMFRegister\("modSmoothMap",[^;]+;', script().read_text(encoding='ascii')).group()
+        self.assertEqual(template, example)
+        self.assertEqual(6, len(example.removeprefix('CMFRegister(').removesuffix(');').split(',')))
+
     def test_sends_smooth_maps_column_and_nothing_else(self):
         text = script().read_text(encoding='ascii')
         sent = {(p, k): float(n) for p, k, n in
                 re.findall(r"SmoothMapAdapterKey\('(\w+)', '(\w+)', ([\d.]+)\);", text)}
         self.assertEqual(sent, SMOOTH_MAP)
         self.assertEqual(len(re.findall(r'SmoothMapAdapterKey\(', text)), len(SMOOTH_MAP) + 1)
-        # The version 10 key is sent only when CMF has it, and counted then.
-        self.assertIn('keys = %d;' % (len(SMOOTH_MAP) - 1), text)
-        self.assertIn("if (CMFHasAbility('opening', 'readyAtFadeStart'))\n\t{\n\t\tkeys += 1;", text)
+        # The two version 10 keys are sent only when CMF has them, and counted then.
+        self.assertIn('keys = %d;' % (len(SMOOTH_MAP) - 2), text)
+        self.assertIn("if (CMFHasAbility('opening', 'readyAtFadeStart'))\n\t{\n\t\tkeys += 2;", text)
         self.assertIn('"CMF adapter provider=modSmoothMap keys=" + keys + " accepted=" + accepted', text)
         for key in NOT_SENT:
             self.assertNotIn("'%s'" % key, text)
 
     def test_every_key_is_one_cmf_takes_in_range(self):
         core = CORE.read_text(encoding='ascii')
-        self.assertIn('function CMFGetVersion() : int { return 10; }', core)
+        self.assertIn('function CMFGetVersion() : int { return 11; }', core)
         for (part, key), number in SMOOTH_MAP.items():
             self.assertIn(key, cmf_pack.THEME_PART_KEYS[part])
             low, high = RANGES[key]
@@ -107,7 +115,7 @@ class SmoothMapAdapterTests(unittest.TestCase):
     def test_player_readme_states_requirements(self):
         readme = (ADAPTER/'README.txt').read_text(encoding='ascii')
         for phrase in ('API version 6', 'Smooth Map 1.1 (Nexus mod 13530)', 'modSmoothMap',
-                       'Mods\\modCMFAdapterSmoothMap', 'ships its own CMF support, uninstall this adapter',
+                       'Mods\\modSmoothMap\\content\\scripts\\local', 'unreleased author template',
                        'other Smooth Map versions are not'):
             self.assertIn(phrase, readme)
 

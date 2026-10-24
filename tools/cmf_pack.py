@@ -63,7 +63,11 @@ API = {'CMFRegisterIcon', 'CMFRegisterLegendIcon', 'CMFRegisterTint', 'CMFRegist
        'CMFRegisterButtonPicture', 'CMFRegisterChoiceOnly', 'CMFSetOpeningView',
        'CMFSetOpeningWorld',
        # Version 10: names only on hover and the screen's shape.
-       'CMFPropertyHoverName', 'CMFScreenWidth', 'CMFScreenHeight'}
+       'CMFPropertyHoverName', 'CMFScreenWidth', 'CMFScreenHeight',
+       # Version 11: one pin at a time (info box title and text, undiscovered and completed art, whole tabs, places).
+       'CMFPropertyInfoTitle', 'CMFPropertyInfoText', 'CMFPropertyIconUndiscovered', 'CMFPropertyIconCompleted',
+       'CMFPropertyTabHidden', 'CMFInfoReplace', 'CMFInfoAdd', 'CMFLevelPlace', 'CMFPlaceRadius', 'CMFRegisterForPlace',
+       'CMFSetLogPins', 'CMFPropertyPresent', 'CMFDeclareProvider', 'CMFProviderPresent'}
 # Categories the vanilla legend defines; a pack's own category id may not reuse one (CMF compares ignoring case).
 VANILLA_CATEGORIES = ('All', 'Default', 'General', 'Quests', 'Exploration', 'NPCs', 'Buffs')
 # Calls that need CMF 2; a pack using them should check CMFRequireVersion(pack, 2) or CMFHasProperty(8).
@@ -97,6 +101,11 @@ VERSION9 = {'CMFPropertyWorldPainting', 'CMFPropertyWorldCrest', 'CMFPropertyBut
 # CMFRequireVersion(pack, 10), and compiles only with CMF 10 or later (the generic CMFRegister id 28 behind
 # CMFHasProperty(28) still compiles on CMF 1).
 VERSION10 = {'CMFPropertyHoverName', 'CMFScreenWidth', 'CMFScreenHeight'}
+# Calls that need CMF 11 (one pin at a time); a pack using them compiles only with CMF 11 or later (the generic
+# CMFRegister and CMFRegisterForTag ids 18, 19, 29, 30 and 37 behind CMFHasProperty(29) still compile on CMF 1).
+VERSION11 = {'CMFPropertyInfoTitle', 'CMFPropertyInfoText', 'CMFPropertyIconUndiscovered', 'CMFPropertyIconCompleted',
+             'CMFPropertyTabHidden', 'CMFInfoReplace', 'CMFInfoAdd', 'CMFLevelPlace', 'CMFPlaceRadius',
+             'CMFRegisterForPlace', 'CMFSetLogPins', 'CMFPropertyPresent', 'CMFDeclareProvider', 'CMFProviderPresent'}
 # The world overview's crest names (UniverseMapContainer.configUI); a region another mod adds goes by its area name.
 WORLD_REGIONS = ('kaer_morhen', 'skellige', 'novigrad', 'no_mans_land', 'prolog_village', 'wyzima_castle', 'bob')
 WORLD_MARKERS = ('player', 'quest')
@@ -126,7 +135,8 @@ THEME_PART_KEYS = {
     'legendTab': THEME_GLOW + ('color', 'spacing', 'hide'),
     'tooltip': THEME_GLOW + ('titleFont', 'titleSize', 'titleColor', 'bodyFont', 'bodySize', 'bodyColor', 'hide',
                              'clearMinHeight', 'clearView', 'clearSide', 'clearCursor', 'clearLeft', 'clearTop',
-                             'clearRight', 'clearBottom'),
+                             'clearRight', 'clearBottom', 'x', 'y', 'clearCursorAbove', 'clearCursorBelow', 'clearCursorTitle', 'clearPadX', 'clearPadY',
+                             'clearGap', 'clearBoxPad', 'clearPick', 'clearCursorWeight'),
     'preview': ('hide',),
     'worldButton': THEME_GLOW + ('hide',),
     'worldHint': THEME_GLOW + ('hide',),
@@ -161,7 +171,8 @@ THEME_PART_ROWS = {'screen': 'Map look > Frames and panels', 'mapEdge': 'Map loo
 THEME_KEY_ROWS = {
     ('tooltip', k): 'Map behaviour > Info box moves out of the way'
     for k in ('clearMinHeight', 'clearSide', 'clearCursor', 'clearLeft', 'clearTop', 'clearRight', 'clearBottom',
-              'clearView')}
+              'clearView', 'clearCursorAbove', 'clearCursorBelow', 'clearCursorTitle', 'clearPadX', 'clearPadY',
+              'clearGap', 'clearBoxPad', 'clearPick', 'clearCursorWeight', 'x', 'y')}
 THEME_KEY_ROWS.update({('pinLabel', k): 'Map behaviour > Label place and hiding'
                        for k in ('rise', 'riseOffset', 'riseTracked', 'riseOffsetTracked')})
 THEME_KEY_ROWS.update({('navigation', k): 'Map movement > Zoom out to the whole region'
@@ -458,9 +469,17 @@ PROPERTY_IDS = {'CMFPropertyIcon': 1, 'CMFPropertyLegendIcon': 2, 'CMFPropertyTi
                 'CMFPropertyPinClick': 16, 'CMFPropertyPinClickHint': 20, 'CMFPropertyPinClickButton': 21,
                 'CMFPropertySpreadRank': 22, 'CMFPropertyCategoryNoDefault': 23, 'CMFPropertyWorldPainting': 24,
                 'CMFPropertyWorldCrest': 25, 'CMFPropertyButtonPicture': 26, 'CMFPropertyWorldMarker': 27,
-                'CMFPropertyHoverName': 28}
-# Property ids this CMF accepts (18 and 19 are kept for tooltip slots).
-KNOWN_PROPERTIES = set(range(1, 18)) | {20, 21, 22, 23} | set(range(24, 28)) | {28}
+                'CMFPropertyHoverName': 28, 'CMFPropertyInfoTitle': 18, 'CMFPropertyInfoText': 19,
+                'CMFPropertyIconUndiscovered': 29, 'CMFPropertyIconCompleted': 30, 'CMFPropertyTabHidden': 37, 'CMFPropertyPresent': 38}
+# Property ids this CMF accepts.
+KNOWN_PROPERTIES = set(range(1, 18)) | {18, 19} | {20, 21, 22, 23} | set(range(24, 28)) | {28, 29, 30, 37, 38}
+# Version 11: the ids a tag (CMFRegisterForTag) or place (CMFRegisterForPlace) claim takes (cmfCore.ws CMFOnePinProperty).
+# API version 11: the player's arrow and markers, reached by type claims with ids 1, 3 and 10 only.
+MARKER_TYPES = {'Player'} | {'User%d' % n for n in range(1, 8)}
+ONE_PIN_PROPERTIES = {1, 3, 5, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 28, 29, 30}
+# CMFRegisterForPlace("provider", id, 'type', x, y, "text", number)
+PLACE_CLAIM = re.compile(r'\s*"([^"]*)"\s*,\s*(\d+|CMFProperty\w+\(\s*\))\s*,\s*\'([^\']*)\'\s*,\s*(-?[\d.]+)\s*,'
+                         r'\s*(-?[\d.]+)\s*,\s*"([^"]*)"\s*,\s*(0[xX][0-9A-Fa-f]+|-?\d+)\s*\)')
 # Version 9: the controller families a button picture (26) may name.
 BUTTON_FAMILIES = ('xbox', 'ps4', 'ps5', 'steam', 'switch')
 GENERIC_KINDS = {1: 'icon', 2: 'legend', 3: 'tint'}
@@ -523,6 +542,12 @@ def n4_issues(prop_id, text_value, number):
         return ['spread rank %d is outside 0 to 1000; CMF rejects the claim' % number]
     if prop_id == 28 and not 0 <= number <= 3:
         return ['hover name bits %d are outside 0 to 3; CMF rejects the claim' % number]
+    if prop_id in (18, 19) and number not in (0, 1):
+        return ['info box %s number %d must be 0 (replace) or 1 (add lines); CMF rejects the claim'
+                % ('title' if prop_id == 18 else 'text', number)]
+    if prop_id in (18, 19, 29, 30) and not text_value:
+        return ['empty %s; CMF rejects the claim' % {18: 'info box title', 19: 'info box text',
+                                                       29: 'undiscovered art', 30: 'completed art'}[prop_id]]
     return []
 
 
@@ -608,7 +633,7 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
     for match in re.finditer(r'\b(cmfIconPath|cmfLegendIconPath|cmfIconTint\w*|cmfIconBy|cmfTintBy|cmfLegend\w+|'
                              r'cmfCategory\w+|cmfRowHide|cmfHiddenBy|cmfIconScale|cmfLabelPlace|cmfLabelText|'
                              r'cmfLabelHide\w*|cmfLabelColor\w*|cmfTabHide\w*|cmfScaleBy|cmfPlaceBy|cmfLabelBy|cmfDescMax\w+|cmfTabName|'
-                             r'cmfSpreadRank\w*)\b',
+                             r'cmfSpreadRank\w*|cmfInfoTitleBy|cmfInfoTextBy)\b',
                              code):
         report.error('%s:%d' % (path_label, line_of(match.start())), 'do not write CMF pin fields (%s) yourself; '
                      'register through CMFRegister... or style one pin with CMFStylePin, so CMF can resolve packs '
@@ -659,16 +684,15 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
                 report.error(where, issue)
             for issue in exemption_issues(text_value) if prop_id == 9 else []:
                 report.error(where, issue)
-            for issue in n4_issues(prop_id, text_value, number) if 10 <= prop_id <= 23 or prop_id == 28 else []:
+            for issue in n4_issues(prop_id, text_value, number) if 10 <= prop_id <= 23 or prop_id in (28, 29, 30) else []:
                 report.error(where, issue)
+            if prop_id == 37 and (name == 'CMFRegisterForTag' or not target or target.lower() == 'all'):
+                report.error(where, 'a whole tab is hidden by CMFRegister with the tab\'s name as target (never All)')
             if 24 <= prop_id <= 27 and name == 'CMFRegisterForTag':
                 report.error(where, 'pictures are type claims: use CMFRegister or the named picture calls')
             elif 24 <= prop_id <= 27:
                 for issue in picture_issues(prop_id, target, text_value, number):
                     report.error(where, issue)
-            if prop_id == 14 and (target or name == 'CMFRegisterForTag'):
-                report.error(where, 'the info box height applies to the whole map: use CMFRegister with target \'\'')
-                continue
             if provider != provider_name:
                 report.error(where, 'provider "%s" must be %s "%s", exactly' % (provider, owner, provider_name))
             if context and prop_id not in (5, 9):
@@ -676,9 +700,9 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
                                     'rejects this claim')
             kind = GENERIC_KINDS.get(prop_id)
             if name == 'CMFRegisterForTag':
-                if prop_id not in (1, 5, 9, 10, 11, 12, 13, 15, 16, 17, 20, 21):
-                    report.error(where, 'CMFRegisterForTag accepts only CMFPropertyIcon, CMFPropertyDisabled, '
-                                        'CMFPropertyHidden and ids 10 to 13, 15 to 17, 20 and 21')
+                if prop_id not in ONE_PIN_PROPERTIES:
+                    report.error(where, 'CMFRegisterForTag accepts only CMFPropertyIcon and ids %s'
+                                 % ', '.join(str(i) for i in sorted(ONE_PIN_PROPERTIES - {1})))
                     continue
                 if prop_id != 1 and not target:
                     report.error(where, 'empty pin tag; CMF rejects the claim')
@@ -687,6 +711,23 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
                 value = number if kind == 'tint' else '"%s"' % text_value
                 claims.append({'call': name, 'kind': kind, 'provider': provider, 'target': target,
                                'value': value, 'where': where})
+        elif name == 'CMFRegisterForPlace':
+            literal = PLACE_CLAIM.match(rest)
+            if not literal:
+                report.warn(where, '%s uses non-literal arguments, so the pack tool cannot check it' % name)
+                continue
+            provider, prop, target, _x, _y, text_value, number = literal.groups()
+            prop_id = int(prop) if prop.isdigit() else PROPERTY_IDS.get(prop.split('(')[0].strip())
+            if prop_id not in ONE_PIN_PROPERTIES:
+                report.error(where, 'CMFRegisterForPlace accepts only CMFPropertyIcon and ids %s'
+                             % ', '.join(str(i) for i in sorted(ONE_PIN_PROPERTIES - {1})))
+                continue
+            if provider != provider_name:
+                report.error(where, 'provider "%s" must be %s "%s", exactly' % (provider, owner, provider_name))
+            if not target:
+                report.error(where, 'empty pin type; CMF rejects the claim')
+            for issue in n4_issues(prop_id, text_value, number) if 10 <= prop_id <= 23 or prop_id in (28, 29, 30) else []:
+                report.error(where, issue)
         elif name in ('CMFRegisterLegendRow', 'CMFRegisterLegendLabel', 'CMFRegisterLegendCategory'):
             literal = (LEGEND_ROW if name == 'CMFRegisterLegendRow' else LEGEND_TEXT).match(rest)
             if not literal:
@@ -791,7 +832,7 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
             elif anchor != 'mapSpace' and kind in ('line', 'movie'):
                 report.error(where, "a %s drawing takes only the mapSpace anchor; CMF rejects the call" % kind)
         elif name in ('CMFStylePin', 'CMFStylePinIcon', 'CMFStylePinTint', 'CMFStylePinScale', 'CMFStylePinLabel',
-                      'CMFHidePin', 'CMFReleaseProvider', 'CMFRequireVersion'):
+                      'CMFHidePin', 'CMFReleaseProvider', 'CMFRequireVersion', 'CMFDeclareProvider'):
             literal = LITERAL_PROVIDER.match(rest)
             if literal and literal.group(1) != provider_name:
                 report.error(where, '%s names provider "%s"; it must be %s "%s"'
@@ -847,6 +888,11 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
         report.note(path_label, 'calls %s, so the pack compiles only with CMF 10 (1.4.0) or later; say so in its README '
                                 '(the generic CMFRegister id 28 behind CMFHasProperty(28) still compiles on CMF 1)'
                     % ', '.join(needs10))
+    needs11 = sorted(set(m.group(1) for m in CALL.finditer(code)) & VERSION11)
+    if needs11:
+        report.note(path_label, 'calls %s, so the pack compiles only with CMF 11 or later; say so in its README '
+                                '(the generic CMFRegister ids 18, 19, 29, 30 and 37 behind CMFHasProperty(29) still compile '
+                                'on CMF 1)' % ', '.join(needs11))
     hooked = re.search(r'@wrapMethod\(\s*CMFCore\s*\)\s*function\s+(%s)\s*\(' % '|'.join(HOOKS), code)
     if (not re.search(r'@wrapMethod\(\s*CR4Game\s*\)\s*function\s+OnGameStarted\s*\(', code) and not hooked
             and CALL.search(code)):
@@ -915,6 +961,10 @@ def check_claims(pack, claims, images, report, types, provider=None, literal=())
                 used.add(image)
                 if image not in images:
                     report.error(where, '%s has no image in art/ (the map would silently keep the stock icon)' % url)
+            elif url.startswith('frame:'):
+                # API version 11: a frame of the game's own pin icon at every level, not only for one pin.
+                if not url[len('frame:'):]:
+                    report.error(where, 'empty frame label; write "frame:<label>", such as "frame:Herbalist"')
             elif url.startswith('img://'):
                 report.warn(where, '%s is not in this pack\'s cache; it shows only if another installed cache '
                                    'holds that image' % url)
@@ -926,6 +976,12 @@ def check_claims(pack, claims, images, report, types, provider=None, literal=())
                 close = [name for name in types if name.lower() == target.lower()]
                 report.warn(where, "'%s' is not a 5.01 world map pin type%s (see docs/authors/pin-types.md)"
                             % (target, '; did you mean \'%s\'?' % close[0] if close else ''))
+            elif target in MARKER_TYPES:
+                report.warn(where, "'%s' has no effect in CMF 1 to 10: %s; from CMF 11, icon, colour and size type "
+                                   "claims reach it" % (target, entry['note']))
+            elif entry['reach'] == 'base' and re.search(r'_[123]$', target):
+                report.warn(where, "'%s' has no effect in CMF 1 to 10: %s; from CMF 11 a claim on it beats the base "
+                                   "type's" % (target, entry['note']))
             elif entry['reach'] in ('base', 'no'):
                 report.warn(where, "'%s' has no effect in CMF 1: %s" % (target, entry['note']))
             elif entry['reach'] == 'unknown':

@@ -1,5 +1,7 @@
 """Write and stage CMF's optional in-game menu add-on, modCMFInGameMenu (developer only).
 
+Version 1.5.0 requires CMF API 11 for provider presence in Loaded map mods.
+
 The add-on is CMF's Options > Mods > Conjunction Map Framework entry: Mod order, Basic choices,
 Advanced choices (9 pages), General and Status (Loaded map mods with the Screen line, and 9 "Who wins"
 pages). Version 1.4.0 (CMF API 10: plans/2026-10-24-cmf-rev10-build-contract.md section 7) adds a plain description
@@ -31,7 +33,8 @@ from xml.sax.saxutils import quoteattr
 
 ROOT = Path(__file__).resolve().parents[1]
 MOD = 'modCMFInGameMenu'
-VERSION = '1.4.0'
+VERSION = '1.5.0'
+MIN_API = 11
 MENU = ROOT/'source/menu'/(MOD + '.xml')
 CATALOG = ROOT/'source/menu/strings.json'
 SCRIPT = ROOT/'source/menu/content/scripts/local/cmfMenu.ws'
@@ -86,7 +89,9 @@ PAGES = [
         ('pick', 'Movement', 'Map movement'),
         ('pick', 'Behaviour', 'Map behaviour')]),
     ('CMFMenuAdvIcons', 'cmf_advanced.cmf_adv_icons', 'Pin icons',
-     [('pick', 'Icons_' + key, label) for key, label in GROUP_NAMES]),
+     [('pick', 'Icons_' + key, label) for key, label in GROUP_NAMES] +
+     # Menu add-on 1.5.0 (CMF API 11): the script hides the row on an older CMF.
+     [('pick', 'Icons_Undiscovered', 'Undiscovered places (?)')]),
     ('CMFMenuAdvColours', 'cmf_advanced.cmf_adv_colours', 'Pin colours',
      [('pick', 'Colours_' + key, label) for key, label in GROUP_NAMES]),
     ('CMFMenuAdvSize', 'cmf_advanced.cmf_adv_size', 'Pin size and labels', [
@@ -103,6 +108,7 @@ PAGES = [
         ('pick', 'Look_Frames', 'Frames and panels'),
         ('pick', 'Look_Legend', 'Legend'),
         ('pick', 'Look_InfoBox', 'Info box'),
+        ('pick', 'Look_InfoText', 'Info box text'),
         ('pick', 'Look_Hints', 'Key hints'),
         ('pick', 'Look_PinText', 'Pin text style')]),
     ('CMFMenuAdvMovement', 'cmf_advanced.cmf_adv_movement', 'Map movement', [
@@ -149,7 +155,8 @@ PAGES = [
     ('CMFMenuStatusMods', 'cmf_status.cmf_status_mods', 'Loaded map mods',
      [('head', 'Mods', 'Map mods loaded'), ('mods',), ('screen',)]),
     ('CMFMenuWinIcons', 'cmf_status.cmf_win_icons', 'Who wins: pin icons',
-     [('win', 'Icons_' + key, label) for key, label in GROUP_NAMES]),
+     [('win', 'Icons_' + key, label) for key, label in GROUP_NAMES] +
+     [('win', 'Icons_Undiscovered', 'Undiscovered places (?)')]),
     ('CMFMenuWinColours', 'cmf_status.cmf_win_colours', 'Who wins: pin colours',
      [('win', 'Colours_' + key, label) for key, label in GROUP_NAMES]),
     ('CMFMenuWinSize', 'cmf_status.cmf_win_size', 'Who wins: pin size and labels', [
@@ -164,6 +171,7 @@ PAGES = [
         ('win', 'Look_Frames', 'Frames and panels'),
         ('win', 'Look_Legend', 'Legend'),
         ('win', 'Look_InfoBox', 'Info box'),
+        ('win', 'Look_InfoText', 'Info box text'),
         ('win', 'Look_Hints', 'Key hints'),
         ('win', 'Look_PinText', 'Pin text style')]),
     ('CMFMenuWinMovement', 'cmf_status.cmf_win_movement', 'Who wins: map movement', [
@@ -205,6 +213,7 @@ LATER_TITLES = ['cmf_adv_behaviour', 'cmf_win_behaviour']
 # The remembered list of map mods (title screen), one folder name per value; a one-segment group with no
 # visible rows, so the game adds no Options entry for it.
 KNOWN_GROUP = 'CMFMenuKnown'
+KNOWN_PRESENT_GROUP = 'CMFMenuKnownPresent'
 KNOWN_SLOTS = 24
 # Words the script reads from the tables (the rule glyphs a .ws file cannot hold: scripts stay ASCII).
 SCRIPT_STRINGS = [
@@ -285,6 +294,12 @@ def menu_xml(probe=False):
         lines += hidden_var('CMFKnown%d' % n)
     lines.append('\t\t</VisibleVars>')
     lines.append('\t</Group>')
+    lines.append('\t<Group id="%s" displayName="cmf_menu_known_present">' % KNOWN_PRESENT_GROUP)
+    lines.append('\t\t<VisibleVars>')
+    for n in range(1, KNOWN_SLOTS + 1):
+        lines += hidden_var('CMFKnownPresent%d' % n)
+    lines.append('\t\t</VisibleVars>')
+    lines.append('\t</Group>')
     lines.append('</UserConfig>')
     return '\n'.join(lines) + '\n'
 
@@ -305,6 +320,7 @@ def catalog(probe=False):
             keys.append(('panel_' + segments[-1], title))
     keys += SCRIPT_STRINGS
     keys += [('panel_' + segment, later[segment]) for segment in LATER_TITLES]
+    keys.append(('cmf_menu_support_present', 'CMF support present'))
     if probe:
         keys.append(('panel_' + HEAD_TEST_PATH, HEAD_TEST_TITLE))
     return {
@@ -414,7 +430,7 @@ def build(out, w3strings, probe=False):
     files = {}
     for path in sorted(p for p in out.rglob('*') if p.is_file()):
         files[path.relative_to(out).as_posix()] = sha(path.read_bytes())
-    (out/'build.json').write_text(json.dumps({'mod': MOD, 'version': VERSION, 'probe': probe, 'files': files},
+    (out/'build.json').write_text(json.dumps({'mod': MOD, 'version': VERSION, 'minCmfApi': MIN_API, 'probe': probe, 'files': files},
                                              indent=2) + '\n',
                                   encoding='utf-8')
     return files

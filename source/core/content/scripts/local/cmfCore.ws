@@ -13,10 +13,14 @@
 // CMFSetOpeningWorld); version 10: behaviour picked apart from art (the Behaviour feature and its pieces, choices per
 // key: CMF files each theme key and property under a look piece or a behaviour piece), the wide part (the map fills
 // wide and tall screens), the wideAnchor drawing key, the HoverName pin property, the opening keys readyAtFadeStart
-// and revealEase, and CMFScreenWidth and CMFScreenHeight).
+// and revealEase, and CMFScreenWidth and CMFScreenHeight); version 11: one pin at a time (the colour of one pin by tag,
+// art for one pin or one real kind while undiscovered or completed, the info box's title and text replaced or added to,
+// its height per type, tag or pin, art for a level variant type, claims by place (CMFRegisterForPlace), the player marker
+// and the player's own markers restyled by type, the game's own legend rows moved and whole filter tabs hidden, and the
+// pin list in the log, [CMFSettings] CMFLogPins, and provider presence without feature ownership).
 // Never remove a call once published.
 
-function CMFGetVersion() : int { return 10; }
+function CMFGetVersion() : int { return 11; }
 
 function CMFPropertyIcon() : int { return 1; }
 function CMFPropertyLegendIcon() : int { return 2; }
@@ -45,7 +49,7 @@ function CMFPropertyLabelColor() : int { return 17; }
 // "button", separated by commas or spaces) and number = any nonzero value handed back with the click (0
 // withdraws); one provider wins each pin. PinClickHint (20) and PinClickButton (21) text = the words shown in
 // the button bar and on the button, number nonzero (0 withdraws); CMF shows them only from the provider that
-// won the pin's click. Ids 18 and 19 are kept for tooltip slots.
+// won the pin's click.
 function CMFPropertyPinClick() : int { return 16; }
 function CMFPropertyPinClickHint() : int { return 20; }
 function CMFPropertyPinClickButton() : int { return 21; }
@@ -70,6 +74,30 @@ function CMFPropertyWorldMarker() : int { return 27; }
 // pin, 2 the hovered pin shows its name on the label line; 0 as the game shows it, so a type claim of 0 keeps that type
 // out of an every-pin claim), for every pin (target ''), a type, a tag or one pin.
 function CMFPropertyHoverName() : int { return 28; }
+// Version 11: the info box's title (18) and text (19), HTML as the game's own, for every pin (target ''), a type, a tag, a
+// place or one pin. number 0 replaces the game's words (one provider wins, as for any property); number 1 adds the text
+// as lines below them (every add claim applies, the earlier folder first). The title is also the pin's name on the map.
+function CMFPropertyInfoTitle() : int { return 18; }
+function CMFPropertyInfoText() : int { return 19; }
+// Version 11: art while the pin is undiscovered (29, the "?" pin) or completed (30, the "...Disabled" pin), text = a
+// picture or "frame:<label>" as for the icon, for a type (the pin's real kind, such as 'BanditCamp', so an undiscovered
+// camp can look apart from an undiscovered cave), a tag, a place or one pin.
+function CMFPropertyIconUndiscovered() : int { return 29; }
+function CMFPropertyIconCompleted() : int { return 30; }
+// Version 11: hides a whole filter tab (target = the tab: Quests, Exploration, NPCs, Buffs, Default or a tab id; never
+// All), number nonzero (0 withdraws). Every claim applies, as for hiding pins.
+function CMFPropertyTabHidden() : int { return 37; }
+// Version 11: provider presence only; never a feature claim.
+function CMFPropertyPresent() : int { return 38; }
+
+// Version 11: how an info box claim's text joins the game's words (its number).
+function CMFInfoReplace() : int { return 0; }
+function CMFInfoAdd() : int { return 1; }
+
+// Version 11: target levels of a claim. 0 every pin, 1 a type, 2 one pin by tag, 3 one pin by place (CMFRegisterForPlace:
+// the pin of that type within CMFPlaceRadius metres of a world position). Tag beats place, which beats type.
+function CMFLevelPlace() : int { return 3; }
+function CMFPlaceRadius() : float { return 2.0; }
 
 // Exemption flags of a hide claim, as stored in its number.
 function CMFExemptTracked() : int { return 2; }
@@ -305,7 +333,7 @@ function CMFPropertyTextFree(propertyId : int) : bool
 		propertyId == CMFPropertyPinScale() || propertyId == CMFPropertyLabelPlace() ||
 		propertyId == CMFPropertyInfoBoxHeight() || propertyId == CMFPropertyLabelColor() ||
 		propertyId == CMFPropertyCategoryNoDefault() || propertyId == CMFPropertySpreadRank() ||
-		propertyId == CMFPropertyHoverName();
+		propertyId == CMFPropertyHoverName() || propertyId == CMFPropertyTabHidden();
 }
 
 // Version 6: the click properties (16, 20, 21), which reach user pins and follow the click's winner.
@@ -379,6 +407,16 @@ function CMFOwnerField(propertyId : int) : string
 			return "cmfSpreadRankBy";
 		case 28:
 			return "cmfHoverNameBy";
+		// Version 11.
+		case 14:
+			return "cmfDescMaxHBy";
+		case 18:
+			return "cmfInfoTitleBy";
+		case 19:
+			return "cmfInfoTextBy";
+		case 29:
+		case 30:
+			return "cmfIconBy";
 	}
 	return "";
 }
@@ -405,7 +443,8 @@ function CMFIsVanillaCategory(category : string, ignoreCase : bool) : bool
 // Painting_Crests (60) and Movement_View (61); every older index stays. Version 10 appends the Behaviour feature (62)
 // and its pieces Behaviour_InfoBoxDodge (63) and Behaviour_InfoBoxHeight (64), Movement_ZoomOut (65),
 // Movement_Controller (66), Behaviour_HoverNames (67) and Movement_Wide (68); Size_Lead, Size_Spread and Labels_Place
-// keep their index and name and answer the Behaviour feature (CMFChoiceParent).
+// keep their index and name and answer the Behaviour feature (CMFChoiceParent). Version 11 keeps 69 (Reserved69, never
+// offered) and appends Icons_Undiscovered (70) and Look_InfoText (71).
 function CMFChoiceKeys() : string
 {
 	return "Icons,Colours,Size,Labels,Clicks,Legend,Hidden,Look,Movement,Painting,Drawings," +
@@ -417,7 +456,7 @@ function CMFChoiceKeys() : string
 		"Painting_Velen,Painting_Skellige,Painting_KaerMorhen,Painting_Vizima,Painting_IsleOfMists,Painting_Spiral," +
 		"Painting_Toussaint,Drawings_Ignore1,Drawings_Ignore2,Drawings_Ignore3,Painting_World,Painting_Crests," +
 		"Movement_View,Behaviour,Behaviour_InfoBoxDodge,Behaviour_InfoBoxHeight,Movement_ZoomOut,Movement_Controller," +
-		"Behaviour_HoverNames,Movement_Wide";
+		"Behaviour_HoverNames,Movement_Wide,Reserved69,Icons_Undiscovered,Look_InfoText";
 }
 
 // Version 10: the feature of the three pieces that moved under Behaviour (62) without a new name, or -1 when the key's
@@ -600,7 +639,8 @@ function CMFTidyName(provider : string) : string
 	return result;
 }
 
-// Target levels: 0 every pin (hide claims only), 1 one pin type, 2 one pin instance (tag).
+// Target levels: 0 every pin (hide claims only), 1 one pin type, 2 one pin instance (tag), 3 (version 11) one pin by
+// place: pinType and the world position placeX, placeY (CMFLevelPlace).
 // Background claims are level 1 with pinType holding the map area name (m_shownArea).
 // Disabled claims carry a map context ('FastTravel', 'Boat', 'GlobalMap'; None means every context).
 struct SCMFClaim
@@ -614,6 +654,8 @@ struct SCMFClaim
 	var text : string;
 	var number : int;
 	var order : int;
+	var placeX : float;
+	var placeY : float;
 }
 
 // Version 9: one provider's opening view for one map area ('' = every area), as CMFSetOpeningView or
@@ -631,6 +673,10 @@ struct SCMFOpeningView
 
 class CMFCore extends CObject
 {
+	// Session presence is independent of claims, offers and provider priority.
+	private var presentIdentities : array<string>;
+	private var presentProviders : array<string>;
+	private var lastPresentProvider : string;
 	private var claims : array<SCMFClaim>;
 	private var winners : array<SCMFClaim>;
 	private var nextOrder : int;
@@ -676,6 +722,8 @@ class CMFCore extends CObject
 	private var groupCacheType : string;
 	private var groupCacheValue : int;
 	private var mapSeen : bool;
+	// Version 11: shared across map instances and save reloads for this core session.
+	private var mapCheckWarned : bool;
 	// Version 9: choice-only registrations (CMFRegisterChoiceOnly) as a provider and a choice index each, the providers
 	// of the claims they left out at the last preparation (one entry per claim), and the opening views.
 	private var choiceOnlyProviders : array<string>;
@@ -685,6 +733,88 @@ class CMFCore extends CObject
 	// Version 10: the visible screen in map units from the last map opening (0 before the first).
 	private var screenWidth : float;
 	private var screenHeight : float;
+	// Version 11: the info box add claims (number 1, every one applies, folder order) and the whole-tab hides of the
+	// last preparation; the pin being written (SetPinContext): the pin key its claims were asked with, its own type when
+	// that is a level variant of the key, and its world position; the pin list log's area and the pins it named there.
+	private var infoAdds : array<SCMFClaim>;
+	private var tabsHidden : array<SCMFClaim>;
+	private var pinKeyNow : string;
+	private var variantNow : string;
+	private var placeOk : bool;
+	private var placeX : float;
+	private var placeY : float;
+	private var listArea : name;
+	private var listedPins : array<string>;
+	// Version 11, opening speed: which properties have a winner, how many claims name a place, and the tag claims' game
+	// ids, worked out once per preparation so a pin's lookups skip what no provider asked for.
+	private var propertyWon : array<bool>;
+	private var placeClaims : int;
+	private var tagIds : array<int>;
+	private var tagNames : array<name>;
+	// Version 11, opening speed: the types the winners name (type claims), whether any winner covers every pin, so a pin
+	// no claim can reach skips the field writing (PinCovered).
+	private var claimedTypes : array<string>;
+	private var everyPinClaims : int;
+	// The same for the info box title and text claims (18, 19, replace and add): the types and tags they name, and
+	// whether one reaches every pin or names a place.
+	private var infoTypes : array<string>;
+	private var infoTags : array<name>;
+	private var infoEveryOrPlace : bool;
+	private var logPins : bool;
+	private var logPinsAsked : bool;
+	private var logPinsLines : int;
+
+	// Called only after a fully shown map closes without any CMF readiness callback. The box waits for the menus to
+	// finish closing (CMFMapCheckLater): a box asked for while the map's menus close can be cleared with them.
+	public function MapCheckWarnOnce() : bool
+	{
+		if (mapCheckWarned)
+		{
+			return false;
+		}
+		mapCheckWarned = true;
+		CMFLog("map check: CMF's map did not load; another mod's map file is loading first");
+		CMFMapCheckSchedule();
+		return true;
+	}
+
+	// Exact spelling is the common per-pin path; case folding and one lookup happen only on a cache miss.
+	public function NoteProviderPresent(provider : string) : bool
+	{
+		var identity : string;
+		if (provider == "")
+		{
+			return false;
+		}
+		if (provider == lastPresentProvider)
+		{
+			return true;
+		}
+		identity = StrLower(provider);
+		if (presentIdentities.FindFirst(identity) < 0)
+		{
+			presentIdentities.PushBack(identity);
+			presentProviders.PushBack(provider);
+			CMFLog("present provider=" + provider);
+		}
+		lastPresentProvider = provider;
+		return true;
+	}
+
+	public function ProviderPresent(provider : string) : bool
+	{
+		return provider != "" && presentIdentities.FindFirst(StrLower(provider)) >= 0;
+	}
+
+	public function PresentProviders(out providers : array<string>)
+	{
+		var i : int;
+		providers.Clear();
+		for (i = 0; i < presentProviders.Size(); i += 1)
+		{
+			providers.PushBack(presentProviders[i]);
+		}
+	}
 
 	public function RequestRefresh()
 	{
@@ -758,16 +888,26 @@ class CMFCore extends CObject
 			}
 			incoming.text = CMFPinClickText(flags);
 		}
-		if (incoming.propertyId == CMFPropertyInfoBoxHeight() && incoming.level != 0)
+		// Version 11: a whole filter tab is hidden by a type claim on the tab's name, never All.
+		if (incoming.propertyId == CMFPropertyTabHidden())
 		{
-			CMFLog("rejected provider=" + incoming.provider + " property=" + incoming.propertyId + " reason=level");
-			return false;
+			if (incoming.level != 1 || StrLower(NameToString(incoming.pinType)) == "all")
+			{
+				CMFLog("rejected provider=" + incoming.provider + " property=" + incoming.propertyId + " reason=target");
+				return false;
+			}
+			if (incoming.number != 0)
+			{
+				incoming.number = 1;
+			}
 		}
 		if ((incoming.propertyId == CMFPropertyPinScale() && (incoming.number < 25 || incoming.number > 400)) ||
 			(incoming.propertyId == CMFPropertyLabelPlace() && (incoming.number < 0 || incoming.number > 10000)) ||
 			(incoming.propertyId == CMFPropertyLabelColor() && (incoming.number < 0 || incoming.number > 16777215)) ||
 			(incoming.propertyId == CMFPropertySpreadRank() && (incoming.number < 0 || incoming.number > 1000)) ||
 			(incoming.propertyId == CMFPropertyHoverName() && (incoming.number < 0 || incoming.number > 3)) ||
+			((incoming.propertyId == CMFPropertyInfoTitle() || incoming.propertyId == CMFPropertyInfoText()) &&
+			incoming.number != CMFInfoReplace() && incoming.number != CMFInfoAdd()) ||
 			(incoming.propertyId == CMFPropertyInfoBoxHeight() && incoming.number != 0 &&
 			(incoming.number < 100 || incoming.number > 1080)))
 		{
@@ -804,7 +944,8 @@ class CMFCore extends CObject
 		}
 		// An empty legend row category means All only; a hide claim needs no text.
 		if (incoming.provider == "" || (!CMFPropertyTextFree(incoming.propertyId) && incoming.text == "") ||
-			(incoming.level == 1 && !IsNameValid(incoming.pinType)) || (incoming.level == 2 && !IsNameValid(incoming.pinTag)))
+			((incoming.level == 1 || incoming.level == CMFLevelPlace()) && !IsNameValid(incoming.pinType)) ||
+			(incoming.level == 2 && !IsNameValid(incoming.pinTag)))
 		{
 			CMFLog("rejected provider=" + incoming.provider + " property=" + incoming.propertyId + " reason=empty");
 			return false;
@@ -834,6 +975,7 @@ class CMFCore extends CObject
 	public function ReleaseProvider(provider : string)
 	{
 		var i, released : int;
+		NoteProviderPresent(provider);
 		released = 0;
 		for (i = claims.Size() - 1; i >= 0; i -= 1)
 		{
@@ -1818,6 +1960,16 @@ class CMFCore extends CObject
 				return 64; // Behaviour_InfoBoxHeight (version 10; Look_InfoBox before)
 			case 28:
 				return 67; // Behaviour_HoverNames
+			// Version 11.
+			case 29:
+				return 70; // Icons_Undiscovered
+			case 30:
+				return 14; // Icons_Completed
+			case 18:
+			case 19:
+				return 71; // Look_InfoText
+			case 37:
+				return 35; // Legend_Tabs
 			case 16:
 			case 20:
 			case 21:
@@ -1881,8 +2033,10 @@ class CMFCore extends CObject
 		switch (part)
 		{
 			case 'tooltip':
-				if (CMFListHas("clearMinHeight,clearSide,clearCursor,clearLeft,clearTop,clearRight,clearBottom,clearView",
-					NameToString(key)))
+				// Version 11: x and y place the box too, so a mod that only moves the box never owns its look.
+				if (CMFListHas("clearMinHeight,clearSide,clearCursor,clearLeft,clearTop,clearRight,clearBottom,clearView," +
+					"clearCursorAbove,clearCursorBelow,clearCursorTitle,clearPadX,clearPadY,clearGap,clearBoxPad,clearPick," +
+					"clearCursorWeight,x,y", NameToString(key)))
 				{
 					return 63; // Behaviour_InfoBoxDodge
 				}
@@ -2438,6 +2592,8 @@ class CMFCore extends CObject
 		hideClaims.Clear();
 		tabHideClaims.Clear();
 		choiceOnlySkipped.Clear();
+		infoAdds.Clear();
+		tabsHidden.Clear();
 		for (i = 0; i < claims.Size(); i += 1)
 		{
 			// Version 9: a claim whose choice its provider made choice-only waits until that provider is picked.
@@ -2466,6 +2622,22 @@ class CMFCore extends CObject
 			}
 			if (claims[i].propertyId == CMFPropertyDisabled() && !AdditiveAllows(6, claims[i].provider))
 			{
+				continue;
+			}
+			// Version 11: info box lines added below the game's words are never arbitrated (every one applies, the
+			// earlier folder first), and every whole-tab hide applies, as hides do.
+			if ((claims[i].propertyId == CMFPropertyInfoTitle() || claims[i].propertyId == CMFPropertyInfoText()) &&
+				claims[i].number == CMFInfoAdd())
+			{
+				AddInfoLine(claims[i]);
+				continue;
+			}
+			if (claims[i].propertyId == CMFPropertyTabHidden())
+			{
+				if (claims[i].number != 0)
+				{
+					tabsHidden.PushBack(claims[i]);
+				}
 				continue;
 			}
 			// A withdrawn label hide or info box height leaves the slot to the next folder.
@@ -2512,6 +2684,7 @@ class CMFCore extends CObject
 				winners.PushBack(claims[i]);
 			}
 		}
+		NoteLookups();
 		dirty = false;
 		revision += 1;
 		if (providerOrder != "")
@@ -2535,6 +2708,204 @@ class CMFCore extends CObject
 				NameToString(tabHideClaims[i].pinType) + " tag=" + NameToString(tabHideClaims[i].pinTag) + " tabs=" +
 				tabHideClaims[i].text);
 		}
+		for (i = 0; i < tabsHidden.Size(); i += 1)
+		{
+			CMFLog("tab hidden provider=" + tabsHidden[i].provider + " tab=" + NameToString(tabsHidden[i].pinType));
+		}
+		for (i = 0; i < infoAdds.Size(); i += 1)
+		{
+			CMFLog("info add provider=" + infoAdds[i].provider + " property=" + infoAdds[i].propertyId + " level=" +
+				infoAdds[i].level + " type=" + NameToString(infoAdds[i].pinType) + " tag=" + NameToString(infoAdds[i].pinTag));
+		}
+	}
+
+	// Version 11, opening speed: the per-preparation lookup aids (propertyWon, placeClaims, tagIds and tagNames, the
+	// tags in LateTag's order: winners, hides, tab hides, info adds).
+	private function NoteLookups()
+	{
+		var i : int;
+		propertyWon.Clear();
+		for (i = 0; i < 64; i += 1)
+		{
+			propertyWon.PushBack(false);
+		}
+		placeClaims = 0;
+		tagIds.Clear();
+		tagNames.Clear();
+		claimedTypes.Clear();
+		everyPinClaims = 0;
+		infoTypes.Clear();
+		infoTags.Clear();
+		infoEveryOrPlace = false;
+		for (i = 0; i < winners.Size(); i += 1)
+		{
+			if (winners[i].propertyId >= 0 && winners[i].propertyId < 64)
+			{
+				propertyWon[winners[i].propertyId] = true;
+			}
+			NoteLookupClaim(winners[i]);
+			NoteInfoClaim(winners[i]);
+			// The every-pin info box height is the menu's (WriteFields takes only a type, tag or place height).
+			if (winners[i].level == 0 && winners[i].propertyId != CMFPropertyInfoBoxHeight())
+			{
+				everyPinClaims += 1;
+			}
+			if (winners[i].level == 1 && !claimedTypes.Contains(NameToString(winners[i].pinType)))
+			{
+				claimedTypes.PushBack(NameToString(winners[i].pinType));
+			}
+		}
+		for (i = 0; i < hideClaims.Size(); i += 1)
+		{
+			NoteLookupClaim(hideClaims[i]);
+		}
+		for (i = 0; i < tabHideClaims.Size(); i += 1)
+		{
+			NoteLookupClaim(tabHideClaims[i]);
+		}
+		for (i = 0; i < infoAdds.Size(); i += 1)
+		{
+			NoteLookupClaim(infoAdds[i]);
+			NoteInfoClaim(infoAdds[i]);
+		}
+	}
+
+	private function NoteInfoClaim(claim : SCMFClaim)
+	{
+		if (claim.propertyId != CMFPropertyInfoTitle() && claim.propertyId != CMFPropertyInfoText())
+		{
+			return;
+		}
+		if (claim.level == 0 || claim.level == CMFLevelPlace())
+		{
+			infoEveryOrPlace = true;
+		}
+		else if (claim.level == 1 && !infoTypes.Contains(NameToString(claim.pinType)))
+		{
+			infoTypes.PushBack(NameToString(claim.pinType));
+		}
+		else if (claim.level == 2)
+		{
+			infoTags.PushBack(claim.pinTag);
+		}
+	}
+
+	// Version 11, opening speed: whether an info box claim can reach this pin (its type, legend name or own type, its tag).
+	private function InfoCovered(pinType : string, filtered : string, own : string, pinTag : name) : bool
+	{
+		var i : int;
+		if (infoEveryOrPlace || infoTypes.Contains(pinType) || infoTypes.Contains(filtered) || infoTypes.Contains(own))
+		{
+			return true;
+		}
+		if (!IsNameValid(pinTag))
+		{
+			return false;
+		}
+		for (i = 0; i < infoTags.Size(); i += 1)
+		{
+			if (infoTags[i] == pinTag)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// Version 11, opening speed: whether any winner can reach this pin in WriteFields: an every-pin claim, a type claim on
+	// its type, legend name or level variant, a tag claim on its tag, or any place claim (checked by Covers there).
+	private function PinCovered(pinKey : string, legendKey : string, pinTag : name) : bool
+	{
+		var i : int;
+		if (everyPinClaims > 0 || placeClaims > 0 || claimedTypes.Contains(pinKey) || claimedTypes.Contains(legendKey) ||
+			(variantNow != "" && claimedTypes.Contains(variantNow)))
+		{
+			return true;
+		}
+		if (!IsNameValid(pinTag))
+		{
+			return false;
+		}
+		for (i = 0; i < tagNames.Size(); i += 1)
+		{
+			if (tagNames[i] == pinTag)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private function PropertyWon(propertyId : int) : bool
+	{
+		return propertyId >= 0 && propertyId < propertyWon.Size() && propertyWon[propertyId];
+	}
+
+	private function NoteLookupClaim(claim : SCMFClaim)
+	{
+		if (claim.level == CMFLevelPlace())
+		{
+			placeClaims += 1;
+		}
+		if (claim.level == 2)
+		{
+			tagIds.PushBack(NameToFlashUInt(claim.pinTag));
+			tagNames.PushBack(claim.pinTag);
+		}
+	}
+
+	// Version 11: keeps the info box add claims in the order they apply: earlier provider first, then registration.
+	private function AddInfoLine(claim : SCMFClaim)
+	{
+		var i : int;
+		for (i = 0; i < infoAdds.Size(); i += 1)
+		{
+			if (ProviderBeats(claim.provider, infoAdds[i].provider) ||
+				(claim.provider == infoAdds[i].provider && claim.order < infoAdds[i].order))
+			{
+				infoAdds.Insert(i, claim);
+				return;
+			}
+		}
+		infoAdds.PushBack(claim);
+	}
+
+	// Version 11: whether a provider's never-arbitrated claim of one choice applies: Vanilla none, a picked mod only its
+	// own, Automatic every one.
+	private function AnswerAllows(choice : int, provider : string) : bool
+	{
+		var answer : string;
+		if (!choicesActive || choice < 0)
+		{
+			return true;
+		}
+		answer = decideAnswer[choice];
+		if (answer == "vanilla")
+		{
+			return false;
+		}
+		return answer == "" || answer == "@order" || answer == provider;
+	}
+
+	// Version 11: the filter tabs hidden whole (CMFPropertyTabHidden), joined with commas.
+	private function HiddenTabs() : string
+	{
+		var tabs, tab : string;
+		var i : int;
+		tabs = "";
+		for (i = 0; i < tabsHidden.Size(); i += 1)
+		{
+			tab = NameToString(tabsHidden[i].pinType);
+			if (AnswerAllows(35, tabsHidden[i].provider) && !CMFListHas(tabs, tab))
+			{
+				if (tabs != "")
+				{
+					tabs += ",";
+				}
+				tabs += tab;
+			}
+		}
+		return tabs;
 	}
 
 	// Orders the winning category claims by (number, id ignoring case); a category's effective tab
@@ -2733,9 +3104,12 @@ class CMFCore extends CObject
 		return root;
 	}
 
-	// Called for every engine pin from AddPinTypeData, after vanilla filled the object: lookup only.
-	public function WritePinFields(dataObject : CScriptedFlashObject, pinType : name, pinTag : name, mapContext : name)
+	// Called for every engine pin from AddPinTypeData, after vanilla filled the object: lookup only. pinType is the
+	// pin's visible type; realType (version 11) its real kind, which an undiscovered "?" or completed pin keeps.
+	public function WritePinFields(dataObject : CScriptedFlashObject, pinType : name, pinTag : name, mapContext : name,
+		optional realType : name)
 	{
+		var pinKey : string;
 		if (dirty)
 		{
 			Prepare();
@@ -2745,21 +3119,207 @@ class CMFCore extends CObject
 			return;
 		}
 		dataObject.SetMemberFlashBool("cmfDone", true);
+		pinKey = NameToString(pinType);
+		NoteListPin(dataObject, pinKey, pinTag, NameToString(realType));
+		SetPinContext(dataObject, pinKey);
 		if (hideClaims.Size() > 0)
 		{
-			MarkHidden(dataObject, HideOwner(dataObject, dataObject.GetMemberFlashString("type"), NameToString(pinType),
-				pinTag, 2, mapContext));
+			MarkHidden(dataObject, HideOwner(dataObject, dataObject.GetMemberFlashString("type"), pinKey,
+				pinTag, CMFLevelPlace(), mapContext));
 		}
 		if (tabHideClaims.Size() > 0)
 		{
-			WriteTabHide(dataObject, dataObject.GetMemberFlashString("type"), NameToString(pinType), pinTag, 2);
+			WriteTabHide(dataObject, dataObject.GetMemberFlashString("type"), pinKey, pinTag, CMFLevelPlace());
 		}
-		if (winners.Size() == 0)
+		if (winners.Size() > 0)
+		{
+			if (PinCovered(pinKey, pinKey, pinTag))
+			{
+				NotePin(pinType, pinTag);
+				WriteFields(dataObject, pinKey, pinKey, pinTag, CMFLevelPlace(), mapContext);
+			}
+			WriteStateIcon(dataObject, pinKey, NameToString(realType), pinTag);
+		}
+		ClearPinContext();
+	}
+
+	// Version 11: the undiscovered (29) or completed (30) art of a pin in that state, from its real kind, its tag, its
+	// place or every pin; a completed pin's visible type ("...Disabled") counts as its kind too. Not on a pin a provider
+	// styled itself.
+	private function WriteStateIcon(dataObject : CScriptedFlashObject, pinKey : string, kind : string, pinTag : name)
+	{
+		var claim : SCMFClaim;
+		var propertyId : int;
+		if (StrBeginsWith(pinKey, "NotDiscoveredPOI"))
+		{
+			propertyId = CMFPropertyIconUndiscovered();
+		}
+		else if (StrEndsWith(pinKey, "Disabled"))
+		{
+			propertyId = CMFPropertyIconCompleted();
+		}
+		else
 		{
 			return;
 		}
-		NotePin(pinType, pinTag);
-		WriteFields(dataObject, NameToString(pinType), NameToString(pinType), pinTag, 2, mapContext);
+		if (!PropertyWon(propertyId) || CMFPinOwner(dataObject, "cmfIconBy") != "")
+		{
+			return;
+		}
+		if (kind == "")
+		{
+			kind = pinKey;
+		}
+		if (Find(propertyId, kind, pinTag, CMFLevelPlace(), claim) ||
+			(kind != pinKey && Find(propertyId, pinKey, pinTag, CMFLevelPlace(), claim)))
+		{
+			dataObject.SetMemberFlashString("cmfIconPath", claim.text);
+		}
+	}
+
+	// Version 11: the info box's title and text claims on one pin, once every mod has added its pins: replace claims
+	// (number 0, one winner), then every add claim's lines (number 1) below, the earlier folder first. A pin a provider
+	// styled itself keeps that title or text.
+	private function WriteInfo(dataObject : CScriptedFlashObject, pinKey : string, legendKey : string, pinTag : name)
+	{
+		var claim : SCMFClaim;
+		var field : string;
+		var i : int;
+		if (CMFPinOwner(dataObject, "cmfInfoTitleBy") == "" &&
+			(Find(CMFPropertyInfoTitle(), pinKey, pinTag, CMFLevelPlace(), claim) ||
+			Find(CMFPropertyInfoTitle(), legendKey, '', 1, claim)))
+		{
+			dataObject.SetMemberFlashString("label", claim.text);
+		}
+		if (CMFPinOwner(dataObject, "cmfInfoTextBy") == "" &&
+			(Find(CMFPropertyInfoText(), pinKey, pinTag, CMFLevelPlace(), claim) ||
+			Find(CMFPropertyInfoText(), legendKey, '', 1, claim)))
+		{
+			dataObject.SetMemberFlashString("description", claim.text);
+		}
+		for (i = 0; i < infoAdds.Size(); i += 1)
+		{
+			if (!AnswerAllows(71, infoAdds[i].provider) ||
+				(!Covers(infoAdds[i], pinKey, pinTag, CMFLevelPlace()) &&
+				!(infoAdds[i].level == 1 && NameToString(infoAdds[i].pinType) == legendKey)) ||
+				((infoAdds[i].level == 2 || infoAdds[i].level == CMFLevelPlace()) && CMFKindHidden(pinKey)))
+			{
+				continue;
+			}
+			field = "description";
+			if (infoAdds[i].propertyId == CMFPropertyInfoTitle())
+			{
+				field = "label";
+			}
+			AddInfoText(dataObject, field, infoAdds[i].text);
+		}
+	}
+
+	// Version 11: one more line below a pin's title or text. The game wraps a description in its own paragraph
+	// (<font size='19'><p align='left'>...</p></font>); the line goes inside that paragraph, so it takes the same
+	// size and alignment instead of starting a centred paragraph of its own.
+	private function AddInfoText(dataObject : CScriptedFlashObject, field : string, text : string)
+	{
+		var current : string;
+		var paragraphEnd : int;
+		current = CMFPinOwner(dataObject, field);
+		LogPinDetail("pin info add type=" + dataObject.GetMemberFlashString("type") + " field=" + field + " before=" + current);
+		if (current == "")
+		{
+			dataObject.SetMemberFlashString(field, text);
+		}
+		else
+		{
+			paragraphEnd = StrFindLast(current, "</p>");
+			if (paragraphEnd >= 0)
+			{
+				dataObject.SetMemberFlashString(field, StrLeft(current, paragraphEnd) + "<br>" + text + StrRight(current, StrLen(current) - paragraphEnd));
+			}
+			else
+			{
+				dataObject.SetMemberFlashString(field, current + "<br>" + text);
+			}
+		}
+	}
+
+	// Version 11: the player marker (type 'Player') and the player's own markers ('User1' to 'User7') take type claims on
+	// exactly their type for their art, colour and size. Every-pin and tag claims never reach them.
+	private function WriteMarkerFields(dataObject : CScriptedFlashObject)
+	{
+		var claim : SCMFClaim;
+		var pinType : string;
+		pinType = dataObject.GetMemberFlashString("type");
+		if (pinType != "Player" && !(StrBeginsWith(pinType, "User") && StrLen(pinType) == 5))
+		{
+			return;
+		}
+		if (Find(CMFPropertyIcon(), pinType, '', 1, claim) && claim.level == 1)
+		{
+			dataObject.SetMemberFlashString("cmfIconPath", claim.text);
+		}
+		if (Find(CMFPropertyTint(), pinType, '', 1, claim) && claim.level == 1)
+		{
+			dataObject.SetMemberFlashUInt("cmfIconTint", claim.number);
+			dataObject.SetMemberFlashBool("cmfIconTintEnabled", true);
+		}
+		if (Find(CMFPropertyPinScale(), pinType, '', 1, claim) && claim.level == 1)
+		{
+			SetSlot(dataObject, CMFPropertyPinScale(), claim.text, claim.number);
+		}
+	}
+
+	// Version 11: with [CMFSettings] CMFLogPins on, logs every pin of an area once (no cap), so an author can find any
+	// pin's tag, type, name and place: "pin list area= type= kind= filteredType= tag= id= label= x= y=".
+	public function NoteListArea(area : name)
+	{
+		logPins = logPinsAsked || CMFSettingsLogPins();
+		if (area != listArea)
+		{
+			listArea = area;
+			listedPins.Clear();
+			logPinsLines = 0;
+		}
+	}
+
+	// Version 11: CMFSetLogPins, for an author's own test pack (the settings file key needs a line in the player's
+	// settings).
+	public function SetLogPins(on : bool)
+	{
+		logPinsAsked = on;
+		logPins = on || CMFSettingsLogPins();
+	}
+
+	// Version 11: with the pin list on, up to 200 lines per area on how CMF changed a pin's info box and legend row.
+	private function LogPinDetail(line : string)
+	{
+		if (logPins && logPinsLines < 200)
+		{
+			logPinsLines += 1;
+			CMFLog(line);
+		}
+	}
+
+	private function NoteListPin(dataObject : CScriptedFlashObject, pinKey : string, pinTag : name, kind : string)
+	{
+		var pinKeyName : string;
+		if (!logPins)
+		{
+			return;
+		}
+		pinKeyName = NameToString(pinTag);
+		if (pinKeyName == "")
+		{
+			pinKeyName = "#" + dataObject.GetMemberFlashUInt("id") + "/" + dataObject.GetMemberFlashString("type");
+		}
+		if (listedPins.Contains(pinKeyName))
+		{
+			return;
+		}
+		listedPins.PushBack(pinKeyName);
+		CMFLog("pin list area=" + NameToString(listArea) + " type=" + dataObject.GetMemberFlashString("type") + " kind=" +
+			kind + " filteredType=" + dataObject.GetMemberFlashString("filteredType") + " tag=" + NameToString(pinTag) +
+			" id=" + dataObject.GetMemberFlashUInt("id") + " label=" + dataObject.GetMemberFlashString("label") + " x=" +
+			FloatToString(dataObject.GetMemberFlashNumber("posX")) + " y=" + FloatToString(dataObject.GetMemberFlashNumber("posY")));
 	}
 
 	// Late pass over the finished pin array: type-level fields for pins that skipped AddPinTypeData
@@ -2778,6 +3338,7 @@ class CMFCore extends CObject
 		var i : int;
 		var fullList : bool;
 		var fresh : bool;
+		var isPlayer, isUser : bool;
 		fullList = indexToUpdate < 0;
 		if (dirty)
 		{
@@ -2792,8 +3353,15 @@ class CMFCore extends CObject
 		{
 			dataObject = flashArray.GetElementFlashObject(i);
 			fresh = false;
-			if (dataObject && !dataObject.GetMemberFlashBool("cmfDone") && !dataObject.GetMemberFlashBool("isPlayer") &&
-				!dataObject.GetMemberFlashBool("isUserPin"))
+			if (!dataObject)
+			{
+				continue;
+			}
+			// Each read crosses into the map panel, so the pin's two kind flags are read once (many pins with All
+			// Quest Markers).
+			isPlayer = dataObject.GetMemberFlashBool("isPlayer");
+			isUser = dataObject.GetMemberFlashBool("isUserPin");
+			if (!isPlayer && !isUser && !dataObject.GetMemberFlashBool("cmfDone"))
 			{
 				fresh = true;
 				dataObject.SetMemberFlashBool("cmfDone", true);
@@ -2819,11 +3387,10 @@ class CMFCore extends CObject
 				// (NameToFlashUInt), as the game sets it on its own pins, so one mod can style or hide a pin
 				// another mod adds by naming the tag that mod gave it.
 				pinTag = LateTag(dataObject);
-				maxLevel = 1;
-				if (IsNameValid(pinTag))
-				{
-					maxLevel = 2;
-				}
+				// Version 11: every lookup for the pin itself also reaches place claims (level 3).
+				maxLevel = CMFLevelPlace();
+				NoteListPin(dataObject, pinType, pinTag, "");
+				SetPinContext(dataObject, pinType);
 				if (fullList && hideClaims.Size() > 0)
 				{
 					MarkHidden(dataObject, HideOwner(dataObject, pinType, filtered, pinTag, maxLevel, mapContext));
@@ -2834,21 +3401,35 @@ class CMFCore extends CObject
 				}
 				if (winners.Size() > 0)
 				{
-					WriteFields(dataObject, pinType, filtered, pinTag, maxLevel, mapContext);
+					if (PinCovered(pinType, filtered, pinTag))
+					{
+						WriteFields(dataObject, pinType, filtered, pinTag, maxLevel, mapContext);
+					}
+					WriteStateIcon(dataObject, pinType, "", pinTag);
 				}
+				ClearPinContext();
+			}
+			// Version 11: the player marker and the player's own markers take type claims on exactly their type.
+			if ((isPlayer || isUser) && winners.Size() > 0)
+			{
+				WriteMarkerFields(dataObject);
+			}
+			// Version 11: the info box's title and text, after every mod's AddPinTypeData wrapper wrote its own.
+			if (fullList && !isPlayer && !isUser && (fresh || !catching) &&
+				(PropertyWon(CMFPropertyInfoTitle()) || PropertyWon(CMFPropertyInfoText()) || infoAdds.Size() > 0))
+			{
+				WritePinInfo(dataObject, fresh);
 			}
 			// Version 6: clicks reach user pins (type claims on their type, then their filteredType), on the full
 			// list and on the one-pin update that follows placing a pin. Other properties keep skipping them.
-			if (dataObject && dataObject.GetMemberFlashBool("isUserPin") && !dataObject.GetMemberFlashBool("isPlayer") &&
-				winners.Size() > 0)
+			if (isUser && !isPlayer && winners.Size() > 0)
 			{
 				WriteClickFields(dataObject, dataObject.GetMemberFlashString("type"),
 					dataObject.GetMemberFlashString("filteredType"), '', 1);
 			}
 			// Every mod has added its pins: providers and adapters may style each one now (OnPinReady). A
 			// second pass for pins pushed after the first (CatchLatePins) reaches only those.
-			if (fullList && dataObject && !dataObject.GetMemberFlashBool("isPlayer") &&
-				!dataObject.GetMemberFlashBool("isUserPin") && (fresh || !catching))
+			if (fullList && !isPlayer && !isUser && (fresh || !catching))
 			{
 				OnPinReady(dataObject, mapContext);
 			}
@@ -2860,35 +3441,56 @@ class CMFCore extends CObject
 		listOpen = false;
 	}
 
+	// Version 11: the info box claims of one pin of the full list. A pushed pin keys on its own type, then its legend name;
+	// a game pin on its visible type (its legend name) with its own type as the level variant. The tag is found by id.
+	private function WritePinInfo(dataObject : CScriptedFlashObject, fresh : bool)
+	{
+		var pinType, filtered, own : string;
+		var pinTag : name;
+		pinType = dataObject.GetMemberFlashString("type");
+		filtered = dataObject.GetMemberFlashString("filteredType");
+		own = pinType;
+		if (!fresh && filtered != "")
+		{
+			pinType = filtered;
+		}
+		if (pinType == "")
+		{
+			pinType = filtered;
+		}
+		if (filtered == "")
+		{
+			filtered = pinType;
+		}
+		pinTag = LateTag(dataObject);
+		if (!InfoCovered(pinType, filtered, own, pinTag))
+		{
+			return;
+		}
+		SetPinContext(dataObject, pinType);
+		WriteInfo(dataObject, pinType, filtered, pinTag);
+		ClearPinContext();
+	}
+
 	// The tag of a tag claim (any property) whose game id (NameToFlashUInt) is this pin's id, or None.
 	private function LateTag(dataObject : CScriptedFlashObject) : name
 	{
 		var id : int;
 		var i : int;
+		if (tagIds.Size() == 0)
+		{
+			return '';
+		}
 		id = dataObject.GetMemberFlashUInt("id");
 		if (id == 0)
 		{
 			return '';
 		}
-		for (i = 0; i < winners.Size(); i += 1)
+		for (i = 0; i < tagIds.Size(); i += 1)
 		{
-			if (winners[i].level == 2 && NameToFlashUInt(winners[i].pinTag) == id)
+			if (tagIds[i] == id)
 			{
-				return winners[i].pinTag;
-			}
-		}
-		for (i = 0; i < hideClaims.Size(); i += 1)
-		{
-			if (hideClaims[i].level == 2 && NameToFlashUInt(hideClaims[i].pinTag) == id)
-			{
-				return hideClaims[i].pinTag;
-			}
-		}
-		for (i = 0; i < tabHideClaims.Size(); i += 1)
-		{
-			if (tabHideClaims[i].level == 2 && NameToFlashUInt(tabHideClaims[i].pinTag) == id)
-			{
-				return tabHideClaims[i].pinTag;
+				return tagNames[i];
 			}
 		}
 		return '';
@@ -2924,15 +3526,42 @@ class CMFCore extends CObject
 		{
 			Prepare();
 		}
+		// Version 11: cmfDescMaxAll keeps the every-pin height while a pin with its own height (cmfDescMaxH on the pin)
+		// is selected.
 		if (Find(CMFPropertyInfoBoxHeight(), "", '', 0, claim))
 		{
 			menuFlash.SetMemberFlashNumber("cmfDescMaxH", claim.number);
+			menuFlash.SetMemberFlashNumber("cmfDescMaxAll", claim.number);
 			menuFlash.SetMemberFlashString("cmfDescMaxBy", claim.provider);
 		}
 		else
 		{
 			menuFlash.SetMemberFlashNumber("cmfDescMaxH", 0);
+			menuFlash.SetMemberFlashNumber("cmfDescMaxAll", 0);
 			menuFlash.SetMemberFlashString("cmfDescMaxBy", "");
+		}
+		SendHiddenTabs(menuFlash);
+	}
+
+	// Version 11: the filter tabs hidden whole go to the legend box (its cmfHiddenTabs), each opening.
+	private function SendHiddenTabs(menuFlash : CScriptedFlashSprite)
+	{
+		var pinPanel : CScriptedFlashSprite;
+		var tabs : string;
+		tabs = HiddenTabs();
+		pinPanel = menuFlash.GetChildFlashSprite("mcHubMapPinPanel");
+		if (!pinPanel)
+		{
+			if (tabs != "")
+			{
+				CMFLog("tabs hidden=" + tabs + " panel=none");
+			}
+			return;
+		}
+		pinPanel.SetMemberFlashString("cmfHiddenTabs", tabs);
+		if (tabs != "")
+		{
+			CMFLog("tabs hidden=" + tabs);
 		}
 	}
 
@@ -2949,15 +3578,8 @@ class CMFCore extends CObject
 		}
 		for (i = 0; i < tabHideClaims.Size(); i += 1)
 		{
-			covers = tabHideClaims[i].level <= maxLevel;
-			if (covers && tabHideClaims[i].level == 1)
-			{
-				covers = NameToString(tabHideClaims[i].pinType) == pinType || NameToString(tabHideClaims[i].pinType) == filtered;
-			}
-			if (covers && tabHideClaims[i].level == 2)
-			{
-				covers = IsNameValid(pinTag) && tabHideClaims[i].pinTag == pinTag;
-			}
+			covers = Covers(tabHideClaims[i], pinType, pinTag, maxLevel) ||
+				(tabHideClaims[i].level == 1 && NameToString(tabHideClaims[i].pinType) == filtered);
 			if (covers)
 			{
 				MergeTabHide(dataObject, tabHideClaims[i].provider, tabHideClaims[i].text);
@@ -3068,16 +3690,9 @@ class CMFCore extends CObject
 		travel = dataObject.GetMemberFlashBool("isFastTravel");
 		for (i = 0; i < hideClaims.Size(); i += 1)
 		{
-			covers = hideClaims[i].level <= maxLevel &&
+			covers = (Covers(hideClaims[i], pinType, pinTag, maxLevel) ||
+				(hideClaims[i].level == 1 && NameToString(hideClaims[i].pinType) == filtered)) &&
 				(!IsNameValid(hideClaims[i].mapContext) || hideClaims[i].mapContext == mapContext);
-			if (covers && hideClaims[i].level == 1)
-			{
-				covers = NameToString(hideClaims[i].pinType) == pinType || NameToString(hideClaims[i].pinType) == filtered;
-			}
-			if (covers && hideClaims[i].level == 2)
-			{
-				covers = IsNameValid(pinTag) && hideClaims[i].pinTag == pinTag;
-			}
 			if (covers && ((tracked && CMFHasFlag(hideClaims[i].number, CMFExemptTracked())) ||
 				(questPin && CMFHasFlag(hideClaims[i].number, CMFExemptQuest())) ||
 				(travel && CMFHasFlag(hideClaims[i].number, CMFExemptFastTravel()))))
@@ -3217,14 +3832,22 @@ class CMFCore extends CObject
 		{
 			dataObject.SetMemberFlashString("cmfIconPath", claim.text);
 		}
+		// Version 11: a "frame:<label>" icon names a frame of the pin's own art, which the legend row cannot show, so the
+		// row keeps its picture.
 		if (Find(CMFPropertyLegendIcon(), legendKey, '', 1, claim) || Find(CMFPropertyIcon(), legendKey, '', 1, claim))
 		{
-			dataObject.SetMemberFlashString("cmfLegendIconPath", claim.text);
+			if (!StrBeginsWith(claim.text, "frame:"))
+			{
+				dataObject.SetMemberFlashString("cmfLegendIconPath", claim.text);
+			}
 		}
 		else if (Find(CMFPropertyLegendIcon(), pinKey, '', 1, claim) || Find(CMFPropertyIcon(), pinKey, '', 1, claim))
 		{
-			dataObject.SetMemberFlashString("cmfLegendIconPath", claim.text);
-			legendFromPin = true;
+			if (!StrBeginsWith(claim.text, "frame:"))
+			{
+				dataObject.SetMemberFlashString("cmfLegendIconPath", claim.text);
+				legendFromPin = true;
+			}
 		}
 		if (!keepGold && CMFPinOwner(dataObject, "cmfTintBy") == "" && (Find(CMFPropertyTint(), pinKey, pinTag, maxLevel, claim) ||
 			Find(CMFPropertyTint(), legendKey, '', 1, claim)))
@@ -3246,6 +3869,8 @@ class CMFCore extends CObject
 		if (Find(CMFPropertyLegendRow(), legendKey, '', 1, claim))
 		{
 			rowHide = true;
+			LogPinDetail("pin legend row type=" + dataObject.GetMemberFlashString("type") + " filteredType=" + legendKey +
+				" category=" + claim.text + " priority=" + LegendPriority(claim.number));
 			dataObject.SetMemberFlashInt("cmfLegendPriority", LegendPriority(claim.number));
 			categoryAt = CategoryIndex(claim.text);
 			if (categoryAt >= 0)
@@ -3289,6 +3914,13 @@ class CMFCore extends CObject
 		WriteSlot(dataObject, CMFPropertyLabelColor(), pinKey, legendKey, pinTag, maxLevel);
 		WriteSlot(dataObject, CMFPropertySpreadRank(), pinKey, legendKey, pinTag, maxLevel);
 		WriteSlot(dataObject, CMFPropertyHoverName(), pinKey, legendKey, pinTag, maxLevel);
+		// Version 11: the info box height of this pin's type, tag or place; an every-pin height stays the menu's.
+		if (CMFPinOwner(dataObject, "cmfDescMaxHBy") == "" &&
+			(Find(CMFPropertyInfoBoxHeight(), pinKey, pinTag, maxLevel, claim) ||
+			Find(CMFPropertyInfoBoxHeight(), legendKey, '', 1, claim)) && claim.level > 0)
+		{
+			SetSlot(dataObject, CMFPropertyInfoBoxHeight(), claim.text, claim.number);
+		}
 		WriteClickFields(dataObject, pinKey, legendKey, pinTag, maxLevel);
 	}
 
@@ -3334,6 +3966,9 @@ class CMFCore extends CObject
 			case 28:
 				dataObject.SetMemberFlashInt("cmfHoverName", number);
 				break;
+			case 14:
+				dataObject.SetMemberFlashNumber("cmfDescMaxH", number);
+				break;
 		}
 	}
 
@@ -3358,24 +3993,24 @@ class CMFCore extends CObject
 		var matches : bool;
 		best = -1;
 		bestScore = -1;
+		if (!PropertyWon(CMFPropertyDisabled()))
+		{
+			return -1;
+		}
 		for (i = 0; i < winners.Size(); i += 1)
 		{
-			matches = winners[i].propertyId == CMFPropertyDisabled() && winners[i].level <= maxLevel &&
+			matches = winners[i].propertyId == CMFPropertyDisabled() && Covers(winners[i], pinType, pinTag, maxLevel) &&
 				(!IsNameValid(winners[i].mapContext) || winners[i].mapContext == mapContext);
-			if (matches && winners[i].level == 1)
+			if (!matches)
 			{
-				matches = NameToString(winners[i].pinType) == pinType;
+				continue;
 			}
-			if (matches && winners[i].level == 2)
-			{
-				matches = winners[i].pinTag == pinTag;
-			}
-			score = winners[i].level * 2;
+			score = Specific(winners[i]) * 2;
 			if (IsNameValid(winners[i].mapContext))
 			{
 				score += 1;
 			}
-			if (matches && score > bestScore)
+			if (score > bestScore)
 			{
 				best = i;
 				bestScore = score;
@@ -3406,11 +4041,17 @@ class CMFCore extends CObject
 	// when it has none the most specific other claim does, or nothing when the General row says Vanilla.
 	private function Find(propertyId : int, pinType : string, pinTag : name, maxLevel : int, out result : SCMFClaim) : bool
 	{
-		var i, best, picked, choice : int;
+		var i, best, picked, choice, rank, bestRank, pickedRank : int;
 		var matches : bool;
 		var answer : string;
+		if (propertyId < 0 || propertyId >= propertyWon.Size() || !propertyWon[propertyId])
+		{
+			return false;
+		}
 		best = -1;
 		picked = -1;
+		bestRank = -1;
+		pickedRank = -1;
 		answer = "";
 		if (choicesActive)
 		{
@@ -3430,24 +4071,28 @@ class CMFCore extends CObject
 		}
 		for (i = 0; i < winners.Size(); i += 1)
 		{
-			matches = winners[i].propertyId == propertyId && winners[i].level <= maxLevel;
-			if (matches && winners[i].level == 1)
+			matches = winners[i].propertyId == propertyId && Covers(winners[i], pinType, pinTag, maxLevel);
+			if (matches && (winners[i].level == 2 || winners[i].level == CMFLevelPlace()))
 			{
-				matches = NameToString(winners[i].pinType) == pinType;
+				// Instance claims never reveal undiscovered "?" pins or restyle completed ("Disabled") ones; version 11:
+				// the undiscovered and completed art (29, 30) is for exactly those.
+				matches = !CMFKindHidden(pinType) || propertyId == CMFPropertyIconUndiscovered() ||
+					propertyId == CMFPropertyIconCompleted();
 			}
-			if (matches && winners[i].level == 2)
+			if (!matches)
 			{
-				// Instance claims never reveal undiscovered "?" pins or restyle completed ("Disabled") ones.
-				matches = winners[i].pinTag == pinTag && pinType != "NotDiscoveredPOI" && !StrEndsWith(pinType, "Disabled");
+				continue;
 			}
-			if (matches && (best < 0 || winners[i].level > winners[best].level))
+			rank = Specific(winners[i]);
+			if (best < 0 || rank > bestRank)
 			{
 				best = i;
+				bestRank = rank;
 			}
-			if (matches && answer != "" && winners[i].provider == answer &&
-				(picked < 0 || winners[i].level > winners[picked].level))
+			if (answer != "" && winners[i].provider == answer && (picked < 0 || rank > pickedRank))
 			{
 				picked = i;
+				pickedRank = rank;
 			}
 		}
 		if (picked >= 0)
@@ -3463,10 +4108,91 @@ class CMFCore extends CObject
 		return true;
 	}
 
+	// Version 11: whether a claim covers the pin asked about (its type, tag, and while a pin is being written its level
+	// variant type and its place), considering levels up to maxLevel. Lookups for a pin pass CMFLevelPlace(); legend
+	// rows and other surfaces pass 1, so place and variant claims never reach them.
+	private function Covers(claim : SCMFClaim, pinType : string, pinTag : name, maxLevel : int) : bool
+	{
+		var dx, dy : float;
+		if (claim.level > maxLevel)
+		{
+			return false;
+		}
+		switch (claim.level)
+		{
+			case 0:
+				return true;
+			case 1:
+				if (NameToString(claim.pinType) == pinType)
+				{
+					return true;
+				}
+				return maxLevel >= CMFLevelPlace() && variantNow != "" && pinType == pinKeyNow &&
+					NameToString(claim.pinType) == variantNow;
+			case 2:
+				return IsNameValid(pinTag) && claim.pinTag == pinTag;
+			case 3:
+				if (!placeOk || (NameToString(claim.pinType) != pinType && NameToString(claim.pinType) != variantNow))
+				{
+					return false;
+				}
+				dx = claim.placeX - placeX;
+				dy = claim.placeY - placeY;
+				return dx * dx + dy * dy <= CMFPlaceRadius() * CMFPlaceRadius();
+		}
+		return false;
+	}
+
+	// Version 11: how specific a claim is for the pin being written: every pin, type, level variant type, place, tag.
+	private function Specific(claim : SCMFClaim) : int
+	{
+		switch (claim.level)
+		{
+			case 1:
+				if (variantNow != "" && NameToString(claim.pinType) == variantNow)
+				{
+					return 3;
+				}
+				return 2;
+			case 2:
+				return 6;
+			case 3:
+				return 4;
+		}
+		return 0;
+	}
+
+	// Version 11: the pin about to be written. pinKey is the key its claims are asked with (the game's visible type, or a
+	// pushed pin's own type); its own type counts as a level variant when it differs; posX and posY place it.
+	private function SetPinContext(dataObject : CScriptedFlashObject, pinKey : string)
+	{
+		var own : string;
+		pinKeyNow = pinKey;
+		own = dataObject.GetMemberFlashString("type");
+		variantNow = "";
+		if (own != pinKey && StrBeginsWith(own, pinKey))
+		{
+			variantNow = own;
+		}
+		placeOk = placeClaims > 0;
+		if (placeOk)
+		{
+			placeX = dataObject.GetMemberFlashNumber("posX");
+			placeY = dataObject.GetMemberFlashNumber("posY");
+		}
+	}
+
+	private function ClearPinContext()
+	{
+		pinKeyNow = "";
+		variantNow = "";
+		placeOk = false;
+	}
+
 	private function SameSlot(a : SCMFClaim, b : SCMFClaim) : bool
 	{
 		return a.propertyId == b.propertyId && a.level == b.level && a.pinType == b.pinType && a.pinTag == b.pinTag &&
-			a.mapContext == b.mapContext;
+			a.mapContext == b.mapContext && a.placeX == b.placeX && a.placeY == b.placeY;
 	}
 
 	// Earlier provider wins (ProviderBeats; version 8: PieceBeats for the claim's choice when a choice is set); then
@@ -3523,6 +4249,7 @@ class CMFCore extends CObject
 		var flags : int;
 		var tabs : string;
 		var choice : int;
+		NoteProviderPresent(provider);
 		// Version 6: clicks, hints and buttons have their own rules (StyleClick).
 		if (CMFIsClickProperty(propertyId))
 		{
@@ -3535,7 +4262,9 @@ class CMFCore extends CObject
 			return false;
 		}
 		if (provider == "" || !dataObject ||
-			((propertyId == CMFPropertyIcon() || propertyId == CMFPropertyLabelText()) && text == "") ||
+			((propertyId == CMFPropertyIcon() || propertyId == CMFPropertyLabelText() || propertyId == CMFPropertyInfoTitle() ||
+			propertyId == CMFPropertyInfoText() || propertyId == CMFPropertyIconUndiscovered() ||
+			propertyId == CMFPropertyIconCompleted()) && text == "") ||
 			((propertyId == CMFPropertyLabelHide() || propertyId == CMFPropertyTabHide()) && number == 0))
 		{
 			NoteStyleRejected(provider, propertyId, "empty");
@@ -3552,10 +4281,40 @@ class CMFCore extends CObject
 			(propertyId == CMFPropertyLabelPlace() && (number < 0 || number > 10000)) ||
 			(propertyId == CMFPropertyLabelColor() && (number < 0 || number > 16777215)) ||
 			(propertyId == CMFPropertySpreadRank() && (number < 0 || number > 1000)) ||
-			(propertyId == CMFPropertyHoverName() && (number < 0 || number > 3)))
+			(propertyId == CMFPropertyHoverName() && (number < 0 || number > 3)) ||
+			(propertyId == CMFPropertyInfoBoxHeight() && (number < 100 || number > 1080)) ||
+			((propertyId == CMFPropertyInfoTitle() || propertyId == CMFPropertyInfoText()) &&
+			number != CMFInfoReplace() && number != CMFInfoAdd()))
 		{
 			NoteStyleRejected(provider, propertyId, "range");
 			return false;
+		}
+		// Version 11: undiscovered and completed art only on a pin in that state.
+		if ((propertyId == CMFPropertyIconUndiscovered() &&
+			!StrBeginsWith(dataObject.GetMemberFlashString("filteredType"), "NotDiscoveredPOI")) ||
+			(propertyId == CMFPropertyIconCompleted() && !StrEndsWith(dataObject.GetMemberFlashString("filteredType"), "Disabled")))
+		{
+			NoteStyleRejected(provider, propertyId, "state");
+			return false;
+		}
+		// Version 11: lines added to the info box: every provider's apply, so there is no loser.
+		if ((propertyId == CMFPropertyInfoTitle() || propertyId == CMFPropertyInfoText()) && number == CMFInfoAdd())
+		{
+			NoteStyledOffer(71, provider);
+			if (!AnswerAllows(71, provider))
+			{
+				NoteStyleRejected(provider, propertyId, "choice");
+				return false;
+			}
+			if (propertyId == CMFPropertyInfoTitle())
+			{
+				AddInfoText(dataObject, "label", text);
+			}
+			else
+			{
+				AddInfoText(dataObject, "description", text);
+			}
+			return true;
 		}
 		if ((propertyId == CMFPropertyLabelHide() && !CMFParseLabelHide(text, flags)) ||
 			(propertyId == CMFPropertyTabHide() && !CMFParseTabs(text, tabs)))
@@ -3616,9 +4375,18 @@ class CMFCore extends CObject
 			}
 			NoteStyleShadow(owner, provider, dataObject, propertyId);
 		}
-		if (propertyId == CMFPropertyIcon())
+		if (propertyId == CMFPropertyIcon() || propertyId == CMFPropertyIconUndiscovered() ||
+			propertyId == CMFPropertyIconCompleted())
 		{
 			dataObject.SetMemberFlashString("cmfIconPath", text);
+		}
+		else if (propertyId == CMFPropertyInfoTitle())
+		{
+			dataObject.SetMemberFlashString("label", text);
+		}
+		else if (propertyId == CMFPropertyInfoText())
+		{
+			dataObject.SetMemberFlashString("description", text);
 		}
 		else if (propertyId == CMFPropertyTint())
 		{
@@ -3750,24 +4518,31 @@ class CMFCore extends CObject
 	private function FindOwn(propertyId : int, provider : string, pinType : string, pinTag : name, maxLevel : int,
 		out result : SCMFClaim) : bool
 	{
-		var i, best : int;
+		var i, best, rank, bestRank : int;
 		var matches : bool;
+		if (!PropertyWon(propertyId))
+		{
+			return false;
+		}
 		best = -1;
+		bestRank = -1;
 		for (i = 0; i < winners.Size(); i += 1)
 		{
-			matches = winners[i].propertyId == propertyId && winners[i].provider == provider && winners[i].level <= maxLevel;
-			if (matches && winners[i].level == 1)
+			matches = winners[i].propertyId == propertyId && winners[i].provider == provider &&
+				Covers(winners[i], pinType, pinTag, maxLevel);
+			if (matches && (winners[i].level == 2 || winners[i].level == CMFLevelPlace()))
 			{
-				matches = NameToString(winners[i].pinType) == pinType;
+				matches = !CMFKindHidden(pinType);
 			}
-			if (matches && winners[i].level == 2)
+			if (!matches)
 			{
-				matches = winners[i].pinTag == pinTag && pinType != "NotDiscoveredPOI" && !StrEndsWith(pinType, "Disabled");
+				continue;
 			}
-			if (matches && (best < 0 || winners[i].level > winners[best].level ||
-				(winners[i].level == winners[best].level && winners[i].order < winners[best].order)))
+			rank = Specific(winners[i]);
+			if (best < 0 || rank > bestRank || (rank == bestRank && winners[i].order < winners[best].order))
 			{
 				best = i;
+				bestRank = rank;
 			}
 		}
 		if (best < 0)
@@ -3959,6 +4734,7 @@ class CMFCore extends CObject
 	public function RegisterChoiceOnly(provider : string, choiceKey : string) : bool
 	{
 		var i, choice : int;
+		NoteProviderPresent(provider);
 		EnsureChoices();
 		choice = choiceKeys.FindFirst(choiceKey);
 		if (provider == "" || choice < 0)
@@ -4030,6 +4806,7 @@ class CMFCore extends CObject
 		var view : SCMFOpeningView;
 		var i : int;
 		var hadAny : bool;
+		NoteProviderPresent(provider);
 		if (provider == "")
 		{
 			CMFLog("opening view rejected provider= area=" + NameToString(area) + " reason=empty");
@@ -4269,6 +5046,12 @@ function CMFCategoryBefore(a : SCMFClaim, b : SCMFClaim) : bool
 }
 
 // The provider that styled this property of the pin with CMFStylePin, or "".
+// True for a pin type that hides its kind: the undiscovered "?" pin and completed ("...Disabled") places.
+function CMFKindHidden(pinType : string) : bool
+{
+	return StrBeginsWith(pinType, "NotDiscoveredPOI") || StrEndsWith(pinType, "Disabled");
+}
+
 function CMFPinOwner(dataObject : CScriptedFlashObject, ownerField : string) : string
 {
 	var owner : string;
@@ -4303,7 +5086,10 @@ function CMFHasProperty(propertyId : int) : bool
 {
 	return (propertyId >= CMFPropertyIcon() && propertyId <= CMFPropertyTabHide()) || propertyId == CMFPropertyLabelColor() ||
 		propertyId == CMFPropertyCategoryNoDefault() || CMFIsPictureProperty(propertyId) ||
-		propertyId == CMFPropertySpreadRank() || CMFIsClickProperty(propertyId) || propertyId == CMFPropertyHoverName();
+		propertyId == CMFPropertySpreadRank() || CMFIsClickProperty(propertyId) || propertyId == CMFPropertyHoverName() ||
+		propertyId == CMFPropertyInfoTitle() || propertyId == CMFPropertyInfoText() ||
+		propertyId == CMFPropertyIconUndiscovered() || propertyId == CMFPropertyIconCompleted() ||
+		propertyId == CMFPropertyTabHidden() || propertyId == CMFPropertyPresent();
 }
 
 // One pin type (a map area for CMFPropertyBackground, a filteredType for the legend row and label, a
@@ -4326,12 +5112,27 @@ function CMFHasProperty(propertyId : int) : bool
 // properties (24 to 27) take the target their property names, text = the picture's url ("" withdraws) and number 0,
 // or for CMFPropertyWorldPainting columns * 10 + rows of a tile url. Version 10: CMFPropertyHoverName number = bits (1 the
 // label line only on the hovered pin, 2 the hovered pin's name on its label line, 0 as the game shows it), target '' for
-// every pin.
+// every pin. Version 11: CMFPropertyInfoBoxHeight also for a type; CMFPropertyInfoTitle and CMFPropertyInfoText text = the
+// words (HTML), number 0 to replace the game's or 1 to add them as lines below, target '' for every pin;
+// CMFPropertyIconUndiscovered and CMFPropertyIconCompleted text = the art, target = the pin's real kind ('' every pin);
+// CMFPropertyTabHidden target = the tab and number nonzero (0 withdraws). A type claim on a level variant type
+// ('MonsterNest_2') beats the base type's claim on those pins, and type claims on exactly 'Player' (the player marker)
+// or 'User1' to 'User7' (the player's own markers) restyle them with ids 1, 3 and 10.
 // Returns false and logs when the claim is not accepted.
 function CMFRegister(provider : string, propertyId : int, target : name, mapContext : name, text : string,
 	number : int) : bool
 {
 	var claim : SCMFClaim;
+	var present : bool;
+	present = theGame.CMFGetCore().NoteProviderPresent(provider);
+	if (propertyId == CMFPropertyPresent())
+	{
+		if (!present)
+		{
+			CMFLog("rejected provider=" + provider + " property=" + propertyId + " reason=empty");
+		}
+		return present;
+	}
 	if (!CMFHasProperty(propertyId))
 	{
 		CMFLog("rejected provider=" + provider + " property=" + propertyId + " reason=unknown");
@@ -4346,7 +5147,9 @@ function CMFRegister(provider : string, propertyId : int, target : name, mapCont
 	claim.propertyId = propertyId;
 	claim.level = 1;
 	if ((propertyId == CMFPropertyHidden() || propertyId == CMFPropertyInfoBoxHeight() ||
-		propertyId == CMFPropertyTabHide() || propertyId == CMFPropertyHoverName()) && !IsNameValid(target))
+		propertyId == CMFPropertyTabHide() || propertyId == CMFPropertyHoverName() || propertyId == CMFPropertyInfoTitle() ||
+		propertyId == CMFPropertyInfoText() || propertyId == CMFPropertyIconUndiscovered() ||
+		propertyId == CMFPropertyIconCompleted()) && !IsNameValid(target))
 	{
 		claim.level = 0;
 	}
@@ -4361,21 +5164,32 @@ function CMFRegister(provider : string, propertyId : int, target : name, mapCont
 	return theGame.CMFGetCore().Upsert(claim);
 }
 
+// Version 11: a declaration names an installed provider without offering or selecting any map feature.
+function CMFDeclareProvider(provider : string) : bool
+{
+	return CMFRegister(provider, CMFPropertyPresent(), '', '', "", 1);
+}
+
+// Query only: asking about an absent provider never declares it.
+function CMFProviderPresent(provider : string) : bool
+{
+	return theGame.CMFGetCore().ProviderPresent(provider);
+}
+
 // One pin instance by its map pin tag; beats type-level claims on that pin. Accepts CMFPropertyIcon,
 // CMFPropertyDisabled, CMFPropertyHidden, (version 4) ids 10-13 and 15, (version 5) id 17, (version 6) ids 16,
-// 20, 21 and 22 and (version 10) id 28. The game's own pins carry
+// 20, 21 and 22, (version 10) id 28 and (version 11) the colour (3), the info box height (14), title and text (18, 19)
+// and the undiscovered and completed art (29, 30). The game's own pins carry
 // their tag. A pin a mod pushes itself is reached when that mod sets the pin's id to
 // NameToFlashUInt(its tag), as the game does (version 4), so any mod can target another mod's pins by tag. Icon, disabled, size and label
-// instance claims never apply to undiscovered "?" pins or completed pins; a hide claim covers its pin in
-// every state.
+// instance claims never apply to undiscovered "?" pins or completed pins (version 11: ids 29 and 30 are for exactly
+// those); a hide claim covers its pin in every state.
 function CMFRegisterForTag(provider : string, propertyId : int, pinTag : name, mapContext : name, text : string,
 	number : int) : bool
 {
 	var claim : SCMFClaim;
-	if (propertyId != CMFPropertyIcon() && propertyId != CMFPropertyDisabled() && propertyId != CMFPropertyHidden() &&
-		(propertyId < CMFPropertyPinScale() || propertyId > CMFPropertyTabHide() || propertyId == CMFPropertyInfoBoxHeight()) &&
-		propertyId != CMFPropertyLabelColor() && !CMFIsClickProperty(propertyId) && propertyId != CMFPropertySpreadRank() &&
-		propertyId != CMFPropertyHoverName())
+	theGame.CMFGetCore().NoteProviderPresent(provider);
+	if (!CMFOnePinProperty(propertyId))
 	{
 		CMFLog("rejected provider=" + provider + " property=" + propertyId + " reason=level");
 		return false;
@@ -4397,6 +5211,52 @@ function CMFRegisterForTag(provider : string, propertyId : int, pinTag : name, m
 		claim.number = 1;
 	}
 	return theGame.CMFGetCore().Upsert(claim);
+}
+
+// The properties a tag (CMFRegisterForTag) or place (CMFRegisterForPlace) claim takes.
+function CMFOnePinProperty(propertyId : int) : bool
+{
+	return propertyId == CMFPropertyIcon() || propertyId == CMFPropertyTint() || propertyId == CMFPropertyDisabled() ||
+		propertyId == CMFPropertyHidden() || (propertyId >= CMFPropertyPinScale() && propertyId <= CMFPropertyTabHide()) ||
+		propertyId == CMFPropertyLabelColor() || CMFIsClickProperty(propertyId) || propertyId == CMFPropertySpreadRank() ||
+		propertyId == CMFPropertyHoverName() || propertyId == CMFPropertyInfoTitle() || propertyId == CMFPropertyInfoText() ||
+		propertyId == CMFPropertyIconUndiscovered() || propertyId == CMFPropertyIconCompleted();
+}
+
+// Version 11: one pin by place, for a pin with no tag (pins a mod pushes with plain numbers) or with a tag nobody knows:
+// the pin of pinType (its own type or its legend name) within CMFPlaceRadius metres of the world position x, y. Takes
+// what CMFRegisterForTag takes and sits between them: a tag claim beats it on that pin, and it beats a type claim.
+// It covers every map context. Calling again with the same type and position replaces the provider's claim.
+function CMFRegisterForPlace(provider : string, propertyId : int, pinType : name, x : float, y : float, text : string,
+	number : int) : bool
+{
+	var claim : SCMFClaim;
+	theGame.CMFGetCore().NoteProviderPresent(provider);
+	if (!CMFOnePinProperty(propertyId))
+	{
+		CMFLog("rejected provider=" + provider + " property=" + propertyId + " reason=level");
+		return false;
+	}
+	claim.provider = provider;
+	claim.propertyId = propertyId;
+	claim.level = CMFLevelPlace();
+	claim.pinType = pinType;
+	claim.placeX = x;
+	claim.placeY = y;
+	claim.text = text;
+	claim.number = number;
+	if (propertyId == CMFPropertyDisabled() && number != 0)
+	{
+		claim.number = 1;
+	}
+	return theGame.CMFGetCore().Upsert(claim);
+}
+
+// Version 11: turns the pin list log on (or off) for this game session, as [CMFSettings] CMFLogPins=true does, for an
+// author's own test pack. Never ship it switched on.
+function CMFSetLogPins(on : bool)
+{
+	theGame.CMFGetCore().SetLogPins(on);
 }
 
 function CMFRegisterIcon(provider : string, pinType : name, url : string)
@@ -4597,6 +5457,7 @@ function CMFRegisterWorldPaintingTiles(provider : string, url : string, columns 
 {
 	if (columns < 1 || columns > 8 || rows < 1 || rows > 8)
 	{
+		theGame.CMFGetCore().NoteProviderPresent(provider);
 		CMFLog("rejected provider=" + provider + " property=" + CMFPropertyWorldPainting() + " reason=range");
 		return false;
 	}
@@ -4805,6 +5666,7 @@ function CMFRegisterButtonPicture(provider : string, family : name, button : str
 	target = CMFButtonTarget(family, button);
 	if (!IsNameValid(target))
 	{
+		theGame.CMFGetCore().NoteProviderPresent(provider);
 		CMFLog("button picture unknown family=" + NameToString(family) + " button=" + button + " provider=" + provider);
 		return false;
 	}
@@ -4868,6 +5730,7 @@ function CMFReleaseProvider(provider : string)
 // shows the folder name tidied (CMFTidyName). Call it once, where the provider registers its claims.
 function CMFSetProviderName(provider : string, displayName : string) : bool
 {
+	theGame.CMFGetCore().NoteProviderPresent(provider);
 	if (provider == "" || displayName == "")
 	{
 		CMFLog("rejected provider=" + provider + " name=" + displayName + " reason=empty");
@@ -5090,9 +5953,12 @@ function CMFThemePartKeys(part : name) : string
 		case 'legendTab':
 			return CMFThemeGlowKeys() + ",color,spacing,hide";
 		case 'tooltip':
-			// Version 7: clear* moves a tall info box clear of the cursor and the other panels.
+			// Version 7: clear* moves a tall info box clear of the cursor and the other panels. Version 11: x and y move
+			// the box from the game's place by px, and clearCursorAbove and the keys after it widen the area kept clear
+			// and the places tried.
 			return CMFThemeGlowKeys() + ",titleFont,titleSize,titleColor,bodyFont,bodySize,bodyColor,hide," +
-				"clearMinHeight,clearView,clearSide,clearCursor,clearLeft,clearTop,clearRight,clearBottom";
+				"clearMinHeight,clearView,clearSide,clearCursor,clearLeft,clearTop,clearRight,clearBottom,x,y," +
+				"clearCursorAbove,clearCursorBelow,clearCursorTitle,clearPadX,clearPadY,clearGap,clearBoxPad,clearPick,clearCursorWeight";
 		case 'preview':
 			return "hide";
 		case 'worldButton':
@@ -5323,6 +6189,15 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 	{
 		return number >= 0 && number <= 4000;
 	}
+	if (k == "clearCursorTitle" || k == "clearPick")
+	{
+		return number == 0 || number == 1;
+	}
+	if (k == "clearCursorAbove" || k == "clearCursorBelow" || k == "clearPadX" || k == "clearPadY" || k == "clearGap" ||
+		k == "clearBoxPad" || k == "clearCursorWeight")
+	{
+		return number >= 0 && number <= 4000;
+	}
 	if (part == 'spread')
 	{
 		return CMFThemeSpreadValueOk(key, number);
@@ -5349,7 +6224,9 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 // (CMFHasAbility('mapSpace', ''), ('line', 'colors'), ('text', '')). Version 7 adds ('tooltip', 'clearMinHeight')
 // and the other clear keys, and ('rect', 'minPartHeight') on every box kind and text. Version 10 adds ('wide', '') and its
 // keys, ('rect', 'wideAnchor') on every box kind and text, and ('opening', 'readyAtFadeStart') and ('opening',
-// 'revealEase'). Abilities designed for later (images,
+// 'revealEase'). Version 11 adds ('tooltip', 'x') and ('tooltip', 'y'), and ('tooltip', 'clearCursorAbove') and the
+// other new clear keys (clearCursorBelow, clearCursorTitle, clearPadX, clearPadY, clearGap, clearBoxPad, clearPick,
+// clearCursorWeight). Abilities designed for later (images,
 // the map hold) answer false until a CMF version adds them.
 function CMFHasAbility(part : name, key : name) : bool
 {
@@ -5394,6 +6271,7 @@ function CMFScreenHeight() : float
 function CMFStylePart(provider : string, part : name, key : name, text : string, number : float) : bool
 {
 	var themeEntry : SCMFThemeEntry;
+	theGame.CMFGetCore().NoteProviderPresent(provider);
 	if (provider == "" || !CMFListHas(CMFThemeParts(), NameToString(part)) || !CMFHasAbility(part, key))
 	{
 		CMFLog("theme rejected provider=" + provider + " part=" + NameToString(part) + " key=" + NameToString(key) +
@@ -5430,6 +6308,7 @@ function CMFStylePart(provider : string, part : name, key : name, text : string,
 function CMFDraw(provider : string, anchor : name, id : name, kind : name) : bool
 {
 	var themeEntry : SCMFThemeEntry;
+	theGame.CMFGetCore().NoteProviderPresent(provider);
 	if (provider == "" || !IsNameValid(anchor) || !IsNameValid(id) || anchor == id ||
 		CMFListHas(CMFThemeParts() + "," + CMFThemeLayers() + "," + CMFThemeKinds(), NameToString(id)) ||
 		(IsNameValid(kind) && !CMFListHas(CMFThemeKinds(), NameToString(kind))) ||
@@ -5458,6 +6337,7 @@ function CMFDrawSet(provider : string, id : name, key : name, text : string, num
 {
 	var themeEntry : SCMFThemeEntry;
 	var own : bool;
+	theGame.CMFGetCore().NoteProviderPresent(provider);
 	own = false;
 	if (provider != "" && IsNameValid(id) && IsNameValid(key) && !CMFListHas(CMFThemeAllShapeKeys(), NameToString(key)))
 	{
@@ -5493,6 +6373,7 @@ function CMFDrawSetList(provider : string, id : name, key : name, values : array
 	var themeEntry : SCMFThemeEntry;
 	var i : int;
 	var k : string;
+	theGame.CMFGetCore().NoteProviderPresent(provider);
 	k = NameToString(key);
 	if (provider == "" || !IsNameValid(id) || !IsNameValid(key) || values.Size() > 100000 ||
 		(!CMFListHas(CMFThemeListKeys('line'), k) && theGame.CMFGetCore().DrawingKind(provider, id) != 'movie'))
@@ -5545,9 +6426,17 @@ function GetShownMapName() : string
 function UpdateUserMapPins(out flashArray : CScriptedFlashArray, indexToUpdate : int) : void
 {
 	wrappedMethod(flashArray, indexToUpdate);
+	if (indexToUpdate < 0)
+	{
+		CMFStamp("late");
+	}
 	theGame.CMFGetCore().FillMissingPinFields(flashArray, CMFMapContext(), indexToUpdate, m_shownArea);
 	if (indexToUpdate < 0)
 	{
+		if (flashArray)
+		{
+			CMFStamp("lateEnd:" + flashArray.GetLength());
+		}
 		theGame.CMFGetCore().KeepFullList(flashArray);
 		theGame.CMFGetCore().MapReady(GetMenuFlash());
 		theGame.CMFGetCore().SendSpace(GetMenuFlashValueStorage(), m_shownArea, this);
@@ -5560,10 +6449,13 @@ function UpdateUserMapPins(out flashArray : CScriptedFlashArray, indexToUpdate :
 function UpdateData(optional ignoreSelectionChange : bool)
 {
 	var flashArray : CScriptedFlashArray;
+	CMFStamp("data");
 	wrappedMethod(ignoreSelectionChange);
+	CMFStamp("sent");
 	flashArray = theGame.CMFGetCore().CatchLatePins(CMFMapContext(), m_shownArea);
 	if (flashArray)
 	{
+		CMFStamp("caught");
 		theGame.CMFGetCore().MapReady(GetMenuFlash());
 		theGame.CMFGetCore().SendSpace(GetMenuFlashValueStorage(), m_shownArea, this);
 		if (ignoreSelectionChange)
@@ -5575,6 +6467,7 @@ function UpdateData(optional ignoreSelectionChange : bool)
 			GetMenuFlashValueStorage().SetFlashArray("worldmap.global.pins.static", flashArray);
 		}
 	}
+	CMFStamp("end");
 }
 
 // Map-space drawing: sends the map-space drawings for the shown area; refresh (CMFMapRefresh) first runs
@@ -5590,11 +6483,30 @@ function CMFMapSpaceSend(refresh : bool)
 	theGame.CMFGetCore().SendSpace(GetMenuFlashValueStorage(), m_shownArea, this);
 }
 
+// Version 11: a step of the pin build, timed by the map panel (MapMenu.cmfStamp) for the log line "build ...".
+@addMethod(CR4MapMenu)
+function CMFStamp(step : string)
+{
+	var menuFlash : CScriptedFlashSprite;
+	var stamp : CScriptedFlashFunction;
+	menuFlash = GetMenuFlash();
+	if (!menuFlash)
+	{
+		return;
+	}
+	stamp = menuFlash.GetMemberFlashFunction("cmfStamp");
+	if (stamp)
+	{
+		stamp.InvokeSelfOneArg(FlashArgString(step));
+	}
+}
+
 // Opens the pin list for per-pin hides; the late pass closes it.
 @wrapMethod(CR4MapMenu)
 function UpdateEntityPins(out flashArray : CScriptedFlashArray) : void
 {
 	theGame.CMFGetCore().OpenPinList();
+	theGame.CMFGetCore().NoteListArea(m_shownArea);
 	wrappedMethod(flashArray);
 }
 
@@ -5602,7 +6514,7 @@ function UpdateEntityPins(out flashArray : CScriptedFlashArray) : void
 function AddPinTypeData(out dataObject : CScriptedFlashObject, targetPin : SCommonMapPinInstance) : void
 {
 	wrappedMethod(dataObject, targetPin);
-	theGame.CMFGetCore().WritePinFields(dataObject, targetPin.visibleType, targetPin.tag, CMFMapContext());
+	theGame.CMFGetCore().WritePinFields(dataObject, targetPin.visibleType, targetPin.tag, CMFMapContext(), targetPin.type);
 }
 
 // The map panel reports how it measured the legend each time that box changes (launch T1 diagnosis).
@@ -5623,6 +6535,7 @@ event OnCMFArtFailed(url : string)
 @addMethod(CR4MapMenu)
 event OnCMFMapThemeReady()
 {
+	CMFMapCheckReady();
 	theGame.CMFGetCore().SendScreen(GetMenuFlashValueStorage());
 	theGame.CMFGetCore().SendTheme(GetMenuFlashValueStorage());
 }
@@ -5654,6 +6567,7 @@ event OnCMFDrawingClicked(id : string, value : int)
 @addMethod(CR4MapMenu)
 event OnCMFListenReady(keys : string)
 {
+	CMFMapCheckReady();
 	theGame.CMFGetCore().ListenReady(this, keys);
 }
 
@@ -5661,6 +6575,7 @@ event OnCMFListenReady(keys : string)
 @addMethod(CR4MapMenu)
 event OnCMFMapSpaceReady()
 {
+	CMFMapCheckReady();
 	theGame.CMFGetCore().SpaceListenerReady(this);
 }
 
@@ -5720,12 +6635,93 @@ function SwitchToHubMap(area : name, onStartup : bool)
 	wrappedMethod(area, onStartup);
 }
 
+// Version 11: readiness belongs to one menu opening, including callbacks before OnConfigUI.
+// Only the actual close resets it; a region/world overview round trip keeps the same panel.
+@addField(CR4MapMenu)
+var cmfMapCheckReady : bool;
+
+@addField(CR4MapMenu)
+var cmfMapCheckShown : bool;
+
+@addMethod(CR4MapMenu)
+function CMFMapCheckReady()
+{
+	cmfMapCheckReady = true;
+}
+
+@addMethod(CR4MapMenu)
+function CMFMapCheckShown()
+{
+	cmfMapCheckShown = true;
+}
+
+// The inherited callback follows the menu's show animation; configuring alone is not a completed opening.
+@wrapMethod(CR4MenuBase)
+function OnMenuShown()
+{
+	var mapMenu : CR4MapMenu;
+	wrappedMethod();
+	mapMenu = (CR4MapMenu)this;
+	if (mapMenu)
+	{
+		mapMenu.CMFMapCheckShown();
+	}
+}
+
+@addMethod(CR4MapMenu)
+function CMFMapCheckClose()
+{
+	var warn : bool;
+	CMFLog("map check close shown=" + CMFYesNo(cmfMapCheckShown) + " ready=" + CMFYesNo(cmfMapCheckReady));
+	warn = cmfMapCheckShown && !cmfMapCheckReady;
+	cmfMapCheckReady = false;
+	cmfMapCheckShown = false;
+	if (warn && CMFSettingsMapCheck())
+	{
+		theGame.CMFGetCore().MapCheckWarnOnce();
+	}
+}
+
+// Version 11: the map check's box, once no menu, message box, black screen or scene is up.
+function CMFMapCheckBusy() : bool
+{
+	if (theGame.GetGuiManager().GetPopup('MessagePopup'))
+	{
+		return true;
+	}
+	return !theGame.IsActive() || theGame.IsBlackscreen() || theGame.GetGuiManager().IsAnyMenu() ||
+		theGame.IsDialogOrCutscenePlaying();
+}
+
+function CMFMapCheckSchedule()
+{
+	if (thePlayer)
+	{
+		thePlayer.AddTimer('CMFMapCheckLater', 0.2, false, , , false, true);
+	}
+}
+
+@addMethod(CR4Player)
+timer function CMFMapCheckLater(dt : float, id : int)
+{
+	if (CMFMapCheckBusy())
+	{
+		CMFMapCheckSchedule();
+		return;
+	}
+	theGame.GetGuiManager().ShowUserDialogAdv(0, GetLocStringByKeyExt("cmf_popup_title"),
+		GetLocStringByKeyExt("cmf_map_check_warning"), false, UDB_Ok);
+}
+
 // Version 9: the map is closing: the shown region reports its last view.
 @wrapMethod(CR4MapMenu)
 function OnClosingMenu()
 {
+	var result : bool;
 	CMFReportView('close');
-	return wrappedMethod();
+	result = wrappedMethod();
+	CMFMapCheckClose();
+	return result;
 }
 
 // Version 6: a button bar label that starts with "cmf:" is shown as the literal text after it (a pin's click

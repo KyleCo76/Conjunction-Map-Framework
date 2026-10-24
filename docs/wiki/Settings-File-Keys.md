@@ -95,6 +95,8 @@ CMFFile_Painting_Skellige=Vanilla
 | `CMFFile_Movement_Controller` | Map movement | Advanced choices > Map movement | Controller crosshair |
 | `CMFFile_Behaviour_HoverNames` | Map behaviour | Advanced choices > Map behaviour | Names only on hover |
 | `CMFFile_Movement_Wide` | Map movement | Advanced choices > Map movement | Fill wide screens |
+| `CMFFile_Icons_Undiscovered` | Pin icons | Advanced choices > Pin icons | Undiscovered places (?) |
+| `CMFFile_Look_InfoText` | Map look | Advanced choices > Map look | Info box text |
 | `CMFFile_Fallthrough` | every feature | General | If the chosen mod has nothing for a pin |
 | `CMFDebug` | the log | General | Write the who-wins report to the log |
 | `CMFProviderOrder1` | the Mod order | Mod order | 1st |
@@ -106,8 +108,14 @@ CMFFile_Painting_Skellige=Vanilla
 | `CMFProviderOrder7` | the Mod order | Mod order | 7th |
 | `CMFProviderOrder8` | the Mod order | Mod order | 8th |
 
-`CMFFile_Fallthrough=Vanilla` makes a chosen mod that has nothing for a pin show the game's own look there, instead of the next mod's. `CMFDebug=true` writes the who-wins report to the script log. `CMFProviderOrder1` to `CMFProviderOrder8` hold one folder name each, earliest first.
+`CMFFile_Fallthrough=Vanilla` makes a chosen mod that has nothing for a pin show the game's own look there, instead of the next mod's. `CMFDebug=true` writes the who-wins report to the script log. `CMFLogPins=true` (version 11) writes one line per pin the map shows to the script log, with its type, tag, id and place, so an author can find the name of the one pin they want to change. `CMFProviderOrder1` to `CMFProviderOrder8` hold one folder name each, earliest first.
 <!-- cmf:settings-keys end -->
+
+## Map file warning and optional adapter check (API 11 review)
+
+`CMFMapCheck` belongs to the core's `[CMFSettings]` group and defaults to On when unset. After a fully shown world map closes, the core warns once per session if its map panel never reported readiness. An early close and an ordinary world/region round trip must stay quiet. Off disables this warning. This is a map-file ownership warning; it does not identify a conflicting mod.
+
+The separate CMF Adapter Check add-on requires API 11. Its `CMFAdapterCheckEnabled` option defaults On; its hidden `CMFAdapterCheckKnown` signature records the last missing set. A clean enabled check clears the signature; disabled checks leave it alone. The updated in-game menu also requires API 11; existing released menu packages and adapter API floors are unchanged.
 
 ---
 

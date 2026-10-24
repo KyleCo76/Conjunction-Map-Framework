@@ -35,4 +35,4 @@ if (CMFHasAbility('spread', ''))
 
 ---
 
-[Previous: Names only on hover](Names-Only-on-Hover.md) · [Contents](Home.md) · [Next: The map theme](Map-Theme.md)
+[Previous: Changing one pin](Changing-One-Pin.md) · [Contents](Home.md) · [Next: The map theme](Map-Theme.md)

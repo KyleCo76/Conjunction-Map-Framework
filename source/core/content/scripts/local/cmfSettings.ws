@@ -73,3 +73,21 @@ function CMFSettingsDebug() : bool
 {
 	return theGame.GetInGameConfigWrapper().GetVarValue('CMFSettings', 'CMFDebug') == "true";
 }
+
+// Version 11: the pin list in the log (CMFCore.NoteListPin) when "1" or "true", read at each map build. For authors
+// finding a pin's tag; a value the game never stored reads "-1", which is off.
+function CMFSettingsLogPins() : bool
+{
+	var value : string;
+	value = StrLower(theGame.GetInGameConfigWrapper().GetVarValue('CMFSettings', 'CMFLogPins'));
+	return value == "1" || value == "true";
+}
+
+// Version 11: warn once per session if a fully shown map closes without CMF's panel callbacks.
+// Missing values (including the game's "-1") keep it on; only "false" or "0" turn it off.
+function CMFSettingsMapCheck() : bool
+{
+	var value : string;
+	value = StrLower(theGame.GetInGameConfigWrapper().GetVarValue('CMFSettings', 'CMFMapCheck'));
+	return value != "false" && value != "0";
+}

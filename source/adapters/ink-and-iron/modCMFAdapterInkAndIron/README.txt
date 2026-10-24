@@ -1,5 +1,5 @@
 Ink and Iron adapter for Conjunction Map Framework
-Version 1.2.0 (carries Ink and Iron's world overview and controller button art, with its
+Version 1.2.1 (carries Ink and Iron's world overview and controller button art, with its
 author's permission)
 
 With Conjunction Map Framework installed, CMF's world map replaces Ink and Iron's
@@ -32,7 +32,9 @@ WHAT YOU SEE
   its corner overview frame, gold key letters, and its legend colours.
 - Ink and Iron 0.8.10's info box: framed on every map, and on the region and interior
   maps a long box (a long quest text) gets a darker backing and moves beside the
-  cursor, clear of the legend, the quest card and the other panels.
+  cursor, clear of the legend, the quest card and the other panels. With a
+  Conjunction Map Framework newer than 1.4.1 (version 11) it also keeps clear of the
+  hovered pin and its level tag, as Ink and Iron does.
 - With Ink and Iron's option "Quest levels on world map pins" on, quest pins show
   Ink and Iron's "Lv N" tag, coloured by difficulty, on its dark plate. With the
   option off, nothing is added.

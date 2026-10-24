@@ -21,6 +21,19 @@
 // The file name starts with zz_ so it sorts after qmiSettings.ws and questMapInfo.ws: wrappers nest by
 // script file name, so these wrappers run around Map Quest Insight's.
 
+// Presence is independent of map settings; the existing source-mod compile dependency stays required.
+@wrapMethod(CR4Game)
+function OnGameStarted(restored : bool)
+{
+	var result : bool;
+	result = wrappedMethod(restored);
+	if (CMFHasProperty(38))
+	{
+		CMFRegister("modMapQuestInsight", 38, '', '', "", 1);
+	}
+	return result;
+}
+
 // The tabs that hide signposts in this map opening, from UpdateDisabledMapPins to OnPinReady.
 @addField(CR4Game)
 var mqiAdapterNoSignTabs : string;

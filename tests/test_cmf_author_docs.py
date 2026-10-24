@@ -31,6 +31,12 @@ class AuthorDocsTest(unittest.TestCase):
         cls.build = docs.Build()
         cls.pages, cls.theme = cls.build.run()
 
+    def test_presence_reference_requires_api_11(self):
+        reference = self.pages['API-Reference.md']
+        self.assertIn('| `38` | `CMFPropertyPresent()` | 11 |', reference)
+        for call in ('CMFDeclareProvider', 'CMFProviderPresent'):
+            self.assertRegex(reference, r'\| `' + call + r'\([^`]+` \| 11 \|')
+
     def test_build_has_no_errors(self):
         self.assertEqual(self.build.errors, [])
 
@@ -92,8 +98,9 @@ class AuthorDocsTest(unittest.TestCase):
         keys = [k for k in ''.join(re.findall(r'"([^"]*)"', listed)).split(',') if k]
         self.assertGreater(len(keys), 50)
         page = self.pages['Settings-File-Keys.md']
-        for key in keys + ['Fallthrough']:
+        for key in [k for k in keys if not k.startswith('Reserved')] + ['Fallthrough']:
             self.assertIn('| `CMFFile_%s` |' % key, page)
+        self.assertIn('`CMFLogPins=true`', page)
 
     def test_a_choice_key_without_a_menu_row_fails(self):
         build = docs.Build()

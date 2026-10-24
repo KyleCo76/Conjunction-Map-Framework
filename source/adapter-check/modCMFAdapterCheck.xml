@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UserConfig>
+	<Group id="CMFAdapterCheck" displayName="Mods.cmf_adapter_check">
+		<VisibleVars>
+			<Var id="CMFAdapterCheckEnabled" value="1" displayName="cmf_adapter_check_enabled" displayType="OPTIONS" tags="customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="Off"><Entry varId="CMFAdapterCheckEnabled" value="0"/></Option>
+					<Option id="1" displayName="On"><Entry varId="CMFAdapterCheckEnabled" value="1"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFAdapterCheckKnown" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+		</VisibleVars>
+	</Group>
+</UserConfig>

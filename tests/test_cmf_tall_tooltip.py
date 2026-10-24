@@ -38,7 +38,7 @@ class CoreTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_7(self):
-        self.assertIn('function CMFGetVersion() : int { return 10; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 11; }', self.core)
 
     def test_tooltip_takes_the_clear_keys(self):
         keys = body(self.core, 'function CMFThemePartKeys(')

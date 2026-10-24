@@ -148,6 +148,21 @@ class ScriptTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             return cmf_pack.check_pack(make_pack(root, name, WRAP % body, art))[0]
 
+    def test_presence_helpers_need_api_11_and_declaration_owns_its_provider(self):
+        for call in ('CMFDeclareProvider("modAcmeIcons");',
+                     'CMFProviderPresent("modAcmeIcons");', 'CMFPropertyPresent();'):
+            report = self.run_pack('\t' + call + '\n')
+            self.assertEqual((report.errors, report.warnings), ([], []))
+            self.assertTrue(any('only with CMF 11' in n for n in report.notes), report.notes)
+        report = self.run_pack('\tCMFDeclareProvider("modWrong");\n')
+        self.assertTrue(any('must be the pack folder name' in e for e in report.errors), report.errors)
+
+    def test_guarded_numeric_presence_keeps_old_api_floor_and_creates_no_art_claim(self):
+        report = self.run_pack('\tif (CMFHasProperty(38))\n\t{\n'
+                               '\t\tCMFRegister("modAcmeIcons", 38, \'\', \'\', "", 1);\n\t}\n')
+        self.assertEqual((report.errors, report.warnings), ([], []))
+        self.assertFalse(any('only with CMF 11' in n for n in report.notes), report.notes)
+
     def test_clean_pack(self):
         art = {'innkeeper.png': cmf_pack.write_png(64, 64, flat_icon())}
         report = self.run_pack('\tCMFRegisterIcon("modAcmeIcons", \'Innkeeper\', '
@@ -209,7 +224,7 @@ class ScriptTests(unittest.TestCase):
         self.assertEqual((report.errors, report.warnings), ([], []))
         cases = {
             '\tCMFRegister("modAcmeIcons", 3, \'Herbalist\', \'Boat\', "", 1);\n': 'map context applies only',
-            '\tCMFRegisterForTag("modAcmeIcons", 3, \'x_tag\', \'\', "", 1);\n': 'accepts only CMFPropertyIcon',
+            '\tCMFRegisterForTag("modAcmeIcons", 2, \'x_tag\', \'\', "img://x.png", 0);\n': 'accepts only CMFPropertyIcon',
             '\tCMFRegister("modOther", 3, \'Herbalist\', \'\', "", 1);\n': 'pack folder name',
             '\tCMFRegister("modAcmeIcons", 3, \'Herbalist\', \'\', "", 0x40FF40);\n': 'decimal (4259648',
         }
@@ -248,7 +263,7 @@ class ScriptTests(unittest.TestCase):
         for body, expected in cases.items():
             report = self.run_pack(body)
             self.assertTrue(any(expected in e for e in report.errors), (body, report.errors))
-        report = self.run_pack('\tCMFRegister("modAcmeIcons", 18, \'AcmePin\', \'\', "", 1);\n')
+        report = self.run_pack('\tCMFRegister("modAcmeIcons", 31, \'AcmePin\', \'\', "", 1);\n')
         self.assertTrue(any('unknown to CMF 6' in w for w in report.warnings), report.warnings)
 
     def test_version3_calls(self):
@@ -329,9 +344,7 @@ class ScriptTests(unittest.TestCase):
             '\tCMFRegister("modAcmeIcons", 12, \'Herbalist\', \'\', "", 0);\n': 'empty label text',
             '\tCMFRegister("modAcmeIcons", 13, \'Herbalist\', \'\', "name", 1);\n': 'pin, crosshair or both',
             '\tCMFRegister("modAcmeIcons", 14, \'\', \'\', "", 50);\n': 'outside 100 to 1080',
-            '\tCMFRegister("modAcmeIcons", 14, \'Herbalist\', \'\', "", 640);\n': 'applies to the whole map',
             '\tCMFRegister("modAcmeIcons", 15, \'\', \'\', "", 1);\n': 'no filter tab named',
-            '\tCMFRegisterForTag("modAcmeIcons", 14, \'acme_well\', \'\', "", 640);\n': 'applies to the whole map',
             '\tCMFStylePinScale("modOther", dataObject, 120);\n': 'must be the pack folder name',
             '\tdataObject.SetMemberFlashNumber("cmfIconScale", 2);\n': 'CMF pin fields',
             '\tdataObject.SetMemberFlashString("cmfLabelText", "x");\n': 'CMF pin fields',
@@ -339,6 +352,10 @@ class ScriptTests(unittest.TestCase):
         for body, expected in cases.items():
             report = self.run_pack(body)
             self.assertTrue(any(expected in e for e in report.errors), (body, report.errors))
+        # Version 11: the info box height also takes a type or a tag.
+        report = self.run_pack('\tCMFRegister("modAcmeIcons", 14, \'Herbalist\', \'\', "", 640);\n'
+                               '\tCMFRegisterForTag("modAcmeIcons", 14, \'acme_well\', \'\', "", 640);\n')
+        self.assertEqual(report.errors, [])
         # A withdrawal (number 0) is never range-checked.
         report = self.run_pack('\tCMFRegister("modAcmeIcons", 14, \'\', \'\', "", 0);\n')
         self.assertEqual(report.errors, [])

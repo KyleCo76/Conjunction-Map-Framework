@@ -76,7 +76,7 @@ PAGES = [
      [guide(''), guide('1. What you need'), guide('2. Quick start'), guide('3. Name your pack folder'),
       guide('4. Make your art')]),
     ('Writing-Your-Script', 'Writing your script', 'Start here',
-     [guide('5. Write your script'), guide('The CMF calls')]),
+     [guide('5. Write your script'), guide('Tell CMF you are here (API version 11)'), guide('The CMF calls')]),
     ('Choosing-Pin-Types', None, 'Start here', [guide('6. Choosing pin types')]),
     ('Check-and-Build', None, 'Start here', [guide('7. Check and build')]),
     ('Install-and-Test', None, 'Start here', [guide('8. Install and test')]),
@@ -95,6 +95,7 @@ PAGES = [
     ('Pin-Hook-OnPinReady', None, 'Pins and the legend', [guide('The pin hook: `OnPinReady` (API version 4)')]),
     ('Pin-Clicks', None, 'Pins and the legend', [guide('Pin clicks (API version 6)')]),
     ('Names-Only-on-Hover', None, 'Pins and the legend', [guide('Names only on hover (API version 10)')]),
+    ('Changing-One-Pin', None, 'Pins and the legend', [guide('Changing one pin (API version 11)')]),
     ('Spreading-Stacked-Pins', None, 'Pins and the legend', [guide('Spreading stacked pins (API version 6)')]),
     ('Map-Theme', None, "The map's look and behaviour", [guide('The map theme (API version 5)')]),
     ('Theme-Parts-and-Keys', None, "The map's look and behaviour", [page_file(THEME)]),
@@ -183,7 +184,7 @@ def strip_title(text):
 def property_since(number):
     """The API version that added a property id."""
     for since, ids in ((1, range(1, 6)), (2, range(6, 9)), (3, (9,)), (4, range(10, 16)), (5, (17,)),
-                       (9, range(24, 28))):
+                       (9, range(24, 28)), (11, (38,))):
         if number in ids:
             return since
     return 6
@@ -621,6 +622,9 @@ class Build:
                 rows[var.group(1)] = (' > '.join(path), var.group(2))
         lines = ['| File key | Feature | In-game menu page | Menu row |', '| --- | --- | --- | --- |']
         for key in keys:
+            # Version 11: index 69 is held by a placeholder no menu or settings file offers.
+            if key.startswith('Reserved'):
+                continue
             feature = key.split('_')[0]
             # Version 10: three pieces keep their names but answer the feature Behaviour (rev 10 contract section 1).
             if 'Behaviour' in keys and key in ('Size_Lead', 'Size_Spread', 'Labels_Place'):
@@ -646,7 +650,9 @@ class Build:
             lines.append('| `CMFProviderOrder%d` | the Mod order | %s | %s |' % (number, rows[var][0], rows[var][1]))
         lines += ['', '`CMFFile_Fallthrough=Vanilla` makes a chosen mod that has nothing for a pin show the game\'s '
                   'own look there, instead of the next mod\'s. `CMFDebug=true` writes the who-wins report to the '
-                  'script log. `CMFProviderOrder1` to `CMFProviderOrder8` hold one folder name each, earliest first.']
+                  'script log. `CMFLogPins=true` (version 11) writes one line per pin the map shows to the script log, '
+                  'with its type, tag, id and place, so an author can find the name of the one pin they want to change. '
+                  '`CMFProviderOrder1` to `CMFProviderOrder8` hold one folder name each, earliest first.']
         return lines
 
     def settings_text(self, text):

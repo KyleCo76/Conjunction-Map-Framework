@@ -68,12 +68,14 @@ def pin_group(pin_type, lists):
 class ChoiceKeyTests(unittest.TestCase):
     def test_keys_are_features_then_pieces(self):
         keys = choice_keys()
-        self.assertEqual(len(keys), 69)
-        self.assertEqual(len(set(keys)), 69)
+        self.assertEqual(len(keys), 72)
+        self.assertEqual(len(set(keys)), 72)
         self.assertEqual(keys[:11], FEATURES)
         # Version 10: the Behaviour feature (62) follows the version 9 pieces; its new pieces carry its name.
         self.assertEqual(keys[62], 'Behaviour')
-        for key in keys[11:62] + keys[63:]:
+        # Version 11 keeps 69 as Reserved69 (rev 10 left it unused; never offered, no menu row).
+        self.assertEqual(keys[69], 'Reserved69')
+        for key in keys[11:62] + keys[63:69] + keys[70:]:
             self.assertIn(key.split('_')[0], FEATURES + ['Behaviour'], key)
             self.assertRegex(key, r'^[A-Za-z]+_[A-Za-z0-9]+$')
         self.assertEqual(keys[11:19], ['Icons_' + k for k, _ in addon.GROUP_NAMES])
@@ -83,8 +85,10 @@ class ChoiceKeyTests(unittest.TestCase):
         # Version 9 appends its pieces; every older index stays.
         self.assertEqual(keys[59:62], ['Painting_World', 'Painting_Crests', 'Movement_View'])
         # Version 10 appends the Behaviour feature and its pieces, and carves two pieces out of Movement_Pan.
-        self.assertEqual(keys[62:], ['Behaviour', 'Behaviour_InfoBoxDodge', 'Behaviour_InfoBoxHeight', 'Movement_ZoomOut',
-                                     'Movement_Controller', 'Behaviour_HoverNames', 'Movement_Wide'])
+        self.assertEqual(keys[62:69], ['Behaviour', 'Behaviour_InfoBoxDodge', 'Behaviour_InfoBoxHeight', 'Movement_ZoomOut',
+                                       'Movement_Controller', 'Behaviour_HoverNames', 'Movement_Wide'])
+        # Version 11 appends two pieces after the reserved index.
+        self.assertEqual(keys[70:], ['Icons_Undiscovered', 'Look_InfoText'])
 
     def test_index_comments_name_the_right_keys(self):
         keys = choice_keys()
@@ -399,7 +403,7 @@ class MenuAddonTests(unittest.TestCase):
     def test_every_choice_has_one_row(self):
         keys = choice_keys()
         rows = addon.choice_rows()
-        self.assertEqual(sorted(rows), sorted(keys))
+        self.assertEqual(sorted(rows), sorted(k for k in keys if k != 'Reserved69'))
         wins = [row[1] for _g, _p, _t, page in addon.PAGES for row in page if row[0] == 'win']
         self.assertEqual(len(wins), len(set(wins)))
         for key in wins:
@@ -415,7 +419,7 @@ class MenuAddonTests(unittest.TestCase):
             self.assertTrue(group.get('id').startswith('CMFMenu'))
             display = group.get('displayName')
             self.assertNotIn('..', display)
-            if group.get('id') != addon.KNOWN_GROUP:
+            if group.get('id') not in (addon.KNOWN_GROUP, addon.KNOWN_PRESENT_GROUP):
                 self.assertTrue(display.startswith('Mods.cmf_menu.'))
                 self.assertLessEqual(len(display.split('.')), 4)
             names = [v.get('id') for v in group.iter('Var')]
@@ -457,7 +461,7 @@ class MenuScriptTests(unittest.TestCase):
 
     def test_script_is_ascii_and_names_only_its_own_pages(self):
         text = self.script()
-        groups = {g for g, _p, _t, _r in addon.PAGES} | {addon.KNOWN_GROUP}
+        groups = {g for g, _p, _t, _r in addon.PAGES} | {addon.KNOWN_GROUP, addon.KNOWN_PRESENT_GROUP}
         for literal in set(re.findall(r"'(CMF\w+)'", text)):
             if literal.startswith('CMFMenu'):
                 self.assertIn(literal, groups)
@@ -566,7 +570,7 @@ class MenuScriptTests(unittest.TestCase):
         # there, and a change the game still reports is kept out; the General page (Reset) is left alone.
         text = self.script()
         page = function_body(text, 'function CMFMenuFillPage(storage : CScriptedFlashValueStorage, groupName : name, groupRootObject : CScriptedFlashObject)')
-        self.assertIn('theGame.CMFMenuGetState().SetTitleScreen(remembered);', page)
+        self.assertIn('theGame.CMFMenuGetState().SetTitleScreen(!theGame.IsActive());', page)
         self.assertIn('providers, remembered);', page.split('CMFMenuFillOrder(')[1].split('\n')[0])
         self.assertIn('remembered || (!offeredAny && stored == "")', text)
         order = function_body(text, 'function CMFMenuFillOrder(storage : CScriptedFlashValueStorage, row : CScriptedFlashObject, varName : name,\n\tposition : string, providers : array<string>, remembered : bool)')

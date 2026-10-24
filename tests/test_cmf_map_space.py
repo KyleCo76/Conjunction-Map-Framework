@@ -70,7 +70,7 @@ class CoreTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_stays_6(self):
-        self.assertIn('function CMFGetVersion() : int { return 10; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 11; }', self.core)
 
     def test_text_drawings_take_wrap_and_fit(self):
         self.assertIn('return text == "keep" || text == "none" || (part == \'\' && (text == "wrap" || text == "fit"));',
@@ -125,7 +125,7 @@ class CoreTests(unittest.TestCase):
         self.assertIn('CMFLog("late pins caught n=" + missed + " of " + flashArray.GetLength());', catch)
         self.assertLess(catch.index('OpenPinList();'), catch.index('FillMissingPinFields(flashArray, mapContext, -1, area);'))
         fill = body(core, '\tpublic function FillMissingPinFields(')
-        self.assertIn('!dataObject.GetMemberFlashBool("isUserPin") && (fresh || !catching))', fill)
+        self.assertIn('if (fullList && !isPlayer && !isUser && (fresh || !catching))\n\t\t\t{\n\t\t\t\tOnPinReady(', fill)
 
     def test_anchor_and_kind_rules(self):
         draw = body(self.core, 'function CMFDraw(')

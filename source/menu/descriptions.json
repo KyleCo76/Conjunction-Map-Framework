@@ -152,6 +152,11 @@
      "var": "CMFPick_Icons_Added",
      "row": "Pins added by mods",
      "text": "Changes the pictures on the pins for pins that mods add to the map, which the game itself does not have."
+    },
+    {
+     "var": "CMFPick_Icons_Undiscovered",
+     "row": "Undiscovered places (?)",
+     "text": "Changes the pictures on the question-mark pins for places you have not discovered yet."
     }
    ]
   },
@@ -267,6 +272,11 @@
      "var": "CMFPick_Look_InfoBox",
      "row": "Info box",
      "text": "Restyles the box that describes a pin when you point at it: its fonts, colours and backing."
+    },
+    {
+     "var": "CMFPick_Look_InfoText",
+     "row": "Info box text",
+     "text": "Changes the title and text in the box that describes a pin when you point at it, or adds lines below them."
     },
     {
      "var": "CMFPick_Look_Hints",

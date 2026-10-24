@@ -2,19 +2,19 @@
 
 # API reference
 
-Every function, property id, hook and map event CMF offers to mods (API version 10). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
+Every function, property id, hook and map event CMF offers to mods (API version 11). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
 
 ## Functions
 
 | Function | Since | What it does | Explained on |
 | --- | --- | --- | --- |
-| `CMFGetVersion() : int` | 1 | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0, `9` in 1.3.0, `10` in 1.4.1). | [Getting started](Getting-Started.md), [Writing your script](Writing-Your-Script.md) |
+| `CMFGetVersion() : int` | 1 | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0, `9` in 1.3.0, `10` in 1.4.1, `11` in 1.5.0). | [Writing your script](Writing-Your-Script.md), [Getting started](Getting-Started.md) |
 | `CMFHasProperty(propertyId : int) : bool` | 1 | `true` when the installed CMF understands that property id. | [Writing your script](Writing-Your-Script.md), [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md), [Hiding pins](Hiding-Pins.md) |
 | `CMFRegister(provider : string, propertyId : int, target : name, mapContext : name, text : string, number : int) : bool` | 1 | One claim for a pin type (a map area for property 4). | [Writing your script](Writing-Your-Script.md), [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Pin clicks](Pin-Clicks.md) |
 | `CMFRegisterBackground(provider : string, area : name, imageRoot : string)` | 1 | Replaces the map image of one area, such as `'AN_NMLandNovigrad'` (Velen and Novigrad). | [Writing your script](Writing-Your-Script.md) |
 | `CMFRegisterDisabled(provider : string, pinType : name, mapContext : name, disable : bool)` | 1 | Draws every pin of that type greyed (grey art at reduced opacity, tint skipped). | [Writing your script](Writing-Your-Script.md), [Greying pins](Greying-Pins.md) |
 | `CMFRegisterDisabledForTag(provider : string, pinTag : name, mapContext : name, disable : bool)` | 1 | The same for one pin by its tag; it beats type-level claims on that pin. | [Writing your script](Writing-Your-Script.md), [Greying pins](Greying-Pins.md) |
-| `CMFRegisterForTag(provider : string, propertyId : int, pinTag : name, mapContext : name, text : string, number : int) : bool` | 1 | The same for one pin by its tag; accepts properties 1, 5, 9, (API version 4) 10 to 13 and 15, (API version 5) 17, (API version 6) 16, 20, 21 and 22 and (API version 10) 28 (`reason=level` otherwise). | [Writing your script](Writing-Your-Script.md), [Porting a map mod](Porting-a-Map-Mod.md), [Hiding pins](Hiding-Pins.md) |
+| `CMFRegisterForTag(provider : string, propertyId : int, pinTag : name, mapContext : name, text : string, number : int) : bool` | 1 | The same for one pin by its tag; accepts properties 1, 5, 9, (API version 4) 10 to 13 and 15, (API version 5) 17, (API version 6) 16, 20, 21 and 22, (API version 10) 28 and (API version 11) 3, 14, 18, 19, 29 and 30 (`reason=level` otherwise). | [Changing one pin](Changing-One-Pin.md), [Writing your script](Writing-Your-Script.md), [Porting a map mod](Porting-a-Map-Mod.md) |
 | `CMFRegisterIcon(provider : string, pinType : name, url : string)` | 1 | Replaces the art of every pin of that type, and its legend row art unless you register a legend icon too. | [Writing your script](Writing-Your-Script.md), [Getting started](Getting-Started.md), [Check and build](Check-and-Build.md) |
 | `CMFRegisterIconForTag(provider : string, pinTag : name, url : string)` | 1 | Replaces the art of one pin, identified by its map pin tag. | [Writing your script](Writing-Your-Script.md), [Choosing pin types](Choosing-Pin-Types.md) |
 | `CMFRegisterLegendIcon(provider : string, pinType : name, url : string)` | 1 | Sets only the legend row art for that type. | [Writing your script](Writing-Your-Script.md), [Choosing pin types](Choosing-Pin-Types.md), [Check and build](Check-and-Build.md) |
@@ -29,7 +29,7 @@ Every function, property id, hook and map event CMF offers to mods (API version 
 | `CMFRegisterLegendCategory(provider : string, category : name, label : string, priority : int)` | 2 | Declares a filter tab after the vanilla tabs. | [Writing your script](Writing-Your-Script.md), [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md) |
 | `CMFRegisterLegendLabel(provider : string, filteredType : name, label : string)` | 2 | Names a legend row. | [Writing your script](Writing-Your-Script.md), [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md), [Adapter: All Quest Objectives](Adapter-All-Quest-Objectives.md) |
 | `CMFRegisterLegendRow(provider : string, filteredType : name, category : name, priority : int)` | 2 | Places a legend row in a filter tab; see [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md). | [Writing your script](Writing-Your-Script.md), [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md), [Adapter: All Quest Objectives](Adapter-All-Quest-Objectives.md) |
-| `CMFStylePin(provider : string, dataObject : CScriptedFlashObject, propertyId : int, text : string, number : int) : bool` | 2 | Styles one pin object for this map opening; properties 1, 3 and 9, (API version 4) 10 to 13 and 15, (API version 5) 17, (API version 6) 16, 20 and 21 and (API version 10) 28. | [Writing your script](Writing-Your-Script.md), [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Styling one pin](Styling-One-Pin.md) |
+| `CMFStylePin(provider : string, dataObject : CScriptedFlashObject, propertyId : int, text : string, number : int) : bool` | 2 | Styles one pin object for this map opening; properties 1, 3 and 9, (API version 4) 10 to 13 and 15, (API version 5) 17, (API version 6) 16, 20 and 21, (API version 10) 28 and (API version 11) 14, 18, 19, 29 and 30. | [Writing your script](Writing-Your-Script.md), [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Styling one pin](Styling-One-Pin.md) |
 | `CMFStylePinIcon(provider : string, dataObject : CScriptedFlashObject, url : string) : bool` | 2 | `CMFStylePin` with property 1. | [Writing your script](Writing-Your-Script.md), [Styling one pin](Styling-One-Pin.md), [Adapter: Map Quest Insight](Adapter-Map-Quest-Insight.md) |
 | `CMFStylePinTint(provider : string, dataObject : CScriptedFlashObject, rgb : int) : bool` | 2 | `CMFStylePin` with property 3. | [Styling one pin](Styling-One-Pin.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Quest Insight](Adapter-Map-Quest-Insight.md) |
 | `CMFPropertyLegendCategory() : int` | 2 | Returns property id `8`. | [Writing your script](Writing-Your-Script.md) |
@@ -60,10 +60,15 @@ Every function, property id, hook and map event CMF offers to mods (API version 
 | `CMFRegisterCategoryNoDefault(provider : string, category : name, noDefault : bool)` | 6 | Keeps the rows of your tab out of Default (`true`), or lists them there again (`false`). | [Writing your script](Writing-Your-Script.md), [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md), [Adapter: Botanist](Adapter-Botanist.md) |
 | `CMFPropertyCategoryNoDefault() : int` | 6 | Returns property id `23`. | [Writing your script](Writing-Your-Script.md) |
 | `CMFPropertyHoverName() : int` | 6 | Returns property id `28`. | [Names only on hover](Names-Only-on-Hover.md), [Writing your script](Writing-Your-Script.md) |
+| `CMFPropertyIconCompleted() : int` | 6 | Returns property id `30`. | [Writing your script](Writing-Your-Script.md) |
+| `CMFPropertyIconUndiscovered() : int` | 6 | Returns property id `29`. | [Writing your script](Writing-Your-Script.md) |
+| `CMFPropertyInfoText() : int` | 6 | Returns property id `19`. | [Writing your script](Writing-Your-Script.md) |
+| `CMFPropertyInfoTitle() : int` | 6 | Returns property id `18`. | [Writing your script](Writing-Your-Script.md) |
 | `CMFPropertyPinClick() : int` | 6 | Returns property id `16`. | [Pin clicks](Pin-Clicks.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Pin Teleport](Adapter-Map-Pin-Teleport.md) |
 | `CMFPropertyPinClickButton() : int` | 6 | Returns property id `21`. | [Pin clicks](Pin-Clicks.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Pin Teleport](Adapter-Map-Pin-Teleport.md) |
 | `CMFPropertyPinClickHint() : int` | 6 | Returns property id `20`. | [Pin clicks](Pin-Clicks.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Pin Teleport](Adapter-Map-Pin-Teleport.md) |
 | `CMFPropertySpreadRank() : int` | 6 | Returns property id `22`. | [Spreading stacked pins](Spreading-Stacked-Pins.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Quest Insight](Adapter-Map-Quest-Insight.md) |
+| `CMFPropertyTabHidden() : int` | 6 | Returns property id `37`. | [Writing your script](Writing-Your-Script.md) |
 | `CMFChoicesChanged()` | 8 | Tells CMF that a player's choice changed, so it prepares its winners again before the next lookup. | [Writing your script](Writing-Your-Script.md), [Players' choices: who wins each feature](Who-Wins-Each-Feature.md) |
 | `CMFSetProviderName(provider : string, displayName : string) : bool` | 8 | The name CMF's in-game menu shows for your mod, for example `"Acme Icons"`; without it the menu shows your folder name tidied. | [Players' choices: who wins each feature](Who-Wins-Each-Feature.md), [Writing your script](Writing-Your-Script.md), [Adapter: Ink and Iron](Adapter-Ink-and-Iron.md) |
 | `CMFRegisterButtonPicture(provider : string, family : name, button : string, url : string) : bool` | 9 | Your picture for one controller button of one family on the map. | [Writing your script](Writing-Your-Script.md), [Controller button pictures](Controller-Button-Pictures.md), [Adapter: Ink and Iron](Adapter-Ink-and-Iron.md) |
@@ -80,6 +85,15 @@ Every function, property id, hook and map event CMF offers to mods (API version 
 | `CMFPropertyWorldPainting() : int` | 9 | Returns property id `24`. | [Writing your script](Writing-Your-Script.md), [World overview pictures](World-Overview-Pictures.md) |
 | `CMFScreenHeight() : float` | 10 | API version 10. | [Writing your script](Writing-Your-Script.md), [Wide and tall screens](Wide-Screens.md) |
 | `CMFScreenWidth() : float` | 10 | API version 10. | [Writing your script](Writing-Your-Script.md), [Wide and tall screens](Wide-Screens.md) |
+| `CMFDeclareProvider(provider : string) : bool` | 11 | Call `CMFDeclareProvider("modAcmeIcons")` once from your `OnGameStarted` wrapper to tell CMF that your mod supplies CMF support. | [Writing your script](Writing-Your-Script.md) |
+| `CMFInfoAdd() : int` | 11 |  | [Writing your script](Writing-Your-Script.md), [Changing one pin](Changing-One-Pin.md) |
+| `CMFInfoReplace() : int` | 11 |  | [Writing your script](Writing-Your-Script.md), [Changing one pin](Changing-One-Pin.md) |
+| `CMFLevelPlace() : int` | 11 |  | [Changing one pin](Changing-One-Pin.md) |
+| `CMFPlaceRadius() : float` | 11 |  | [Writing your script](Writing-Your-Script.md) |
+| `CMFProviderPresent(provider : string) : bool` | 11 | `CMFProviderPresent(provider : string) : bool` asks whether a nonempty provider has submitted anything this session, ignoring case; asking never declares it. | [Writing your script](Writing-Your-Script.md) |
+| `CMFRegisterForPlace(provider : string, propertyId : int, pinType : name, x : float, y : float, text : string, number : int) : bool` | 11 | API version 11. | [Changing one pin](Changing-One-Pin.md), [Writing your script](Writing-Your-Script.md) |
+| `CMFSetLogPins(on : bool)` | 11 | API version 11. | [Writing your script](Writing-Your-Script.md), [Changing one pin](Changing-One-Pin.md) |
+| `CMFPropertyPresent() : int` | 11 | Returns property id `38`. | [Writing your script](Writing-Your-Script.md) |
 
 ## Property ids
 
@@ -104,6 +118,8 @@ The generic calls `CMFRegister`, `CMFRegisterForTag` and `CMFStylePin` take one 
 | `15` | `CMFPropertyTabHide()` | 4 | [Writing your script](Writing-Your-Script.md), [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Adapter: Map Quest Insight](Adapter-Map-Quest-Insight.md) |
 | `16` | `CMFPropertyPinClick()` | 6 | [Pin clicks](Pin-Clicks.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Pin Teleport](Adapter-Map-Pin-Teleport.md) |
 | `17` | `CMFPropertyLabelColor()` | 5 | [The map theme](Map-Theme.md), [Adapter: Ink and Iron](Adapter-Ink-and-Iron.md) |
+| `18` | `CMFPropertyInfoTitle()` | 6 | [Writing your script](Writing-Your-Script.md) |
+| `19` | `CMFPropertyInfoText()` | 6 | [Writing your script](Writing-Your-Script.md) |
 | `20` | `CMFPropertyPinClickHint()` | 6 | [Pin clicks](Pin-Clicks.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Pin Teleport](Adapter-Map-Pin-Teleport.md) |
 | `21` | `CMFPropertyPinClickButton()` | 6 | [Pin clicks](Pin-Clicks.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Pin Teleport](Adapter-Map-Pin-Teleport.md) |
 | `22` | `CMFPropertySpreadRank()` | 6 | [Spreading stacked pins](Spreading-Stacked-Pins.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Quest Insight](Adapter-Map-Quest-Insight.md) |
@@ -113,6 +129,10 @@ The generic calls `CMFRegister`, `CMFRegisterForTag` and `CMFStylePin` take one 
 | `26` | `CMFPropertyButtonPicture()` | 9 | [Writing your script](Writing-Your-Script.md) |
 | `27` | `CMFPropertyWorldMarker()` | 9 | [Writing your script](Writing-Your-Script.md), [World overview pictures](World-Overview-Pictures.md) |
 | `28` | `CMFPropertyHoverName()` | 6 | [Names only on hover](Names-Only-on-Hover.md), [Writing your script](Writing-Your-Script.md) |
+| `29` | `CMFPropertyIconUndiscovered()` | 6 | [Writing your script](Writing-Your-Script.md) |
+| `30` | `CMFPropertyIconCompleted()` | 6 | [Writing your script](Writing-Your-Script.md) |
+| `37` | `CMFPropertyTabHidden()` | 6 | [Writing your script](Writing-Your-Script.md) |
+| `38` | `CMFPropertyPresent()` | 11 | [Writing your script](Writing-Your-Script.md) |
 
 ## Hooks
 
@@ -144,11 +164,12 @@ CMF's map calls these events on `CR4MapMenu` under CMF's own names. Add one with
 - **3**: `CMFHidePin`, `CMFPropertyHidden`, `CMFRegisterHidden`, `CMFRegisterHiddenForTag`
 - **4**: `CMFLabelHideCrosshair`, `CMFLabelHidePin`, `CMFLevelLabel`, `CMFPropertyInfoBoxHeight`, `CMFPropertyLabelHide`, `CMFPropertyLabelPlace`, `CMFPropertyLabelText`, `CMFPropertyPinScale`, `CMFPropertyTabHide`, `CMFStylePinLabel`, `CMFStylePinScale`, hook `OnPinReady`, hook `OnMapReady`
 - **5**: `CMFDraw`, `CMFDrawSet`, `CMFHasAbility`, `CMFPropertyLabelColor`, `CMFStylePart`
-- **6**: `CMFDrawSetList`, `CMFMapRefresh`, `CMFPropertyCategoryNoDefault`, `CMFPropertyHoverName`, `CMFPropertyPinClick`, `CMFPropertyPinClickButton`, `CMFPropertyPinClickHint`, `CMFPropertySpreadRank`, `CMFRegisterCategoryNoDefault`, hook `OnPinClicked`, hook `OnDrawingClicked`, hook `OnMapListening`
+- **6**: `CMFDrawSetList`, `CMFMapRefresh`, `CMFPropertyCategoryNoDefault`, `CMFPropertyHoverName`, `CMFPropertyIconCompleted`, `CMFPropertyIconUndiscovered`, `CMFPropertyInfoText`, `CMFPropertyInfoTitle`, `CMFPropertyPinClick`, `CMFPropertyPinClickButton`, `CMFPropertyPinClickHint`, `CMFPropertySpreadRank`, `CMFPropertyTabHidden`, `CMFRegisterCategoryNoDefault`, hook `OnPinClicked`, hook `OnDrawingClicked`, hook `OnMapListening`
 - **7**: no new calls (new theme keys only)
 - **8**: `CMFChoicesChanged`, `CMFSetProviderName`
 - **9**: `CMFPropertyButtonPicture`, `CMFPropertyWorldCrest`, `CMFPropertyWorldMarker`, `CMFPropertyWorldPainting`, `CMFRegisterButtonPicture`, `CMFRegisterChoiceOnly`, `CMFRegisterWorldCrest`, `CMFRegisterWorldMarker`, `CMFRegisterWorldPainting`, `CMFRegisterWorldPaintingTiles`, `CMFSetOpeningView`, `CMFSetOpeningWorld`, hook `OnMapView`, hook `OnMapOpening`
 - **10**: `CMFScreenHeight`, `CMFScreenWidth`
+- **11**: `CMFDeclareProvider`, `CMFInfoAdd`, `CMFInfoReplace`, `CMFLevelPlace`, `CMFPlaceRadius`, `CMFPropertyPresent`, `CMFProviderPresent`, `CMFRegisterForPlace`, `CMFSetLogPins`
 
 ---
 

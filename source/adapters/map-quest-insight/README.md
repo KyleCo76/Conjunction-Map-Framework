@@ -1,5 +1,7 @@
 # Map Quest Insight adapter
 
+**Adapter version 1.1.1.** Tells CMF the adapter is installed when the game starts (property 38, behind `CMFHasProperty(38)`, API 11), so CMF's adapter check can see it. Nothing else changes.
+
 `modCMFAdapterMapQuestInsight` is a separate mod that sits between Conjunction Map Framework (CMF) and Map Quest Insight 1.6.1 or later (Nexus 14219). Map Quest Insight stays unchanged. It normally talks to its own map file: it asks that file for a handshake number, then writes its values onto the map and onto each pin. CMF's map reads none of those names, so the adapter turns each value into CMF's general calls, the way Map Quest Insight's author would when porting. It is the worked example of an adapter that translates a mod's own field names through CMF's general hooks a design note kept in the private development repository. The author-facing version is [`docs/authors/map-quest-insight-adapter.md`](../../../docs/authors/map-quest-insight-adapter.md).
 
 It does not retire: it stays the guide for Map Quest Insight's author until a port exists.
@@ -65,7 +67,7 @@ Every claim names `modMapQuestInsight`, Map Quest Insight's own folder, as its p
 
 | Path | What |
 |---|---|
-| `modCMFAdapterMapQuestInsight/content/scripts/local/zz_modcmfadaptermapquestinsight_cmf.ws` | the four wrappers and the log line |
+| `modCMFAdapterMapQuestInsight/content/scripts/local/zz_modcmfadaptermapquestinsight_cmf.ws` | the startup declaration, four map/pin wrappers and the log line |
 | `modCMFAdapterMapQuestInsight/art/quest_*.png` | Map Quest Insight's main quest, contract and Gwent quest icons, 96 × 96, white with its dark outline so the level tints and the tracked gold multiply them; sent by its author, Wolfer, for the adapter and shipped with their permission (2026-10-21) from `MQI icons for CMF.zip` (SHA-256 `d14cc5abbe2b376a11d76194a24cb2bbcad3aa8fdc036ffc43b14b99459cdc86`), unchanged; the zip's 128 × 128 copies are not used |
 | `modCMFAdapterMapQuestInsight/README.txt` | for players |
 | `tests/test_cmf_mqi_adapter.py` | static checks: the Map Quest Insight names it uses exist with these signatures in 1.5.0, wrapper order, every claim names `modMapQuestInsight`, it writes no pin field itself, the kind table, the author's three icons check clean, plus WitcherScript hygiene |
