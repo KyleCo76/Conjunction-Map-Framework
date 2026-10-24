@@ -68,18 +68,23 @@ def pin_group(pin_type, lists):
 class ChoiceKeyTests(unittest.TestCase):
     def test_keys_are_features_then_pieces(self):
         keys = choice_keys()
-        self.assertEqual(len(keys), 62)
-        self.assertEqual(len(set(keys)), 62)
+        self.assertEqual(len(keys), 69)
+        self.assertEqual(len(set(keys)), 69)
         self.assertEqual(keys[:11], FEATURES)
-        for key in keys[11:]:
-            self.assertIn(key.split('_')[0], FEATURES, key)
+        # Version 10: the Behaviour feature (62) follows the version 9 pieces; its new pieces carry its name.
+        self.assertEqual(keys[62], 'Behaviour')
+        for key in keys[11:62] + keys[63:]:
+            self.assertIn(key.split('_')[0], FEATURES + ['Behaviour'], key)
             self.assertRegex(key, r'^[A-Za-z]+_[A-Za-z0-9]+$')
         self.assertEqual(keys[11:19], ['Icons_' + k for k, _ in addon.GROUP_NAMES])
         self.assertEqual(keys[19:27], ['Colours_' + k for k, _ in addon.GROUP_NAMES])
         self.assertEqual(keys[36:39], ['Hidden_Ignore1', 'Hidden_Ignore2', 'Hidden_Ignore3'])
         self.assertEqual(keys[56:59], ['Drawings_Ignore1', 'Drawings_Ignore2', 'Drawings_Ignore3'])
         # Version 9 appends its pieces; every older index stays.
-        self.assertEqual(keys[59:], ['Painting_World', 'Painting_Crests', 'Movement_View'])
+        self.assertEqual(keys[59:62], ['Painting_World', 'Painting_Crests', 'Movement_View'])
+        # Version 10 appends the Behaviour feature and its pieces, and carves two pieces out of Movement_Pan.
+        self.assertEqual(keys[62:], ['Behaviour', 'Behaviour_InfoBoxDodge', 'Behaviour_InfoBoxHeight', 'Movement_ZoomOut',
+                                     'Movement_Controller', 'Behaviour_HoverNames', 'Movement_Wide'])
 
     def test_index_comments_name_the_right_keys(self):
         keys = choice_keys()
@@ -399,7 +404,8 @@ class MenuAddonTests(unittest.TestCase):
         self.assertEqual(len(wins), len(set(wins)))
         for key in wins:
             self.assertIn(key, keys)
-        pieces = [k for k in keys[11:] if not re.search(r'_Ignore\d$', k)]
+        # Every piece (a key with a feature prefix; version 10 appends the feature Behaviour after the pieces).
+        pieces = [k for k in keys if '_' in k and not re.search(r'_Ignore\d$', k)]
         self.assertEqual(sorted(wins), sorted(pieces + ['Hidden', 'Drawings']))
 
     def test_menu_file_follows_the_safe_schema(self):

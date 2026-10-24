@@ -3,7 +3,7 @@
 > [!NOTE]
 > **Proof-of-concept example, not a shipped adapter.** This adapter is not part of any CMF release and is not on Nexus. It is published here only as a worked example for Smooth Map's author. Its keys ran in game together with Ink & Iron, which won the movement keys it also sets; Smooth Map's values on their own, without Ink & Iron, have not been checked in a launch.
 
-This note is for the author of Smooth Map (Nexus 13530). It describes Smooth Map 1.1, the version the adapter targets. It shows how Smooth Map's smoother movement and faster opening come back on Conjunction Map Framework's (CMF) world map, using the proof-of-concept adapter published here as a worked example (it is not part of any CMF release), [`source/adapters/smooth-map/modCMFAdapterSmoothMap`](../../source/adapters/smooth-map/modCMFAdapterSmoothMap/).
+This note is for the author of Smooth Map (Nexus 13530). It describes Smooth Map 1.1, the version the adapter targets. It shows how Smooth Map's smoother movement and faster opening come back on Conjunction Map Framework's (CMF) world map, using CMF's example adapter as a worked example, [`source/adapters/smooth-map/modCMFAdapterSmoothMap`](../../source/adapters/smooth-map/modCMFAdapterSmoothMap/).
 
 ## What changes under CMF
 
@@ -56,8 +56,12 @@ The provider is your own folder name, `modSmoothMap`, so folder order between mo
 
 ## The quick change for you
 
-An optional "CMF support" folder of your own can replace the adapter: the same script, unchanged, because it already uses your folder name. It must stay a separate folder, because a CMF call fails to compile when CMF is not installed. Anyone who installed this example adapter uninstalls it when they install your support folder: with both installed the game may stop at the script compile screen (the same function names twice), and removing the adapter fixes it. If you later add an on/off option, send `"unset"` as the text for each key while it is off, so another mod's value or the game's applies (author guide, "Smooth map movement").
+An optional "CMF support" folder of your own can replace the adapter: the same script, unchanged, because it already uses your folder name. It must stay a separate folder, because a CMF call fails to compile when CMF is not installed. The example adapter was never released to players, so nobody has to uninstall it. If you later add an on/off option, send `"unset"` as the text for each key while it is off, so another mod's value or the game's applies (author guide, "Smooth map movement").
 
 ## What does not come back this way
 
-Nothing that Smooth Map does is left out. The adapter has run in game alongside Ink & Iron and Map Quest Insight, where the map opened as yours does; your movement on its own, without Ink & Iron, has not been checked in a launch. The controller parts (stick zoom, the stick reading) are checked by value only, because no launch has used a controller.
+Your map takes input and shows the legend, quest tracker, crosshair and edge pointers as soon as its fade-in starts (`handleShowTimer`); CMF's map shows them after the tiles have faded in. From CMF 1.4.1 (API version 10) the `opening` key `readyAtFadeStart` 1 does what yours does, and `revealEase` 1 makes the `revealSeconds` fade ease in. The example adapter sends `readyAtFadeStart` 1 behind `CMFHasAbility('opening', 'readyAtFadeStart')`, so the same script still runs on CMF 1.3.0. In the CMF 1.4.1 launch (2026-10-24) the example adapter's keys were accepted and the legend and tracker arrived together with the map; `revealEase` has not yet run in game.
+
+CMF's map runs at 60 frames a second by default (with `frameTimed`, `zoomTimed` and `tweenEveryFrame` `1`), not the game's 24. Your mod does not set `frameRate`, so it gets CMF's 60; send `CMFStylePart("modSmoothMap", 'navigation', 'frameRate', "", 24)` if you want to keep 24.
+
+The adapter has run in game alongside Ink & Iron and Map Quest Insight, where the map opened as yours does, and all its keys were accepted in the final test round (2026-10-21); your movement on its own, without Ink & Iron, has not yet been judged in a launch. The controller parts (stick zoom, the stick reading) are checked by value only, because no launch has used a controller.

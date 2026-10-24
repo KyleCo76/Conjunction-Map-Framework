@@ -26,7 +26,7 @@ CMFFile_Painting_Skellige=Vanilla
 | --- | --- | --- | --- |
 | `CMFFile_Icons` | Pin icons | Basic choices | Pin icons |
 | `CMFFile_Colours` | Pin colours | Basic choices | Pin colours |
-| `CMFFile_Size` | Pin size and spreading | Basic choices | Pin size and spreading |
+| `CMFFile_Size` | Pin size | Basic choices | Pin size |
 | `CMFFile_Labels` | Pin labels | Basic choices | Pin labels |
 | `CMFFile_Clicks` | Pin clicks | Basic choices | Pin clicks |
 | `CMFFile_Legend` | Legend and filter tabs | Basic choices | Legend and filter tabs |
@@ -51,11 +51,11 @@ CMFFile_Painting_Skellige=Vanilla
 | `CMFFile_Colours_Power` | Pin colours | Advanced choices > Pin colours | Places of power and workbenches |
 | `CMFFile_Colours_Other` | Pin colours | Advanced choices > Pin colours | Other (beds, herbs, stables) |
 | `CMFFile_Colours_Added` | Pin colours | Advanced choices > Pin colours | Pins added by mods |
-| `CMFFile_Size_Scale` | Pin size and spreading | Advanced choices > Pin size and labels | Pin size |
-| `CMFFile_Size_Lead` | Pin size and spreading | Advanced choices > Pin size and labels | Which pin leads a spread |
-| `CMFFile_Size_Spread` | Pin size and spreading | Advanced choices > Pin size and labels | Spreading |
+| `CMFFile_Size_Scale` | Pin size | Advanced choices > Pin size and labels | Pin size |
+| `CMFFile_Size_Lead` | Map behaviour | Advanced choices > Map behaviour | Which pin leads a spread |
+| `CMFFile_Size_Spread` | Map behaviour | Advanced choices > Map behaviour | Stacked pins spread out |
 | `CMFFile_Labels_Text` | Pin labels | Advanced choices > Pin size and labels | Level tags and label text |
-| `CMFFile_Labels_Place` | Pin labels | Advanced choices > Pin size and labels | Label place and hiding |
+| `CMFFile_Labels_Place` | Map behaviour | Advanced choices > Map behaviour | Label place and hiding |
 | `CMFFile_Clicks_Pins` | Pin clicks | Advanced choices > Clicks and drawings | Pin clicks |
 | `CMFFile_Legend_Rows` | Legend and filter tabs | Advanced choices > Legend and filters | Legend rows |
 | `CMFFile_Legend_Names` | Legend and filter tabs | Advanced choices > Legend and filters | Row names |
@@ -69,7 +69,7 @@ CMFFile_Painting_Skellige=Vanilla
 | `CMFFile_Look_Hints` | Map look | Advanced choices > Map look | Key hints |
 | `CMFFile_Look_PinText` | Map look | Advanced choices > Map look | Pin text style |
 | `CMFFile_Movement_Area` | Map movement | Advanced choices > Map movement | Map area |
-| `CMFFile_Movement_Pan` | Map movement | Advanced choices > Map movement | Pan and zoom |
+| `CMFFile_Movement_Pan` | Map movement | Advanced choices > Map movement | Pan and zoom feel |
 | `CMFFile_Movement_Opening` | Map movement | Advanced choices > Map movement | Opening and closing |
 | `CMFFile_Painting_WhiteOrchard` | Map painting | Advanced choices > Map painting | White Orchard |
 | `CMFFile_Painting_WhiteOrchardWinter` | Map painting | Advanced choices > Map painting | White Orchard (winter) |
@@ -86,6 +86,13 @@ CMFFile_Painting_Skellige=Vanilla
 | `CMFFile_Painting_World` | Map painting | Advanced choices > Map painting | World overview |
 | `CMFFile_Painting_Crests` | Map painting | Advanced choices > Map painting | Region crests and markers |
 | `CMFFile_Movement_View` | Map movement | Advanced choices > Map movement | Opening view |
+| `CMFFile_Behaviour` | Map behaviour | Basic choices | Map behaviour |
+| `CMFFile_Behaviour_InfoBoxDodge` | Map behaviour | Advanced choices > Map behaviour | Info box moves out of the way |
+| `CMFFile_Behaviour_InfoBoxHeight` | Map behaviour | Advanced choices > Map behaviour | Info box height and scrolling |
+| `CMFFile_Movement_ZoomOut` | Map movement | Advanced choices > Map movement | Zoom out to the whole region |
+| `CMFFile_Movement_Controller` | Map movement | Advanced choices > Map movement | Controller crosshair |
+| `CMFFile_Behaviour_HoverNames` | Map behaviour | Advanced choices > Map behaviour | Names only on hover |
+| `CMFFile_Movement_Wide` | Map movement | Advanced choices > Map movement | Fill wide screens |
 | `CMFFile_Fallthrough` | every feature | General | If the chosen mod has nothing for a pin |
 | `CMFDebug` | the log | General | Write the who-wins report to the log |
 | `CMFProviderOrder1` | the Mod order | Mod order | 1st |

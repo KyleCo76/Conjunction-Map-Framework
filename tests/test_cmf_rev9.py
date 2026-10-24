@@ -39,7 +39,7 @@ class ApiTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_and_property_ids(self):
-        self.assertIn('function CMFGetVersion() : int { return 9; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 10; }', self.core)
         self.assertRegex(self.core.split('function CMFGetVersion')[0], r'version 9: world overview pictures')
         ids = {'CMFPropertyWorldPainting': 24, 'CMFPropertyWorldCrest': 25, 'CMFPropertyButtonPicture': 26,
                'CMFPropertyWorldMarker': 27}
@@ -107,7 +107,7 @@ class ApiTests(unittest.TestCase):
 
     def test_choice_keys_and_property_choices(self):
         keys = choice_keys(self.core)
-        self.assertEqual(keys[59:], ['Painting_World', 'Painting_Crests', 'Movement_View'])
+        self.assertEqual(keys[59:62], ['Painting_World', 'Painting_Crests', 'Movement_View'])
         choice = body(self.core, 'public function PropertyChoice(propertyId : int, pinType : string) : int')
         self.assertIn('case 24:\n\t\t\t\treturn 59; // Painting_World', choice)
         self.assertIn('case 25:\n\t\t\tcase 27:\n\t\t\t\treturn 60; // Painting_Crests', choice)
@@ -144,7 +144,7 @@ class ApiTests(unittest.TestCase):
                       'fileChoices[choice] != provider &&\n\t\t\tfileChoices[feature] != provider;', skips)
         prepare = body(self.core, 'public function Prepare()')
         self.assertLess(prepare.index('ChoiceOnlySkips(PropertyChoice('), prepare.index('CMFPropertyHidden()'))
-        self.assertIn('!ChoiceOnlySkips(PartChoice(part), themeEntries[i].provider)',
+        self.assertIn('!ChoiceOnlySkips(keyChoice, themeEntries[i].provider)',
                       body(self.core, 'private function ThemeStyleOwner('))
         self.assertIn('ChoiceOnlySkips(61, openingViews[i].provider)', body(self.core, 'private function OpeningViewWinner('))
         self.assertIn('choiceOnly = " choiceonly=" + skipped;', body(self.core, 'private function ReportProviders()'))

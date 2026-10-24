@@ -1,10 +1,16 @@
 // CMF In-Game Menu (modCMFInGameMenu): the optional Options > Mods > Conjunction Map Framework entry for CMF 1.2.0
 // and later (CMFGetVersion 8). 1.2.0 adds the World overview, Region crests and markers, and Opening view rows, which
 // need CMF 1.3.0 (CMFGetVersion 9); on an older CMF the page leaves out every row whose choice key that CMF does not
-// know, so the add-on works there as 1.1.1. Its menu file declares every row with spare placeholder choices; while
-// the game builds a page, this script replaces them with the loaded map mods and remembers which folder name each
-// position stands for. A chosen row keeps the folder name in a hidden name var beside it (CMFName_<key>,
-// CMFOrderName<n>), so a choice survives mods being added or removed. CMF reads the rows each time it prepares winners (ReadMenuChoices).
+// know, so the add-on works there as 1.1.1. 1.3.0 (CMF 1.4.0, CMFGetVersion 10) adds the Map behaviour row and page,
+// the Zoom out, Controller crosshair and Fill wide screens rows, the Who wins: map behaviour page and the Screen line
+// on Loaded map mods, and renames Pin size, Pan and zoom feel and Stacked pins spread out; on CMF 1.3.0 or older the
+// new rows are left out the same way, the renamed rows show their 1.2.x names (CMFMenuOldLabel) and the Screen line
+// is left out. The Screen line calls CMFScreenWidth and CMFScreenHeight, which only CMF 1.4.0 declares, so this
+// script compiles only beside CMF 1.4.0 or later: the two ship together. Its menu file declares every row with spare
+// placeholder choices; while the game builds a page, this script replaces them with the loaded map mods and remembers
+// which folder name each position stands for. A chosen row keeps the folder name in a hidden name var beside it
+// (CMFName_<key>, CMFOrderName<n>), so a choice survives mods being added or removed. CMF reads the rows each time it
+// prepares winners (ReadMenuChoices).
 // Without this add-on every in-game level reads Automatic.
 
 // The positions each live row showed when its page was built: one comma-joined list of answers per row var ("" is
@@ -17,6 +23,7 @@ class CMFMenuState extends CObject
 	private var helpTexts : array<string>;
 	private var boxShown : bool;
 	private var titleScreen : bool;
+	private var resetPending : bool;
 
 	// 1.1.0: the help line of a choice row ("Offered by: ..."), made when its page is built.
 	public function RememberHelp(varName : name, text : string)
@@ -67,6 +74,17 @@ class CMFMenuState extends CObject
 	public function TitleScreen() : bool
 	{
 		return titleScreen;
+	}
+
+	// 1.3.0: a Reset ran and the open Options screen still shows the old positions, until its pages are built again.
+	public function SetResetPending(pending : bool)
+	{
+		resetPending = pending;
+	}
+
+	public function ResetPending() : bool
+	{
+		return resetPending;
 	}
 
 	public function Remember(varName : name, answers : string)
@@ -155,6 +173,15 @@ function CMFMenuGroupOf(key : string) : name
 	{
 		return 'CMFMenuAdvColours';
 	}
+	// 1.3.0: the behaviour pieces, the three moved ones (their keys keep the Size_ and Labels_ names) first.
+	if (StrBeginsWith(key, "Behaviour_") || StrBeginsWith(key, "Labels_Place"))
+	{
+		return 'CMFMenuAdvBehaviour';
+	}
+	if (StrBeginsWith(key, "Size_Spread") || StrBeginsWith(key, "Size_Lead"))
+	{
+		return 'CMFMenuAdvBehaviour';
+	}
 	if (StrBeginsWith(key, "Size_") || StrBeginsWith(key, "Labels_"))
 	{
 		return 'CMFMenuAdvSize';
@@ -193,6 +220,7 @@ function CMFMenuChoiceGroups() : array<name>
 	groups.PushBack('CMFMenuAdvLegend');
 	groups.PushBack('CMFMenuAdvLook');
 	groups.PushBack('CMFMenuAdvMovement');
+	groups.PushBack('CMFMenuAdvBehaviour');
 	groups.PushBack('CMFMenuAdvPainting');
 	groups.PushBack('CMFMenuAdvClicks');
 	return groups;
@@ -265,7 +293,30 @@ function CMFMenuHeadingStyle() : int
 	return 1;
 }
 
-// The feature names the Loaded map mods page lists, by feature index (CMFChoiceKeys 0 to 10).
+// 1.3.0: the 1.2.x name of a row renamed in 1.3.0, shown on CMF 1.3.0 or older (CMFGetVersion 9 or less), where the
+// row still means what it meant then; "" for a row that kept its name.
+function CMFMenuOldLabel(key : string) : string
+{
+	if (CMFGetVersion() >= 10)
+	{
+		return "";
+	}
+	if (key == "Size")
+	{
+		return "Pin size and spreading";
+	}
+	if (key == "Size_Spread")
+	{
+		return "Spreading";
+	}
+	if (key == "Movement_Pan")
+	{
+		return "Pan and zoom";
+	}
+	return "";
+}
+
+// The feature names the Loaded map mods page lists, by feature index (CMFChoiceKeys 0 to 10; 1.3.0: 62 Behaviour).
 function CMFMenuFeatureName(feature : int) : string
 {
 	switch (feature)
@@ -292,6 +343,8 @@ function CMFMenuFeatureName(feature : int) : string
 			return "Painting";
 		case 10:
 			return "Drawings";
+		case 62:
+			return "Behaviour";
 	}
 	return "";
 }
@@ -348,6 +401,11 @@ function CMFMenuProviders(out providers : array<string>) : bool
 	groupName : name, groupRootObject : CScriptedFlashObject) : bool
 {
 	var result : bool;
+	if (theGame.CMFMenuGetState().ResetPending() && StrBeginsWith(NameToString(groupName), "CMFMenu"))
+	{
+		CMFMenuReset("pages built");
+		theGame.CMFMenuGetState().SetResetPending(false);
+	}
 	result = wrappedMethod(flashStorageUtility, groupID, groupName, groupRootObject);
 	if (result && StrBeginsWith(NameToString(groupName), "CMFMenu"))
 	{
@@ -415,6 +473,13 @@ function CMFMenuFillPage(storage : CScriptedFlashValueStorage, groupName : name,
 		else if (StrBeginsWith(varText, "CMFWin_"))
 		{
 			if (!CMFMenuFillWin(storage, row, StrAfterFirst(varText, "CMFWin_"), providers, remembered))
+			{
+				rows.RemoveElement(i);
+			}
+		}
+		else if (varText == "CMFStatusScreen")
+		{
+			if (!CMFMenuFillScreen(storage, row, remembered))
 			{
 				rows.RemoveElement(i);
 			}
@@ -540,6 +605,10 @@ function CMFMenuFillPick(storage : CScriptedFlashValueStorage, row : CScriptedFl
 	if (choice < 0)
 	{
 		return false;
+	}
+	if (CMFMenuOldLabel(key) != "")
+	{
+		row.SetMemberFlashString("label", CMFMenuOldLabel(key));
 	}
 	feature = core.ChoiceFeature(choice);
 	basic = choice == feature;
@@ -703,7 +772,7 @@ function CMFMenuFillMod(storage : CScriptedFlashValueStorage, row : CScriptedFla
 	var core : CMFCore;
 	var labels : array<string>;
 	var text : string;
-	var feature : int;
+	var feature, behaviour : int;
 	if (index < 0 || index >= providers.Size())
 	{
 		return false;
@@ -727,6 +796,16 @@ function CMFMenuFillMod(storage : CScriptedFlashValueStorage, row : CScriptedFla
 				}
 				text += CMFMenuFeatureName(feature);
 			}
+		}
+		// 1.3.0: Behaviour (62) last, when the installed CMF knows it.
+		behaviour = core.ChoiceIndex("Behaviour");
+		if (behaviour >= 0 && core.Offers(behaviour, providers[index]))
+		{
+			if (text != "")
+			{
+				text += ", ";
+			}
+			text += CMFMenuFeatureName(behaviour);
 		}
 		if (text == "")
 		{
@@ -753,6 +832,10 @@ function CMFMenuFillWin(storage : CScriptedFlashValueStorage, row : CScriptedFla
 	if (choice < 0)
 	{
 		return false;
+	}
+	if (CMFMenuOldLabel(key) != "")
+	{
+		row.SetMemberFlashString("label", CMFMenuOldLabel(key));
 	}
 	greyed = false;
 	if (remembered)
@@ -795,6 +878,72 @@ function CMFMenuFillWin(storage : CScriptedFlashValueStorage, row : CScriptedFla
 	labels.PushBack(text);
 	CMFMenuSetChoices(storage, row, labels, 0, greyed);
 	return true;
+}
+
+// 1.3.0: the Screen line on Loaded map mods (ultrawide spec 6.5). The label holds the screen in map units from the
+// last map opening (CMFScreenWidth and CMFScreenHeight, 0 before the first); the value says who decides Fill wide
+// screens (Movement_Wide): CMF's own full-width layout when no mod sends wide keys, Vanilla (the game's centred 16:9
+// map), or the winning mod. False on CMF 1.3.0 or older, which the page then leaves out.
+function CMFMenuFillScreen(storage : CScriptedFlashValueStorage, row : CScriptedFlashObject, remembered : bool) : bool
+{
+	var core : CMFCore;
+	var labels : array<string>;
+	var width, height : float;
+	var choice, level : int;
+	var winner, text : string;
+	if (CMFGetVersion() < 10)
+	{
+		return false;
+	}
+	core = theGame.CMFGetCore();
+	choice = core.ChoiceIndex("Movement_Wide");
+	if (choice < 0)
+	{
+		return false;
+	}
+	width = CMFScreenWidth();
+	height = CMFScreenHeight();
+	if (width < 1 || height < 1)
+	{
+		row.SetMemberFlashString("label", "Screen: open the map once");
+	}
+	else
+	{
+		row.SetMemberFlashString("label", "Screen: " + IntToString(RoundF(width)) + " x " + IntToString(RoundF(height)));
+	}
+	if (remembered)
+	{
+		text = "Load a save to see";
+	}
+	else
+	{
+		winner = core.WinnerOf(choice, 0, level);
+		if (winner == "vanilla" || (winner == "" && CMFMenuWideVanilla()))
+		{
+			text = "16:9 map (Vanilla)";
+		}
+		else if (winner == "")
+		{
+			text = "Map fills it (CMF)";
+		}
+		else
+		{
+			text = CMFMenuFit("Map fills it (", core.ProviderName(winner), ")");
+		}
+	}
+	labels.PushBack(text);
+	CMFMenuSetChoices(storage, row, labels, 0, remembered || width < 1);
+	return true;
+}
+
+// 1.3.0: true when Fill wide screens is decided as Vanilla. WinnerOf answers "" while no mod sends wide keys (it has
+// no candidates), but CMF still turns its own full-width layout off then (rev 10 contract section 3), so the core's own
+// deciding answer is asked.
+function CMFMenuWideVanilla() : bool
+{
+	var core : CMFCore;
+	core = theGame.CMFGetCore();
+	return core.DecidedAnswer(core.ChoiceIndex("Movement_Wide")) == "vanilla";
 }
 
 // 1.1.0: the help line of a choice row. It names every loaded map mod that offers the piece, in order; before the
@@ -898,8 +1047,20 @@ function CMFMenuValueChanged(varName : name, value : string)
 		CMFLog("menu change var=CMFReset value=" + value);
 		if (value == "1")
 		{
-			CMFMenuReset();
+			CMFMenuReset("row");
+			theGame.CMFMenuGetState().SetResetPending(true);
 		}
+		return;
+	}
+	// 1.3.0: after a Reset the rows still on screen keep their old positions, and in start B (2026-10-24) the picks
+	// and the "has nothing" row changed earlier on that screen came back. Until the pages are built again, a change
+	// to a choice, order or "has nothing" row is put straight back to its reset value.
+	if (theGame.CMFMenuGetState().ResetPending() && (varText == "CMFFallthrough" || StrBeginsWith(varText, "CMFPick_")
+		|| (StrBeginsWith(varText, "CMFOrder") && StrLen(varText) == 9)))
+	{
+		CMFLog("menu change var=" + varText + " value=" + value + " undone (reset pending)");
+		CMFMenuUndoChange(varName, varText);
+		CMFChoicesChanged();
 		return;
 	}
 	if (varText == "CMFFallthrough" || varText == "CMFReport")
@@ -946,13 +1107,15 @@ function CMFMenuValueChanged(varName : name, value : string)
 // pushed to the open Options screen: in menu launch 1 (2026-10-22) pushing the new positions made the game report the
 // rows as changed again, so Reset ran 15 times and the old picks came back. The Reset row stays on "Reset now" until
 // its page is next built (CMFMenuFillReset), and the other pages show the reset the next time Options opens.
-function CMFMenuReset()
+// 1.3.0: the reset then stays pending until the pages are built again: changes from the old screen are put back
+// (CMFMenuValueChanged), and closing the menu and building the pages each reset once more. why names the caller.
+function CMFMenuReset(why : string)
 {
 	var config : CInGameConfigWrapper;
 	var groups : array<name>;
 	var varName : name;
 	var varText : string;
-	var g, i, count : int;
+	var g, i, count, names, rows : int;
 	config = theGame.GetInGameConfigWrapper();
 	groups = CMFMenuChoiceGroups();
 	groups.PushBack('CMFMenuOrder');
@@ -966,16 +1129,65 @@ function CMFMenuReset()
 			if (StrBeginsWith(varText, "CMFName_") || StrBeginsWith(varText, "CMFOrderName"))
 			{
 				config.SetVarValue(groups[g], varName, "");
+				names += 1;
 			}
 			else if (StrBeginsWith(varText, "CMFPick_") || StrBeginsWith(varText, "CMFOrder"))
 			{
 				config.SetVarValue(groups[g], varName, "0");
+				rows += 1;
 			}
 		}
 	}
 	config.SetVarValue('CMFMenuGeneral', 'CMFFallthrough', "0");
-	CMFLog("menu reset");
+	CMFLog("menu reset (" + why + ") names=" + IntToString(names) + " rows=" + IntToString(rows));
 	CMFChoicesChanged();
+}
+
+// 1.3.0: puts one choice, order or "has nothing" row back to its reset value while a reset is pending.
+function CMFMenuUndoChange(varName : name, varText : string)
+{
+	var config : CInGameConfigWrapper;
+	var groupName, nameVar : name;
+	config = theGame.GetInGameConfigWrapper();
+	if (varText == "CMFFallthrough")
+	{
+		config.SetVarValue('CMFMenuGeneral', 'CMFFallthrough', "0");
+		return;
+	}
+	if (StrBeginsWith(varText, "CMFPick_"))
+	{
+		groupName = CMFMenuGroupOf(StrAfterFirst(varText, "CMFPick_"));
+		nameVar = CMFMenuVarNamed(groupName, "CMFName_" + StrAfterFirst(varText, "CMFPick_"));
+	}
+	else
+	{
+		groupName = 'CMFMenuOrder';
+		nameVar = CMFMenuVarNamed(groupName, "CMFOrderName" + StrRight(varText, 1));
+	}
+	if (groupName == '')
+	{
+		return;
+	}
+	config.SetVarValue(groupName, varName, "0");
+	if (nameVar != '')
+	{
+		config.SetVarValue(groupName, nameVar, "");
+	}
+}
+
+// 1.3.0: closing the menu with a reset pending resets once more after the game's own close, then saves, so nothing
+// the closing screen hands back outlives the reset.
+@wrapMethod(CR4IngameMenu) function OnClosingMenu()
+{
+	var result : bool;
+	result = wrappedMethod();
+	if (theGame.CMFMenuGetState().ResetPending())
+	{
+		CMFMenuReset("menu closed");
+		theGame.CMFMenuGetState().SetResetPending(false);
+		theGame.SaveUserSettings();
+	}
+	return result;
 }
 
 // The Reset row as its page is built: back on "Keep my choices" after a reset.

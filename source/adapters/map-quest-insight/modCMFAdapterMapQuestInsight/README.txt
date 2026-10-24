@@ -1,5 +1,5 @@
 Map Quest Insight adapter for Conjunction Map Framework
-Version 1.0.1 (quest icons by Wolfer, Map Quest Insight's author)
+Version 1.1.0 (quest icons by Wolfer, Map Quest Insight's author)
 
 Brings Map Quest Insight's world map features back on Conjunction Map Framework's
 world map. Map Quest Insight stays exactly as its author ships it. Map Quest Insight
@@ -8,6 +8,7 @@ and hands it to CMF, which draws it.
 
 REQUIREMENTS
 - Conjunction Map Framework version 6 with stacked-pin spreading, or later.
+  The Ultrawide map setting needs CMF 1.4.1 (version 10) or later.
 - Map Quest Insight 1.6.1 or later (Nexus mod 14219), installed as its author
   describes. This adapter calls Map Quest Insight's own functions. Without Map Quest
   Insight, or with a version before 1.6, the game stops at the script compile screen.
@@ -36,6 +37,11 @@ All of it follows Map Quest Insight's own menu settings:
   movement (not yet tested in game).
 - "Spread stacked quest markers": markers on one spot fan out into a row under the
   cursor and the top quest is selected.
+- "Ultrawide map" and "Side panels position" (Map Quest Insight 1.6.2 or later): on a
+  wide screen the map fills the screen and the side panels sit where that setting
+  puts them. With "Ultrawide map" off the map stays 16:9 with dark sides, as Map
+  Quest Insight's own map does. Needs CMF 1.4.1; with 1.6.1, which has no such
+  setting, CMF fills wide screens its own way.
 
 KNOWN DIFFERENCES
 - With "Spread stacked quest markers" on, the info box still lists the other quests on

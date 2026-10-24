@@ -51,4 +51,4 @@ The wrapper acts only when `provider` is your own folder name and passes every o
 
 ---
 
-[Previous: The pin hook: `OnPinReady`](Pin-Hook-OnPinReady.md) · [Contents](Home.md) · [Next: Spreading stacked pins](Spreading-Stacked-Pins.md)
+[Previous: The pin hook: `OnPinReady`](Pin-Hook-OnPinReady.md) · [Contents](Home.md) · [Next: Names only on hover](Names-Only-on-Hover.md)

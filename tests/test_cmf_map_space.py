@@ -70,7 +70,7 @@ class CoreTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_stays_6(self):
-        self.assertIn('function CMFGetVersion() : int { return 9; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 10; }', self.core)
 
     def test_text_drawings_take_wrap_and_fit(self):
         self.assertIn('return text == "keep" || text == "none" || (part == \'\' && (text == "wrap" || text == "fit"));',
@@ -178,7 +178,7 @@ class PanelEditTests(unittest.TestCase):
         self.assertIn('sig += "|" + MapMenu.cmfTab;', menu)
         self.assertIn('String(param1.keys.tab) != MapMenu.cmfTab', menu)
         self.assertIn('y2 = param2.top - Number(param1.above);', menu)
-        self.assertIn('area,src,tab,tabLabel,text,listen,listenFields,clearView,clearSide,";', menu)
+        self.assertIn('area,src,tab,tabLabel,text,listen,listenFields,clearView,clearSide,wideAnchor,";', menu)
         self.assertIn('"clicks":true,', menu)
 
     def test_map_space_layers(self):

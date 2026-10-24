@@ -38,7 +38,7 @@ class CoreTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_7(self):
-        self.assertIn('function CMFGetVersion() : int { return 9; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 10; }', self.core)
 
     def test_tooltip_takes_the_clear_keys(self):
         keys = body(self.core, 'function CMFThemePartKeys(')
@@ -48,7 +48,7 @@ class CoreTests(unittest.TestCase):
             self.assertIn(key, cmf_pack.THEME_PART_KEYS['tooltip'])
 
     def test_box_kinds_take_min_part_height(self):
-        self.assertIn('CMFThemeHoverKeys() + ",minPartHeight";', body(self.core, 'function CMFThemeShapeKeys('))
+        self.assertIn('CMFThemeHoverKeys() + ",minPartHeight,', body(self.core, 'function CMFThemeShapeKeys('))
         for kind in ('rect', 'ring', 'ellipse', 'polygon', 'band', 'text'):
             self.assertIn('minPartHeight', cmf_pack.THEME_KIND_KEYS[kind])
         for kind in ('line', 'movie'):
@@ -56,7 +56,7 @@ class CoreTests(unittest.TestCase):
 
     def test_values(self):
         text = body(self.core, 'function CMFThemeTextKey(')
-        self.assertIn('listenFields,clearView,clearSide"', text)
+        self.assertIn('listenFields,clearView,clearSide,', text)
         values = body(self.core, 'function CMFThemeValueOk(')
         self.assertIn("case 'view':\n\t\t\tcase 'clearView':\n\t\t\t\treturn CMFThemeWordsOk(text, \"region,interior,world\");",
                       values)
@@ -70,7 +70,7 @@ class PanelTests(unittest.TestCase):
         self.menu = menu()
 
     def test_text_keys_match_the_core(self):
-        self.assertIn('listen,listenFields,clearView,clearSide,";', self.menu)
+        self.assertIn('listen,listenFields,clearView,clearSide,wideAnchor,";', self.menu)
 
     def test_min_part_height_hides_a_drawing_on_a_shorter_part(self):
         shows = body(self.menu, 'public static function cmfShows(')

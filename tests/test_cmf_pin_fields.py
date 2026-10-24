@@ -125,6 +125,20 @@ class SettingsOverlayTests(unittest.TestCase):
                 cmf_pin_stage.settings_overlay(root, {})
 
 
+def layered(edits, header):
+    """One CMF function as the build writes it: its text from the edit that adds it, with every later edit whose
+    find lies inside it applied in order (edits apply one after another to the export)."""
+    first = [i for i, e in enumerate(edits) if header in e['replace'] and header not in e['find']]
+    assert len(first) == 1, header
+    body = edits[first[0]]['replace']
+    body = body[body.index(header):]
+    body = body[:body.index('\n      }\n') + 9]
+    for e in edits[first[0] + 1:]:
+        if body.count(e['find']) == 1:
+            body = body.replace(e['find'], e['replace'])
+    return body
+
+
 class SourceTests(unittest.TestCase):
     def test_edits_cover_exactly_fourteen_classes(self):
         # Smooth map movement (P6) adds UniverseMap and the tween library's GTween to the eleven; version 9 adds
@@ -191,6 +205,93 @@ class SourceTests(unittest.TestCase):
                 if tag in ('replace', 'delete'):
                     self.assertTrue(set(edit['find'].split('\n')[i1:i2]) <= changed, edit['find'])
 
+    def test_version10_panel_names(self):
+        # Revision 10 build contract (plans/2026-10-24-cmf-rev10-build-contract.md) sections 4 and 5: wide and tall
+        # screens, names on hover and the two opening keys, under CMF's own names only.
+        classes = json.loads((ROOT/'source/panel/pin-fields/edits.json').read_text(encoding='utf-8'))['classes']
+        code = {name: ''.join(e['replace'] for e in edits) for name, edits in classes.items()}
+        data = code['red/game/witcher3/data/StaticMapPinData.as']
+        for line in ('public var cmfHoverName:int = 0;', 'public var cmfHoverNameBy:String = "";'):
+            self.assertIn(line, data)
+        menu = code['red/game/witcher3/menus/worldmap/MapMenu.as']
+        for line in ('protected function cmfWideLayout() : void',
+                     'public static function cmfWideX(param1:Number, param2:Boolean) : Number',
+                     'public static function cmfWideY(param1:Number, param2:Boolean) : Number',
+                     'public function cmfSetScreen(param1:Object) : void',
+                     'var rect:Rectangle = CommonUtils.getScreenRect();',
+                     'dispatchEvent(new GameEvent(GameEvent.CALL,"OnCMFScreen",[Math.round(param2),Math.round(param3)]));',
+                     '"wide off (fill 0)" : "wide off (16:9)"',
+                     '"wide screen=" + Math.round(rect.width) + "x" + Math.round(rect.height) + " window=" + ',
+                     '" unstretch=" + (stretched ? 1 : 0) + " panels=" + panels + " maxRatio=" + cap + " world=" + world',
+                     'PinPointersManager.getInstance()["init"](this.mcPointersCanvas);',
+                     'this.mcHubMap.cmfVisibleAreaChanged(this.mcVisibleArea);',
+                     'this.mcUniverseMap.cmfWideWorld(', 'MapMenu.cmfNum("opening","revealEase",0) != 0',
+                     'this.mcHubMapPinPanel.x += MapMenu.cmfSideL;',
+                     'this.cmfWideTween(this.mcHubMapPinPanel,"x",MapMenu.cmfSideL);',
+                     'public static var cmfWideL:Number = 0;', 'public static var cmfWideR:Number = 1920;',
+                     'public static var cmfWideB:Number = 1080;', 'public static var cmfSideL:Number = 0;',
+                     'public static var cmfSideR:Number = 0;', 'public static var cmfSideD:Number = 0;'):
+            self.assertIn(line, menu)
+        self.assertTrue(re.search(r'CMF_TEXT_KEYS:String = "[^"]*,wideAnchor,";', menu))
+        hub = code['red/game/witcher3/menus/worldmap/HubMap.as']
+        self.assertIn('if(MapMenu.cmfNum("opening","readyAtFadeStart",0) != 0)\n         {\n'
+                      '            this._fadingInCompleted = true;', hub)
+        self.assertIn('_loc2_.cmfTagShown(true);\n            _loc2_.cmfHoverHide();', hub)
+        pin = code['red/game/witcher3/menus/worldmap/StaticMapPinDescribed.as']
+        self.assertIn('this.cmfHoverLabel(_loc1_);\n         this.cmfThemeLabel();', pin)
+        self.assertIn('if(Boolean(d) && !this.isAvatar && (d.cmfHoverName & 1) != 0)', pin)
+        container = code['red/game/witcher3/menus/worldmap/HubMapContainer.as']
+        self.assertIn('new Point(MapMenu.cmfWideR,MapMenu.cmfWideBottom(MapMenu.cmfNum("map","bottom",1080)))', container)
+        self.assertIn('public function cmfWideWorld(param1:Number) : void',
+                      code['red/game/witcher3/menus/worldmap/UniverseMap.as'])
+
+    def test_version10_configui_keeps_the_opening_time_first(self):
+        # Ultrawide Menus' patcher leaves a map alone whose configUI does not start with super.configUI(); that is
+        # what keeps a frozen copy of CMF's map out of its folder (ultrawide spec 5.8).
+        menu = json.loads((ROOT/'source/panel/pin-fields/edits.json').read_text(encoding='utf-8'))['classes'][
+            'red/game/witcher3/menus/worldmap/MapMenu.as']
+        head = '      override protected function configUI() : void\n      {\n'
+        owners = [e for e in menu if head in e['find'] or head in e['replace']]
+        self.assertEqual(len(owners), 1)
+        self.assertEqual(owners[0]['find'], head + '         super.configUI();\n')
+        self.assertTrue(owners[0]['replace'].startswith(head + '         this._cmfOpenedAt = getTimer();\n'))
+        self.assertLess(owners[0]['replace'].index('this._cmfOpenedAt = getTimer();'),
+                        owners[0]['replace'].index('super.configUI();'))
+
+    def test_version10_screen_listener_comes_before_the_theme_call(self):
+        edits = json.loads((ROOT/'source/panel/pin-fields/edits.json').read_text(encoding='utf-8'))['classes'][
+            'red/game/witcher3/menus/worldmap/MapMenu.as']
+        menu = ''.join(e['replace'] for e in edits)
+        create = layered(edits, 'protected function cmfCreateTheme() : void')
+        register = 'dispatchEvent(new GameEvent(GameEvent.REGISTER,"cmf.map.screen",[this.cmfSetScreen]));'
+        self.assertEqual(menu.count(register), 1)
+        self.assertLess(create.index(register),
+                        create.index('dispatchEvent(new GameEvent(GameEvent.CALL,"OnCMFMapThemeReady"));'))
+        # The opening's shifts start from 16:9 before anything can read them.
+        self.assertLess(create.index('MapMenu.cmfWideScale = 1;'), create.index(register))
+
+    def test_version10_wide_gate_returns_before_any_member_write(self):
+        # Rule 1 of the ultrawide spec: on a 16:9 rect, or with fill 0, the layout writes no member, so the map is
+        # 1.3.0's pixel for pixel. Every member write lives in cmfWideApply, reached only past the gate (or to undo
+        # an earlier layout of the same opening).
+        edits = json.loads((ROOT/'source/panel/pin-fields/edits.json').read_text(encoding='utf-8'))['classes'][
+            'red/game/witcher3/menus/worldmap/MapMenu.as']
+        menu = ''.join(e['replace'] for e in edits)
+        body = layered(edits, 'protected function cmfWideLayout() : void')
+        gate = body.index('if(fill == 0 || rect.width <= 1922 && rect.height <= 1082 && !stretched)')
+        block = body[gate:body.index('\n            }\n', gate)]
+        self.assertFalse(re.search(r'\bthis\.\w+(\.\w+)*\s*[-+*/]?=[^=]', body[:gate]), body[:gate])
+        self.assertNotIn('cmfWideApply(', body[:gate])
+        self.assertTrue(block.rstrip().endswith('return;'))
+        self.assertIn('if(this._cmfWideOn)\n               {\n                  this.cmfWideApply(1,0,1920,1080,0,0,0,0);',
+                      block)
+        self.assertFalse(re.search(r'\bthis\.\w+(\.\w+)*\s*[-+*/]?=[^=]', body), 'cmfWideLayout writes a member')
+        self.assertFalse(re.search(r'(?<![\w.])(x|y|scaleX|scaleY)\s*=[^=]', body))
+        # The theme hand-off runs it after the styles are stored and before the first placement.
+        self.assertIn('this.cmfWideArrived();\n            if(this._cmfThemeGot)', menu)
+        self.assertIn('if(this._cmfWideGot)\n         {\n            this.cmfWideLayout();\n         }\n'
+                      '         if(MapMenu.cmfStyles)', menu)
+
     def test_core_ships_no_art(self):
         # Kyle 2026-10-20 18:05Z: placeholder art lives in the adapter that needs it, never in CMF.
         self.assertFalse((ROOT/'source/core/art').exists())
@@ -220,12 +321,11 @@ class SourceTests(unittest.TestCase):
         self.assertTrue(marker)
         self.assertEqual(re.findall(r'public var (\w+):', compat),
                          ['qmiLevelText', 'iaiLv', 'iaiDiff', 'qmiIconScale', 'qmiIconTop', 'qmiIconKind',
-                          'qmiNoCrosshairLabel', 'qmiIconTint', 'uireScale', 'uireHideLabel', 'uireLevelLabel',
-                          'uireLevel', 'uireLevelColor'])
+                          'qmiNoCrosshairLabel', 'qmiIconTint'])
         self.assertFalse([n for n in re.findall(r'public var (\w+):', head) if not n.startswith(('cmf', 'objScriptName'))])
         rest = ''.join(e['replace'] for name, edits in classes.items() for e in edits
                        if name != 'red/game/witcher3/data/StaticMapPinData.as')
-        self.assertFalse(re.findall(r'\b(qmi\w*|iai\w*|uire\w*|\w*Gwm\w*|\w*[Ii]nk[A-Z]\w*|inkiron\S*)', rest))
+        self.assertFalse(re.findall(r'\b(qmi\w*|iai\w*|\w*Gwm\w*|\w*[Ii]nk[A-Z]\w*|inkiron\S*)', rest))
 
     def test_n4_panel_reads_only_cmfs_own_fields(self):
         # N4 spec (a design note kept in the private development repository) section 8.1.
@@ -233,7 +333,7 @@ class SourceTests(unittest.TestCase):
         pin = ''.join(e['replace'] for e in classes['red/game/witcher3/menus/worldmap/StaticMapPinDescribed.as'])
         hub = ''.join(e['replace'] for e in classes['red/game/witcher3/menus/worldmap/HubMap.as'])
         menu = ''.join(e['replace'] for e in classes['red/game/witcher3/menus/worldmap/MapMenu.as'])
-        for alias in ('qmiIconScale', 'qmiIconTop', 'qmiLevelText', 'iaiLv', 'uireScale', 'uireHideLabel'):
+        for alias in ('qmiIconScale', 'qmiIconTop', 'qmiLevelText', 'iaiLv'):
             self.assertNotIn(alias, pin + hub)
         self.assertIn('this.cmfApplyPinScale(_loc1_);\n         this.cmfApplyIconTint(_loc1_);\n'
                       '         this.cmfApplyIconArt(_loc1_);', pin)
@@ -299,7 +399,7 @@ class SourceTests(unittest.TestCase):
         parts = ''.join(re.findall(r'"([^"]*)"', parts[:parts.index('}')])).split(',')
         # mapSpace drawings go to the map layer (cmf.map.space), not to the screen-part drawer.
         self.assertEqual(drawn, [p for p in parts if p not in ('keyCap', 'navigation', 'markerPanel', 'pinButton',
-                                                               'mapSpace', 'opening', 'spread')])
+                                                               'mapSpace', 'opening', 'spread', 'wide')])
         for path in ('red/game/witcher3/menus/worldmap/HubMapContainer.as', 'red/game/witcher3/tooltips/TooltipMap.as',
                      'red/game/witcher3/controls/InputFeedbackButton.as',
                      'red/game/witcher3/controls/KeyboardButtonIcon.as'):
@@ -473,7 +573,7 @@ class SourceTests(unittest.TestCase):
         # Kyle 2026-10-20 05:02Z/05:05Z: no mod-specific calls in CMF; adapters translate other mods' fields
         # through CMF's general calls and the OnPinReady/OnMapReady hooks.
         core = SCRIPTS[0].read_text(encoding='ascii')
-        for name in ('"qmi', '"iai', '"uire', 'modMapQuestInsight', 'modInkAndIron', 'UIRemastered'):
+        for name in ('"qmi', '"iai', 'modMapQuestInsight', 'modInkAndIron'):
             self.assertNotIn(name, core)
         for line in ('public function OnPinReady(dataObject : CScriptedFlashObject, mapContext : name)',
                      'public function OnMapReady(menuFlash : CScriptedFlashSprite)',

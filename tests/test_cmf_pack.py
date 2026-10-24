@@ -394,9 +394,10 @@ class ScriptTests(unittest.TestCase):
             # The N4 pack styles one pin from the OnPinReady hook and claims by tag through a property function.
             # The click probe (modZZCMFTestClick) registers one generic click claim (id 16); the smooth movement
             # probe (modZZCMFTestSmooth) only sends navigation and opening keys; the map-space probe
-            # (modCMFTestMapSpace) only makes drawings.
+            # (modCMFTestMapSpace) only makes drawings; the hover names probe (modCMFTestHoverNames) registers generic
+            # HoverName claims (id 28).
             self.assertTrue(claims or calls & {'CMFRegisterBackground', 'CMFRegisterDisabled', 'CMFStylePinScale'} or
-                            pack == 'modZZCMFTestClick' and 'CMFRegister' in calls or
+                            pack in ('modZZCMFTestClick', 'modCMFTestHoverNames') and 'CMFRegister' in calls or
                             pack == 'modZZCMFTestSmooth' and 'CMFStylePart' in calls or
                             pack == 'modCMFTestMapSpace' and 'CMFDrawSetList' in calls, script)
             # CMF's own test packs may use the CMF prefix; their art is cooked by tools/cmf_pin_stage.py.

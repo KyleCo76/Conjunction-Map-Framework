@@ -10,10 +10,13 @@
 // tidy provider names and the menu add-on's hook and calls; version 9: world overview pictures (the painting, region
 // crests and the player and quest markers), controller button pictures, choice-only claims, the player marker as a
 // hide target, and the map's view: the OnMapView and OnMapOpening hooks, CMFSetOpeningView and
-// CMFSetOpeningWorld).
+// CMFSetOpeningWorld); version 10: behaviour picked apart from art (the Behaviour feature and its pieces, choices per
+// key: CMF files each theme key and property under a look piece or a behaviour piece), the wide part (the map fills
+// wide and tall screens), the wideAnchor drawing key, the HoverName pin property, the opening keys readyAtFadeStart
+// and revealEase, and CMFScreenWidth and CMFScreenHeight).
 // Never remove a call once published.
 
-function CMFGetVersion() : int { return 9; }
+function CMFGetVersion() : int { return 10; }
 
 function CMFPropertyIcon() : int { return 1; }
 function CMFPropertyLegendIcon() : int { return 2; }
@@ -63,6 +66,10 @@ function CMFPropertyWorldPainting() : int { return 24; }
 function CMFPropertyWorldCrest() : int { return 25; }
 function CMFPropertyButtonPicture() : int { return 26; }
 function CMFPropertyWorldMarker() : int { return 27; }
+// Version 10: names only on hover (number = bits: 1 the pin's label line and its tag drawings show only on the hovered
+// pin, 2 the hovered pin shows its name on the label line; 0 as the game shows it, so a type claim of 0 keeps that type
+// out of an every-pin claim), for every pin (target ''), a type, a tag or one pin.
+function CMFPropertyHoverName() : int { return 28; }
 
 // Exemption flags of a hide claim, as stored in its number.
 function CMFExemptTracked() : int { return 2; }
@@ -297,7 +304,8 @@ function CMFPropertyTextFree(propertyId : int) : bool
 		propertyId == CMFPropertyLegendRow() || propertyId == CMFPropertyHidden() ||
 		propertyId == CMFPropertyPinScale() || propertyId == CMFPropertyLabelPlace() ||
 		propertyId == CMFPropertyInfoBoxHeight() || propertyId == CMFPropertyLabelColor() ||
-		propertyId == CMFPropertyCategoryNoDefault() || propertyId == CMFPropertySpreadRank();
+		propertyId == CMFPropertyCategoryNoDefault() || propertyId == CMFPropertySpreadRank() ||
+		propertyId == CMFPropertyHoverName();
 }
 
 // Version 6: the click properties (16, 20, 21), which reach user pins and follow the click's winner.
@@ -369,6 +377,8 @@ function CMFOwnerField(propertyId : int) : string
 			return "cmfLabelColorBy";
 		case 22:
 			return "cmfSpreadRankBy";
+		case 28:
+			return "cmfHoverNameBy";
 	}
 	return "";
 }
@@ -392,7 +402,10 @@ function CMFIsVanillaCategory(category : string, ignoreCase : bool) : bool
 // [CMFSettings] file values CMFFile_<key> use these keys. Hidden and Drawings are added together (every mod's
 // applies), so their pieces are three slots that each leave one mod out. CMFCore keeps the order as indices:
 // 0 to 10 are the features in this order, then the pieces. Version 9 appends Painting_World (59),
-// Painting_Crests (60) and Movement_View (61); every older index stays.
+// Painting_Crests (60) and Movement_View (61); every older index stays. Version 10 appends the Behaviour feature (62)
+// and its pieces Behaviour_InfoBoxDodge (63) and Behaviour_InfoBoxHeight (64), Movement_ZoomOut (65),
+// Movement_Controller (66), Behaviour_HoverNames (67) and Movement_Wide (68); Size_Lead, Size_Spread and Labels_Place
+// keep their index and name and answer the Behaviour feature (CMFChoiceParent).
 function CMFChoiceKeys() : string
 {
 	return "Icons,Colours,Size,Labels,Clicks,Legend,Hidden,Look,Movement,Painting,Drawings," +
@@ -403,7 +416,19 @@ function CMFChoiceKeys() : string
 		"Look_PinText,Movement_Area,Movement_Pan,Movement_Opening,Painting_WhiteOrchard,Painting_WhiteOrchardWinter," +
 		"Painting_Velen,Painting_Skellige,Painting_KaerMorhen,Painting_Vizima,Painting_IsleOfMists,Painting_Spiral," +
 		"Painting_Toussaint,Drawings_Ignore1,Drawings_Ignore2,Drawings_Ignore3,Painting_World,Painting_Crests," +
-		"Movement_View";
+		"Movement_View,Behaviour,Behaviour_InfoBoxDodge,Behaviour_InfoBoxHeight,Movement_ZoomOut,Movement_Controller," +
+		"Behaviour_HoverNames,Movement_Wide";
+}
+
+// Version 10: the feature of the three pieces that moved under Behaviour (62) without a new name, or -1 when the key's
+// prefix names its feature.
+function CMFChoiceParent(choice : int) : int
+{
+	if (choice == 28 || choice == 29 || choice == 31)
+	{
+		return 62; // Behaviour
+	}
+	return -1;
 }
 
 // Version 8: the pin group of a pin type for the Advanced icon and colour rows, as an offset from Icons_General:
@@ -657,6 +682,9 @@ class CMFCore extends CObject
 	private var choiceOnlyChoices : array<int>;
 	private var choiceOnlySkipped : array<string>;
 	private var openingViews : array<SCMFOpeningView>;
+	// Version 10: the visible screen in map units from the last map opening (0 before the first).
+	private var screenWidth : float;
+	private var screenHeight : float;
 
 	public function RequestRefresh()
 	{
@@ -739,6 +767,7 @@ class CMFCore extends CObject
 			(incoming.propertyId == CMFPropertyLabelPlace() && (incoming.number < 0 || incoming.number > 10000)) ||
 			(incoming.propertyId == CMFPropertyLabelColor() && (incoming.number < 0 || incoming.number > 16777215)) ||
 			(incoming.propertyId == CMFPropertySpreadRank() && (incoming.number < 0 || incoming.number > 1000)) ||
+			(incoming.propertyId == CMFPropertyHoverName() && (incoming.number < 0 || incoming.number > 3)) ||
 			(incoming.propertyId == CMFPropertyInfoBoxHeight() && incoming.number != 0 &&
 			(incoming.number < 100 || incoming.number > 1080)))
 		{
@@ -909,22 +938,25 @@ class CMFCore extends CObject
 	}
 
 	// The provider that owns a part's style keys (the earliest folder that styled the part), or for the
-	// behaviour parts map, navigation, opening and spread the owner of that one key.
+	// behaviour parts map, navigation, opening, spread and wide the owner of that one key.
 	// Version 8: through the part's choice (PartChoice): Vanilla gives no owner, a chosen mod that styled the part
 	// owns it, and otherwise the next level decides (none when the General row says Vanilla). Version 9: a provider
-	// that made the part's choice choice-only (CMFRegisterChoiceOnly) owns it only when picked.
+	// that made the part's choice choice-only (CMFRegisterChoiceOnly) owns it only when picked. Version 10: through the
+	// key's choice (PartKeyChoice); on a look part one provider owns each piece, worked out among the providers that
+	// sent a key of that piece, so a mod sending only the info box's clear keys never owns its look.
 	private function ThemeStyleOwner(part : name, key : name) : string
 	{
-		var i, choice : int;
+		var i, choice, keyChoice : int;
 		var owner, answer : string;
 		var perKey : bool;
-		perKey = part == 'map' || part == 'navigation' || part == 'opening' || part == 'spread';
+		perKey = part == 'map' || part == 'navigation' || part == 'opening' || part == 'spread' || part == 'wide';
 		owner = "";
+		keyChoice = PartKeyChoice(part, key);
 		choice = -1;
 		answer = "";
 		if (choicesActive)
 		{
-			choice = PartChoice(part);
+			choice = keyChoice;
 			if (choice >= 0)
 			{
 				answer = decideAnswer[choice];
@@ -940,8 +972,9 @@ class CMFCore extends CObject
 		}
 		for (i = 0; i < themeEntries.Size(); i += 1)
 		{
-			if (themeEntries[i].kind == 1 && themeEntries[i].target == part && (!perKey || themeEntries[i].key == key) &&
-				!ChoiceOnlySkips(PartChoice(part), themeEntries[i].provider))
+			if (themeEntries[i].kind == 1 && themeEntries[i].target == part &&
+				((perKey && themeEntries[i].key == key) || (!perKey && PartKeyChoice(part, themeEntries[i].key) == keyChoice)) &&
+				!ChoiceOnlySkips(keyChoice, themeEntries[i].provider))
 			{
 				if (answer != "" && themeEntries[i].provider == answer)
 				{
@@ -1080,7 +1113,8 @@ class CMFCore extends CObject
 				if (owner != themeEntries[i].provider)
 				{
 					NoteTheme("theme style shadowed provider=" + themeEntries[i].provider + " part=" +
-						NameToString(themeEntries[i].target) + " by=" + owner);
+						NameToString(themeEntries[i].target) + " piece=" +
+						ChoiceKey(PartKeyChoice(themeEntries[i].target, themeEntries[i].key)) + " by=" + owner);
 					continue;
 				}
 			}
@@ -1119,6 +1153,7 @@ class CMFCore extends CObject
 			sent += 1;
 		}
 		ownMotion = SendDefaultMotion(storage, flashArray);
+		SendWideVanilla(storage, flashArray);
 		storage.SetFlashArray("cmf.map.theme", flashArray);
 		NoteTheme("theme sent entries=" + sent + " of=" + themeEntries.Size() + " cmfMotion=" + ownMotion);
 		SendWorld(storage);
@@ -1233,6 +1268,76 @@ class CMFCore extends CObject
 			sent += 1;
 		}
 		return sent;
+	}
+
+	// Version 10: the map fills a wide or tall screen unless the Fill wide screens row (Movement_Wide) says Vanilla.
+	// Filling is CMF's base layout, not a behaviour value: the map does it with no wide entry, so CMF sends an entry of
+	// its own (fill 0, p -1) only for Vanilla. Logs who decides the layout once per opening.
+	private function SendWideVanilla(storage : CScriptedFlashValueStorage, flashArray : CScriptedFlashArray)
+	{
+		var item : CScriptedFlashObject;
+		var owner : string;
+		if (choicesActive && decideAnswer[68] == "vanilla")
+		{
+			item = storage.CreateTempFlashObject();
+			item.SetMemberFlashInt("k", 1);
+			item.SetMemberFlashString("t", "wide");
+			item.SetMemberFlashString("a", "");
+			item.SetMemberFlashString("y", "fill");
+			item.SetMemberFlashString("s", "");
+			item.SetMemberFlashNumber("n", 0);
+			item.SetMemberFlashInt("p", -1);
+			item.SetMemberFlashInt("o", 0);
+			flashArray.PushBackFlashObject(item);
+			NoteTheme("theme default part=wide key=fill value=0");
+			CMFLog("wide owner=vanilla");
+			return;
+		}
+		owner = ThemeStyleOwner('wide', 'fill');
+		if (owner == "")
+		{
+			owner = "CMF";
+		}
+		CMFLog("wide owner=" + owner);
+	}
+
+	// Version 10: sends the game window's size in pixels under "cmf.map.screen" (w and h, 0 when the game answers
+	// nothing), right before the theme, so the map can tell a stretched picture from a wide one.
+	public function SendScreen(storage : CScriptedFlashValueStorage)
+	{
+		var item : CScriptedFlashObject;
+		var w, h : int;
+		if (!storage)
+		{
+			return;
+		}
+		theGame.GetCurrentViewportResolution(w, h);
+		if (w <= 0 || h <= 0)
+		{
+			w = 0;
+			h = 0;
+		}
+		item = storage.CreateTempFlashObject();
+		item.SetMemberFlashInt("w", w);
+		item.SetMemberFlashInt("h", h);
+		storage.SetFlashObject("cmf.map.screen", item);
+	}
+
+	// Version 10: the visible screen in map units from the last map opening (OnCMFScreen), 0 before the first.
+	public function ScreenSeen(width : float, height : float)
+	{
+		screenWidth = width;
+		screenHeight = height;
+	}
+
+	public function ScreenWidth() : float
+	{
+		return screenWidth;
+	}
+
+	public function ScreenHeight() : float
+	{
+		return screenHeight;
 	}
 
 	// Map-space drawing. Sends the mapSpace drawings for the shown area under "cmf.map.space" on every full map
@@ -1351,6 +1456,10 @@ class CMFCore extends CObject
 			if (StrFindFirst(choiceKeys[i], "_") < 0)
 			{
 				choiceFeature.PushBack(i);
+			}
+			else if (CMFChoiceParent(i) >= 0)
+			{
+				choiceFeature.PushBack(CMFChoiceParent(i));
 			}
 			else
 			{
@@ -1706,7 +1815,9 @@ class CMFCore extends CObject
 			case 13:
 				return 31; // Labels_Place
 			case 14:
-				return 41; // Look_InfoBox
+				return 64; // Behaviour_InfoBoxHeight (version 10; Look_InfoBox before)
+			case 28:
+				return 67; // Behaviour_HoverNames
 			case 16:
 			case 20:
 			case 21:
@@ -1757,8 +1868,50 @@ class CMFCore extends CObject
 				return 46; // Movement_Opening
 			case 'spread':
 				return 29; // Size_Spread
+			case 'wide':
+				return 68; // Movement_Wide
 		}
 		return -1;
+	}
+
+	// Version 10: the choice one theme key belongs to. Behaviour keys on a look part, and a look key on a behaviour
+	// part, answer their own piece; every other key answers its part's choice (PartChoice).
+	public function PartKeyChoice(part : name, key : name) : int
+	{
+		switch (part)
+		{
+			case 'tooltip':
+				if (CMFListHas("clearMinHeight,clearSide,clearCursor,clearLeft,clearTop,clearRight,clearBottom,clearView",
+					NameToString(key)))
+				{
+					return 63; // Behaviour_InfoBoxDodge
+				}
+				break;
+			case 'pinLabel':
+				if (CMFListHas("rise,riseOffset,riseTracked,riseOffsetTracked", NameToString(key)))
+				{
+					return 31; // Labels_Place
+				}
+				break;
+			case 'navigation':
+				if (key == 'zoomOutFit' || key == 'edgeOvershoot')
+				{
+					return 65; // Movement_ZoomOut
+				}
+				if (CMFListHas("crosshairRoam,safeLeft,safeTop,safeRight,safeBottom,snapSeconds,centerSeconds,padHoldMs",
+					NameToString(key)))
+				{
+					return 66; // Movement_Controller
+				}
+				break;
+			case 'map':
+				if (key == 'backdrop')
+				{
+					return 39; // Look_Frames
+				}
+				break;
+		}
+		return PartChoice(part);
 	}
 
 	// The pin group of the last type asked (pin lookups ask for one pin's type several times in a row).
@@ -1903,7 +2056,7 @@ class CMFCore extends CObject
 		{
 			if (themeEntries[i].kind == 1)
 			{
-				NoteOfferFor(PartChoice(themeEntries[i].target), themeEntries[i].provider);
+				NoteOfferFor(PartKeyChoice(themeEntries[i].target, themeEntries[i].key), themeEntries[i].provider);
 			}
 			else
 			{
@@ -2038,6 +2191,21 @@ class CMFCore extends CObject
 			return false;
 		}
 		return offerFlags[p * choiceKeys.Size() + choice];
+	}
+
+	// Version 10, for the menu add-on: the answer that decides one choice in the current preparation ("vanilla", a
+	// provider, or "" when no level picks one), the same answer the map's lookups use.
+	public function DecidedAnswer(choice : int) : string
+	{
+		if (dirty)
+		{
+			Prepare();
+		}
+		if (!choicesActive || choice < 0 || choice >= decideAnswer.Size())
+		{
+			return "";
+		}
+		return decideAnswer[choice];
 	}
 
 	// Version 8, for the menu add-on's rows and the report: who wins a choice now. Returns a provider, "vanilla" (a
@@ -3120,6 +3288,7 @@ class CMFCore extends CObject
 		WriteSlot(dataObject, CMFPropertyLabelHide(), pinKey, legendKey, pinTag, maxLevel);
 		WriteSlot(dataObject, CMFPropertyLabelColor(), pinKey, legendKey, pinTag, maxLevel);
 		WriteSlot(dataObject, CMFPropertySpreadRank(), pinKey, legendKey, pinTag, maxLevel);
+		WriteSlot(dataObject, CMFPropertyHoverName(), pinKey, legendKey, pinTag, maxLevel);
 		WriteClickFields(dataObject, pinKey, legendKey, pinTag, maxLevel);
 	}
 
@@ -3161,6 +3330,9 @@ class CMFCore extends CObject
 				break;
 			case 22:
 				dataObject.SetMemberFlashInt("cmfSpreadRank", number);
+				break;
+			case 28:
+				dataObject.SetMemberFlashInt("cmfHoverName", number);
 				break;
 		}
 	}
@@ -3379,7 +3551,8 @@ class CMFCore extends CObject
 		if ((propertyId == CMFPropertyPinScale() && (number < 25 || number > 400)) ||
 			(propertyId == CMFPropertyLabelPlace() && (number < 0 || number > 10000)) ||
 			(propertyId == CMFPropertyLabelColor() && (number < 0 || number > 16777215)) ||
-			(propertyId == CMFPropertySpreadRank() && (number < 0 || number > 1000)))
+			(propertyId == CMFPropertySpreadRank() && (number < 0 || number > 1000)) ||
+			(propertyId == CMFPropertyHoverName() && (number < 0 || number > 3)))
 		{
 			NoteStyleRejected(provider, propertyId, "range");
 			return false;
@@ -4130,7 +4303,7 @@ function CMFHasProperty(propertyId : int) : bool
 {
 	return (propertyId >= CMFPropertyIcon() && propertyId <= CMFPropertyTabHide()) || propertyId == CMFPropertyLabelColor() ||
 		propertyId == CMFPropertyCategoryNoDefault() || CMFIsPictureProperty(propertyId) ||
-		propertyId == CMFPropertySpreadRank() || CMFIsClickProperty(propertyId);
+		propertyId == CMFPropertySpreadRank() || CMFIsClickProperty(propertyId) || propertyId == CMFPropertyHoverName();
 }
 
 // One pin type (a map area for CMFPropertyBackground, a filteredType for the legend row and label, a
@@ -4151,7 +4324,9 @@ function CMFHasProperty(propertyId : int) : bool
 // the pin's rank in a spread stack (0-1000, highest selected first). CMFPropertyCategoryNoDefault target = a CMF
 // category id and number nonzero: that tab's rows stay out of Default (0 withdraws). Version 9: the picture
 // properties (24 to 27) take the target their property names, text = the picture's url ("" withdraws) and number 0,
-// or for CMFPropertyWorldPainting columns * 10 + rows of a tile url.
+// or for CMFPropertyWorldPainting columns * 10 + rows of a tile url. Version 10: CMFPropertyHoverName number = bits (1 the
+// label line only on the hovered pin, 2 the hovered pin's name on its label line, 0 as the game shows it), target '' for
+// every pin.
 // Returns false and logs when the claim is not accepted.
 function CMFRegister(provider : string, propertyId : int, target : name, mapContext : name, text : string,
 	number : int) : bool
@@ -4171,7 +4346,7 @@ function CMFRegister(provider : string, propertyId : int, target : name, mapCont
 	claim.propertyId = propertyId;
 	claim.level = 1;
 	if ((propertyId == CMFPropertyHidden() || propertyId == CMFPropertyInfoBoxHeight() ||
-		propertyId == CMFPropertyTabHide()) && !IsNameValid(target))
+		propertyId == CMFPropertyTabHide() || propertyId == CMFPropertyHoverName()) && !IsNameValid(target))
 	{
 		claim.level = 0;
 	}
@@ -4187,8 +4362,8 @@ function CMFRegister(provider : string, propertyId : int, target : name, mapCont
 }
 
 // One pin instance by its map pin tag; beats type-level claims on that pin. Accepts CMFPropertyIcon,
-// CMFPropertyDisabled, CMFPropertyHidden, (version 4) ids 10-13 and 15, (version 5) id 17 and (version 6) ids 16,
-// 20, 21 and 22. The game's own pins carry
+// CMFPropertyDisabled, CMFPropertyHidden, (version 4) ids 10-13 and 15, (version 5) id 17, (version 6) ids 16,
+// 20, 21 and 22 and (version 10) id 28. The game's own pins carry
 // their tag. A pin a mod pushes itself is reached when that mod sets the pin's id to
 // NameToFlashUInt(its tag), as the game does (version 4), so any mod can target another mod's pins by tag. Icon, disabled, size and label
 // instance claims never apply to undiscovered "?" pins or completed pins; a hide claim covers its pin in
@@ -4199,7 +4374,8 @@ function CMFRegisterForTag(provider : string, propertyId : int, pinTag : name, m
 	var claim : SCMFClaim;
 	if (propertyId != CMFPropertyIcon() && propertyId != CMFPropertyDisabled() && propertyId != CMFPropertyHidden() &&
 		(propertyId < CMFPropertyPinScale() || propertyId > CMFPropertyTabHide() || propertyId == CMFPropertyInfoBoxHeight()) &&
-		propertyId != CMFPropertyLabelColor() && !CMFIsClickProperty(propertyId) && propertyId != CMFPropertySpreadRank())
+		propertyId != CMFPropertyLabelColor() && !CMFIsClickProperty(propertyId) && propertyId != CMFPropertySpreadRank() &&
+		propertyId != CMFPropertyHoverName())
 	{
 		CMFLog("rejected provider=" + provider + " property=" + propertyId + " reason=level");
 		return false;
@@ -4732,11 +4908,12 @@ struct SCMFThemeEntry
 // The map's parts (Stage 6b design 3.2, plus markerPanel and worldHint). pinLabel is a label above a pin
 // (level tags and CMF label texts there); pinName is a name below a fast-travel pin; pinButton (version 6) is
 // the button beside a pin whose click claims "button" (style keys only, no drawings). mapSpace (version 6) is
-// the map itself in world coordinates: an anchor for line, text and movie drawings only (no style keys).
+// the map itself in world coordinates: an anchor for line, text and movie drawings only (no style keys). wide (version
+// 10) is how the map fills a screen that is not 16:9 (style keys only, won key by key).
 function CMFThemeParts() : string
 {
 	return "screen,map,mapEdge,title,tracker,legend,legendRow,legendTab,tooltip,preview,worldButton,worldHint,hints," +
-		"keyCap,pinLabel,pinName,navigation,markerPanel,pinButton,mapSpace,opening,spread";
+		"keyCap,pinLabel,pinName,navigation,markerPanel,pinButton,mapSpace,opening,spread,wide";
 }
 
 function CMFThemeLayers() : string
@@ -4801,11 +4978,36 @@ function CMFDefaultNavigationValue(key : name) : float
 	return 1;
 }
 
-// Smooth map movement (P6): how the map opens and closes.
+// Smooth map movement (P6): how the map opens and closes. Version 10 adds readyAtFadeStart (1: the map takes input
+// and shows its panels when its fade-in starts, not when it ends) and revealEase (1: the panels' reveal eases in).
 function CMFThemeOpeningKeys() : string
 {
 	return "slideSeconds,slideOffset,closeSeconds,pinsDuringSlide,pinStepMs,pinBatch,pinBudgetMs,showDelayMs," +
-		"fadeSeconds,tileFadeSeconds,revealSeconds";
+		"fadeSeconds,tileFadeSeconds,revealSeconds,readyAtFadeStart,revealEase";
+}
+
+// Version 10: the map on a screen that is not 16:9. fill 1 fills the screen (the default with no provider), 0 keeps
+// the 16:9 map with dark sides; panels (0 to 1) is how far the side and bottom panels move to the screen's edges;
+// maxRatio (0, or 1.78 to 4) caps the shape the map fills; world 1 scales the world overview to the screen's width.
+function CMFThemeWideKeys() : string
+{
+	return "fill,panels,maxRatio,world";
+}
+
+// Version 10: the range of a wide key.
+function CMFThemeWideValueOk(key : name, number : float) : bool
+{
+	switch (key)
+	{
+		case 'fill':
+		case 'world':
+			return number == 0 || number == 1;
+		case 'panels':
+			return number >= 0 && number <= 1;
+		case 'maxRatio':
+			return number == 0 || (number >= 1.78 && number <= 4);
+	}
+	return false;
 }
 
 // Spreading stacked pins: pins on one spot fan out into a row when the cursor (or the controller crosshair)
@@ -4843,6 +5045,8 @@ function CMFThemeMotionValueOk(key : name, number : float) : bool
 		case 'tweenEveryFrame':
 		case 'zoomOutFit':
 		case 'pinsDuringSlide':
+		case 'readyAtFadeStart':
+		case 'revealEase':
 			return number == 0 || number == 1;
 		case 'stepMs':
 		case 'worldStepMs':
@@ -4914,6 +5118,8 @@ function CMFThemePartKeys(part : name) : string
 			return CMFThemeOpeningKeys();
 		case 'spread':
 			return CMFThemeSpreadKeys();
+		case 'wide':
+			return CMFThemeWideKeys();
 	}
 	return "";
 }
@@ -4948,7 +5154,9 @@ function CMFThemeHideWords(part : name) : string
 // hover keys to the box kinds, and the map-space kinds: line and movie on mapSpace only, text on mapSpace (placed
 // at x, y metres) or on any part or drawing; line, text and movie also take listen and listenFields. A movie
 // also takes any key its author documents for the movie. Version 7 adds minPartHeight to the box kinds and text:
-// the drawing shows only while its part's box is at least that many pixels tall.
+// the drawing shows only while its part's box is at least that many pixels tall. Version 10 adds wideAnchor to the box
+// kinds and text: on a wide or tall screen the drawing's screen numbers move with the screen's edges ("edges"), with
+// its part's panel ("panels") or stay in the 16:9 middle ("centre"); unset, CMF picks by what the drawing is tied to.
 function CMFThemeShapeKeys(kind : name) : string
 {
 	var keys : string;
@@ -4956,7 +5164,7 @@ function CMFThemeShapeKeys(kind : name) : string
 	keys = "left,top,right,bottom,width,height,widthShare,heightShare,minWidth,minHeight,alignX,alignY,offsetX,offsetY," +
 		"minLeft,maxRight,minTop,maxBottom,screenLeft,screenRight,screenTop,screenBottom,measure,fill,alpha,fill2,alpha2," +
 		"gradient,angle,curve,stroke,strokeAlpha,strokeWidth,layer,order,view,when,repeat,repeatStep,alphaList," +
-		CMFThemeGlowKeys() + "," + CMFThemeShadowKeys() + ",tab,tabLabel,click,above," + CMFThemeHoverKeys() + ",minPartHeight";
+		CMFThemeGlowKeys() + "," + CMFThemeShadowKeys() + ",tab,tabLabel,click,above," + CMFThemeHoverKeys() + ",minPartHeight,wideAnchor";
 	space = "layer,order,alpha,view,area,preview,fadeMs,tab,tabLabel,listen,listenFields";
 	switch (kind)
 	{
@@ -4990,7 +5198,7 @@ function CMFThemeAllShapeKeys() : string
 function CMFThemeTextKey(key : name) : bool
 {
 	return CMFListHas("font,nameFont,titleFont,bodyFont,align,wrap,panLimit,hide,layer,when,gradient,side,measure,view," +
-		"points,alphaList,area,src,tab,tabLabel,text,listen,listenFields,clearView,clearSide", NameToString(key));
+		"points,alphaList,area,src,tab,tabLabel,text,listen,listenFields,clearView,clearSide,wideAnchor", NameToString(key));
 }
 
 // Map-space drawing: a word with no space or comma (area names, tab ids).
@@ -5056,6 +5264,8 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 				return CMFThemeWordsOk(text, "region,interior,world");
 			case 'clearSide':
 				return text == "left" || text == "right";
+			case 'wideAnchor':
+				return text == "edges" || text == "panels" || text == "centre";
 			case 'area':
 			case 'tab':
 				return CMFThemeWordOk(text);
@@ -5069,6 +5279,11 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 					StrReplaceAll(text, "..", "") == text && StrReplaceAll(text, "\\", "") == text;
 		}
 		return text != "";
+	}
+	// Version 10: wide's fill is a switch, not a colour.
+	if (part == 'wide')
+	{
+		return CMFThemeWideValueOk(key, number);
 	}
 	// fill takes a colour, or the text "label" (the label's own colour) on pinLabel and pinName drawings.
 	if (key == 'fill' && text == "label")
@@ -5132,7 +5347,9 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 // kind this CMF knows; CMFHasAbility(part, key) for every style key the part takes, and for a drawing kind
 // every key and list key its drawings take. Version 6 adds mapSpace, line, text and movie
 // (CMFHasAbility('mapSpace', ''), ('line', 'colors'), ('text', '')). Version 7 adds ('tooltip', 'clearMinHeight')
-// and the other clear keys, and ('rect', 'minPartHeight') on every box kind and text. Abilities designed for later (images,
+// and the other clear keys, and ('rect', 'minPartHeight') on every box kind and text. Version 10 adds ('wide', '') and its
+// keys, ('rect', 'wideAnchor') on every box kind and text, and ('opening', 'readyAtFadeStart') and ('opening',
+// 'revealEase'). Abilities designed for later (images,
 // the map hold) answer false until a CMF version adds them.
 function CMFHasAbility(part : name, key : name) : bool
 {
@@ -5153,10 +5370,26 @@ function CMFHasAbility(part : name, key : name) : bool
 	return false;
 }
 
+// Version 10. The visible screen in map units from the last map opening: 1920 x 1080 on a 16:9 screen, 2580 x 1080 on
+// a 3440 x 1440 one, 1920 x 1200 on a 16:10 one; 0 before the first opening. For mods that want the screen's shape (for
+// example to send wide keys only on very wide screens); no pack needs it for a correct layout, because CMF moves
+// numbers sent in 1920 x 1080 units by itself.
+function CMFScreenWidth() : float
+{
+	return theGame.CMFGetCore().ScreenWidth();
+}
+
+function CMFScreenHeight() : float
+{
+	return theGame.CMFGetCore().ScreenHeight();
+}
+
 // Version 5. Styles one part of the map (fonts, colours, glows, place, the game decorations to hide) or sets
-// one map behaviour (parts map, navigation, opening and spread). text carries words (fonts such as "$TitleFont",
+// one map behaviour (parts map, navigation, opening, spread and, version 10, wide). text carries words (fonts such as "$TitleFont",
 // "keep", "region,world", decoration names); number carries everything else, colours as 0xRRGGBB. The earliest
-// folder that styles a part owns all of its style keys; map, navigation, opening and spread are won key by key.
+// folder that styles a part owns all of its style keys; map, navigation, opening, spread and wide are won key by key.
+// Version 10: on a look part, a key that is a behaviour (the info box's clear keys, the label's rise keys) is owned
+// apart from the look (CMFCore.PartKeyChoice).
 // Unset keys keep the game's look.
 function CMFStylePart(provider : string, part : name, key : name, text : string, number : float) : bool
 {
@@ -5200,7 +5433,7 @@ function CMFDraw(provider : string, anchor : name, id : name, kind : name) : boo
 	if (provider == "" || !IsNameValid(anchor) || !IsNameValid(id) || anchor == id ||
 		CMFListHas(CMFThemeParts() + "," + CMFThemeLayers() + "," + CMFThemeKinds(), NameToString(id)) ||
 		(IsNameValid(kind) && !CMFListHas(CMFThemeKinds(), NameToString(kind))) ||
-		CMFListHas(CMFThemeLayers() + "," + CMFThemeKinds() + ",navigation,opening,spread", NameToString(anchor)) ||
+		CMFListHas(CMFThemeLayers() + "," + CMFThemeKinds() + ",navigation,opening,spread,wide", NameToString(anchor)) ||
 		(anchor == 'mapSpace' && IsNameValid(kind) && kind != 'line' && kind != 'text' && kind != 'movie') ||
 		(anchor != 'mapSpace' && (kind == 'line' || kind == 'movie')))
 	{
@@ -5390,7 +5623,15 @@ event OnCMFArtFailed(url : string)
 @addMethod(CR4MapMenu)
 event OnCMFMapThemeReady()
 {
+	theGame.CMFGetCore().SendScreen(GetMenuFlashValueStorage());
 	theGame.CMFGetCore().SendTheme(GetMenuFlashValueStorage());
+}
+
+// Version 10: the map panel reports the visible screen in map units (1920 x 1080 on a 16:9 screen) once per opening.
+@addMethod(CR4MapMenu)
+event OnCMFScreen(width : float, height : float)
+{
+	theGame.CMFGetCore().ScreenSeen(width, height);
 }
 
 // Version 6: the map panel reports a click on a pin whose click a provider won (input "use", "doubleClick" or

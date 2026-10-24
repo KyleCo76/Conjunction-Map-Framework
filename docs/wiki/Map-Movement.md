@@ -32,10 +32,12 @@ Ran in game on 2026-10-20 through the Smooth Map and Map Quest Insight adapters 
 | `showDelayMs` | `200` | `0` to `5000` | the wait between prepared pins and the fade-in. |
 | `fadeSeconds`, `tileFadeSeconds` | `0.33`, `0.66` | `0` to `5` | the edge gradient and pin fade-in, and the map tiles' fade-in. |
 | `revealSeconds` | `0` | `0` to `5` | the crosshair, edge pointers, legend and quest tracker fade in over this time; `0` shows them at once. |
+| `readyAtFadeStart` (API version 10; ran in game on 2026-10-24) | `0` | `0`/`1` | `1`: the map takes input, and the legend, quest tracker, crosshair and edge pointers appear (or begin their `revealSeconds` fade), as soon as the fade-in starts after `showDelayMs`, instead of after the tiles have faded in. |
+| `revealEase` (API version 10) | `0` | `0`/`1` | the curve of the `revealSeconds` fade: `0` even, `1` ease-in. Not yet run in game. |
 
 - **Send every key your mod decides**, even one equal to the game's value, so a quieter mod does not take it from you.
 - **`"unset"` withdraws one key** (API version 6, any part and key): `CMFStylePart(provider, part, key, "unset", 0)` removes your own value, so the next folder's value or the game's applies from the next opening. Use it for an on/off option.
-- **Frame rate is the one unproven key.** If the game does not honour it, a later CMF answers `false` to `CMFHasAbility('navigation', 'frameRate')`; `tweenEveryFrame` `1` then makes tweens smooth instead.
+- **Frame rate** ran in game on 2026-10-21: the log showed `frameRate asked=60 now=60`. If the game could not change the rate, CMF would answer `false` and the map would stay at 24; `tweenEveryFrame` `1` still makes tweens smooth.
 - **Controller keys** (`padHoldMs`, the crosshair keys) are checked by value only; no launch has used a controller.
 - **Log.** Each opening writes `opening ms=N` (from the map's start to its first full pin build) and, with any key set, a line such as `nav frameTimed=1 step=17 world=24 max=100 zoomTimed=0 pad=0 tweens=frame frameRate asked=60 now=60 opening=slide:0.2/0 pins:120@1 ready=420ms`. Each held-key pan writes `nav pan ms=3010 ticks=431 px=2660`; with `zoomOutFit` the map writes `nav zoomOutFit min=0.66 game=1.6`.
 

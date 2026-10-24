@@ -305,7 +305,7 @@
 					<Option id="24" displayName="24"><Entry varId="CMFPick_Colours" value="24"/></Option>
 				</OptionsArray>
 			</Var>
-			<Var id="CMFPick_Size" value="0" displayName="Pin size and spreading" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+			<Var id="CMFPick_Size" value="0" displayName="Pin size" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
 				<OptionsArray>
 					<Option id="0" displayName="0"><Entry varId="CMFPick_Size" value="0"/></Option>
 					<Option id="1" displayName="1"><Entry varId="CMFPick_Size" value="1"/></Option>
@@ -361,35 +361,6 @@
 					<Option id="22" displayName="22"><Entry varId="CMFPick_Labels" value="22"/></Option>
 					<Option id="23" displayName="23"><Entry varId="CMFPick_Labels" value="23"/></Option>
 					<Option id="24" displayName="24"><Entry varId="CMFPick_Labels" value="24"/></Option>
-				</OptionsArray>
-			</Var>
-			<Var id="CMFPick_Clicks" value="0" displayName="Pin clicks" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
-				<OptionsArray>
-					<Option id="0" displayName="0"><Entry varId="CMFPick_Clicks" value="0"/></Option>
-					<Option id="1" displayName="1"><Entry varId="CMFPick_Clicks" value="1"/></Option>
-					<Option id="2" displayName="2"><Entry varId="CMFPick_Clicks" value="2"/></Option>
-					<Option id="3" displayName="3"><Entry varId="CMFPick_Clicks" value="3"/></Option>
-					<Option id="4" displayName="4"><Entry varId="CMFPick_Clicks" value="4"/></Option>
-					<Option id="5" displayName="5"><Entry varId="CMFPick_Clicks" value="5"/></Option>
-					<Option id="6" displayName="6"><Entry varId="CMFPick_Clicks" value="6"/></Option>
-					<Option id="7" displayName="7"><Entry varId="CMFPick_Clicks" value="7"/></Option>
-					<Option id="8" displayName="8"><Entry varId="CMFPick_Clicks" value="8"/></Option>
-					<Option id="9" displayName="9"><Entry varId="CMFPick_Clicks" value="9"/></Option>
-					<Option id="10" displayName="10"><Entry varId="CMFPick_Clicks" value="10"/></Option>
-					<Option id="11" displayName="11"><Entry varId="CMFPick_Clicks" value="11"/></Option>
-					<Option id="12" displayName="12"><Entry varId="CMFPick_Clicks" value="12"/></Option>
-					<Option id="13" displayName="13"><Entry varId="CMFPick_Clicks" value="13"/></Option>
-					<Option id="14" displayName="14"><Entry varId="CMFPick_Clicks" value="14"/></Option>
-					<Option id="15" displayName="15"><Entry varId="CMFPick_Clicks" value="15"/></Option>
-					<Option id="16" displayName="16"><Entry varId="CMFPick_Clicks" value="16"/></Option>
-					<Option id="17" displayName="17"><Entry varId="CMFPick_Clicks" value="17"/></Option>
-					<Option id="18" displayName="18"><Entry varId="CMFPick_Clicks" value="18"/></Option>
-					<Option id="19" displayName="19"><Entry varId="CMFPick_Clicks" value="19"/></Option>
-					<Option id="20" displayName="20"><Entry varId="CMFPick_Clicks" value="20"/></Option>
-					<Option id="21" displayName="21"><Entry varId="CMFPick_Clicks" value="21"/></Option>
-					<Option id="22" displayName="22"><Entry varId="CMFPick_Clicks" value="22"/></Option>
-					<Option id="23" displayName="23"><Entry varId="CMFPick_Clicks" value="23"/></Option>
-					<Option id="24" displayName="24"><Entry varId="CMFPick_Clicks" value="24"/></Option>
 				</OptionsArray>
 			</Var>
 			<Var id="CMFPick_Legend" value="0" displayName="Legend and filter tabs" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
@@ -479,35 +450,6 @@
 					<Option id="24" displayName="24"><Entry varId="CMFPick_Look" value="24"/></Option>
 				</OptionsArray>
 			</Var>
-			<Var id="CMFPick_Movement" value="0" displayName="Map movement" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
-				<OptionsArray>
-					<Option id="0" displayName="0"><Entry varId="CMFPick_Movement" value="0"/></Option>
-					<Option id="1" displayName="1"><Entry varId="CMFPick_Movement" value="1"/></Option>
-					<Option id="2" displayName="2"><Entry varId="CMFPick_Movement" value="2"/></Option>
-					<Option id="3" displayName="3"><Entry varId="CMFPick_Movement" value="3"/></Option>
-					<Option id="4" displayName="4"><Entry varId="CMFPick_Movement" value="4"/></Option>
-					<Option id="5" displayName="5"><Entry varId="CMFPick_Movement" value="5"/></Option>
-					<Option id="6" displayName="6"><Entry varId="CMFPick_Movement" value="6"/></Option>
-					<Option id="7" displayName="7"><Entry varId="CMFPick_Movement" value="7"/></Option>
-					<Option id="8" displayName="8"><Entry varId="CMFPick_Movement" value="8"/></Option>
-					<Option id="9" displayName="9"><Entry varId="CMFPick_Movement" value="9"/></Option>
-					<Option id="10" displayName="10"><Entry varId="CMFPick_Movement" value="10"/></Option>
-					<Option id="11" displayName="11"><Entry varId="CMFPick_Movement" value="11"/></Option>
-					<Option id="12" displayName="12"><Entry varId="CMFPick_Movement" value="12"/></Option>
-					<Option id="13" displayName="13"><Entry varId="CMFPick_Movement" value="13"/></Option>
-					<Option id="14" displayName="14"><Entry varId="CMFPick_Movement" value="14"/></Option>
-					<Option id="15" displayName="15"><Entry varId="CMFPick_Movement" value="15"/></Option>
-					<Option id="16" displayName="16"><Entry varId="CMFPick_Movement" value="16"/></Option>
-					<Option id="17" displayName="17"><Entry varId="CMFPick_Movement" value="17"/></Option>
-					<Option id="18" displayName="18"><Entry varId="CMFPick_Movement" value="18"/></Option>
-					<Option id="19" displayName="19"><Entry varId="CMFPick_Movement" value="19"/></Option>
-					<Option id="20" displayName="20"><Entry varId="CMFPick_Movement" value="20"/></Option>
-					<Option id="21" displayName="21"><Entry varId="CMFPick_Movement" value="21"/></Option>
-					<Option id="22" displayName="22"><Entry varId="CMFPick_Movement" value="22"/></Option>
-					<Option id="23" displayName="23"><Entry varId="CMFPick_Movement" value="23"/></Option>
-					<Option id="24" displayName="24"><Entry varId="CMFPick_Movement" value="24"/></Option>
-				</OptionsArray>
-			</Var>
 			<Var id="CMFPick_Painting" value="0" displayName="Map painting" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
 				<OptionsArray>
 					<Option id="0" displayName="0"><Entry varId="CMFPick_Painting" value="0"/></Option>
@@ -566,17 +508,105 @@
 					<Option id="24" displayName="24"><Entry varId="CMFPick_Drawings" value="24"/></Option>
 				</OptionsArray>
 			</Var>
+			<Var id="CMFPick_Clicks" value="0" displayName="Pin clicks" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Clicks" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Clicks" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Clicks" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Clicks" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Clicks" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Clicks" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Clicks" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Clicks" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Clicks" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Clicks" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Clicks" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Clicks" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Clicks" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Clicks" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Clicks" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Clicks" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Clicks" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Clicks" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Clicks" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Clicks" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Clicks" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Clicks" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Clicks" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Clicks" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Clicks" value="24"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFPick_Movement" value="0" displayName="Map movement" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Movement" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Movement" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Movement" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Movement" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Movement" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Movement" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Movement" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Movement" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Movement" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Movement" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Movement" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Movement" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Movement" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Movement" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Movement" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Movement" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Movement" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Movement" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Movement" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Movement" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Movement" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Movement" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Movement" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Movement" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Movement" value="24"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFPick_Behaviour" value="0" displayName="Map behaviour" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Behaviour" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Behaviour" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Behaviour" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Behaviour" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Behaviour" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Behaviour" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Behaviour" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Behaviour" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Behaviour" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Behaviour" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Behaviour" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Behaviour" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Behaviour" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Behaviour" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Behaviour" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Behaviour" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Behaviour" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Behaviour" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Behaviour" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Behaviour" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Behaviour" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Behaviour" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Behaviour" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Behaviour" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Behaviour" value="24"/></Option>
+				</OptionsArray>
+			</Var>
 			<Var id="CMFName_Icons" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Colours" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Size" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Labels" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
-			<Var id="CMFName_Clicks" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Legend" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Hidden" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Look" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
-			<Var id="CMFName_Movement" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Painting" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Drawings" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFName_Clicks" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFName_Movement" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFName_Behaviour" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 		</VisibleVars>
 	</Group>
 	<Group id="CMFMenuAdvIcons" displayName="Mods.cmf_menu.cmf_advanced.cmf_adv_icons">
@@ -1098,64 +1128,6 @@
 					<Option id="24" displayName="24"><Entry varId="CMFPick_Size_Scale" value="24"/></Option>
 				</OptionsArray>
 			</Var>
-			<Var id="CMFPick_Size_Lead" value="0" displayName="Which pin leads a spread" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
-				<OptionsArray>
-					<Option id="0" displayName="0"><Entry varId="CMFPick_Size_Lead" value="0"/></Option>
-					<Option id="1" displayName="1"><Entry varId="CMFPick_Size_Lead" value="1"/></Option>
-					<Option id="2" displayName="2"><Entry varId="CMFPick_Size_Lead" value="2"/></Option>
-					<Option id="3" displayName="3"><Entry varId="CMFPick_Size_Lead" value="3"/></Option>
-					<Option id="4" displayName="4"><Entry varId="CMFPick_Size_Lead" value="4"/></Option>
-					<Option id="5" displayName="5"><Entry varId="CMFPick_Size_Lead" value="5"/></Option>
-					<Option id="6" displayName="6"><Entry varId="CMFPick_Size_Lead" value="6"/></Option>
-					<Option id="7" displayName="7"><Entry varId="CMFPick_Size_Lead" value="7"/></Option>
-					<Option id="8" displayName="8"><Entry varId="CMFPick_Size_Lead" value="8"/></Option>
-					<Option id="9" displayName="9"><Entry varId="CMFPick_Size_Lead" value="9"/></Option>
-					<Option id="10" displayName="10"><Entry varId="CMFPick_Size_Lead" value="10"/></Option>
-					<Option id="11" displayName="11"><Entry varId="CMFPick_Size_Lead" value="11"/></Option>
-					<Option id="12" displayName="12"><Entry varId="CMFPick_Size_Lead" value="12"/></Option>
-					<Option id="13" displayName="13"><Entry varId="CMFPick_Size_Lead" value="13"/></Option>
-					<Option id="14" displayName="14"><Entry varId="CMFPick_Size_Lead" value="14"/></Option>
-					<Option id="15" displayName="15"><Entry varId="CMFPick_Size_Lead" value="15"/></Option>
-					<Option id="16" displayName="16"><Entry varId="CMFPick_Size_Lead" value="16"/></Option>
-					<Option id="17" displayName="17"><Entry varId="CMFPick_Size_Lead" value="17"/></Option>
-					<Option id="18" displayName="18"><Entry varId="CMFPick_Size_Lead" value="18"/></Option>
-					<Option id="19" displayName="19"><Entry varId="CMFPick_Size_Lead" value="19"/></Option>
-					<Option id="20" displayName="20"><Entry varId="CMFPick_Size_Lead" value="20"/></Option>
-					<Option id="21" displayName="21"><Entry varId="CMFPick_Size_Lead" value="21"/></Option>
-					<Option id="22" displayName="22"><Entry varId="CMFPick_Size_Lead" value="22"/></Option>
-					<Option id="23" displayName="23"><Entry varId="CMFPick_Size_Lead" value="23"/></Option>
-					<Option id="24" displayName="24"><Entry varId="CMFPick_Size_Lead" value="24"/></Option>
-				</OptionsArray>
-			</Var>
-			<Var id="CMFPick_Size_Spread" value="0" displayName="Spreading" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
-				<OptionsArray>
-					<Option id="0" displayName="0"><Entry varId="CMFPick_Size_Spread" value="0"/></Option>
-					<Option id="1" displayName="1"><Entry varId="CMFPick_Size_Spread" value="1"/></Option>
-					<Option id="2" displayName="2"><Entry varId="CMFPick_Size_Spread" value="2"/></Option>
-					<Option id="3" displayName="3"><Entry varId="CMFPick_Size_Spread" value="3"/></Option>
-					<Option id="4" displayName="4"><Entry varId="CMFPick_Size_Spread" value="4"/></Option>
-					<Option id="5" displayName="5"><Entry varId="CMFPick_Size_Spread" value="5"/></Option>
-					<Option id="6" displayName="6"><Entry varId="CMFPick_Size_Spread" value="6"/></Option>
-					<Option id="7" displayName="7"><Entry varId="CMFPick_Size_Spread" value="7"/></Option>
-					<Option id="8" displayName="8"><Entry varId="CMFPick_Size_Spread" value="8"/></Option>
-					<Option id="9" displayName="9"><Entry varId="CMFPick_Size_Spread" value="9"/></Option>
-					<Option id="10" displayName="10"><Entry varId="CMFPick_Size_Spread" value="10"/></Option>
-					<Option id="11" displayName="11"><Entry varId="CMFPick_Size_Spread" value="11"/></Option>
-					<Option id="12" displayName="12"><Entry varId="CMFPick_Size_Spread" value="12"/></Option>
-					<Option id="13" displayName="13"><Entry varId="CMFPick_Size_Spread" value="13"/></Option>
-					<Option id="14" displayName="14"><Entry varId="CMFPick_Size_Spread" value="14"/></Option>
-					<Option id="15" displayName="15"><Entry varId="CMFPick_Size_Spread" value="15"/></Option>
-					<Option id="16" displayName="16"><Entry varId="CMFPick_Size_Spread" value="16"/></Option>
-					<Option id="17" displayName="17"><Entry varId="CMFPick_Size_Spread" value="17"/></Option>
-					<Option id="18" displayName="18"><Entry varId="CMFPick_Size_Spread" value="18"/></Option>
-					<Option id="19" displayName="19"><Entry varId="CMFPick_Size_Spread" value="19"/></Option>
-					<Option id="20" displayName="20"><Entry varId="CMFPick_Size_Spread" value="20"/></Option>
-					<Option id="21" displayName="21"><Entry varId="CMFPick_Size_Spread" value="21"/></Option>
-					<Option id="22" displayName="22"><Entry varId="CMFPick_Size_Spread" value="22"/></Option>
-					<Option id="23" displayName="23"><Entry varId="CMFPick_Size_Spread" value="23"/></Option>
-					<Option id="24" displayName="24"><Entry varId="CMFPick_Size_Spread" value="24"/></Option>
-				</OptionsArray>
-			</Var>
 			<Var id="CMFPick_Labels_Text" value="0" displayName="Level tags and label text" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
 				<OptionsArray>
 					<Option id="0" displayName="0"><Entry varId="CMFPick_Labels_Text" value="0"/></Option>
@@ -1185,40 +1157,8 @@
 					<Option id="24" displayName="24"><Entry varId="CMFPick_Labels_Text" value="24"/></Option>
 				</OptionsArray>
 			</Var>
-			<Var id="CMFPick_Labels_Place" value="0" displayName="Label place and hiding" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
-				<OptionsArray>
-					<Option id="0" displayName="0"><Entry varId="CMFPick_Labels_Place" value="0"/></Option>
-					<Option id="1" displayName="1"><Entry varId="CMFPick_Labels_Place" value="1"/></Option>
-					<Option id="2" displayName="2"><Entry varId="CMFPick_Labels_Place" value="2"/></Option>
-					<Option id="3" displayName="3"><Entry varId="CMFPick_Labels_Place" value="3"/></Option>
-					<Option id="4" displayName="4"><Entry varId="CMFPick_Labels_Place" value="4"/></Option>
-					<Option id="5" displayName="5"><Entry varId="CMFPick_Labels_Place" value="5"/></Option>
-					<Option id="6" displayName="6"><Entry varId="CMFPick_Labels_Place" value="6"/></Option>
-					<Option id="7" displayName="7"><Entry varId="CMFPick_Labels_Place" value="7"/></Option>
-					<Option id="8" displayName="8"><Entry varId="CMFPick_Labels_Place" value="8"/></Option>
-					<Option id="9" displayName="9"><Entry varId="CMFPick_Labels_Place" value="9"/></Option>
-					<Option id="10" displayName="10"><Entry varId="CMFPick_Labels_Place" value="10"/></Option>
-					<Option id="11" displayName="11"><Entry varId="CMFPick_Labels_Place" value="11"/></Option>
-					<Option id="12" displayName="12"><Entry varId="CMFPick_Labels_Place" value="12"/></Option>
-					<Option id="13" displayName="13"><Entry varId="CMFPick_Labels_Place" value="13"/></Option>
-					<Option id="14" displayName="14"><Entry varId="CMFPick_Labels_Place" value="14"/></Option>
-					<Option id="15" displayName="15"><Entry varId="CMFPick_Labels_Place" value="15"/></Option>
-					<Option id="16" displayName="16"><Entry varId="CMFPick_Labels_Place" value="16"/></Option>
-					<Option id="17" displayName="17"><Entry varId="CMFPick_Labels_Place" value="17"/></Option>
-					<Option id="18" displayName="18"><Entry varId="CMFPick_Labels_Place" value="18"/></Option>
-					<Option id="19" displayName="19"><Entry varId="CMFPick_Labels_Place" value="19"/></Option>
-					<Option id="20" displayName="20"><Entry varId="CMFPick_Labels_Place" value="20"/></Option>
-					<Option id="21" displayName="21"><Entry varId="CMFPick_Labels_Place" value="21"/></Option>
-					<Option id="22" displayName="22"><Entry varId="CMFPick_Labels_Place" value="22"/></Option>
-					<Option id="23" displayName="23"><Entry varId="CMFPick_Labels_Place" value="23"/></Option>
-					<Option id="24" displayName="24"><Entry varId="CMFPick_Labels_Place" value="24"/></Option>
-				</OptionsArray>
-			</Var>
 			<Var id="CMFName_Size_Scale" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
-			<Var id="CMFName_Size_Lead" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
-			<Var id="CMFName_Size_Spread" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Labels_Text" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
-			<Var id="CMFName_Labels_Place" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 		</VisibleVars>
 	</Group>
 	<Group id="CMFMenuAdvLegend" displayName="Mods.cmf_menu.cmf_advanced.cmf_adv_legend">
@@ -1590,7 +1530,7 @@
 					<Option id="24" displayName="24"><Entry varId="CMFPick_Movement_Area" value="24"/></Option>
 				</OptionsArray>
 			</Var>
-			<Var id="CMFPick_Movement_Pan" value="0" displayName="Pan and zoom" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+			<Var id="CMFPick_Movement_Pan" value="0" displayName="Pan and zoom feel" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
 				<OptionsArray>
 					<Option id="0" displayName="0"><Entry varId="CMFPick_Movement_Pan" value="0"/></Option>
 					<Option id="1" displayName="1"><Entry varId="CMFPick_Movement_Pan" value="1"/></Option>
@@ -1617,6 +1557,64 @@
 					<Option id="22" displayName="22"><Entry varId="CMFPick_Movement_Pan" value="22"/></Option>
 					<Option id="23" displayName="23"><Entry varId="CMFPick_Movement_Pan" value="23"/></Option>
 					<Option id="24" displayName="24"><Entry varId="CMFPick_Movement_Pan" value="24"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFPick_Movement_ZoomOut" value="0" displayName="Zoom out to the whole region" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Movement_ZoomOut" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Movement_ZoomOut" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Movement_ZoomOut" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Movement_ZoomOut" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Movement_ZoomOut" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Movement_ZoomOut" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Movement_ZoomOut" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Movement_ZoomOut" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Movement_ZoomOut" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Movement_ZoomOut" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Movement_ZoomOut" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Movement_ZoomOut" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Movement_ZoomOut" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Movement_ZoomOut" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Movement_ZoomOut" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Movement_ZoomOut" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Movement_ZoomOut" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Movement_ZoomOut" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Movement_ZoomOut" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Movement_ZoomOut" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Movement_ZoomOut" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Movement_ZoomOut" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Movement_ZoomOut" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Movement_ZoomOut" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Movement_ZoomOut" value="24"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFPick_Movement_Controller" value="0" displayName="Controller crosshair" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Movement_Controller" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Movement_Controller" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Movement_Controller" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Movement_Controller" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Movement_Controller" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Movement_Controller" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Movement_Controller" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Movement_Controller" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Movement_Controller" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Movement_Controller" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Movement_Controller" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Movement_Controller" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Movement_Controller" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Movement_Controller" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Movement_Controller" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Movement_Controller" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Movement_Controller" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Movement_Controller" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Movement_Controller" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Movement_Controller" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Movement_Controller" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Movement_Controller" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Movement_Controller" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Movement_Controller" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Movement_Controller" value="24"/></Option>
 				</OptionsArray>
 			</Var>
 			<Var id="CMFPick_Movement_Opening" value="0" displayName="Opening and closing" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
@@ -1677,10 +1675,226 @@
 					<Option id="24" displayName="24"><Entry varId="CMFPick_Movement_View" value="24"/></Option>
 				</OptionsArray>
 			</Var>
+			<Var id="CMFPick_Movement_Wide" value="0" displayName="Fill wide screens" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Movement_Wide" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Movement_Wide" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Movement_Wide" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Movement_Wide" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Movement_Wide" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Movement_Wide" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Movement_Wide" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Movement_Wide" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Movement_Wide" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Movement_Wide" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Movement_Wide" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Movement_Wide" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Movement_Wide" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Movement_Wide" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Movement_Wide" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Movement_Wide" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Movement_Wide" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Movement_Wide" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Movement_Wide" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Movement_Wide" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Movement_Wide" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Movement_Wide" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Movement_Wide" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Movement_Wide" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Movement_Wide" value="24"/></Option>
+				</OptionsArray>
+			</Var>
 			<Var id="CMFName_Movement_Area" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Movement_Pan" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFName_Movement_ZoomOut" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFName_Movement_Controller" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Movement_Opening" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFName_Movement_View" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFName_Movement_Wide" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+		</VisibleVars>
+	</Group>
+	<Group id="CMFMenuAdvBehaviour" displayName="Mods.cmf_menu.cmf_advanced.cmf_adv_behaviour">
+		<VisibleVars>
+			<Var id="CMFPick_Size_Spread" value="0" displayName="Stacked pins spread out" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Size_Spread" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Size_Spread" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Size_Spread" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Size_Spread" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Size_Spread" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Size_Spread" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Size_Spread" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Size_Spread" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Size_Spread" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Size_Spread" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Size_Spread" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Size_Spread" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Size_Spread" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Size_Spread" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Size_Spread" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Size_Spread" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Size_Spread" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Size_Spread" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Size_Spread" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Size_Spread" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Size_Spread" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Size_Spread" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Size_Spread" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Size_Spread" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Size_Spread" value="24"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFPick_Size_Lead" value="0" displayName="Which pin leads a spread" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Size_Lead" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Size_Lead" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Size_Lead" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Size_Lead" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Size_Lead" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Size_Lead" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Size_Lead" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Size_Lead" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Size_Lead" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Size_Lead" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Size_Lead" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Size_Lead" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Size_Lead" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Size_Lead" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Size_Lead" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Size_Lead" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Size_Lead" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Size_Lead" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Size_Lead" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Size_Lead" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Size_Lead" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Size_Lead" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Size_Lead" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Size_Lead" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Size_Lead" value="24"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFPick_Labels_Place" value="0" displayName="Label place and hiding" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Labels_Place" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Labels_Place" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Labels_Place" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Labels_Place" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Labels_Place" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Labels_Place" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Labels_Place" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Labels_Place" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Labels_Place" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Labels_Place" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Labels_Place" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Labels_Place" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Labels_Place" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Labels_Place" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Labels_Place" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Labels_Place" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Labels_Place" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Labels_Place" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Labels_Place" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Labels_Place" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Labels_Place" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Labels_Place" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Labels_Place" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Labels_Place" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Labels_Place" value="24"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFPick_Behaviour_InfoBoxDodge" value="0" displayName="Info box moves out of the way" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Behaviour_InfoBoxDodge" value="24"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFPick_Behaviour_InfoBoxHeight" value="0" displayName="Info box height and scrolling" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Behaviour_InfoBoxHeight" value="24"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFPick_Behaviour_HoverNames" value="0" displayName="Names only on hover" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="0"><Entry varId="CMFPick_Behaviour_HoverNames" value="0"/></Option>
+					<Option id="1" displayName="1"><Entry varId="CMFPick_Behaviour_HoverNames" value="1"/></Option>
+					<Option id="2" displayName="2"><Entry varId="CMFPick_Behaviour_HoverNames" value="2"/></Option>
+					<Option id="3" displayName="3"><Entry varId="CMFPick_Behaviour_HoverNames" value="3"/></Option>
+					<Option id="4" displayName="4"><Entry varId="CMFPick_Behaviour_HoverNames" value="4"/></Option>
+					<Option id="5" displayName="5"><Entry varId="CMFPick_Behaviour_HoverNames" value="5"/></Option>
+					<Option id="6" displayName="6"><Entry varId="CMFPick_Behaviour_HoverNames" value="6"/></Option>
+					<Option id="7" displayName="7"><Entry varId="CMFPick_Behaviour_HoverNames" value="7"/></Option>
+					<Option id="8" displayName="8"><Entry varId="CMFPick_Behaviour_HoverNames" value="8"/></Option>
+					<Option id="9" displayName="9"><Entry varId="CMFPick_Behaviour_HoverNames" value="9"/></Option>
+					<Option id="10" displayName="10"><Entry varId="CMFPick_Behaviour_HoverNames" value="10"/></Option>
+					<Option id="11" displayName="11"><Entry varId="CMFPick_Behaviour_HoverNames" value="11"/></Option>
+					<Option id="12" displayName="12"><Entry varId="CMFPick_Behaviour_HoverNames" value="12"/></Option>
+					<Option id="13" displayName="13"><Entry varId="CMFPick_Behaviour_HoverNames" value="13"/></Option>
+					<Option id="14" displayName="14"><Entry varId="CMFPick_Behaviour_HoverNames" value="14"/></Option>
+					<Option id="15" displayName="15"><Entry varId="CMFPick_Behaviour_HoverNames" value="15"/></Option>
+					<Option id="16" displayName="16"><Entry varId="CMFPick_Behaviour_HoverNames" value="16"/></Option>
+					<Option id="17" displayName="17"><Entry varId="CMFPick_Behaviour_HoverNames" value="17"/></Option>
+					<Option id="18" displayName="18"><Entry varId="CMFPick_Behaviour_HoverNames" value="18"/></Option>
+					<Option id="19" displayName="19"><Entry varId="CMFPick_Behaviour_HoverNames" value="19"/></Option>
+					<Option id="20" displayName="20"><Entry varId="CMFPick_Behaviour_HoverNames" value="20"/></Option>
+					<Option id="21" displayName="21"><Entry varId="CMFPick_Behaviour_HoverNames" value="21"/></Option>
+					<Option id="22" displayName="22"><Entry varId="CMFPick_Behaviour_HoverNames" value="22"/></Option>
+					<Option id="23" displayName="23"><Entry varId="CMFPick_Behaviour_HoverNames" value="23"/></Option>
+					<Option id="24" displayName="24"><Entry varId="CMFPick_Behaviour_HoverNames" value="24"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFName_Size_Spread" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFName_Size_Lead" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFName_Labels_Place" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFName_Behaviour_InfoBoxDodge" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFName_Behaviour_InfoBoxHeight" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFName_Behaviour_HoverNames" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 		</VisibleVars>
 	</Group>
 	<Group id="CMFMenuAdvPainting" displayName="Mods.cmf_menu.cmf_advanced.cmf_adv_painting">
@@ -2262,6 +2476,12 @@
 					<Option id="1" displayName="-"><Entry varId="CMFStatusMod16" value="1"/></Option>
 				</OptionsArray>
 			</Var>
+			<Var id="CMFStatusScreen" value="0" displayName="Screen" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="-"><Entry varId="CMFStatusScreen" value="0"/></Option>
+					<Option id="1" displayName="-"><Entry varId="CMFStatusScreen" value="1"/></Option>
+				</OptionsArray>
+			</Var>
 		</VisibleVars>
 	</Group>
 	<Group id="CMFMenuWinIcons" displayName="Mods.cmf_menu.cmf_status.cmf_win_icons">
@@ -2376,28 +2596,10 @@
 					<Option id="1" displayName="-"><Entry varId="CMFWin_Size_Scale" value="1"/></Option>
 				</OptionsArray>
 			</Var>
-			<Var id="CMFWin_Size_Lead" value="0" displayName="Which pin leads a spread" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
-				<OptionsArray>
-					<Option id="0" displayName="-"><Entry varId="CMFWin_Size_Lead" value="0"/></Option>
-					<Option id="1" displayName="-"><Entry varId="CMFWin_Size_Lead" value="1"/></Option>
-				</OptionsArray>
-			</Var>
-			<Var id="CMFWin_Size_Spread" value="0" displayName="Spreading" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
-				<OptionsArray>
-					<Option id="0" displayName="-"><Entry varId="CMFWin_Size_Spread" value="0"/></Option>
-					<Option id="1" displayName="-"><Entry varId="CMFWin_Size_Spread" value="1"/></Option>
-				</OptionsArray>
-			</Var>
 			<Var id="CMFWin_Labels_Text" value="0" displayName="Level tags and label text" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
 				<OptionsArray>
 					<Option id="0" displayName="-"><Entry varId="CMFWin_Labels_Text" value="0"/></Option>
 					<Option id="1" displayName="-"><Entry varId="CMFWin_Labels_Text" value="1"/></Option>
-				</OptionsArray>
-			</Var>
-			<Var id="CMFWin_Labels_Place" value="0" displayName="Label place and hiding" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
-				<OptionsArray>
-					<Option id="0" displayName="-"><Entry varId="CMFWin_Labels_Place" value="0"/></Option>
-					<Option id="1" displayName="-"><Entry varId="CMFWin_Labels_Place" value="1"/></Option>
 				</OptionsArray>
 			</Var>
 		</VisibleVars>
@@ -2472,10 +2674,22 @@
 					<Option id="1" displayName="-"><Entry varId="CMFWin_Movement_Area" value="1"/></Option>
 				</OptionsArray>
 			</Var>
-			<Var id="CMFWin_Movement_Pan" value="0" displayName="Pan and zoom" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+			<Var id="CMFWin_Movement_Pan" value="0" displayName="Pan and zoom feel" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
 				<OptionsArray>
 					<Option id="0" displayName="-"><Entry varId="CMFWin_Movement_Pan" value="0"/></Option>
 					<Option id="1" displayName="-"><Entry varId="CMFWin_Movement_Pan" value="1"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFWin_Movement_ZoomOut" value="0" displayName="Zoom out to the whole region" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="-"><Entry varId="CMFWin_Movement_ZoomOut" value="0"/></Option>
+					<Option id="1" displayName="-"><Entry varId="CMFWin_Movement_ZoomOut" value="1"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFWin_Movement_Controller" value="0" displayName="Controller crosshair" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="-"><Entry varId="CMFWin_Movement_Controller" value="0"/></Option>
+					<Option id="1" displayName="-"><Entry varId="CMFWin_Movement_Controller" value="1"/></Option>
 				</OptionsArray>
 			</Var>
 			<Var id="CMFWin_Movement_Opening" value="0" displayName="Opening and closing" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
@@ -2488,6 +2702,52 @@
 				<OptionsArray>
 					<Option id="0" displayName="-"><Entry varId="CMFWin_Movement_View" value="0"/></Option>
 					<Option id="1" displayName="-"><Entry varId="CMFWin_Movement_View" value="1"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFWin_Movement_Wide" value="0" displayName="Fill wide screens" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="-"><Entry varId="CMFWin_Movement_Wide" value="0"/></Option>
+					<Option id="1" displayName="-"><Entry varId="CMFWin_Movement_Wide" value="1"/></Option>
+				</OptionsArray>
+			</Var>
+		</VisibleVars>
+	</Group>
+	<Group id="CMFMenuWinBehaviour" displayName="Mods.cmf_menu.cmf_status.cmf_win_behaviour">
+		<VisibleVars>
+			<Var id="CMFWin_Size_Spread" value="0" displayName="Stacked pins spread out" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="-"><Entry varId="CMFWin_Size_Spread" value="0"/></Option>
+					<Option id="1" displayName="-"><Entry varId="CMFWin_Size_Spread" value="1"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFWin_Size_Lead" value="0" displayName="Which pin leads a spread" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="-"><Entry varId="CMFWin_Size_Lead" value="0"/></Option>
+					<Option id="1" displayName="-"><Entry varId="CMFWin_Size_Lead" value="1"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFWin_Labels_Place" value="0" displayName="Label place and hiding" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="-"><Entry varId="CMFWin_Labels_Place" value="0"/></Option>
+					<Option id="1" displayName="-"><Entry varId="CMFWin_Labels_Place" value="1"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFWin_Behaviour_InfoBoxDodge" value="0" displayName="Info box moves out of the way" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="-"><Entry varId="CMFWin_Behaviour_InfoBoxDodge" value="0"/></Option>
+					<Option id="1" displayName="-"><Entry varId="CMFWin_Behaviour_InfoBoxDodge" value="1"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFWin_Behaviour_InfoBoxHeight" value="0" displayName="Info box height and scrolling" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="-"><Entry varId="CMFWin_Behaviour_InfoBoxHeight" value="0"/></Option>
+					<Option id="1" displayName="-"><Entry varId="CMFWin_Behaviour_InfoBoxHeight" value="1"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFWin_Behaviour_HoverNames" value="0" displayName="Names only on hover" displayType="OPTIONS" tags="nonLocalizedName;customNames;nonLocalized">
+				<OptionsArray>
+					<Option id="0" displayName="-"><Entry varId="CMFWin_Behaviour_HoverNames" value="0"/></Option>
+					<Option id="1" displayName="-"><Entry varId="CMFWin_Behaviour_HoverNames" value="1"/></Option>
 				</OptionsArray>
 			</Var>
 		</VisibleVars>

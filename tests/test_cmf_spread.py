@@ -103,11 +103,11 @@ class CoreTests(unittest.TestCase):
         self.assertIn(22, cmf_pack.KNOWN_PROPERTIES)
         self.assertIn('CMFPropertySpreadRank', cmf_pack.VERSION6)
         # Accepted by CMFRegister, CMFRegisterForTag and CMFStylePin like ids 10-17, with no text.
-        self.assertIn('propertyId == CMFPropertySpreadRank() || CMFIsClickProperty(propertyId);',
+        self.assertIn('propertyId == CMFPropertySpreadRank() || CMFIsClickProperty(propertyId)',
                       body(self.core, 'function CMFHasProperty(propertyId : int) : bool'))
-        self.assertIn('propertyId != CMFPropertySpreadRank())',
+        self.assertIn('propertyId != CMFPropertySpreadRank()',
                       body(self.core, 'function CMFRegisterForTag('))
-        self.assertIn('propertyId == CMFPropertySpreadRank();', body(self.core, 'function CMFPropertyTextFree('))
+        self.assertIn('propertyId == CMFPropertySpreadRank()', body(self.core, 'function CMFPropertyTextFree('))
         self.assertIn('case 22:\n\t\t\treturn "cmfSpreadRankBy";', body(self.core, 'function CMFOwnerField('))
         self.assertIn('WriteSlot(dataObject, CMFPropertySpreadRank(), pinKey, legendKey, pinTag, maxLevel);', self.core)
         self.assertIn('case 22:\n\t\t\t\tdataObject.SetMemberFlashInt("cmfSpreadRank", number);', self.core)
@@ -119,13 +119,13 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(len(cmf_pack.n4_issues(22, '', '1001')), 1)
 
     def test_spread_part_and_keys(self):
-        self.assertIn(',opening,spread"', body(self.core, 'function CMFThemeParts() : string'))
+        self.assertIn(',opening,spread,', body(self.core, 'function CMFThemeParts() : string'))
         self.assertIn('return "%s";' % ','.join(SPREAD_KEYS), body(self.core, 'function CMFThemeSpreadKeys() : string'))
         self.assertIn("case 'spread':\n\t\t\treturn CMFThemeSpreadKeys();", self.core)
         self.assertEqual(list(cmf_pack.THEME_PART_KEYS['spread']), SPREAD_KEYS)
         # A behaviour part: won key by key, "unset" withdraws a key, never a drawing anchor.
-        self.assertIn("part == 'opening' || part == 'spread';", body(self.core, 'private function ThemeStyleOwner('))
-        self.assertIn('",navigation,opening,spread", NameToString(anchor)', self.core)
+        self.assertIn("part == 'opening' || part == 'spread' ||", body(self.core, 'private function ThemeStyleOwner('))
+        self.assertIn('",navigation,opening,spread,wide", NameToString(anchor)', self.core)
         self.assertIn("if (part == 'spread')\n\t{\n\t\treturn CMFThemeSpreadValueOk(key, number);\n\t}",
                       body(self.core, 'function CMFThemeValueOk(part : name, key : name, text : string, number : '
                                       'float) : bool'))
@@ -141,7 +141,7 @@ class CoreTests(unittest.TestCase):
             self.assertTrue(value in (0, 1) if expected == 'switch' else expected[0] <= value <= expected[1], key)
 
     def test_version_stays_six(self):
-        self.assertIn('function CMFGetVersion() : int { return 9; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 10; }', self.core)
 
 
 class PanelTests(unittest.TestCase):

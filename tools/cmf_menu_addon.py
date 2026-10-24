@@ -1,7 +1,8 @@
 """Write and stage CMF's optional in-game menu add-on, modCMFInGameMenu (developer only).
 
 The add-on is CMF's Options > Mods > Conjunction Map Framework entry: Mod order, Basic choices,
-Advanced choices (8 pages), General and Status (Loaded map mods and 8 "Who wins" pages). Every
+Advanced choices (9 pages), General and Status (Loaded map mods with the Screen line, and 9 "Who wins"
+pages). Version 1.3.0 (CMF API 10: plans/2026-10-24-cmf-rev10-build-contract.md section 7). Every
 choice row is an OPTIONS row with spare placeholder choices; the add-on's script replaces them
 with the loaded map mods while the game builds the page, and keeps the chosen folder name in a
 hidden name var beside the row.
@@ -28,6 +29,7 @@ from xml.sax.saxutils import quoteattr
 
 ROOT = Path(__file__).resolve().parents[1]
 MOD = 'modCMFInGameMenu'
+VERSION = '1.3.0'
 MENU = ROOT/'source/menu'/(MOD + '.xml')
 CATALOG = ROOT/'source/menu/strings.json'
 SCRIPT = ROOT/'source/menu/content/scripts/local/cmfMenu.ws'
@@ -50,7 +52,12 @@ GROUP_NAMES = [('General', 'General (signposts, boards, stash, Roach)'), ('Quest
 
 # Row kinds: ('head', var suffix, heading text) is a SEPARATOR the script re-labels; ('pick', choice key, label) a live
 # choice row with its hidden name var; ('order', n) a Mod order row; ('fixed', var, label, [choices]) a
-# plain OPTIONS row; ('mods',) the Loaded map mods rows; ('win', choice key, label) a read-only Who wins row.
+# plain OPTIONS row; ('mods',) the Loaded map mods rows; ('win', choice key, label) a read-only Who wins row;
+# ('screen',) the read-only Screen line (1.3.0, CMF API 10).
+# Menu add-on 1.3.0 (CMF API 10): a row whose choice key the installed CMF does not know (Behaviour and the keys 63 to
+# 68) is left out by the script, and on CMF API 9 or less the script shows the 1.2.x names of the renamed rows
+# (cmfMenu.ws CMFMenuOldLabel). The moved rows Spreading, Which pin leads a spread and Label place and hiding keep
+# their choice keys and show on the Map behaviour page there too.
 PAGES = [
     ('CMFMenuOrder', 'cmf_order', 'Mod order',
      [('head', 'Order', 'Which map mod wins inside CMF (not the game\'s load order)')] +
@@ -60,25 +67,23 @@ PAGES = [
     ('CMFMenuBasic', 'cmf_basic', 'Basic choices', [
         ('pick', 'Icons', 'Pin icons'),
         ('pick', 'Colours', 'Pin colours'),
-        ('pick', 'Size', 'Pin size and spreading'),
+        ('pick', 'Size', 'Pin size'),
         ('pick', 'Labels', 'Pin labels'),
-        ('pick', 'Clicks', 'Pin clicks'),
         ('pick', 'Legend', 'Legend and filter tabs'),
         ('pick', 'Hidden', 'Hidden pins'),
         ('pick', 'Look', 'Map look'),
-        ('pick', 'Movement', 'Map movement'),
         ('pick', 'Painting', 'Map painting'),
-        ('pick', 'Drawings', 'Drawings on the map')]),
+        ('pick', 'Drawings', 'Drawings on the map'),
+        ('pick', 'Clicks', 'Pin clicks'),
+        ('pick', 'Movement', 'Map movement'),
+        ('pick', 'Behaviour', 'Map behaviour')]),
     ('CMFMenuAdvIcons', 'cmf_advanced.cmf_adv_icons', 'Pin icons',
      [('pick', 'Icons_' + key, label) for key, label in GROUP_NAMES]),
     ('CMFMenuAdvColours', 'cmf_advanced.cmf_adv_colours', 'Pin colours',
      [('pick', 'Colours_' + key, label) for key, label in GROUP_NAMES]),
     ('CMFMenuAdvSize', 'cmf_advanced.cmf_adv_size', 'Pin size and labels', [
         ('pick', 'Size_Scale', 'Pin size'),
-        ('pick', 'Size_Lead', 'Which pin leads a spread'),
-        ('pick', 'Size_Spread', 'Spreading'),
-        ('pick', 'Labels_Text', 'Level tags and label text'),
-        ('pick', 'Labels_Place', 'Label place and hiding')]),
+        ('pick', 'Labels_Text', 'Level tags and label text')]),
     ('CMFMenuAdvLegend', 'cmf_advanced.cmf_adv_legend', 'Legend and filters', [
         ('pick', 'Legend_Rows', 'Legend rows'),
         ('pick', 'Legend_Names', 'Row names'),
@@ -94,10 +99,21 @@ PAGES = [
         ('pick', 'Look_PinText', 'Pin text style')]),
     ('CMFMenuAdvMovement', 'cmf_advanced.cmf_adv_movement', 'Map movement', [
         ('pick', 'Movement_Area', 'Map area'),
-        ('pick', 'Movement_Pan', 'Pan and zoom'),
+        ('pick', 'Movement_Pan', 'Pan and zoom feel'),
+        ('pick', 'Movement_ZoomOut', 'Zoom out to the whole region'),
+        ('pick', 'Movement_Controller', 'Controller crosshair'),
         ('pick', 'Movement_Opening', 'Opening and closing'),
         # Menu add-on 1.2.0 (CMF API 9): the script hides this row and the two picture rows on an older CMF.
-        ('pick', 'Movement_View', 'Opening view')]),
+        ('pick', 'Movement_View', 'Opening view'),
+        ('pick', 'Movement_Wide', 'Fill wide screens')]),
+    # Menu add-on 1.3.0 (CMF API 10): the behaviour rows (behaviour spec 5.5; the last row from the ultrawide spec 7).
+    ('CMFMenuAdvBehaviour', 'cmf_advanced.cmf_adv_behaviour', 'Map behaviour', [
+        ('pick', 'Size_Spread', 'Stacked pins spread out'),
+        ('pick', 'Size_Lead', 'Which pin leads a spread'),
+        ('pick', 'Labels_Place', 'Label place and hiding'),
+        ('pick', 'Behaviour_InfoBoxDodge', 'Info box moves out of the way'),
+        ('pick', 'Behaviour_InfoBoxHeight', 'Info box height and scrolling'),
+        ('pick', 'Behaviour_HoverNames', 'Names only on hover')]),
     ('CMFMenuAdvPainting', 'cmf_advanced.cmf_adv_painting', 'Map painting', [
         ('pick', 'Painting_WhiteOrchard', 'White Orchard'),
         ('pick', 'Painting_WhiteOrchardWinter', 'White Orchard (winter)'),
@@ -120,18 +136,17 @@ PAGES = [
          ['Use the next mod in order', 'Use Vanilla']),
         ('fixed', 'CMFReset', 'Reset every CMF choice', ['Keep my choices', 'Reset now (reopen Options to see)']),
         ('fixed', 'CMFReport', 'Write the who-wins report to the log', ['Off', 'On'])]),
+    # 1.3.0: the Screen line goes last. Above the heading it made the game list the page's two parts in the
+    # right-hand column (start B, 2026-10-24).
     ('CMFMenuStatusMods', 'cmf_status.cmf_status_mods', 'Loaded map mods',
-     [('head', 'Mods', 'Map mods loaded'), ('mods',)]),
+     [('head', 'Mods', 'Map mods loaded'), ('mods',), ('screen',)]),
     ('CMFMenuWinIcons', 'cmf_status.cmf_win_icons', 'Who wins: pin icons',
      [('win', 'Icons_' + key, label) for key, label in GROUP_NAMES]),
     ('CMFMenuWinColours', 'cmf_status.cmf_win_colours', 'Who wins: pin colours',
      [('win', 'Colours_' + key, label) for key, label in GROUP_NAMES]),
     ('CMFMenuWinSize', 'cmf_status.cmf_win_size', 'Who wins: pin size and labels', [
         ('win', 'Size_Scale', 'Pin size'),
-        ('win', 'Size_Lead', 'Which pin leads a spread'),
-        ('win', 'Size_Spread', 'Spreading'),
-        ('win', 'Labels_Text', 'Level tags and label text'),
-        ('win', 'Labels_Place', 'Label place and hiding')]),
+        ('win', 'Labels_Text', 'Level tags and label text')]),
     ('CMFMenuWinLegend', 'cmf_status.cmf_win_legend', 'Who wins: legend and filters', [
         ('win', 'Legend_Rows', 'Legend rows'),
         ('win', 'Legend_Names', 'Row names'),
@@ -145,9 +160,19 @@ PAGES = [
         ('win', 'Look_PinText', 'Pin text style')]),
     ('CMFMenuWinMovement', 'cmf_status.cmf_win_movement', 'Who wins: map movement', [
         ('win', 'Movement_Area', 'Map area'),
-        ('win', 'Movement_Pan', 'Pan and zoom'),
+        ('win', 'Movement_Pan', 'Pan and zoom feel'),
+        ('win', 'Movement_ZoomOut', 'Zoom out to the whole region'),
+        ('win', 'Movement_Controller', 'Controller crosshair'),
         ('win', 'Movement_Opening', 'Opening and closing'),
-        ('win', 'Movement_View', 'Opening view')]),
+        ('win', 'Movement_View', 'Opening view'),
+        ('win', 'Movement_Wide', 'Fill wide screens')]),
+    ('CMFMenuWinBehaviour', 'cmf_status.cmf_win_behaviour', 'Who wins: map behaviour', [
+        ('win', 'Size_Spread', 'Stacked pins spread out'),
+        ('win', 'Size_Lead', 'Which pin leads a spread'),
+        ('win', 'Labels_Place', 'Label place and hiding'),
+        ('win', 'Behaviour_InfoBoxDodge', 'Info box moves out of the way'),
+        ('win', 'Behaviour_InfoBoxHeight', 'Info box height and scrolling'),
+        ('win', 'Behaviour_HoverNames', 'Names only on hover')]),
     ('CMFMenuWinPainting', 'cmf_status.cmf_win_painting', 'Who wins: map painting', [
         ('win', 'Painting_WhiteOrchard', 'White Orchard'),
         ('win', 'Painting_WhiteOrchardWinter', 'White Orchard (winter)'),
@@ -166,6 +191,9 @@ PAGES = [
 ]
 # Page titles for the nodes above the pages.
 NODE_TITLES = {'cmf_advanced': 'Advanced choices', 'cmf_status': 'Status'}
+# Page titles added after the first release, in the order they were added. Their string IDs follow every earlier
+# string (the script strings included), so no ID ever moves or is reused: 1.3.0 Map behaviour and its Who wins page.
+LATER_TITLES = ['cmf_adv_behaviour', 'cmf_win_behaviour']
 # The remembered list of map mods (title screen), one folder name per value; a one-segment group with no
 # visible rows, so the game adds no Options entry for it.
 KNOWN_GROUP = 'CMFMenuKnown'
@@ -224,6 +252,8 @@ def page_vars(rows):
                 lines += options_var('CMFStatusMod%d' % n, 'Map mod %d' % n, ['-', '-'])
         elif kind == 'win':
             lines += options_var('CMFWin_' + row[1], row[2], ['-', '-'])
+        elif kind == 'screen':
+            lines += options_var('CMFStatusScreen', 'Screen', ['-', '-'])
         else:
             raise ValueError(kind)
     return lines + hidden
@@ -254,14 +284,19 @@ def menu_xml(probe=False):
 def catalog(probe=False):
     keys = []
     seen = set()
+    later = {}
     for _group, path, title, _rows in PAGES:
         segments = path.split('.')
         for segment in segments[:-1]:
             if segment not in seen:
                 seen.add(segment)
                 keys.append(('panel_' + segment, NODE_TITLES[segment]))
-        keys.append(('panel_' + segments[-1], title))
+        if segments[-1] in LATER_TITLES:
+            later[segments[-1]] = title
+        else:
+            keys.append(('panel_' + segments[-1], title))
     keys += SCRIPT_STRINGS
+    keys += [('panel_' + segment, later[segment]) for segment in LATER_TITLES]
     if probe:
         keys.append(('panel_' + HEAD_TEST_PATH, HEAD_TEST_TITLE))
     return {
@@ -323,7 +358,8 @@ def build(out, w3strings, probe=False):
     files = {}
     for path in sorted(p for p in out.rglob('*') if p.is_file()):
         files[path.relative_to(out).as_posix()] = sha(path.read_bytes())
-    (out/'build.json').write_text(json.dumps({'mod': MOD, 'probe': probe, 'files': files}, indent=2) + '\n',
+    (out/'build.json').write_text(json.dumps({'mod': MOD, 'version': VERSION, 'probe': probe, 'files': files},
+                                             indent=2) + '\n',
                                   encoding='utf-8')
     return files
 

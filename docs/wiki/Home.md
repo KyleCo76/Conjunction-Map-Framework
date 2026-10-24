@@ -4,7 +4,7 @@
 
 Conjunction Map Framework (CMF) is one world map for The Witcher 3 (Remastered, patch 5.01) that map mods can share. Only one copy of the map file loads in the game, so before CMF two map mods that each shipped their own copy could not both work. With CMF, your mod no longer ships a map file: it tells CMF what it wants changed on the map, and CMF decides between mods and draws the result. Several map mods then work at once, with no Script Merger and no edited map files.
 
-These pages are for anyone who has made a Witcher 3 mod before and wants to build on CMF: an icon pack, a mod that adds its own pins, a new look for the whole map, or an existing map mod moving onto CMF. Everything here is CMF 1.3.0, which is API version 9 (`CMFGetVersion()` returns `9`; that number is the version of CMF's script interface, not a release number).
+These pages are for anyone who has made a Witcher 3 mod before and wants to build on CMF: an icon pack, a mod that adds its own pins, a new look for the whole map, or an existing map mod moving onto CMF. Everything here is CMF 1.4.1, which is API version 10 (`CMFGetVersion()` returns `10`; that number is the version of CMF's script interface, not a release number).
 
 New here? Start with [What do you want to change?](Abilities.md), then [Getting started](Getting-Started.md).
 
@@ -55,6 +55,7 @@ CMF, its adapters and its example icon pack are published under the Creative Com
 - [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md)
 - [The pin hook: `OnPinReady`](Pin-Hook-OnPinReady.md)
 - [Pin clicks](Pin-Clicks.md)
+- [Names only on hover](Names-Only-on-Hover.md)
 - [Spreading stacked pins](Spreading-Stacked-Pins.md)
 
 **The map's look and behaviour**
@@ -67,6 +68,7 @@ CMF, its adapters and its example icon pack are published under the Creative Com
 - [World overview pictures](World-Overview-Pictures.md)
 - [Controller button pictures](Controller-Button-Pictures.md)
 - [The map's view](Map-View.md)
+- [Wide and tall screens](Wide-Screens.md)
 
 **Moving a map mod onto CMF**
 

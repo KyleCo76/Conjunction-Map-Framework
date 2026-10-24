@@ -45,12 +45,12 @@ def replaced(cls):
 class ApiTests(unittest.TestCase):
     def test_version6_calls(self):
         core = CORE.read_text(encoding='ascii')
-        for line in ('function CMFGetVersion() : int { return 9; }',
+        for line in ('function CMFGetVersion() : int { return 10; }',
                      'function CMFPropertyPinClick() : int { return 16; }',
                      'function CMFPropertyPinClickHint() : int { return 20; }',
                      'function CMFPropertyPinClickButton() : int { return 21; }'):
             self.assertIn(line, core)
-        self.assertIn('CMFIsClickProperty(propertyId);', body(core, 'function CMFHasProperty('))
+        self.assertIn('CMFIsClickProperty(propertyId)', body(core, 'function CMFHasProperty('))
         self.assertIn('!CMFIsClickProperty(propertyId)', body(core, 'function CMFRegisterForTag('))
         click = body(core, 'function CMFIsClickProperty(')
         for name in ('CMFPropertyPinClick()', 'CMFPropertyPinClickHint()', 'CMFPropertyPinClickButton()'):

@@ -6,7 +6,7 @@
 
 [![Latest release](https://img.shields.io/github/v/release/KyleCo76/Conjunction-Map-Framework?label=release)](https://github.com/KyleCo76/Conjunction-Map-Framework/releases/latest)
 ![The Witcher 3 Remastered 5.01](https://img.shields.io/badge/The%20Witcher%203-Remastered%205.01-8b0000)
-![CMF API version 9](https://img.shields.io/badge/CMF%20API-version%209-2f6f4f)
+![CMF API version 10](https://img.shields.io/badge/CMF%20API-version%2010-2f6f4f)
 ![Windows, and Linux with CMF 1.0.0](https://img.shields.io/badge/tested%20on-Windows%20%7C%20Linux%20%28Proton%2C%20CMF%201.0.0%29-555)
 [![Licence CC BY-NC 4.0](https://img.shields.io/badge/licence-CC%20BY--NC%204.0-lightgrey)](LICENSE)
 
@@ -43,7 +43,7 @@ flowchart LR
 
 Other map compatibility tools solve the same problem in their own ways, and many players have used them happily. CMF takes a different route.
 
-- **Build your own setup, feature by feature.** With the optional [in-game menu add-on](#good-to-know) you choose in Options which of your map mods wins each feature: pin icons from one mod, pin colours from another, the map's look from a third. Change your mind at any time, with nothing to reinstall.
+- **Build your own setup, feature by feature.** With the optional [in-game menu add-on](#good-to-know) you choose in Options which of your map mods wins each feature: pin icons from one mod, pin colours from another, the map's look from a third. From 1.4.1 a mod's map behaviour (how stacked pins spread out, how the info box moves) is chosen apart from its look, so one mod's icons can go with another mod's spreading. Change your mind at any time, with nothing to reinstall.
 - **Updates need no rebuild.** CMF builds nothing ahead of time. Each map mod tells CMF what it wants shown when your game loads, so when one of your map mods updates, you install the update and play. There is no combined map to rebuild. At most, a mod that uses a CMF adapter may get an updated adapter, and once its author supports CMF directly, the adapter goes away.
 - **Mods stay as their authors ship them.** CMF changes no other mod's files, and its adapters contain none of the mod they adapt.
 
@@ -82,8 +82,8 @@ CMF comes as separate archives. You always need CMF itself; take the rest only f
 
 | Archive | What it is | When to install it |
 | --- | --- | --- |
-| `mod0000_ConjunctionMapFramework` | CMF itself (1.3.0) | **Always** |
-| `modCMFInGameMenu` | In-game menu add-on (1.2.0): choose in Options which map mod wins each feature | Optional. See [Good to know](#good-to-know) |
+| `mod0000_ConjunctionMapFramework` | CMF itself (1.4.1) | **Always** |
+| `modCMFInGameMenu` | In-game menu add-on (1.3.0): choose in Options which map mod wins each feature | Optional. See [Good to know](#good-to-know) |
 | `modCMFMinimapPanel` | Minimap add-on (2.1.0): your icon packs' icons and colours on the HUD minimap too, on top of whichever minimap you have | Optional. See [Good to know](#good-to-know) for the minimap and HUD mods it was tested with |
 | `modCMFExampleIconPack` | Sample icon pack: a small example for pack authors | Optional |
 | `modCMFAdapter…` (12 archives) | Adapters for 12 map mods that don't support CMF yet | Only for those mods you use, and only until the mod's author updates it for CMF. See [Supported map mods](#supported-map-mods) |
@@ -114,7 +114,7 @@ One exception: the **Coloured Map Markers** adapter also shows its icons without
 | Gwent Players Map | 1.0.9 | **1.0.1** | Its card markers, in its author's own card art, and its "Gwent" tab |
 | Ink and Iron - All in One | 0.8.10 (0.8.7 to 0.8.9 work too; 0.9.0 has the same scripts, not yet launched) | **1.2.0** | Ink and Iron's map look, quest level tags, key-hint row, map movement, its tall info box and its gold controller buttons (not yet tried with a real controller). With 1.2.0, also the engraved world overview and seven crests of its optional World Map file, in its author's own art, when you pick them in the menu |
 | Map Pin Teleport | 1.2.2 | 1.0.0 | Teleporting from your own map pins |
-| Map Quest Insight | 1.6.1 | **1.0.1** | Quest icons by type (main quest, contract and Gwent quest icons in its author's own art), coloured level labels, its info box, spreading stacked markers |
+| Map Quest Insight | 1.6.2 (1.6.1 works too) | **1.1.0** | Quest icons by type (main quest, contract and Gwent quest icons in its author's own art), coloured level labels, its info box, spreading stacked markers, and with 1.6.2 its Ultrawide map and Side panels position settings |
 | The Stable - Roach-Horse Customization | 2.2.1 | 1.0.0 | Its Stables row on the map |
 | Witcher Upgrade Gear Map | 1.0.1 | **1.0.1** | Its diagram markers, in its author's own art and school colours, its "Witcher Gear" tab and legend row |
 | Witcher's Path | 1.0.3 | 1.0.0 | Its travel route drawn on the map, and its buttons |
@@ -124,7 +124,11 @@ One exception: the **Coloured Map Markers** adapter also shows its icons without
 
 <br/>
 
-**Tested, no adapter needed:** Map Remastered 2.4.2, All Quest Markers, Wild Monster Hunt, Wolf's Bearing, Apocrypha Menu Framework 1.0.6, HUD Position Manager 1.0.0, Reveal Map POI, Reveal Map Icons - Remastered (to see their icons, set the map's legend filter to All or Exploration).
+**Tested, no adapter needed:** Map Remastered 2.4.2, All Quest Markers, Wild Monster Hunt, Wolf's Bearing (1.0; 1.1 checked in its files, also beside the minimap add-on), Apocrypha Menu Framework 1.0.6, HUD Position Manager 1.0.0, Reveal Map POI, Reveal Map Icons - Remastered (to see their icons, set the map's legend filter to All or Exploration).
+
+**Checked in their files, no adapter needed, not yet seen in game:** Show Chests on Map (Remastered) 1.7, Show Quests on Map (Remastered) 1.4, Gwent Card Finder, Malaombra's Map 1.3.0, and Configurable Minimap Zoom 1.1.2 (also beside the minimap add-on).
+
+**Ultrawide Menus** 1.0.2 was tried beside CMF with its patcher run, and CMF's map loaded as usual. From 1.4.1 CMF's map fills wide screens by itself, so Ultrawide Menus is not needed for the map.
 
 **Not supported yet (needs its author's update):** some map mods keep their map features, and often their icon art, inside their own copy of the world map file. CMF never copies another mod's art or files unless its author permits it, so those features stay hidden under CMF until the author updates the mod for CMF or gives permission for an adapter to use them. The mod's scripts and menus keep working meanwhile. Smooth Map and Community Patch - World Map are in this group: everything they change lives in their own map file, so 1.0.0 has no adapter for them.
 
@@ -140,6 +144,10 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 - **Placeholder art** in the All Quest Objectives and Botanist adapters, until those authors supply theirs. The Gwent Players Map and Witcher Gear Map adapters (1.0.1), the Map Quest Insight adapter (1.0.1) and the Ink and Iron adapter (1.2.0) use their authors' own art. CMF ships another mod's art only when its author permits it, and credits them.
 - **Ink and Iron's World Map file art** (the engraved world overview and crests) shows only when you pick Ink and Iron on the menu's World overview and Region crests and markers rows, or in the settings file: the game cannot tell whether that optional file is installed. Without it, change nothing.
 - **Fog of War's clouds** do not draw on CMF's map until Fog of War supports CMF; the hiding works.
+- **Show Chests on Map's** optional white chest icon is written into the game's own files, so on CMF's map chests show the game's own chest icon (from its files, not seen in game).
+- **Gwent Card Finder beside the Map Pin Teleport adapter:** Card Finder's pins show Map Pin Teleport's "Go Now" button, which most likely does nothing on them (from their files, not seen in game).
+- **Malaombra's Map:** with its "names only on hover" option on, it also hides the quest level labels that CMF adapters draw (from its files, not seen in game).
+- **Ultrawide Menus:** run its patcher, as its page says. Without it, its own map file loads ahead of CMF's.
 - **Map Remastered's** own region emblems on the world overview do not show; its redrawn terrain does.
 - **Witcher's Path:** its speed setting does nothing under CMF.
 - **World Map Merger** is not compatible with CMF, by design: it merges map mods into a map file of its own, which loads in place of CMF's map. Use one or the other.
@@ -150,15 +158,18 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 
 ### Good to know
 
-- **The in-game menu add-on (1.2.0) is optional.** With `modCMFInGameMenu` installed, Options > Mods > Conjunction Map Framework lets you choose which of your map mods wins each feature.
-  - **Mod order** ranks your map mods once; **Basic choices** has one row per feature (pin icons, pin colours, legend, map look, map movement and more); **Advanced choices** splits a feature further, such as quest icons from one mod and shop icons from another; **Status** shows which mod wins each piece now, and why.
+- **The in-game menu add-on (1.3.0) is optional.** With `modCMFInGameMenu` installed, Options > Mods > Conjunction Map Framework lets you choose which of your map mods wins each feature.
+  - **Mod order** ranks your map mods once; **Basic choices** has one row per feature (pin icons, pin colours, legend, map look, map behaviour, map movement and more); **Advanced choices** splits a feature further, such as quest icons from one mod and shop icons from another; **Status** shows which mod wins each piece now, and why.
   - Every row starts on **Automatic**, which keeps CMF's usual winner and names it in brackets. **Vanilla** uses the game's own look; or pick one of your loaded map mods.
   - Highlight a row and the help box at the bottom of the screen names every loaded map mod that offers it, for example "Offered by: Botanist, Map Quest Insight". Some offers are known only after the world map has been opened once in a session, and the box says so until then.
   - At the title screen, before a save is loaded, the choice rows and Mod order rows show your choices greyed and cannot be changed. Load a save to change them. Reset on the General page still works there.
-  - With CMF 1.3.0, Advanced choices also has World overview, Region crests and markers and Opening view rows, with their Who wins rows. With an older CMF they are left out.
+  - With CMF 1.3.0 or later, Advanced choices also has World overview, Region crests and markers and Opening view rows, with their Who wins rows.
+  - From 1.3.0 the Basic row **Map behaviour**, with its own Advanced and Who wins pages, covers how stacked pins spread out, which pin leads a spread, label place and hiding, how the info box moves out of the way, its height and scrolling, and names only on hover. CMF adds no behaviour of its own: each one comes from a map mod. "Pin size and spreading" is now "Pin size", and "Pan and zoom" is now "Pan and zoom feel", with Zoom out to the whole region, Controller crosshair and Fill wide screens as their own rows. Picks made in 1.2.0 on the three rows that moved under Map behaviour count as Automatic again.
+  - Menu add-on 1.3.0 and later need CMF 1.4.1 or later; with an older CMF the game stops at the script compile screen, so update CMF first.
   - The more specific choice wins: Advanced beats Basic, and Basic beats Mod order. No restart is needed: the minimap add-on follows as soon as Options closes, and the world map the next time you open it.
   - Hidden pins add up: every mod's hides apply, unless you keep only one mod's, none (Vanilla), or leave out up to three mods.
   - Without the add-on every choice is Automatic, and choices it left behind are ignored. The same choices can also go into `dx12user.settings` by hand, with the game closed: `CMFFile_…` lines under a `[CMFSettings]` heading (add the heading if it is missing), listed in CMF's `README.txt`.
+- **Wide and tall screens.** From 1.4.1 the map fills 21:9, 32:9 and 16:10 screens instead of showing a 16:9 picture with dark sides, and its panels and button hints move to the screen's edges. On a 16:9 screen nothing changes. A map mod can switch this off or set it its own way; the menu's **Fill wide screens** row (Advanced, map movement) picks whose way wins, and Vanilla keeps the 16:9 map. Tested at 21:9 (3440 x 1440) and 16:10 (1920 x 1200); 32:9 has not been tried yet.
 - **When two mods want the same spot**, a "hide" beats any icon or colour; otherwise, with nothing chosen, the mod whose folder name sorts first wins. Your mod manager's load order does not change this. To pick a winner without the menu add-on, list folder names in `Documents\The Witcher 3\dx12user.settings` (details in the [author guide, section 11](docs/authors/icon-pack-guide.md#11-for-players-installing-cmf-icon-packs-and-other-map-mods)):
   ```ini
   [CMFSettings]
@@ -174,7 +185,7 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 - **The map moves at 60 frames per second** by default.
 
 > [!IMPORTANT]
-> **Not tested:** controllers and the Steam Deck. CMF 1.3.0's controller button pictures were seen through a test copy of the map, not yet with a real controller. CMF 1.0.0 and 1.1.0 were tested on Windows with keyboard and mouse, both with the files copied in by hand and installed with RMMR in a full, everyday game setup. CMF 1.2.0 and the in-game menu add-on were tested on Windows with keyboard and mouse with Ink and Iron, Map Quest Insight, Coloured Map Markers, Gwent Players Map and Witcher Gear Map and their adapters, not yet in a full everyday setup. CMF 1.3.0, the menu add-on 1.2.0 and the Annoying Map and Ink and Iron adapters were tested on Windows with keyboard and mouse beside 27 mod folders, in three starts: test packs with placeholder art, Annoying Map with its adapter, and Ink and Iron's art. On Linux (Steam with Proton, keyboard and mouse) MateusAnd, the Gwent Players Map author, tested CMF 1.0.0 with the Gwent Players Map, Witcher Gear Map and Map Pin Teleport adapters: scripts compiled, the game started, and every adapter feature worked.
+> **Not tested:** controllers and the Steam Deck. CMF 1.4.1 was tested on Windows with keyboard and mouse at 16:9, 16:10 and 21:9, with Map Quest Insight 1.6.2 and its adapter. CMF 1.3.0's controller button pictures were seen through a test copy of the map, not yet with a real controller. CMF 1.0.0 and 1.1.0 were tested on Windows with keyboard and mouse, both with the files copied in by hand and installed with RMMR in a full, everyday game setup. CMF 1.2.0 and the in-game menu add-on were tested on Windows with keyboard and mouse with Ink and Iron, Map Quest Insight, Coloured Map Markers, Gwent Players Map and Witcher Gear Map and their adapters, not yet in a full everyday setup. CMF 1.3.0, the menu add-on 1.2.0 and the Annoying Map and Ink and Iron adapters were tested on Windows with keyboard and mouse beside 27 mod folders, in three starts: test packs with placeholder art, Annoying Map with its adapter, and Ink and Iron's art. On Linux (Steam with Proton, keyboard and mouse) MateusAnd, the Gwent Players Map author, tested CMF 1.0.0 with the Gwent Players Map, Witcher Gear Map and Map Pin Teleport adapters: scripts compiled, the game started, and every adapter feature worked.
 
 ---
 
@@ -186,7 +197,7 @@ Three rules shape everything CMF offers:
 
 1. **Abilities, not special cases.** Every ability is one general call that takes its target as an argument. CMF has no calls made for one particular mod, and names (pin types, tags, tab ids, folder names) are open, so your mod can style a pin another mod added.
 2. **Clear winners.** When two mods ask for the same thing, a hide wins; otherwise the folder name that sorts first wins, unless the player picks a winner, for a whole mod or one feature at a time. CMF settles this when the game loads, and again when the player changes a choice.
-3. **The version number is a promise.** `CMFGetVersion()` returns CMF's script interface version (**9** in 1.3.0), not a release number. Nothing is removed from 1.0.0 on; later versions only add.
+3. **The version number is a promise.** `CMFGetVersion()` returns CMF's script interface version (**10** in 1.4.1), not a release number. Nothing is removed from 1.0.0 on; later versions only add.
 
 ### What CMF can do for your mod
 
@@ -213,6 +224,9 @@ Three rules shape everything CMF offers:
 | Where the player left the map (`CMFCore.OnMapView`), and the view a region map opens with (`OnMapOpening`, `CMFSetOpeningView`) | 9 | [The map's view](docs/wiki/Map-View.md) |
 | Pictures that show only when the player picks your mod (`CMFRegisterChoiceOnly`) | 9 | [Choice-only claims](docs/wiki/Choice-Only-Claims.md) |
 | Hiding Geralt's marker (a hide on `'Player'`) | 9 | [Hiding pins](docs/wiki/Hiding-Pins.md) |
+| Filling wide and tall screens your own way (the theme part `wide`), and the screen size (`CMFScreenWidth`, `CMFScreenHeight`) | 10 | [Wide and tall screens](docs/wiki/Wide-Screens.md) |
+| Names only on hover (property 28) | 10 | [Names only on hover](docs/wiki/Names-Only-on-Hover.md) |
+| Showing the map's panels as soon as it starts fading in (`readyAtFadeStart`) | 10 | [Map movement](docs/wiki/Map-Movement.md) |
 
 A minimal pack, the whole script:
 
@@ -265,6 +279,7 @@ The adapters are teaching examples, written as the code that mod's own author wo
 | Your mod | Porting page | Adapter source |
 | --- | --- | --- |
 | All Quest Objectives On Map - Remastered | [page](docs/authors/all-quest-objectives-adapter.md) | [source](source/adapters/all-quest-objectives/) |
+| Annoying Map | [page](docs/authors/annoying-map-adapter.md) | [source](source/adapters/annoying-map/) |
 | Botanist - NG - Remastered | [page](docs/authors/botanist-adapter.md) | [source](source/adapters/botanist/) |
 | Fog of War | [page](docs/authors/fog-of-war-adapter.md) | [source](source/adapters/fog-of-war/) |
 | Gwent Players Map | [page](docs/authors/gwent-players-map-adapter.md) | [source](source/adapters/gwent-players-map/) |
@@ -274,8 +289,6 @@ The adapters are teaching examples, written as the code that mod's own author wo
 | The Stable | [page](docs/authors/the-stable-adapter.md) | [source](source/adapters/the-stable/) |
 | Witcher Upgrade Gear Map | [page](docs/authors/witcher-gear-map-adapter.md) | [source](source/adapters/witcher-gear-map/) |
 | Witcher's Path | [page](docs/authors/witchers-path-adapter.md) | [source](source/adapters/witchers-path/) |
-
-The Annoying Map adapter has no porting page yet; its [source](source/adapters/annoying-map/) shows the two hooks and the one call it uses.
 
 The Coloured Map Markers adapter has no porting page: that mod has no scripts, so the adapter is only its icons registered with CMF ([source](source/adapters/coloured-map-markers/)).
 
@@ -341,7 +354,7 @@ Each version has a [GitHub Release](https://github.com/KyleCo76/Conjunction-Map-
 To check a download in PowerShell, in the folder with the archive:
 
 ```powershell
-Get-FileHash .\mod0000_ConjunctionMapFramework-1.3.0.zip -Algorithm SHA256
+Get-FileHash .\mod0000_ConjunctionMapFramework-1.4.1.zip -Algorithm SHA256
 ```
 
 The result must equal that file's line in `SHA256SUMS`.

@@ -18,6 +18,7 @@ Find what your mod wants to do on the map, then follow the page. Every call take
 | Make the pin information box taller | property `14` | [Pin size, labels and the info box](page:Pin-Size-Labels-and-Info-Box) |
 | Decide per pin, from your own values | wrap `CMFCore.OnPinReady`, then any "one pin" call | [The pin hook](page:Pin-Hook-OnPinReady) |
 | Do something when the player uses a pin (E, double-click, a button beside it) | properties `16`, `20`, `21`, wrap `CMFCore.OnPinClicked` | [Pin clicks](page:Pin-Clicks) |
+| Show pin names only on the hovered pin | property `28`, `CMFPropertyHoverName` (API version 10) | [Names only on hover](page:Names-Only-on-Hover) |
 | Fan out pins stacked on one spot | the `spread` part, property `22` | [Spreading stacked pins](page:Spreading-Stacked-Pins) |
 | Change a pin another mod added | the same calls, by its type name, or by its tag when that mod gives its pin a tag id | [Porting a map mod](page:Porting-a-Map-Mod) |
 
@@ -40,7 +41,8 @@ Find what your mod wants to do on the map, then follow the page. Every call take
 | Draw frames, plates, bands or shapes tied to any part of the screen | `CMFDraw`, `CMFDrawSet` | [The map theme](page:Map-Theme) |
 | Show your own key hints inside the map | `"cmf.map.hints"`, the event `OnCMFMapHintsReady` | [Key hints and filter tab reports](page:Key-Hints-and-Filter-Tab-Reports) |
 | Replace the map image of an area | `CMFRegisterBackground` | [Writing your script](page:Writing-Your-Script) |
-| Change how the map pans, zooms, opens and closes | the `navigation` and `opening` parts | [Smooth map movement](page:Map-Movement) |
+| Change how the map pans, zooms, opens and closes | the `navigation` and `opening` parts (from API version 10 also `readyAtFadeStart`, `revealEase`) | [Smooth map movement](page:Map-Movement) |
+| Choose how the map fills wide and tall screens | the `wide` part, the drawing key `wideAnchor`, `CMFScreenWidth`, `CMFScreenHeight` (API version 10) | [Wide and tall screens](page:Wide-Screens) |
 | Know where the player left the region map | wrap `CMFCore.OnMapView` (API version 9) | [The map's view](page:Map-View) |
 | Choose the place and zoom a region map opens with | wrap `CMFCore.OnMapOpening`, `CMFSetOpeningView`, `CMFSetOpeningWorld` (API version 9) | [The map's view](page:Map-View) |
 | Give the world overview your own painting, crests or markers | `CMFRegisterWorldPainting`, `CMFRegisterWorldPaintingTiles`, `CMFRegisterWorldCrest`, `CMFRegisterWorldMarker` (API version 9) | [World overview pictures](page:World-Overview-Pictures) |

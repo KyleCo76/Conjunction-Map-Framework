@@ -60,4 +60,4 @@ function OnMapOpening(menu : CR4MapMenu, area : name, mapContext : name)
 
 ---
 
-[Previous: Controller button pictures](Controller-Button-Pictures.md) · [Contents](Home.md) · [Next: Porting a map mod](Porting-a-Map-Mod.md)
+[Previous: Controller button pictures](Controller-Button-Pictures.md) · [Contents](Home.md) · [Next: Wide and tall screens](Wide-Screens.md)

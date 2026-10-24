@@ -13,7 +13,9 @@
 // porting (smooth map movement research 2026-10-20, section 5.2, Smooth Map's column). It sends only the keys
 // Smooth Map's map file decides, including the ones equal to the game's value (stepMs 17, worldStepMs 24,
 // padHoldMs 0), so an earlier folder that set them otherwise does not win them by default; it sends none of the
-// keys Smooth Map leaves as the game's (the menu's slide and close, the frame rate, the zoom limit).
+// keys Smooth Map leaves as the game's (the menu's slide and close, the frame rate, the zoom limit). With CMF API
+// version 10 it also sends readyAtFadeStart 1: Smooth Map's map takes input and shows its panels as soon as its
+// fade-in starts (handleShowTimer), which CMF 1.3.0 had no key for.
 //
 // Every key names Smooth Map's own folder, modSmoothMap, as its provider, so folder order between mods is the
 // same with CMF as without it: on a key that an earlier folder also sets (modInkAndIronUI, modMapQuestInsight)
@@ -33,8 +35,9 @@ function OnGameStarted(restored : bool)
 
 function SmoothMapAdapterSend()
 {
-	var accepted : int;
+	var accepted, keys : int;
 	accepted = 0;
+	keys = 15;
 	// How the map moves: by elapsed time on every drawn frame, zoom included; tweens every drawn frame.
 	accepted += SmoothMapAdapterKey('navigation', 'frameTimed', 1);
 	accepted += SmoothMapAdapterKey('navigation', 'stepMs', 17);
@@ -52,7 +55,13 @@ function SmoothMapAdapterSend()
 	accepted += SmoothMapAdapterKey('opening', 'fadeSeconds', 0.2);
 	accepted += SmoothMapAdapterKey('opening', 'tileFadeSeconds', 0.2);
 	accepted += SmoothMapAdapterKey('opening', 'revealSeconds', 0.2);
-	LogChannel('CMF', "CMF adapter provider=modSmoothMap keys=15 accepted=" + accepted);
+	// Version 10: ready for input, panels shown, when the fade-in starts.
+	if (CMFHasAbility('opening', 'readyAtFadeStart'))
+	{
+		keys += 1;
+		accepted += SmoothMapAdapterKey('opening', 'readyAtFadeStart', 1);
+	}
+	LogChannel('CMF', "CMF adapter provider=modSmoothMap keys=" + keys + " accepted=" + accepted);
 }
 
 // One key under Smooth Map's folder name; 1 when CMF took it (CMF logs every refusal with its reason).

@@ -61,7 +61,9 @@ API = {'CMFRegisterIcon', 'CMFRegisterLegendIcon', 'CMFRegisterTint', 'CMFRegist
        'CMFPropertyWorldPainting', 'CMFPropertyWorldCrest', 'CMFPropertyButtonPicture', 'CMFPropertyWorldMarker',
        'CMFRegisterWorldPainting', 'CMFRegisterWorldPaintingTiles', 'CMFRegisterWorldCrest', 'CMFRegisterWorldMarker',
        'CMFRegisterButtonPicture', 'CMFRegisterChoiceOnly', 'CMFSetOpeningView',
-       'CMFSetOpeningWorld'}
+       'CMFSetOpeningWorld',
+       # Version 10: names only on hover and the screen's shape.
+       'CMFPropertyHoverName', 'CMFScreenWidth', 'CMFScreenHeight'}
 # Categories the vanilla legend defines; a pack's own category id may not reuse one (CMF compares ignoring case).
 VANILLA_CATEGORIES = ('All', 'Default', 'General', 'Quests', 'Exploration', 'NPCs', 'Buffs')
 # Calls that need CMF 2; a pack using them should check CMFRequireVersion(pack, 2) or CMFHasProperty(8).
@@ -91,6 +93,10 @@ VERSION9 = {'CMFPropertyWorldPainting', 'CMFPropertyWorldCrest', 'CMFPropertyBut
             'CMFRegisterWorldPainting', 'CMFRegisterWorldPaintingTiles', 'CMFRegisterWorldCrest',
             'CMFRegisterWorldMarker', 'CMFRegisterButtonPicture', 'CMFRegisterChoiceOnly', 'CMFSetOpeningView',
             'CMFSetOpeningWorld'}
+# Calls that need CMF 10 (1.4.0: names only on hover, the screen's shape); a pack using them should check
+# CMFRequireVersion(pack, 10), and compiles only with CMF 10 or later (the generic CMFRegister id 28 behind
+# CMFHasProperty(28) still compiles on CMF 1).
+VERSION10 = {'CMFPropertyHoverName', 'CMFScreenWidth', 'CMFScreenHeight'}
 # The world overview's crest names (UniverseMapContainer.configUI); a region another mod adds goes by its area name.
 WORLD_REGIONS = ('kaer_morhen', 'skellige', 'novigrad', 'no_mans_land', 'prolog_village', 'wyzima_castle', 'bob')
 WORLD_MARKERS = ('player', 'quest')
@@ -135,10 +141,40 @@ THEME_PART_KEYS = {
     'pinButton': ('width', 'height', 'curve', 'fill', 'alpha', 'stroke', 'strokeWidth', 'offsetX', 'offsetY') + THEME_TEXT,
     'mapSpace': (),
     'opening': ('slideSeconds', 'slideOffset', 'closeSeconds', 'pinsDuringSlide', 'pinStepMs', 'pinBatch',
-                'pinBudgetMs', 'showDelayMs', 'fadeSeconds', 'tileFadeSeconds', 'revealSeconds'),
+                'pinBudgetMs', 'showDelayMs', 'fadeSeconds', 'tileFadeSeconds', 'revealSeconds', 'readyAtFadeStart',
+                'revealEase'),
     'spread': ('on', 'anyPin', 'enterRadius', 'stackDistance', 'gap', 'maxPins', 'openMs', 'closeMs', 'lockRadius',
                'keepRadius'),
+    'wide': ('fill', 'panels', 'maxRatio', 'world'),
 }
+# Version 10: the menu row that decides each theme key (cmfCore.ws PartKeyChoice): behaviour keys on a look part and
+# the map's backdrop colour answer their own row; every other key answers its part's row.
+THEME_PART_ROWS = {'screen': 'Map look > Frames and panels', 'mapEdge': 'Map look > Frames and panels', 'title': 'Map look > Frames and panels',
+                   'tracker': 'Map look > Frames and panels', 'preview': 'Map look > Frames and panels', 'worldButton': 'Map look > Frames and panels',
+                   'worldHint': 'Map look > Frames and panels', 'markerPanel': 'Map look > Frames and panels',
+                   'legend': 'Map look > Legend', 'legendRow': 'Map look > Legend', 'legendTab': 'Map look > Legend',
+                   'tooltip': 'Map look > Info box', 'hints': 'Map look > Key hints', 'keyCap': 'Map look > Key hints',
+                   'pinLabel': 'Map look > Pin text style', 'pinName': 'Map look > Pin text style',
+                   'pinButton': 'Map look > Pin text style', 'map': 'Map movement > Map area',
+                   'navigation': 'Map movement > Pan and zoom feel', 'opening': 'Map movement > Opening and closing',
+                   'spread': 'Map behaviour > Stacked pins spread out', 'wide': 'Map movement > Fill wide screens'}
+THEME_KEY_ROWS = {
+    ('tooltip', k): 'Map behaviour > Info box moves out of the way'
+    for k in ('clearMinHeight', 'clearSide', 'clearCursor', 'clearLeft', 'clearTop', 'clearRight', 'clearBottom',
+              'clearView')}
+THEME_KEY_ROWS.update({('pinLabel', k): 'Map behaviour > Label place and hiding'
+                       for k in ('rise', 'riseOffset', 'riseTracked', 'riseOffsetTracked')})
+THEME_KEY_ROWS.update({('navigation', k): 'Map movement > Zoom out to the whole region'
+                       for k in ('zoomOutFit', 'edgeOvershoot')})
+THEME_KEY_ROWS.update({('navigation', k): 'Map movement > Controller crosshair'
+                       for k in ('crosshairRoam', 'safeLeft', 'safeTop', 'safeRight', 'safeBottom', 'snapSeconds',
+                                 'centerSeconds', 'padHoldMs')})
+THEME_KEY_ROWS[('map', 'backdrop')] = 'Map look > Frames and panels'
+
+
+def theme_key_row(part, key):
+    """The menu row that decides one theme key (version 10), or '' for a part with no row."""
+    return THEME_KEY_ROWS.get((part, key), THEME_PART_ROWS.get(part, ''))
 THEME_LAYERS = ('under', 'over', 'belowMap', 'aboveMap', 'top')
 THEME_SHAPE_COMMON = ('left', 'top', 'right', 'bottom', 'width', 'height', 'widthShare', 'heightShare', 'minWidth',
                       'minHeight', 'alignX', 'alignY', 'offsetX', 'offsetY', 'minLeft', 'maxRight', 'minTop',
@@ -148,7 +184,7 @@ THEME_SHAPE_COMMON = ('left', 'top', 'right', 'bottom', 'width', 'height', 'widt
 # Version 6 (map-space drawing): drawing tabs, clicks and the hover look on the box kinds; the map-space kinds
 # line and movie (mapSpace only) and text (mapSpace, placed at x, y metres, or any part or drawing).
 THEME_HOVER = ('fillHover', 'alphaHover', 'strokeHover', 'strokeAlphaHover', 'strokeWidthHover', 'colorHover')
-THEME_BOX = THEME_SHAPE_COMMON + ('tab', 'tabLabel', 'click', 'above') + THEME_HOVER + ('minPartHeight',)
+THEME_BOX = THEME_SHAPE_COMMON + ('tab', 'tabLabel', 'click', 'above') + THEME_HOVER + ('minPartHeight', 'wideAnchor')
 THEME_SPACE = ('layer', 'order', 'alpha', 'view', 'area', 'preview', 'fadeMs', 'tab', 'tabLabel', 'listen',
                'listenFields')
 THEME_KIND_KEYS = {'rect': THEME_BOX, 'ring': THEME_BOX + ('inset',), 'ellipse': THEME_BOX,
@@ -421,9 +457,10 @@ PROPERTY_IDS = {'CMFPropertyIcon': 1, 'CMFPropertyLegendIcon': 2, 'CMFPropertyTi
                 'CMFPropertyInfoBoxHeight': 14, 'CMFPropertyTabHide': 15, 'CMFPropertyLabelColor': 17,
                 'CMFPropertyPinClick': 16, 'CMFPropertyPinClickHint': 20, 'CMFPropertyPinClickButton': 21,
                 'CMFPropertySpreadRank': 22, 'CMFPropertyCategoryNoDefault': 23, 'CMFPropertyWorldPainting': 24,
-                'CMFPropertyWorldCrest': 25, 'CMFPropertyButtonPicture': 26, 'CMFPropertyWorldMarker': 27}
+                'CMFPropertyWorldCrest': 25, 'CMFPropertyButtonPicture': 26, 'CMFPropertyWorldMarker': 27,
+                'CMFPropertyHoverName': 28}
 # Property ids this CMF accepts (18 and 19 are kept for tooltip slots).
-KNOWN_PROPERTIES = set(range(1, 18)) | {20, 21, 22, 23} | set(range(24, 28))
+KNOWN_PROPERTIES = set(range(1, 18)) | {20, 21, 22, 23} | set(range(24, 28)) | {28}
 # Version 9: the controller families a button picture (26) may name.
 BUTTON_FAMILIES = ('xbox', 'ps4', 'ps5', 'steam', 'switch')
 GENERIC_KINDS = {1: 'icon', 2: 'legend', 3: 'tint'}
@@ -484,6 +521,8 @@ def n4_issues(prop_id, text_value, number):
         return ['empty %s text; CMF rejects the claim' % ('hint' if prop_id == 20 else 'button')]
     if prop_id == 22 and not 0 <= number <= 1000:
         return ['spread rank %d is outside 0 to 1000; CMF rejects the claim' % number]
+    if prop_id == 28 and not 0 <= number <= 3:
+        return ['hover name bits %d are outside 0 to 3; CMF rejects the claim' % number]
     return []
 
 
@@ -620,7 +659,7 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
                 report.error(where, issue)
             for issue in exemption_issues(text_value) if prop_id == 9 else []:
                 report.error(where, issue)
-            for issue in n4_issues(prop_id, text_value, number) if 10 <= prop_id <= 23 else []:
+            for issue in n4_issues(prop_id, text_value, number) if 10 <= prop_id <= 23 or prop_id == 28 else []:
                 report.error(where, issue)
             if 24 <= prop_id <= 27 and name == 'CMFRegisterForTag':
                 report.error(where, 'pictures are type claims: use CMFRegister or the named picture calls')
@@ -716,6 +755,8 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
                 elif key not in THEME_PART_KEYS[target]:
                     report.error(where, "part '%s' takes no key '%s' in CMF 7; CMF rejects the call (ask "
                                         "CMFHasAbility first for a key a later CMF adds)" % (target, key))
+                elif theme_key_row(target, key):
+                    report.note(where, "%s.%s is decided by the menu row %s" % (target, key, theme_key_row(target, key)))
             elif key not in THEME_SHAPE_KEYS and target not in movies:
                 report.error(where, "'%s' is not a drawing key in CMF 7; CMF rejects the call (a movie drawing "
                                     "takes its own keys after CMFDraw)" % key)
@@ -742,7 +783,7 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
             if draw_id in THEME_PART_KEYS or draw_id in THEME_LAYERS or draw_id in THEME_KIND_KEYS or not draw_id:
                 report.error(where, "'%s' cannot be a drawing id: ids are your own names (prefix them with your "
                                     "mod's name)" % draw_id)
-            if anchor in THEME_LAYERS or anchor in THEME_KIND_KEYS or anchor in ('navigation', 'opening', 'spread') or not anchor:
+            if anchor in THEME_LAYERS or anchor in THEME_KIND_KEYS or anchor in ('navigation', 'opening', 'spread', 'wide') or not anchor:
                 report.error(where, "'%s' cannot be an anchor: use a part of the map or a drawing id" % anchor)
             elif anchor == 'mapSpace' and kind and kind not in THEME_SPACE_KINDS:
                 report.error(where, "mapSpace takes only %s drawings; CMF rejects the call"
@@ -801,6 +842,11 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
         report.note(path_label, 'uses %s, so the pack compiles only with CMF 9 (1.3.0) or later; say so in its README '
                                 '(the generic CMFRegister ids 24 to 27 behind CMFHasProperty(24) still compile on CMF 1)'
                     % ', '.join(needs9))
+    needs10 = sorted(set(m.group(1) for m in CALL.finditer(code)) & VERSION10)
+    if needs10:
+        report.note(path_label, 'calls %s, so the pack compiles only with CMF 10 (1.4.0) or later; say so in its README '
+                                '(the generic CMFRegister id 28 behind CMFHasProperty(28) still compiles on CMF 1)'
+                    % ', '.join(needs10))
     hooked = re.search(r'@wrapMethod\(\s*CMFCore\s*\)\s*function\s+(%s)\s*\(' % '|'.join(HOOKS), code)
     if (not re.search(r'@wrapMethod\(\s*CR4Game\s*\)\s*function\s+OnGameStarted\s*\(', code) and not hooked
             and CALL.search(code)):

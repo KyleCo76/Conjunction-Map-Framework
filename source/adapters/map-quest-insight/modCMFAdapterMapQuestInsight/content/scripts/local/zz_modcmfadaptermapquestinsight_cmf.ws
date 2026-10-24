@@ -76,6 +76,7 @@ function OnConfigUI()
 	wrappedMethod();
 	MqiAdapterSendMotion();
 	MqiAdapterSendSpread();
+	MqiAdapterSendWide();
 }
 
 // Map Quest Insight's "Faster map" and "Zoom out to whole region" switches (Map markers, both default On;
@@ -150,6 +151,43 @@ function MqiAdapterSendSpread()
 	MqiAdapterMotion('spread', 'closeMs', spread, 120);
 	MqiAdapterMotion('spread', 'lockRadius', spread, 24);
 	MqiAdapterMotion('spread', 'keepRadius', spread, 48);
+}
+
+// Map Quest Insight's "Ultrawide map" page (1.6.2; qmiSettings.ws, page qmiWide: the switch qmiUwMap, default On, and
+// the side panels position qmiUwSidePos, 0 to 100 %, default 100). Its own map file then fills a screen wider than
+// 16:9 and moves the side panels outward by that share; under CMF 10 the same choice becomes CMF's wide keys: off sends
+// fill 0, so the switch keeps its meaning, and on sends fill 1 with panels at that share. The values are read by their
+// menu names, not through QMI_OptUwMap and QMI_OptUwSidePos, so Map Quest Insight 1.6.1, which has no such page and
+// answers "", still compiles and sends nothing (CMF's own layout then applies).
+function MqiAdapterSendWide()
+{
+	var config : CInGameConfigWrapper;
+	var on, side : string;
+	var panels : float;
+	if (!CMFHasAbility('wide', 'fill'))
+	{
+		return;
+	}
+	config = theGame.GetInGameConfigWrapper();
+	on = config.GetVarValue('qmiWide', 'qmiUwMap');
+	if (on == "")
+	{
+		return;
+	}
+	if (on != "true" && on != "1")
+	{
+		MqiAdapterMotion('wide', 'fill', "", 0);
+		MqiAdapterMotion('wide', 'panels', "unset", 0);
+		return;
+	}
+	panels = 1;
+	side = config.GetVarValue('qmiWide', 'qmiUwSidePos');
+	if (side != "")
+	{
+		panels = ClampF(StringToFloat(side) / 100, 0, 1);
+	}
+	MqiAdapterMotion('wide', 'fill', "", 1);
+	MqiAdapterMotion('wide', 'panels', "", panels);
 }
 
 // One key under Map Quest Insight's folder name, only when this CMF takes it.

@@ -4,7 +4,7 @@ Conjunction Map Framework (CMF) is a single world map that map mods can share. C
 
 An **icon pack** is the simplest kind of CMF mod. It changes how existing map pins look on the full-screen world map: their icon, their legend icon and their colour. It does not add or move pins; from API version 3 any CMF mod can also hide pins, and from API version 4 resize pins and change their labels (section 5). You do not edit any map file and you do not need Script Merger, FFDec, REDkit or WolvenKit.
 
-This guide is for someone who has made a Witcher 3 mod before but has never seen CMF. Everything it describes is in CMF 1.3.0, which is API version 9 (`CMFGetVersion()` returns `9`; this is the version of CMF's script interface, not a release number). Calls and sections marked API version 2 to 9 need that version or later; the rest works from API version 1 on. Parts that have not yet run in game say so. Section 12 shows how existing map mods move onto CMF. A finished example is in [`examples/modCMFExampleIconPack`](../../examples/modCMFExampleIconPack/).
+This guide is for someone who has made a Witcher 3 mod before but has never seen CMF. Everything it describes is in CMF 1.4.1, which is API version 10 (`CMFGetVersion()` returns `10`; this is the version of CMF's script interface, not a release number). Calls and sections marked API version 2 to 10 need that version or later; the rest works from API version 1 on. Parts that have not yet run in game say so. Section 12 shows how existing map mods move onto CMF. A finished example is in [`examples/modCMFExampleIconPack`](../../examples/modCMFExampleIconPack/).
 
 ## 1. What you need
 
@@ -116,8 +116,9 @@ API version 2 adds legend rows, filter tabs and per-pin styling to the API versi
 | `25` `CMFPropertyWorldCrest()` (API version 9; target is a region name) | `CMFRegisterWorldCrest` | image path, `""` withdraws | unused |
 | `26` `CMFPropertyButtonPicture()` (API version 9; target `'family_button'`, for example `'xbox_gamepad_Y'`, with a dash in the map's name written as `_`: `'xbox_enter_gamepad_A'`) | `CMFRegisterButtonPicture` | image path, `""` withdraws | unused |
 | `27` `CMFPropertyWorldMarker()` (API version 9; target `'player'` or `'quest'`) | `CMFRegisterWorldMarker` | image path, `""` withdraws | unused |
+| `28` `CMFPropertyHoverName()` (API version 10; target `''` means every pin) | none | unused | bits: `1` the label line only on the hovered pin, `2` the name on the hovered pin; `0` as the game shows it |
 
-Section "Pin size, labels and the info box" below explains 10 to 15, "Pin clicks" explains 16, 20 and 21, "Spreading stacked pins" explains 22, "Legend rows and filter tabs" explains 23, and "World overview pictures" and "Controller button pictures" explain 24 to 27.
+Section "Pin size, labels and the info box" below explains 10 to 15, "Pin clicks" explains 16, 20 and 21, "Spreading stacked pins" explains 22, "Legend rows and filter tabs" explains 23, "World overview pictures" and "Controller button pictures" explain 24 to 27, and "Names only on hover" explains 28.
 
 ```
 if (CMFHasProperty(3))
@@ -132,12 +133,12 @@ Write a property newer than the CMF version you require as its number, not as it
 | --- | --- |
 | `CMFHasProperty(propertyId : int) : bool` | `true` when the installed CMF understands that property id. Test an id before registering it, above all an id newer than API version 1. |
 | `CMFRegister(provider : string, propertyId : int, target : name, mapContext : name, text : string, number : int) : bool` | One claim for a pin type (a map area for property 4). `mapContext` is `''` except for properties 5 and 9. Returns `false` and logs `rejected ... reason=unknown`, `reason=context`, `reason=empty` or `reason=exemption` when CMF does not accept the claim. |
-| `CMFRegisterForTag(provider : string, propertyId : int, pinTag : name, mapContext : name, text : string, number : int) : bool` | The same for one pin by its tag; accepts properties 1, 5, 9, (API version 4) 10 to 13 and 15, (API version 5) 17 and (API version 6) 16, 20 and 21 (`reason=level` otherwise). The game's own pins carry their tag; from API version 4 a pin another mod pushes is reached when that mod set its id to `NameToFlashUInt(tag)` (section 6). |
+| `CMFRegisterForTag(provider : string, propertyId : int, pinTag : name, mapContext : name, text : string, number : int) : bool` | The same for one pin by its tag; accepts properties 1, 5, 9, (API version 4) 10 to 13 and 15, (API version 5) 17, (API version 6) 16, 20, 21 and 22 and (API version 10) 28 (`reason=level` otherwise). The game's own pins carry their tag; from API version 4 a pin another mod pushes is reached when that mod set its id to `NameToFlashUInt(tag)` (section 6). |
 | `CMFRegisterLegendRow(provider : string, filteredType : name, category : name, priority : int)` | API version 2. Places a legend row in a filter tab; see "Legend rows and filter tabs" below. |
 | `CMFRegisterLegendLabel(provider : string, filteredType : name, label : string)` | API version 2. Names a legend row. |
 | `CMFRegisterLegendCategory(provider : string, category : name, label : string, priority : int)` | API version 2. Declares a filter tab after the vanilla tabs. |
 | `CMFRegisterCategoryNoDefault(provider : string, category : name, noDefault : bool)` | API version 6. Keeps the rows of your tab out of Default (`true`), or lists them there again (`false`). |
-| `CMFStylePin(provider : string, dataObject : CScriptedFlashObject, propertyId : int, text : string, number : int) : bool` | API version 2. Styles one pin object for this map opening; properties 1, 3 and 9, (API version 4) 10 to 13 and 15, (API version 5) 17 and (API version 6) 16, 20 and 21. See "Styling one pin" below. |
+| `CMFStylePin(provider : string, dataObject : CScriptedFlashObject, propertyId : int, text : string, number : int) : bool` | API version 2. Styles one pin object for this map opening; properties 1, 3 and 9, (API version 4) 10 to 13 and 15, (API version 5) 17, (API version 6) 16, 20 and 21 and (API version 10) 28. See "Styling one pin" below. |
 | `CMFStylePinIcon(provider : string, dataObject : CScriptedFlashObject, url : string) : bool` | API version 2. `CMFStylePin` with property 1. |
 | `CMFStylePinTint(provider : string, dataObject : CScriptedFlashObject, rgb : int) : bool` | API version 2. `CMFStylePin` with property 3. |
 | `CMFRegisterHidden(provider : string, pinType : name, mapContext : name, exemptions : string, hide : bool)` | API version 3. Hides every pin of a type or `filteredType` (`''` for every pin) in one map context (`''` for every context); `hide` `false` withdraws. See "Hiding pins" below. |
@@ -156,7 +157,7 @@ Write a property newer than the CMF version you require as its number, not as it
 | `CMFRegisterBackground(provider : string, area : name, imageRoot : string)` | Replaces the map image of one area, such as `'AN_NMLandNovigrad'` (Velen and Novigrad). The tiles live in your pack's texture cache at `gameplay\gui_new\maps\<imageRoot>\level<L>\tile<X>x<Y>.jpg`, with the same tile size, level range and tile count as the area's vanilla image; CMF logs those values per area (`background area=...`) the first time the map shows it. The map draws level 0 as its background layer, then the area's own levels. |
 | `CMFRequireVersion(provider : string, minVersion : int) : bool` | Returns `false` and logs a line when the installed CMF is older than `minVersion`. Wrap your calls in it as above. |
 | `CMFReleaseProvider(provider : string)` | Withdraws everything your pack registered. Only needed if your pack can be switched off without being uninstalled. |
-| `CMFGetVersion() : int` | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0, `9` in 1.3.0). |
+| `CMFGetVersion() : int` | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0, `9` in 1.3.0, `10` in 1.4.1). |
 | `CMFSetProviderName(provider : string, displayName : string) : bool` | API version 8. The name CMF's in-game menu shows for your mod, for example `"Acme Icons"`; without it the menu shows your folder name tidied. Returns `false` and logs for an empty provider or name. See [Players' choices](icon-pack-guide.md#players-choices-who-wins-each-feature-api-version-8). |
 | `CMFChoicesChanged()` | API version 8. Tells CMF that a player's choice changed, so it prepares its winners again before the next lookup. CMF's menu add-on calls it; a pack never needs to. |
 | `CMFRegisterWorldPainting(provider : string, url : string) : bool` | API version 9. Your picture for the world overview's painting. See "World overview pictures" below. |
@@ -167,6 +168,7 @@ Write a property newer than the CMF version you require as its number, not as it
 | `CMFRegisterChoiceOnly(provider : string, choiceKey : string) : bool` | API version 9. Your claims for that feature or piece apply only when the player picks your mod for it. See "Choice-only claims" below. |
 | `CMFSetOpeningView(provider : string, area : name, x : float, y : float, zoom : float, keepPlace : bool) : bool` | API version 9. The view a region map opens with, called from an `OnMapOpening` wrapper. See "The map's view" below. |
 | `CMFSetOpeningWorld(provider : string, area : name, worldX : float, worldY : float, zoom : float) : bool` | API version 9. As `CMFSetOpeningView`, with the place given in world coordinates (for example Geralt's position): the region map opens centred there. See "The map's view" below. |
+| `CMFScreenWidth() : float`, `CMFScreenHeight() : float` | API version 10. The screen the map last opened on, in map units: 1920 x 1080 on a 16:9 screen, 2580 x 1080 on a 3440 x 1440 one, 1920 x 1200 on a 16:10 one; `0` before the first opening. See "Wide and tall screens" below. |
 
 Behaviour you can rely on:
 
@@ -392,7 +394,7 @@ API version 5 lets a mod restyle the map itself and draw on it, with three gener
 - **A drawing is placed against its anchor's box**: the part's visible text trimmed to its width plus 8 px, or the box of the drawing it is tied to. `left`, `top`, `right`, `bottom` push each edge outward in px (negative moves inward); `width`/`height` with `alignX`/`alignY` give a fixed size; `minLeft`, `maxRight`, `minTop`, `maxBottom` keep it on screen; `screenLeft` and the others fix an edge to the screen. On `pinLabel` and `pinName` the box is the label's text box (text width + 4 by text height + 4 px).
 - **Paint** with `fill`/`alpha`, a linear gradient with `fill2`, `alpha2`, `gradient` `"linear"`, `angle` and `curve`, an outline with `stroke`, and glows and shadows with the same keys as parts. `repeat` and `repeatStep` draw grown copies (a soft shadow of rings), `alphaList` gives each copy its own opacity.
 - **Layers.** `layer` is `over` by default (just above the part); `under` is just below it, `belowMap` under the map image, `aboveMap` over the map image and under every panel, `top` over every panel. `order` sorts within a layer. `view` (`"region,interior,world"`) and `when` (`"selected"`, `"tracked"`, `"untracked"`) limit when it shows.
-- **Who wins.** The earliest folder that styles a part owns all of that part's style keys; `map`, `navigation` and `opening` keys are won one by one. Every mod may draw: drawings from several mods sit together, the earlier folder on top within the same `order`. An id belongs to the folder that made it first, so prefix ids with your mod's name.
+- **Who wins.** The earliest folder that styles a part owns all of that part's style keys; `map`, `navigation`, `opening`, `spread` and (API version 10) `wide` keys are won one by one. From API version 10 a part's behaviour keys (the tooltip's `clear` keys, the label's `rise` keys) have an owner of their own, apart from its look ("Players' choices" below). Every mod may draw: drawings from several mods sit together, the earlier folder on top within the same `order`. An id belongs to the folder that made it first, so prefix ids with your mod's name.
 - **Pin label colour.** Property `17`, `CMFPropertyLabelColor()`, colours a pin's label (`0xRRGGBB`) by type, tag or one pin, like any pin property; a `pinLabel` drawing with `fill` `"label"` takes that colour.
 - `navigation` and `opening` keys change how the map moves and opens; see "Smooth map movement" below.
 
@@ -496,10 +498,12 @@ Ran in game on 2026-10-20 through the Smooth Map and Map Quest Insight adapters 
 | `showDelayMs` | `200` | `0` to `5000` | the wait between prepared pins and the fade-in. |
 | `fadeSeconds`, `tileFadeSeconds` | `0.33`, `0.66` | `0` to `5` | the edge gradient and pin fade-in, and the map tiles' fade-in. |
 | `revealSeconds` | `0` | `0` to `5` | the crosshair, edge pointers, legend and quest tracker fade in over this time; `0` shows them at once. |
+| `readyAtFadeStart` (API version 10; ran in game on 2026-10-24) | `0` | `0`/`1` | `1`: the map takes input, and the legend, quest tracker, crosshair and edge pointers appear (or begin their `revealSeconds` fade), as soon as the fade-in starts after `showDelayMs`, instead of after the tiles have faded in. |
+| `revealEase` (API version 10) | `0` | `0`/`1` | the curve of the `revealSeconds` fade: `0` even, `1` ease-in. Not yet run in game. |
 
 - **Send every key your mod decides**, even one equal to the game's value, so a quieter mod does not take it from you.
 - **`"unset"` withdraws one key** (API version 6, any part and key): `CMFStylePart(provider, part, key, "unset", 0)` removes your own value, so the next folder's value or the game's applies from the next opening. Use it for an on/off option.
-- **Frame rate is the one unproven key.** If the game does not honour it, a later CMF answers `false` to `CMFHasAbility('navigation', 'frameRate')`; `tweenEveryFrame` `1` then makes tweens smooth instead.
+- **Frame rate** ran in game on 2026-10-21: the log showed `frameRate asked=60 now=60`. If the game could not change the rate, CMF would answer `false` and the map would stay at 24; `tweenEveryFrame` `1` still makes tweens smooth.
 - **Controller keys** (`padHoldMs`, the crosshair keys) are checked by value only; no launch has used a controller.
 - **Log.** Each opening writes `opening ms=N` (from the map's start to its first full pin build) and, with any key set, a line such as `nav frameTimed=1 step=17 world=24 max=100 zoomTimed=0 pad=0 tweens=frame frameRate asked=60 now=60 opening=slide:0.2/0 pins:120@1 ready=420ms`. Each held-key pan writes `nav pan ms=3010 ticks=431 px=2660`; with `zoomOutFit` the map writes `nav zoomOutFit min=0.66 game=1.6`.
 
@@ -549,6 +553,27 @@ if (CMFHasAbility('spread', ''))
 	CMFStylePart("modAcmeSpread", 'spread', 'gap', text, 56);
 }
 ```
+
+### Names only on hover (API version 10)
+
+Some map mods keep the map quiet by showing a pin's name only while the cursor or crosshair is on it. Property `28`, `CMFPropertyHoverName()`, does this for any pin, by every pin, by type, by tag or on one pin, like any pin property. The number holds bits:
+
+- `1`: the pin's label line (a signpost's name, or a pack's level tag) and its tag drawings show only on the pin under the cursor or crosshair.
+- `2`: the pin under the cursor or crosshair shows its name on the label line, above its level tag when it has one; pins with no label line today, such as merchants, get one while hovered.
+- `3` is both; `0` keeps the pin as the game shows it.
+
+```
+if (CMFRequireVersion("modAcmeQuietMap", 10))
+{
+	CMFRegister("modAcmeQuietMap", CMFPropertyHoverName(), '', '', "", 3);			// every pin
+	CMFRegister("modAcmeQuietMap", CMFPropertyHoverName(), 'RoadSign', '', "", 0);	// signposts as the game shows them
+}
+```
+
+- **Levels.** Target `''` is an every-pin claim; a type claim and a tag claim beat it on their pins, so a type claim of `0` keeps that type as the game shows it. `CMFRegisterForTag` and `CMFStylePin` take property 28 too. The player's marker and the player's own pins are never changed.
+- **Who wins.** Names only on hover is its own row under Map behaviour (`Behaviour_HoverNames`).
+- **No extra work per frame.** The hovered pin's copy is rebuilt only when the selection changes, as the game already does.
+- Ran in game in the CMF 1.4.1 launch (2026-10-24): quest level tags and their plates showed only on the hovered pin, signposts kept their names through a type claim of `0`, and the hovered name stayed inside the screen's edge.
 
 ### Drawing on the map itself (API version 6)
 
@@ -646,6 +671,16 @@ Your script does not change. Keep registering as before: the player's choices de
 7. CMF's default order, folder names sorted (Default).
 
 When two mods claim the same thing, a level decides between them only when it names one of them; a level that names another mod, Vanilla or nothing passes the question to the next level. A mod chosen for a piece wins every pin it has something for. On a pin where it has nothing, the next mod in order decides, or the game's own look shows when the player sets the General row "If the chosen mod has nothing for a pin" (or `CMFFile_Fallthrough`) to Vanilla. In-game choices come only from the menu add-on: without it every in-game level reads Automatic, and values a removed add-on left behind steer nothing.
+
+**Looks and behaviours are separate choices (API version 10).** From CMF 1.4.1 a player can take one mod's look and another mod's behaviour: pin icons from one mod and the way stacked pins spread out from another. Your script does not change: send behaviours with the same calls as before, and CMF files each key under a look row or a behaviour row by itself. The Basic page gains the row **Map behaviour**, and "Pin size and spreading" becomes **Pin size**. Advanced > Map movement now has Map area, **Pan and zoom feel**, **Zoom out to the whole region**, **Controller crosshair**, Opening and closing, Opening view and **Fill wide screens**, and the new Advanced page **Map behaviour** has Stacked pins spread out, Which pin leads a spread, Label place and hiding, Info box moves out of the way, Info box height and scrolling, and Names only on hover. What moved:
+
+- the `spread` part and property `22` (spreading and which pin leads) answer Map behaviour, not Pin size;
+- properties `11` and `13` and the `pinLabel` keys `rise`, `riseOffset`, `riseTracked`, `riseOffsetTracked` answer Label place and hiding, and the label's font stays with its look;
+- the tooltip's `clear` keys answer Info box moves out of the way, and property `14` answers Info box height and scrolling; the box's fonts, colours and plates stay on the Map look's Info box row;
+- the `navigation` keys `zoomOutFit` and `edgeOvershoot` answer Zoom out to the whole region, and the controller crosshair keys (`crosshairRoam`, the `safe` keys, `snapSeconds`, `centerSeconds`, `padHoldMs`) answer Controller crosshair;
+- the `map` part's `backdrop` colour is paint, so it answers the Map look's frames row.
+
+On a look part, the look and the behaviour each have one owner, decided among the mods that sent a key of that kind: a mod that sends only the tooltip's `clear` keys never takes the tooltip's fonts from another mod. A saved `CMFFile_Size` choice keeps choosing pin size and no longer chooses spreading. [Settings file keys](settings-file-keys.md) lists every row, and the theme page's tables say which row decides each key. `python tools/cmf_pack.py check` prints the row for each key your pack sends.
 
 **Added together: hidden pins and drawings.** Hide claims (with greyed pins and filter-tab hides) and drawings are never decided between mods: every mod's applies. Their choices work differently. Automatic keeps every mod's, Vanilla keeps none, a chosen mod keeps only that mod's, and three Ignore slots (`Hidden_Ignore1` to `3`, `Drawings_Ignore1` to `3`) each leave one mod out. When any in-game row of one of these two features is set, the in-game rows replace the file's for that feature; they are not added to them.
 
@@ -787,6 +822,47 @@ function OnMapOpening(menu : CR4MapMenu, area : name, mapContext : name)
 - **Who wins.** For the area shown, a view for that area beats an every-area view; between mods the menu's **Opening view** row (`Movement_View`, under the Movement feature) decides, then the Mod order, the settings file and folder order. Vanilla on the row (or on Movement) keeps the game's view.
 - **When it applies.** Only when the map opened on its usual place (the player, the default position or the middle) and the player has not moved it yet. An opening on a particular spot, such as a lonely fast-travel pin or "show on map" from the quest list, keeps the game's whole view, zoom included; a pack cannot change that in API version 9. Nothing waits for the view: the map opens as fast as before.
 - **The log** shows one line per region shown: `map opening area= context= view=<provider or none> x= y= zoom= keep= world=` (`world=1` for a `CMFSetOpeningWorld` view).
+
+### Wide and tall screens (API version 10)
+
+From CMF 1.4.1 the map fills a screen that is not 16:9: wider (21:9, 32:9) or taller (16:10, 4:3). Nothing is scaled: pins, labels, icons and panels keep their size, and a wider screen shows more map. The top edge never moves, because the game's menu bar sits above the map; the map grows left, right and down. On a 16:9 screen nothing changes at all.
+
+**Send numbers in 1920 x 1080 units; CMF moves them on wide and tall screens.** Every place, edge and bound your pack sends today stays right without a second set of numbers. CMF moves an x number below 960 with the left side and one of 960 or more with the right side, and a y number above 540 with the bottom:
+
+| Number | Moves with |
+| --- | --- |
+| `screenLeft`, `screenRight`, `screenTop`, `screenBottom` on a drawing tied to `screen` | the screen's edges, so a frame or fade still runs edge to edge |
+| the same keys on a drawing tied to a part or another drawing | that part's panel, so the drawing stays with it |
+| bounds: `minLeft`, `maxRight`, `minTop`, `maxBottom`, the tooltip's `clearLeft`, `clearTop`, `clearRight`, `clearBottom`, the navigation `safe` keys | the screen's edges |
+| the `title`'s `screenX`, `screenY`, `x`, `y` and the `hints`' `x`, `y` | that part's panel |
+| the `map`'s `top` | nothing |
+| the `map`'s `bottom` of 1080 or more | the bottom edge |
+| drawings on `mapSpace`, pin labels and pin buttons | nothing; they live on the map or on pins |
+
+The drawing key `wideAnchor` overrides this for one drawing: `edges` (move with the screen's edges), `panels` (move with the panels) or `centre` (stay in the middle 16:9 area, for a frame meant to surround it). `CMFHasAbility('rect', 'wideAnchor')` tells you whether the installed CMF has it.
+
+**The `wide` part** holds the layout's own choices, won key by key like `navigation`:
+
+| Key | Values | Without any mod | What it does |
+| --- | --- | --- | --- |
+| `fill` | `0`/`1` | `1` | `1`: the map fills the whole screen. `0`: the 16:9 map, centred, with dark sides |
+| `panels` | `0` to `1` | `1` | how far the side panels (and on a taller screen the bottom panels) move from their 16:9 place to the screen's edge |
+| `maxRatio` | `0`, or `1.78` to `4` | `0` (no limit) | the widest shape the map fills; on a wider screen the rest shows the backing, so a 32:9 player can keep a 21:9 map |
+| `world` | `0`/`1` | `0` | `1`: the world overview grows to the screen's width, cropping top and bottom; `0` keeps it centred at its size |
+
+```
+if (CMFHasAbility('wide', 'fill'))
+{
+	CMFStylePart("modAcmeLayout", 'wide', 'panels', "", 0.5);	// side panels halfway to the edges
+}
+```
+
+- **Who wins.** Fill wide screens (`Movement_Wide`, under Map movement). Vanilla there shows the game's centred 16:9 map. `fill` `1` without any mod is CMF's own layout, not a claim, so Automatic with no `wide` keys fills the screen.
+- **The screen's shape.** `CMFScreenWidth()` and `CMFScreenHeight()` give the screen the map last opened on, in map units (`2580` x `1080` on a 3440 x 1440 monitor), and `0` before the first opening, for example to send `wide` keys only on very wide screens. No pack needs them for a correct layout.
+- **The log** shows `wide screen=WxH window=WxH left= right= bottom= unstretch= panels= maxRatio= world=` once per opening on a wide or tall screen, or `wide off (16:9)` and `wide off (fill 0)`.
+- **Speed.** The layout runs once when the map opens; nothing runs per frame, and the map opens as fast as before.
+- **Tested** in the CMF 1.4.1 launch (2026-10-24) at 16:9, at 16:10 (1920 x 1200) and at 21:9 (3440 x 1440, `wide screen=2580x1080`): the map filled the screen with square pixels, the panels sat at the edges, `fill` `0` and Vanilla gave the centred 16:9 map, the overview stayed centred, and the info box and hovered names stayed on screen. Not yet run in game: 32:9 and 4:3 screens, `maxRatio` and `world` `1`.
+- CMF changes only its own map; other menus and the HUD are not part of this.
 
 ### Choice-only claims (API version 9)
 

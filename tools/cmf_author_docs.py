@@ -94,6 +94,7 @@ PAGES = [
      [guide('Pin size, labels and the info box (API version 4)')]),
     ('Pin-Hook-OnPinReady', None, 'Pins and the legend', [guide('The pin hook: `OnPinReady` (API version 4)')]),
     ('Pin-Clicks', None, 'Pins and the legend', [guide('Pin clicks (API version 6)')]),
+    ('Names-Only-on-Hover', None, 'Pins and the legend', [guide('Names only on hover (API version 10)')]),
     ('Spreading-Stacked-Pins', None, 'Pins and the legend', [guide('Spreading stacked pins (API version 6)')]),
     ('Map-Theme', None, "The map's look and behaviour", [guide('The map theme (API version 5)')]),
     ('Theme-Parts-and-Keys', None, "The map's look and behaviour", [page_file(THEME)]),
@@ -107,6 +108,7 @@ PAGES = [
     ('Controller-Button-Pictures', None, "The map's look and behaviour",
      [guide('Controller button pictures (API version 9)')]),
     ('Map-View', None, "The map's look and behaviour", [guide("The map's view (API version 9)")]),
+    ('Wide-Screens', None, "The map's look and behaviour", [guide('Wide and tall screens (API version 10)')]),
     ('Porting-a-Map-Mod', 'Porting a map mod', 'Moving a map mod onto CMF',
      [guide('12. Teaching examples: moving a map mod onto CMF'), guide('One mod, with and without CMF'),
       guide('The adapter identity rule'),
@@ -546,6 +548,17 @@ class Build:
             shown += ['`%s`%s' % (k, ' (text)' if k in text_keys else '') for k in names]
             return ', '.join(shown) or 'none'
         text_group = [('text keys', ('font', 'size', 'color', 'spacing', 'align'))]
+        def rows(part, names):
+            # Version 10: the part's row, then the keys that answer another row (cmf_pack.theme_key_row).
+            base = cmf_pack.THEME_PART_ROWS.get(part, '')
+            other = {}
+            for k in names:
+                row = cmf_pack.theme_key_row(part, k)
+                if row != base:
+                    other.setdefault(row, []).append('`%s`' % k)
+            shown = [base] if base else []
+            shown += ['%s: %s' % (', '.join(ks), row) for row, ks in other.items()]
+            return '; '.join(shown) or 'none (an anchor)'
         def mark(names):
             return ', '.join('`%s`%s' % (k, ' (text)' if k in text_keys else '') for k in names)
         lines = ['### Key groups', '',
@@ -557,10 +570,11 @@ class Build:
                  + ', glow keys, shadow keys',
                  '- **map-space keys** (`line` and `movie`): %s' % mark(cmf_pack.THEME_SPACE),
                  '', '"(text)" marks a key whose value goes in the `text` argument.', '',
-                 '### Parts and their style keys', '', '| Part | Style keys | `hide` words |', '| --- | --- | --- |']
+                 '### Parts and their style keys', '', '| Part | Style keys | `hide` words | Decided by (menu row) |',
+                 '| --- | --- | --- | --- |']
         for part, names in cmf_pack.THEME_PART_KEYS.items():
             words = ', '.join('`%s`' % w for w in hide.get(part, '').split(',') if w) or 'none'
-            lines.append('| `%s` | %s | %s |' % (part, keys(names, text_group), words))
+            lines.append('| `%s` | %s | %s | %s |' % (part, keys(names, text_group), words, rows(part, names)))
         lines += ['', '### Drawing kinds and their keys', '',
                   '| Kind | Anchors | Keys | List keys |', '| --- | --- | --- | --- |']
         for kind, names in cmf_pack.THEME_KIND_KEYS.items():
@@ -608,6 +622,9 @@ class Build:
         lines = ['| File key | Feature | In-game menu page | Menu row |', '| --- | --- | --- | --- |']
         for key in keys:
             feature = key.split('_')[0]
+            # Version 10: three pieces keep their names but answer the feature Behaviour (rev 10 contract section 1).
+            if 'Behaviour' in keys and key in ('Size_Lead', 'Size_Spread', 'Labels_Place'):
+                feature = 'Behaviour'
             if 'CMFFile_' + key not in stored:
                 self.errors.append('%s has no CMFFile_%s, which cmfCore.ws CMFChoiceKeys lists' % (SETTINGS_MENU, key))
             if 'CMFPick_' + key not in rows or 'CMFPick_' + feature not in rows:

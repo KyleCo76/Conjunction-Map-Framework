@@ -25,6 +25,8 @@ SMOOTH_MAP = {
     ('navigation', 'tweenEveryFrame'): 1, ('opening', 'pinsDuringSlide'): 1, ('opening', 'pinStepMs'): 1,
     ('opening', 'pinBatch'): 0, ('opening', 'pinBudgetMs'): 8, ('opening', 'showDelayMs'): 1,
     ('opening', 'fadeSeconds'): 0.2, ('opening', 'tileFadeSeconds'): 0.2, ('opening', 'revealSeconds'): 0.2,
+    # API version 10 (readiness check 2026-10-24): ready and panels shown at the start of the fade-in.
+    ('opening', 'readyAtFadeStart'): 1,
 }
 # Keys Smooth Map leaves as the game's (the menu's slide and close, frame rate, zoom limit, controller crosshair).
 NOT_SENT = ['slideSeconds', 'slideOffset', 'closeSeconds', 'frameRate', 'zoomOutFit', 'edgeOvershoot',
@@ -34,7 +36,7 @@ RANGES = {
     'frameTimed': (0, 1), 'zoomTimed': (0, 1), 'tweenEveryFrame': (0, 1), 'pinsDuringSlide': (0, 1),
     'stepMs': (1, 1000), 'worldStepMs': (1, 1000), 'maxStepMs': (1, 1000), 'pinStepMs': (1, 1000),
     'padHoldMs': (0, 1000), 'pinBudgetMs': (0, 1000), 'showDelayMs': (0, 5000), 'pinBatch': (0, 100000),
-    'fadeSeconds': (0, 5), 'tileFadeSeconds': (0, 5), 'revealSeconds': (0, 5),
+    'fadeSeconds': (0, 5), 'tileFadeSeconds': (0, 5), 'revealSeconds': (0, 5), 'readyAtFadeStart': (0, 1),
 }
 
 
@@ -51,13 +53,16 @@ class SmoothMapAdapterTests(unittest.TestCase):
                 re.findall(r"SmoothMapAdapterKey\('(\w+)', '(\w+)', ([\d.]+)\);", text)}
         self.assertEqual(sent, SMOOTH_MAP)
         self.assertEqual(len(re.findall(r'SmoothMapAdapterKey\(', text)), len(SMOOTH_MAP) + 1)
-        self.assertIn('keys=%d accepted=' % len(SMOOTH_MAP), text)
+        # The version 10 key is sent only when CMF has it, and counted then.
+        self.assertIn('keys = %d;' % (len(SMOOTH_MAP) - 1), text)
+        self.assertIn("if (CMFHasAbility('opening', 'readyAtFadeStart'))\n\t{\n\t\tkeys += 1;", text)
+        self.assertIn('"CMF adapter provider=modSmoothMap keys=" + keys + " accepted=" + accepted', text)
         for key in NOT_SENT:
             self.assertNotIn("'%s'" % key, text)
 
     def test_every_key_is_one_cmf_takes_in_range(self):
         core = CORE.read_text(encoding='ascii')
-        self.assertIn('function CMFGetVersion() : int { return 9; }', core)
+        self.assertIn('function CMFGetVersion() : int { return 10; }', core)
         for (part, key), number in SMOOTH_MAP.items():
             self.assertIn(key, cmf_pack.THEME_PART_KEYS[part])
             low, high = RANGES[key]
