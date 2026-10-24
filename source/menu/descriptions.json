@@ -1,0 +1,489 @@
+{
+ "pages": [
+  {
+   "page": "Mod order",
+   "rows": [
+    {
+     "var": "CMFOrder1",
+     "row": "1st",
+     "text": "This mod's map changes come first wherever a choice is left on Automatic. Only CMF's own order; the game's load order is not touched."
+    },
+    {
+     "var": "CMFOrder2",
+     "row": "2nd",
+     "text": "Next in line: this mod's map changes appear wherever every mod placed above it has nothing to show."
+    },
+    {
+     "var": "CMFOrder3",
+     "row": "3rd",
+     "text": "Next in line: this mod's map changes appear wherever every mod placed above it has nothing to show."
+    },
+    {
+     "var": "CMFOrder4",
+     "row": "4th",
+     "text": "Next in line: this mod's map changes appear wherever every mod placed above it has nothing to show."
+    },
+    {
+     "var": "CMFOrder5",
+     "row": "5th",
+     "text": "Next in line: this mod's map changes appear wherever every mod placed above it has nothing to show."
+    },
+    {
+     "var": "CMFOrder6",
+     "row": "6th",
+     "text": "Next in line: this mod's map changes appear wherever every mod placed above it has nothing to show."
+    },
+    {
+     "var": "CMFOrder7",
+     "row": "7th",
+     "text": "Next in line: this mod's map changes appear wherever every mod placed above it has nothing to show."
+    },
+    {
+     "var": "CMFOrder8",
+     "row": "8th",
+     "text": "Next in line: this mod's map changes appear wherever every mod placed above it has nothing to show."
+    }
+   ]
+  },
+  {
+   "page": "Basic choices",
+   "rows": [
+    {
+     "var": "CMFPick_Icons",
+     "row": "Pin icons",
+     "text": "Changes the pictures on the map's pins: quest markers, signposts, shops, monster nests and every other place."
+    },
+    {
+     "var": "CMFPick_Colours",
+     "row": "Pin colours",
+     "text": "Tints the map's pins, so quest types, finished places or shops stand out from each other by colour."
+    },
+    {
+     "var": "CMFPick_Size",
+     "row": "Pin size",
+     "text": "Makes the map's pins bigger or smaller."
+    },
+    {
+     "var": "CMFPick_Labels",
+     "row": "Pin labels",
+     "text": "Adds or changes the small text above pins, such as a quest's level, and its colour."
+    },
+    {
+     "var": "CMFPick_Legend",
+     "row": "Legend and filter tabs",
+     "text": "Changes the list of pin types beside the map: which rows it has, what they are called, and its filter tabs."
+    },
+    {
+     "var": "CMFPick_Hidden",
+     "row": "Hidden pins",
+     "text": "Hides or greys out pins to keep the map tidy. Automatic keeps every mod's hiding, Vanilla shows every pin, a mod keeps only its own."
+    },
+    {
+     "var": "CMFPick_Look",
+     "row": "Map look",
+     "text": "Restyles the screen around the map: frames, region title, the list beside the map, the pin info box, key hints and pin text."
+    },
+    {
+     "var": "CMFPick_Painting",
+     "row": "Map painting",
+     "text": "Replaces the painted map itself: the art of each region and of the zoomed-out world view."
+    },
+    {
+     "var": "CMFPick_Drawings",
+     "row": "Drawings on the map",
+     "text": "Shows extra shapes drawn on the map, such as borders, frames or marked areas. Automatic shows every mod's, Vanilla none."
+    },
+    {
+     "var": "CMFPick_Clicks",
+     "row": "Pin clicks",
+     "text": "Makes using a pin do something, such as travelling to it or opening a list, with a button beside the pin."
+    },
+    {
+     "var": "CMFPick_Movement",
+     "row": "Map movement",
+     "text": "Changes how the map scrolls, zooms and opens, how much of the screen it fills and where it is centred when it opens."
+    },
+    {
+     "var": "CMFPick_Behaviour",
+     "row": "Map behaviour",
+     "text": "Changes how the map reacts under the cursor: stacked pins fan out, text and the info box step aside, names appear on hover."
+    }
+   ]
+  },
+  {
+   "page": "Advanced > Pin icons",
+   "rows": [
+    {
+     "var": "CMFPick_Icons_General",
+     "row": "General (signposts, boards, stash, Roach)",
+     "text": "Changes the pictures on the pins for signposts, harbours, notice boards, your stash and Roach."
+    },
+    {
+     "var": "CMFPick_Icons_Quests",
+     "row": "Quests",
+     "text": "Changes the pictures on the pins for quest pins, including the quest you follow and races."
+    },
+    {
+     "var": "CMFPick_Icons_Places",
+     "row": "Places (undiscovered and active)",
+     "text": "Changes the pictures on the pins for places not yet cleared: monster nests, bandit camps, treasure, cave entrances."
+    },
+    {
+     "var": "CMFPick_Icons_Completed",
+     "row": "Completed places",
+     "text": "Changes the pictures on the pins for places you have already cleared, which the game shows greyed out."
+    },
+    {
+     "var": "CMFPick_Icons_Services",
+     "row": "Shops and services",
+     "text": "Changes the pictures on the pins for merchants, smiths, armourers, innkeepers, barbers and other services."
+    },
+    {
+     "var": "CMFPick_Icons_Power",
+     "row": "Places of power and workbenches",
+     "text": "Changes the pictures on the pins for places of power, grindstones, armour tables, alchemy tables and similar."
+    },
+    {
+     "var": "CMFPick_Icons_Other",
+     "row": "Other (beds, herbs, stables)",
+     "text": "Changes the pictures on the pins for beds, herbs, stables, caves, enemies and your own map markers."
+    },
+    {
+     "var": "CMFPick_Icons_Added",
+     "row": "Pins added by mods",
+     "text": "Changes the pictures on the pins for pins that mods add to the map, which the game itself does not have."
+    }
+   ]
+  },
+  {
+   "page": "Advanced > Pin colours",
+   "rows": [
+    {
+     "var": "CMFPick_Colours_General",
+     "row": "General (signposts, boards, stash, Roach)",
+     "text": "Tints the pins for signposts, harbours, notice boards, your stash and Roach."
+    },
+    {
+     "var": "CMFPick_Colours_Quests",
+     "row": "Quests",
+     "text": "Tints the pins for quest pins, including the quest you follow and races."
+    },
+    {
+     "var": "CMFPick_Colours_Places",
+     "row": "Places (undiscovered and active)",
+     "text": "Tints the pins for places not yet cleared: monster nests, bandit camps, treasure, cave entrances."
+    },
+    {
+     "var": "CMFPick_Colours_Completed",
+     "row": "Completed places",
+     "text": "Tints the pins for places you have already cleared, which the game shows greyed out."
+    },
+    {
+     "var": "CMFPick_Colours_Services",
+     "row": "Shops and services",
+     "text": "Tints the pins for merchants, smiths, armourers, innkeepers, barbers and other services."
+    },
+    {
+     "var": "CMFPick_Colours_Power",
+     "row": "Places of power and workbenches",
+     "text": "Tints the pins for places of power, grindstones, armour tables, alchemy tables and similar."
+    },
+    {
+     "var": "CMFPick_Colours_Other",
+     "row": "Other (beds, herbs, stables)",
+     "text": "Tints the pins for beds, herbs, stables, caves, enemies and your own map markers."
+    },
+    {
+     "var": "CMFPick_Colours_Added",
+     "row": "Pins added by mods",
+     "text": "Tints the pins for pins that mods add to the map, which the game itself does not have."
+    }
+   ]
+  },
+  {
+   "page": "Advanced > Pin size and labels",
+   "rows": [
+    {
+     "var": "CMFPick_Size_Scale",
+     "row": "Pin size",
+     "text": "Makes the map's pins bigger or smaller."
+    },
+    {
+     "var": "CMFPick_Labels_Text",
+     "row": "Level tags and label text",
+     "text": "Changes the words above pins, such as a quest's level tag, and their colour."
+    }
+   ]
+  },
+  {
+   "page": "Advanced > Legend and filters",
+   "rows": [
+    {
+     "var": "CMFPick_Legend_Rows",
+     "row": "Legend rows",
+     "text": "Adds or removes rows in the list of pin types beside the map."
+    },
+    {
+     "var": "CMFPick_Legend_Names",
+     "row": "Row names",
+     "text": "Renames the rows in the list of pin types beside the map."
+    },
+    {
+     "var": "CMFPick_Legend_Tabs",
+     "row": "Tab names",
+     "text": "Changes the filter tabs of the list beside the map: their names and which rows each tab shows."
+    },
+    {
+     "var": "CMFPick_Hidden_Ignore1",
+     "row": "Ignore hidden pins from (1st)",
+     "text": "Brings back the pins one mod hides or greys out, while every other mod's hiding stays. Nobody brings none back."
+    },
+    {
+     "var": "CMFPick_Hidden_Ignore2",
+     "row": "Ignore hidden pins from (2nd)",
+     "text": "Brings back the pins one mod hides or greys out, while every other mod's hiding stays. Nobody brings none back."
+    },
+    {
+     "var": "CMFPick_Hidden_Ignore3",
+     "row": "Ignore hidden pins from (3rd)",
+     "text": "Brings back the pins one mod hides or greys out, while every other mod's hiding stays. Nobody brings none back."
+    }
+   ]
+  },
+  {
+   "page": "Advanced > Map look",
+   "rows": [
+    {
+     "var": "CMFPick_Look_Frames",
+     "row": "Frames and panels",
+     "text": "Restyles the frame around the map, the region title, the quest tracker, the corner overview and the world view button."
+    },
+    {
+     "var": "CMFPick_Look_Legend",
+     "row": "Legend",
+     "text": "Restyles the list of pin types beside the map: its fonts, colours and backgrounds."
+    },
+    {
+     "var": "CMFPick_Look_InfoBox",
+     "row": "Info box",
+     "text": "Restyles the box that describes a pin when you point at it: its fonts, colours and backing."
+    },
+    {
+     "var": "CMFPick_Look_Hints",
+     "row": "Key hints",
+     "text": "Restyles the row of key hints on the map and the key pictures in it."
+    },
+    {
+     "var": "CMFPick_Look_PinText",
+     "row": "Pin text style",
+     "text": "Changes the font and shadow of text on pins, of names under signposts and of buttons beside pins."
+    }
+   ]
+  },
+  {
+   "page": "Advanced > Map movement",
+   "rows": [
+    {
+     "var": "CMFPick_Movement_Area",
+     "row": "Map area",
+     "text": "Changes how much of the screen the map fills from top to bottom, and how far you can scroll it."
+    },
+    {
+     "var": "CMFPick_Movement_Pan",
+     "row": "Pan and zoom feel",
+     "text": "Makes scrolling and zooming smoother or faster, with keys, mouse or stick."
+    },
+    {
+     "var": "CMFPick_Movement_ZoomOut",
+     "row": "Zoom out to the whole region",
+     "text": "Lets you zoom out until the whole region fits on screen, and scroll a little past its edge."
+    },
+    {
+     "var": "CMFPick_Movement_Controller",
+     "row": "Controller crosshair",
+     "text": "Changes how the controller crosshair moves near the screen's edges and how it snaps to pins."
+    },
+    {
+     "var": "CMFPick_Movement_Opening",
+     "row": "Opening and closing",
+     "text": "Changes how the map slides and fades in and out, and how quickly its pins appear."
+    },
+    {
+     "var": "CMFPick_Movement_View",
+     "row": "Opening view",
+     "text": "Changes where the map is centred and how far it is zoomed each time you open it."
+    },
+    {
+     "var": "CMFPick_Movement_Wide",
+     "row": "Fill wide screens",
+     "text": "On a screen wider or taller than 16:9, the map fills the whole screen instead of a centred 16:9 picture. Vanilla keeps it centred."
+    }
+   ]
+  },
+  {
+   "page": "Advanced > Map behaviour",
+   "rows": [
+    {
+     "var": "CMFPick_Size_Spread",
+     "row": "Stacked pins spread out",
+     "text": "Pins sitting on the same spot fan out into a row as the cursor reaches them, so you can pick each one."
+    },
+    {
+     "var": "CMFPick_Size_Lead",
+     "row": "Which pin leads a spread",
+     "text": "Decides which pin is picked first when stacked pins fan out, such as the quest pin."
+    },
+    {
+     "var": "CMFPick_Labels_Place",
+     "row": "Label place and hiding",
+     "text": "Moves the text above pins higher or lower, and hides it on some pins or under the crosshair."
+    },
+    {
+     "var": "CMFPick_Behaviour_InfoBoxDodge",
+     "row": "Info box moves out of the way",
+     "text": "A tall pin info box moves aside so it does not cover the cursor or the map's panels."
+    },
+    {
+     "var": "CMFPick_Behaviour_InfoBoxHeight",
+     "row": "Info box height and scrolling",
+     "text": "Lets the pin info box grow taller before its text starts to scroll."
+    },
+    {
+     "var": "CMFPick_Behaviour_HoverNames",
+     "row": "Names only on hover",
+     "text": "Keeps the map quiet: a pin's name shows only while you point at it."
+    }
+   ]
+  },
+  {
+   "page": "Advanced > Map painting",
+   "rows": [
+    {
+     "var": "CMFPick_Painting_WhiteOrchard",
+     "row": "White Orchard",
+     "text": "Replaces the painted map of White Orchard."
+    },
+    {
+     "var": "CMFPick_Painting_WhiteOrchardWinter",
+     "row": "White Orchard (winter)",
+     "text": "Replaces the painted map of the winter White Orchard of the game's last chapter."
+    },
+    {
+     "var": "CMFPick_Painting_Velen",
+     "row": "Velen and Novigrad",
+     "text": "Replaces the painted map of Velen and Novigrad."
+    },
+    {
+     "var": "CMFPick_Painting_Skellige",
+     "row": "Skellige",
+     "text": "Replaces the painted map of the Skellige Isles."
+    },
+    {
+     "var": "CMFPick_Painting_KaerMorhen",
+     "row": "Kaer Morhen",
+     "text": "Replaces the painted map of Kaer Morhen."
+    },
+    {
+     "var": "CMFPick_Painting_Vizima",
+     "row": "Vizima",
+     "text": "Replaces the painted map of Vizima."
+    },
+    {
+     "var": "CMFPick_Painting_IsleOfMists",
+     "row": "Isle of Mists",
+     "text": "Replaces the painted map of the Isle of Mists."
+    },
+    {
+     "var": "CMFPick_Painting_Spiral",
+     "row": "The Spiral",
+     "text": "Replaces the painted map of the Spiral."
+    },
+    {
+     "var": "CMFPick_Painting_Toussaint",
+     "row": "Toussaint",
+     "text": "Replaces the painted map of Toussaint."
+    },
+    {
+     "var": "CMFPick_Painting_World",
+     "row": "World overview",
+     "text": "Replaces the painting of the whole world shown when you zoom out to the world view."
+    },
+    {
+     "var": "CMFPick_Painting_Crests",
+     "row": "Region crests and markers",
+     "text": "Replaces the region crests and the you-are-here and quest markers on the world view."
+    }
+   ]
+  },
+  {
+   "page": "Advanced > Clicks and drawings",
+   "rows": [
+    {
+     "var": "CMFPick_Clicks_Pins",
+     "row": "Pin clicks",
+     "text": "Makes using a pin do something, such as travelling to it or opening a list, with a button beside the pin."
+    },
+    {
+     "var": "CMFPick_Drawings_Ignore1",
+     "row": "Leave out drawings from (1st)",
+     "text": "Removes one mod's shapes drawn on the map, while every other mod's drawings stay. Nobody removes none."
+    },
+    {
+     "var": "CMFPick_Drawings_Ignore2",
+     "row": "Leave out drawings from (2nd)",
+     "text": "Removes one mod's shapes drawn on the map, while every other mod's drawings stay. Nobody removes none."
+    },
+    {
+     "var": "CMFPick_Drawings_Ignore3",
+     "row": "Leave out drawings from (3rd)",
+     "text": "Removes one mod's shapes drawn on the map, while every other mod's drawings stay. Nobody removes none."
+    }
+   ]
+  },
+  {
+   "page": "General",
+   "rows": [
+    {
+     "var": "CMFFallthrough",
+     "row": "If the chosen mod has nothing for a pin",
+     "text": "When the mod you picked has nothing for a pin, that pin shows the next mod's version, or the game's own look."
+    },
+    {
+     "var": "CMFReset",
+     "row": "Reset every CMF choice",
+     "text": "Puts every choice in this menu back to its default, the mod order included. Reopen Options to see it."
+    },
+    {
+     "var": "CMFReport",
+     "row": "Write the who-wins report to the log",
+     "text": "For bug reports: writes which mod decides each part of the map into the game's script log."
+    }
+   ]
+  },
+  {
+   "page": "Status > Loaded map mods",
+   "rows": [
+    {
+     "var": "CMFStatusScreen",
+     "row": "Screen",
+     "text": "Your screen size as the map last saw it, and whether the map fills it. Open the map once to see it."
+    },
+    {
+     "var": "CMFStatusMod*",
+     "row": "Map mod 1 to 16 (shows each mod's name)",
+     "text": "A map mod CMF found, and which parts of the map it changes. Some show only after the map has been opened once."
+    }
+   ]
+  },
+  {
+   "page": "Status > Who wins pages (every row)",
+   "rows": [
+    {
+     "var": "CMFWin_*",
+     "row": "(same names as the choice rows)",
+     "text": "Which mod's version of this part of the map you see right now, and which setting decided it. Change it on the Basic or Advanced page."
+    }
+   ]
+  }
+ ]
+}

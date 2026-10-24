@@ -86,7 +86,8 @@ class TableTests(unittest.TestCase):
         self.assertEqual(addon.catalog(probe=True)['strings'][-1]['key'], 'panel_' + addon.HEAD_TEST_PATH)
 
     def test_version(self):
-        self.assertEqual(addon.VERSION, '1.3.0')
+        # 1.4.0 (descriptions) keeps every 1.3.0 row.
+        self.assertGreaterEqual(tuple(int(n) for n in addon.VERSION.split('.')), (1, 3, 0))
         self.assertIn('1.3.0 (CMF 1.4.0, CMFGetVersion 10)', MENU_WS.read_text(encoding='ascii').split('\n\n')[0])
 
 

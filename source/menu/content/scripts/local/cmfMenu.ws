@@ -5,7 +5,8 @@
 // the Zoom out, Controller crosshair and Fill wide screens rows, the Who wins: map behaviour page and the Screen line
 // on Loaded map mods, and renames Pin size, Pan and zoom feel and Stacked pins spread out; on CMF 1.3.0 or older the
 // new rows are left out the same way, the renamed rows show their 1.2.x names (CMFMenuOldLabel) and the Screen line
-// is left out. The Screen line calls CMFScreenWidth and CMFScreenHeight, which only CMF 1.4.0 declares, so this
+// is left out. 1.4.0 (still CMF 1.4.0 and later) shows a plain description of every CMF row in the Options list's help
+// box, a choice row's "Offered by" line under it. The Screen line calls CMFScreenWidth and CMFScreenHeight, which only CMF 1.4.0 declares, so this
 // script compiles only beside CMF 1.4.0 or later: the two ship together. Its menu file declares every row with spare
 // placeholder choices; while the game builds a page, this script replaces them with the loaded map mods and remembers
 // which folder name each position stands for. A chosen row keeps the folder name in a hidden name var beside it
@@ -24,8 +25,11 @@ class CMFMenuState extends CObject
 	private var boxShown : bool;
 	private var titleScreen : bool;
 	private var resetPending : bool;
+	private var boxHomeY : float;
+	private var boxHomeKnown : bool;
 
-	// 1.1.0: the help line of a choice row ("Offered by: ..."), made when its page is built.
+	// 1.1.0: the help line of a choice row ("Offered by: ..."), made when its page is built. 1.4.0: the whole help box
+	// text of any CMF row, its description first.
 	public function RememberHelp(varName : name, text : string)
 	{
 		var i : int;
@@ -63,6 +67,22 @@ class CMFMenuState extends CObject
 	public function BoxShown() : bool
 	{
 		return boxShown;
+	}
+
+	// 1.4.0: where the game's own help box sat before CMF moved it, put back for the game's Bard's Ballad text.
+	public function SetBoxHome(y : float)
+	{
+		if (!boxHomeKnown)
+		{
+			boxHomeY = y;
+			boxHomeKnown = true;
+		}
+	}
+
+	public function BoxHome(out y : float) : bool
+	{
+		y = boxHomeY;
+		return boxHomeKnown;
 	}
 
 	// 1.1.1: whether the pages were last built from the remembered list (the title screen, no save loaded).
@@ -433,6 +453,11 @@ function CMFMenuFillPage(storage : CScriptedFlashValueStorage, groupName : name,
 		row = rows.GetElementFlashObject(i);
 		varName = config.GetVarNameByGroupName(groupName, StringToInt(row.GetMemberFlashString("id")));
 		varText = NameToString(varName);
+		// 1.4.0: every row but a choice row (CMFMenuFillPick) shows its description alone.
+		if (!StrBeginsWith(varText, "CMFPick_") && CMFMenuDescription(varName) != "")
+		{
+			theGame.CMFMenuGetState().RememberHelp(varName, CMFMenuDescription(varName));
+		}
 		if (varText == "CMFHead_Mods")
 		{
 			CMFMenuFillModsHeading(row, providers.Size(), remembered);
@@ -702,7 +727,8 @@ function CMFMenuFillPick(storage : CScriptedFlashValueStorage, row : CScriptedFl
 	// (reviews/2026-10-23-menu-title-screen-picks.md; Kyle's "Grey out", 2026-10-23 00:41Z).
 	CMFMenuSetChoices(storage, row, labels, current, remembered || (!offeredAny && stored == ""));
 	theGame.CMFMenuGetState().Remember(varName, CMFMenuJoin(answers));
-	theGame.CMFMenuGetState().RememberHelp(varName, CMFMenuHelpText(choice, providers, remembered, seen));
+	theGame.CMFMenuGetState().RememberHelp(varName, CMFMenuBoxText(varName, CMFMenuHelpText(choice, providers,
+		remembered, seen)));
 	if (config.GetVarValue(groupName, varName) != IntToString(current))
 	{
 		config.SetVarValue(groupName, varName, IntToString(current));
@@ -946,6 +972,193 @@ function CMFMenuWideVanilla() : bool
 	return core.DecidedAnswer(core.ChoiceIndex("Movement_Wide")) == "vanilla";
 }
 
+// 1.4.0: a choice row's help box: its description, a line break, then its help line (Kyle's "Box", 2026-10-24 03:14Z).
+function CMFMenuBoxText(varName : name, helpLine : string) : string
+{
+	if (CMFMenuDescription(varName) == "")
+	{
+		return helpLine;
+	}
+	return CMFMenuDescription(varName) + CMFMenuLineBreak() + helpLine;
+}
+
+// 1.4.0: the line break inside the help box text.
+function CMFMenuLineBreak() : string
+{
+	return "<br>";
+}
+
+// BEGIN row descriptions: written by tools/cmf_menu_addon.py from source/menu/descriptions.json
+// 1.4.0: the plain description of a row, shown first in the help box ("" for a row without one).
+function CMFMenuDescription(varName : name) : string
+{
+	var varText : string;
+	varText = NameToString(varName);
+	if (StrBeginsWith(varText, "CMFStatusMod"))
+	{
+		return "A map mod CMF found, and which parts of the map it changes. Some show only after the map has been opened once.";
+	}
+	if (StrBeginsWith(varText, "CMFWin_"))
+	{
+		return "Which mod's version of this part of the map you see right now, and which setting decided it. Change it on the Basic or Advanced page.";
+	}
+	switch (varName)
+	{
+		case 'CMFOrder1':
+			return "This mod's map changes come first wherever a choice is left on Automatic. Only CMF's own order; the game's load order is not touched.";
+		case 'CMFOrder2':
+		case 'CMFOrder3':
+		case 'CMFOrder4':
+		case 'CMFOrder5':
+		case 'CMFOrder6':
+		case 'CMFOrder7':
+		case 'CMFOrder8':
+			return "Next in line: this mod's map changes appear wherever every mod placed above it has nothing to show.";
+		case 'CMFPick_Icons':
+			return "Changes the pictures on the map's pins: quest markers, signposts, shops, monster nests and every other place.";
+		case 'CMFPick_Colours':
+			return "Tints the map's pins, so quest types, finished places or shops stand out from each other by colour.";
+		case 'CMFPick_Size':
+		case 'CMFPick_Size_Scale':
+			return "Makes the map's pins bigger or smaller.";
+		case 'CMFPick_Labels':
+			return "Adds or changes the small text above pins, such as a quest's level, and its colour.";
+		case 'CMFPick_Legend':
+			return "Changes the list of pin types beside the map: which rows it has, what they are called, and its filter tabs.";
+		case 'CMFPick_Hidden':
+			return "Hides or greys out pins to keep the map tidy. Automatic keeps every mod's hiding, Vanilla shows every pin, a mod keeps only its own.";
+		case 'CMFPick_Look':
+			return "Restyles the screen around the map: frames, region title, the list beside the map, the pin info box, key hints and pin text.";
+		case 'CMFPick_Painting':
+			return "Replaces the painted map itself: the art of each region and of the zoomed-out world view.";
+		case 'CMFPick_Drawings':
+			return "Shows extra shapes drawn on the map, such as borders, frames or marked areas. Automatic shows every mod's, Vanilla none.";
+		case 'CMFPick_Clicks':
+		case 'CMFPick_Clicks_Pins':
+			return "Makes using a pin do something, such as travelling to it or opening a list, with a button beside the pin.";
+		case 'CMFPick_Movement':
+			return "Changes how the map scrolls, zooms and opens, how much of the screen it fills and where it is centred when it opens.";
+		case 'CMFPick_Behaviour':
+			return "Changes how the map reacts under the cursor: stacked pins fan out, text and the info box step aside, names appear on hover.";
+		case 'CMFPick_Icons_General':
+			return "Changes the pictures on the pins for signposts, harbours, notice boards, your stash and Roach.";
+		case 'CMFPick_Icons_Quests':
+			return "Changes the pictures on the pins for quest pins, including the quest you follow and races.";
+		case 'CMFPick_Icons_Places':
+			return "Changes the pictures on the pins for places not yet cleared: monster nests, bandit camps, treasure, cave entrances.";
+		case 'CMFPick_Icons_Completed':
+			return "Changes the pictures on the pins for places you have already cleared, which the game shows greyed out.";
+		case 'CMFPick_Icons_Services':
+			return "Changes the pictures on the pins for merchants, smiths, armourers, innkeepers, barbers and other services.";
+		case 'CMFPick_Icons_Power':
+			return "Changes the pictures on the pins for places of power, grindstones, armour tables, alchemy tables and similar.";
+		case 'CMFPick_Icons_Other':
+			return "Changes the pictures on the pins for beds, herbs, stables, caves, enemies and your own map markers.";
+		case 'CMFPick_Icons_Added':
+			return "Changes the pictures on the pins for pins that mods add to the map, which the game itself does not have.";
+		case 'CMFPick_Colours_General':
+			return "Tints the pins for signposts, harbours, notice boards, your stash and Roach.";
+		case 'CMFPick_Colours_Quests':
+			return "Tints the pins for quest pins, including the quest you follow and races.";
+		case 'CMFPick_Colours_Places':
+			return "Tints the pins for places not yet cleared: monster nests, bandit camps, treasure, cave entrances.";
+		case 'CMFPick_Colours_Completed':
+			return "Tints the pins for places you have already cleared, which the game shows greyed out.";
+		case 'CMFPick_Colours_Services':
+			return "Tints the pins for merchants, smiths, armourers, innkeepers, barbers and other services.";
+		case 'CMFPick_Colours_Power':
+			return "Tints the pins for places of power, grindstones, armour tables, alchemy tables and similar.";
+		case 'CMFPick_Colours_Other':
+			return "Tints the pins for beds, herbs, stables, caves, enemies and your own map markers.";
+		case 'CMFPick_Colours_Added':
+			return "Tints the pins for pins that mods add to the map, which the game itself does not have.";
+		case 'CMFPick_Labels_Text':
+			return "Changes the words above pins, such as a quest's level tag, and their colour.";
+		case 'CMFPick_Legend_Rows':
+			return "Adds or removes rows in the list of pin types beside the map.";
+		case 'CMFPick_Legend_Names':
+			return "Renames the rows in the list of pin types beside the map.";
+		case 'CMFPick_Legend_Tabs':
+			return "Changes the filter tabs of the list beside the map: their names and which rows each tab shows.";
+		case 'CMFPick_Hidden_Ignore1':
+		case 'CMFPick_Hidden_Ignore2':
+		case 'CMFPick_Hidden_Ignore3':
+			return "Brings back the pins one mod hides or greys out, while every other mod's hiding stays. Nobody brings none back.";
+		case 'CMFPick_Look_Frames':
+			return "Restyles the frame around the map, the region title, the quest tracker, the corner overview and the world view button.";
+		case 'CMFPick_Look_Legend':
+			return "Restyles the list of pin types beside the map: its fonts, colours and backgrounds.";
+		case 'CMFPick_Look_InfoBox':
+			return "Restyles the box that describes a pin when you point at it: its fonts, colours and backing.";
+		case 'CMFPick_Look_Hints':
+			return "Restyles the row of key hints on the map and the key pictures in it.";
+		case 'CMFPick_Look_PinText':
+			return "Changes the font and shadow of text on pins, of names under signposts and of buttons beside pins.";
+		case 'CMFPick_Movement_Area':
+			return "Changes how much of the screen the map fills from top to bottom, and how far you can scroll it.";
+		case 'CMFPick_Movement_Pan':
+			return "Makes scrolling and zooming smoother or faster, with keys, mouse or stick.";
+		case 'CMFPick_Movement_ZoomOut':
+			return "Lets you zoom out until the whole region fits on screen, and scroll a little past its edge.";
+		case 'CMFPick_Movement_Controller':
+			return "Changes how the controller crosshair moves near the screen's edges and how it snaps to pins.";
+		case 'CMFPick_Movement_Opening':
+			return "Changes how the map slides and fades in and out, and how quickly its pins appear.";
+		case 'CMFPick_Movement_View':
+			return "Changes where the map is centred and how far it is zoomed each time you open it.";
+		case 'CMFPick_Movement_Wide':
+			return "On a screen wider or taller than 16:9, the map fills the whole screen instead of a centred 16:9 picture. Vanilla keeps it centred.";
+		case 'CMFPick_Size_Spread':
+			return "Pins sitting on the same spot fan out into a row as the cursor reaches them, so you can pick each one.";
+		case 'CMFPick_Size_Lead':
+			return "Decides which pin is picked first when stacked pins fan out, such as the quest pin.";
+		case 'CMFPick_Labels_Place':
+			return "Moves the text above pins higher or lower, and hides it on some pins or under the crosshair.";
+		case 'CMFPick_Behaviour_InfoBoxDodge':
+			return "A tall pin info box moves aside so it does not cover the cursor or the map's panels.";
+		case 'CMFPick_Behaviour_InfoBoxHeight':
+			return "Lets the pin info box grow taller before its text starts to scroll.";
+		case 'CMFPick_Behaviour_HoverNames':
+			return "Keeps the map quiet: a pin's name shows only while you point at it.";
+		case 'CMFPick_Painting_WhiteOrchard':
+			return "Replaces the painted map of White Orchard.";
+		case 'CMFPick_Painting_WhiteOrchardWinter':
+			return "Replaces the painted map of the winter White Orchard of the game's last chapter.";
+		case 'CMFPick_Painting_Velen':
+			return "Replaces the painted map of Velen and Novigrad.";
+		case 'CMFPick_Painting_Skellige':
+			return "Replaces the painted map of the Skellige Isles.";
+		case 'CMFPick_Painting_KaerMorhen':
+			return "Replaces the painted map of Kaer Morhen.";
+		case 'CMFPick_Painting_Vizima':
+			return "Replaces the painted map of Vizima.";
+		case 'CMFPick_Painting_IsleOfMists':
+			return "Replaces the painted map of the Isle of Mists.";
+		case 'CMFPick_Painting_Spiral':
+			return "Replaces the painted map of the Spiral.";
+		case 'CMFPick_Painting_Toussaint':
+			return "Replaces the painted map of Toussaint.";
+		case 'CMFPick_Painting_World':
+			return "Replaces the painting of the whole world shown when you zoom out to the world view.";
+		case 'CMFPick_Painting_Crests':
+			return "Replaces the region crests and the you-are-here and quest markers on the world view.";
+		case 'CMFPick_Drawings_Ignore1':
+		case 'CMFPick_Drawings_Ignore2':
+		case 'CMFPick_Drawings_Ignore3':
+			return "Removes one mod's shapes drawn on the map, while every other mod's drawings stay. Nobody removes none.";
+		case 'CMFFallthrough':
+			return "When the mod you picked has nothing for a pin, that pin shows the next mod's version, or the game's own look.";
+		case 'CMFReset':
+			return "Puts every choice in this menu back to its default, the mod order included. Reopen Options to see it.";
+		case 'CMFReport':
+			return "For bug reports: writes which mod decides each part of the map into the game's script log.";
+		case 'CMFStatusScreen':
+			return "Your screen size as the map last saw it, and whether the map fills it. Open the map once to see it.";
+	}
+	return "";
+}
+// END row descriptions
+
 // 1.1.0: the help line of a choice row. It names every loaded map mod that offers the piece, in order; before the
 // map has been opened some offers are not known yet, so it says so (menu launch 3: the line named one mod while more
 // could be chosen).
@@ -990,26 +1203,82 @@ function CMFMenuHelpText(choice : int, providers : array<string>, remembered : b
 
 // 1.1.0: the game calls this each time the highlight moves to an Options row (menu launch 3). A CMF choice row shows
 // its help line in the Options list's own help box (updateBardsBalladText and showBardsBalladTooltip); any other row
-// hides the box again. Changing a row's label instead also renames the selected left-hand entry (night launch
+// hides the box again. 1.4.0: every CMF row with a description shows the box. Changing a row's label instead also renames the selected left-hand entry (night launch
 // 2026-10-22), so the help line never goes into a row.
 @wrapMethod(CR4IngameMenu) function OnOptionSelectionChanged(optionName : name, value : bool)
 {
 	var menuState : CMFMenuState;
 	var text : string;
 	menuState = theGame.CMFMenuGetState();
-	if (StrBeginsWith(NameToString(optionName), "CMFPick_") && menuState.Help(optionName, text))
+	if (StrBeginsWith(NameToString(optionName), "CMF") && menuState.Help(optionName, text) && text != "")
 	{
 		m_flashModule.GetMemberFlashFunction("updateBardsBalladText").InvokeSelfOneArg(FlashArgString(text));
 		m_flashModule.GetMemberFlashFunction("showBardsBalladTooltip").InvokeSelfOneArg(FlashArgBool(true));
 		menuState.SetBoxShown(true);
+		CMFMenuPlaceBox(m_flashModule, true);
 	}
 	else if (menuState.BoxShown())
 	{
 		m_flashModule.GetMemberFlashFunction("updateBardsBalladText").InvokeSelfOneArg(FlashArgString(""));
 		m_flashModule.GetMemberFlashFunction("showBardsBalladTooltip").InvokeSelfOneArg(FlashArgBool(false));
 		menuState.SetBoxShown(false);
+		CMFMenuPlaceBox(m_flashModule, false);
 	}
 	return wrappedMethod(optionName, value);
+}
+
+// 1.4.0: the game draws its help box (the option list module's "tooltip" clip) at a fixed place near the bottom,
+// over the 12th row of a page (Kyle's 1.4.1 check, 2026-10-24). While a CMF row shows it, CMF moves it to sit just
+// above the list's top edge (the list clip "mcOptionList"), its height taken after the text is set; hiding it puts it
+// back where the game had it, for the game's own Bard's Ballad text. Nothing happens if either clip is missing.
+function CMFMenuPlaceBox(menuFlash : CScriptedFlashSprite, shown : bool)
+{
+	var module, box, list : CScriptedFlashSprite;
+	var field : CScriptedFlashObject;
+	var home : float;
+	if (!menuFlash)
+	{
+		return;
+	}
+	module = menuFlash.GetChildFlashSprite("mcOptionListModule");
+	if (!module)
+	{
+		return;
+	}
+	box = module.GetChildFlashSprite("tooltip");
+	list = module.GetChildFlashSprite("mcOptionList");
+	if (!box || !list)
+	{
+		return;
+	}
+	if (shown)
+	{
+		theGame.CMFMenuGetState().SetBoxHome(box.GetY());
+		// The game grows the box's frame to the text, but its text field keeps room for two lines, so a third line
+		// (a description that wraps, then "Offered by") was cut off (1.4.0 check, 2026-10-24). The field grows too.
+		field = box.GetMemberFlashObject("textField");
+		if (field)
+		{
+			field.SetMemberFlashNumber("height", field.GetMemberFlashNumber("textHeight") + CMFMenuFieldSpare());
+		}
+		box.SetY(list.GetY() - box.GetMemberFlashNumber("height") - CMFMenuBoxGap());
+	}
+	else if (theGame.CMFMenuGetState().BoxHome(home))
+	{
+		box.SetY(home);
+	}
+}
+
+// 1.4.0: room under the last line of the help box's text field (Flash keeps a small gutter around its text).
+function CMFMenuFieldSpare() : float
+{
+	return 8.0;
+}
+
+// 1.4.0: the space between the help box and the list, in the menu's own units (1080 to the screen's height).
+function CMFMenuBoxGap() : float
+{
+	return 12.0;
 }
 
 // 1.1.0: a newly shown Options page never keeps the box from the last one.
@@ -1020,6 +1289,7 @@ function CMFMenuHelpText(choice : int, providers : array<string>, remembered : b
 		m_flashModule.GetMemberFlashFunction("updateBardsBalladText").InvokeSelfOneArg(FlashArgString(""));
 		m_flashModule.GetMemberFlashFunction("showBardsBalladTooltip").InvokeSelfOneArg(FlashArgBool(false));
 		theGame.CMFMenuGetState().SetBoxShown(false);
+		CMFMenuPlaceBox(m_flashModule, false);
 	}
 	wrappedMethod(actionType, menuTag, id);
 }

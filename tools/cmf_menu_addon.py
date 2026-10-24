@@ -2,14 +2,16 @@
 
 The add-on is CMF's Options > Mods > Conjunction Map Framework entry: Mod order, Basic choices,
 Advanced choices (9 pages), General and Status (Loaded map mods with the Screen line, and 9 "Who wins"
-pages). Version 1.3.0 (CMF API 10: plans/2026-10-24-cmf-rev10-build-contract.md section 7). Every
+pages). Version 1.4.0 (CMF API 10: plans/2026-10-24-cmf-rev10-build-contract.md section 7) adds a plain description
+of every row to the Options list's help box. Every
 choice row is an OPTIONS row with spare placeholder choices; the add-on's script replaces them
 with the loaded map mods while the game builds the page, and keeps the chosen folder name in a
 hidden name var beside the row.
 
   python tools/cmf_menu_addon.py write            rewrite source/menu/modCMFInGameMenu.xml and
-                                                  source/menu/strings.json from the tables below
-  python tools/cmf_menu_addon.py check            exit 1 when either file differs from the tables
+                                                  source/menu/strings.json from the tables below, and the
+                                                  description block of cmfMenu.ws from source/menu/descriptions.json
+  python tools/cmf_menu_addon.py check            exit 1 when any of them differs from its source
   python tools/cmf_menu_addon.py build --out DIR  stage Mods/modCMFInGameMenu (script and the 18
                                                   string tables) and bin/config/.../pc/modCMFInGameMenu.xml,
                                                   plus build.json with every SHA-256
@@ -29,10 +31,16 @@ from xml.sax.saxutils import quoteattr
 
 ROOT = Path(__file__).resolve().parents[1]
 MOD = 'modCMFInGameMenu'
-VERSION = '1.3.0'
+VERSION = '1.4.0'
 MENU = ROOT/'source/menu'/(MOD + '.xml')
 CATALOG = ROOT/'source/menu/strings.json'
 SCRIPT = ROOT/'source/menu/content/scripts/local/cmfMenu.ws'
+# 1.4.0: the row descriptions, written into cmfMenu.ws between the two
+# marker lines. A var ending in * stands for every var that starts with the rest.
+DESCRIPTIONS = ROOT/'source/menu/descriptions.json'
+DESCRIPTION_BEGIN = '// BEGIN row descriptions: written by tools/cmf_menu_addon.py from source/menu/descriptions.json'
+DESCRIPTION_END = '// END row descriptions'
+DESCRIPTION_MAX = 160
 MENUS = 'bin/config/r4game/user_config_matrix/pc'
 LANGUAGES = 'ar br cn cz de en es esmx fr hu it jp kr pl ru tr ua zh'.split()
 DEFAULT_TOOL = Path('w3strings.py')
@@ -315,6 +323,54 @@ def catalog_json(probe=False):
     return '\n'.join(lines) + '\n'
 
 
+def descriptions():
+    """(var, text) for every described row, in the order of descriptions.json."""
+    data = json.loads(DESCRIPTIONS.read_text(encoding='utf-8'))
+    return [(row['var'], row['text']) for page in data['pages'] for row in page['rows']]
+
+
+def description_ws():
+    """The CMFMenuDescription function, between the marker lines."""
+    exact, prefixes = [], []
+    for var, text in descriptions():
+        if '"' in text or '\\' in text or not text.isascii():
+            raise ValueError('description of %s must be plain ASCII without quotes or backslashes' % var)
+        (prefixes if var.endswith('*') else exact).append((var.rstrip('*'), text))
+    lines = [DESCRIPTION_BEGIN,
+             '// 1.4.0: the plain description of a row, shown first in the help box ("" for a row without one).',
+             'function CMFMenuDescription(varName : name) : string',
+             '{',
+             '\tvar varText : string;',
+             '\tvarText = NameToString(varName);']
+    for prefix, text in prefixes:
+        lines += ['\tif (StrBeginsWith(varText, "%s"))' % prefix, '\t{', '\t\treturn "%s";' % text, '\t}']
+    lines += ['\tswitch (varName)', '\t{']
+    texts = []
+    for _var, text in exact:
+        if text not in texts:
+            texts.append(text)
+    for text in texts:
+        for var, other in exact:
+            if other == text:
+                lines.append("\t\tcase '%s':" % var)
+        lines.append('\t\t\treturn "%s";' % text)
+    lines += ['\t}', '\treturn "";', '}', DESCRIPTION_END]
+    return '\n'.join(lines)
+
+
+def script_text():
+    """cmfMenu.ws with its description block written from descriptions.json."""
+    text = SCRIPT.read_text(encoding='utf-8')
+    start = text.index(DESCRIPTION_BEGIN)
+    end = text.index(DESCRIPTION_END) + len(DESCRIPTION_END)
+    return text[:start] + description_ws() + text[end:]
+
+
+def up_to_date():
+    return (MENU.read_text(encoding='utf-8') == menu_xml() and CATALOG.read_text(encoding='utf-8') == catalog_json()
+            and SCRIPT.read_text(encoding='utf-8') == script_text())
+
+
 def choice_rows():
     """Every choice key a row of the menu names, in menu order."""
     return [row[1] for _g, _p, _t, rows in PAGES for row in rows if row[0] == 'pick']
@@ -335,7 +391,7 @@ def build(out, w3strings, probe=False):
     out = Path(out)
     if out.exists() and any(out.iterdir()):
         raise SystemExit('output folder must be new or empty: %s' % out)
-    if MENU.read_text(encoding='utf-8') != menu_xml() or CATALOG.read_text(encoding='utf-8') != catalog_json():
+    if not up_to_date():
         raise SystemExit('source/menu is out of date: run "write" first')
     mod = out/'Mods'/MOD
     (mod/'content/scripts/local').mkdir(parents=True)
@@ -378,10 +434,11 @@ def main(argv=None):
         MENU.parent.mkdir(parents=True, exist_ok=True)
         MENU.write_text(menu_xml(), encoding='utf-8', newline='\n')
         CATALOG.write_text(catalog_json(), encoding='utf-8', newline='\n')
-        print('wrote', MENU.relative_to(ROOT), CATALOG.relative_to(ROOT))
+        SCRIPT.write_text(script_text(), encoding='utf-8', newline='\n')
+        print('wrote', MENU.relative_to(ROOT), CATALOG.relative_to(ROOT), SCRIPT.relative_to(ROOT))
         return 0
     if args.command == 'check':
-        ok = MENU.read_text(encoding='utf-8') == menu_xml() and CATALOG.read_text(encoding='utf-8') == catalog_json()
+        ok = up_to_date()
         print('up to date' if ok else 'out of date')
         return 0 if ok else 1
     for path, digest in build(args.out, args.w3strings, args.probe).items():
