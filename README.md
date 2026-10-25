@@ -131,7 +131,9 @@ One exception: the **Coloured Map Markers** adapter also shows its icons without
 
 **Ultrawide Menus** 1.0.2 was tried beside CMF with its patcher run, and CMF's map loaded as usual. From 1.4.1 CMF's map fills wide screens by itself, so Ultrawide Menus is not needed for the map.
 
-**Not supported yet (needs its author's update):** some map mods keep their map features, and often their icon art, inside their own copy of the world map file. CMF never copies another mod's art or files unless its author permits it, so those features stay hidden under CMF until the author updates the mod for CMF or gives permission for an adapter to use them. The mod's scripts and menus keep working meanwhile. Smooth Map and Community Patch - World Map are in this group: everything they change lives in their own map file, so 1.0.0 has no adapter for them.
+**Not supported yet (needs its author's update):** some map mods keep their map features, and often their icon art, inside their own copy of the world map file. CMF never copies another mod's art or files unless its author permits it, so those features stay hidden under CMF until the author updates the mod for CMF or gives permission for an adapter to use them. The mod's scripts and menus keep working meanwhile. Community Patch - World Map is in this group: everything it changes lives in its own map file, so CMF has no adapter for it.
+
+**Supports CMF itself:** [Smooth Map Remastered](https://www.nexusmods.com/witcher3/mods/13530) by Narcolepsy now supports CMF itself. Install it as its own page describes; it needs no CMF adapter.
 
 The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/witcher3/mods/14693).
 
@@ -296,7 +298,7 @@ The adapters are teaching examples, written as the code that mod's own author wo
 
 The Coloured Map Markers adapter has no porting page: that mod has no scripts, so the adapter is only its icons registered with CMF ([source](source/adapters/coloured-map-markers/)).
 
-**Smooth Map** has a [porting page](docs/authors/smooth-map-adapter.md) and a [proof-of-concept example adapter](source/adapters/smooth-map/) for its author. That example is not part of any CMF release, and Smooth Map's values on their own have not been checked in a launch. Community Patch - World Map has a porting section in the [author guide, section 12](docs/authors/icon-pack-guide.md#12-teaching-examples-moving-a-map-mod-onto-cmf); no adapter ships for either mod.
+**Smooth Map** now supports CMF itself: see [Smooth Map Remastered](https://www.nexusmods.com/witcher3/mods/13530) by Narcolepsy. Community Patch - World Map has a porting section in the [author guide, section 12](docs/authors/icon-pack-guide.md#12-teaching-examples-moving-a-map-mod-onto-cmf); no adapter ships for it.
 
 ---
 

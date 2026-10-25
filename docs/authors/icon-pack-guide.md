@@ -1281,18 +1281,7 @@ An `OnPinClicked` wrapper then reduces `pinId` to its low 30 bits, the number yo
 
 ### Smooth Map (API version 6)
 
-Smooth Map has no script: its timing lives in its own map file, which does not load under CMF. Now the same timing is a set of `navigation` and `opening` keys sent once per game session under your folder name:
-
-```
-CMFStylePart("modSmoothMap", 'navigation', 'frameTimed', "", 1);
-CMFStylePart("modSmoothMap", 'navigation', 'zoomTimed', "", 1);
-CMFStylePart("modSmoothMap", 'navigation', 'tweenEveryFrame', "", 1);
-CMFStylePart("modSmoothMap", 'opening', 'pinsDuringSlide', "", 1);
-CMFStylePart("modSmoothMap", 'opening', 'pinBudgetMs', "", 8);
-CMFStylePart("modSmoothMap", 'opening', 'revealSeconds', "", 0.2);
-```
-
-The full list, with every value your map file used, is in "Smooth map movement" above. Each key is won on its own by the earliest folder that sets it, so your values mix with Ink & Iron's and Map Quest Insight's key by key instead of one map file replacing the others. A proof-of-concept example adapter, `modCMFAdapterSmoothMap`, shows the whole change, and [its author page](smooth-map-adapter.md) walks through it. It is an example, not a shipped adapter: it ran in game on 2026-10-20 together with Ink & Iron, where all 15 keys were accepted, but Smooth Map's values on their own have not been checked in a launch.
+Smooth Map supports CMF itself: its author's "Conjunction Map Framework Version" (folder `modSmoothMap_CMF`, on Smooth Map's Nexus page) sends Smooth Map's timing as `navigation` and `opening` keys and has its own settings menu for the opening speed. The example adapter `modCMFAdapterSmoothMap` that once stood here is retired. "Smooth map movement" above lists every key.
 
 ### Community Patch - World Map (API version 6)
 

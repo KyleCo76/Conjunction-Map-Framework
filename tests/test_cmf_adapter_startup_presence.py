@@ -64,13 +64,6 @@ class AdapterStartupPresenceTests(unittest.TestCase):
         startup = self.assert_declaration("map-quest-insight", "modMapQuestInsight")
         self.assertNotRegex(startup, r"QMI_|MqiAdapterSend|CMFRequireVersion")
 
-    def test_smooth_author_template_declares_after_existing_gate_before_sending(self):
-        startup = self.assert_declaration("smooth-map", "modSmoothMap")
-        self.assertLess(startup.index('CMFRequireVersion("modSmoothMap", 6)'), startup.index("CMFHasProperty(38)"))
-        self.assertLess(startup.index("CMFHasProperty(38)"), startup.index("SmoothMapAdapterSend()"))
-        raw = next((ROOT / "source/adapters/smooth-map").glob("*/content/scripts/local/*_cmf.ws")).read_text()
-        self.assertIn("Ship this inside Smooth Map's own folder; a separate adapter folder must not declare, because it cannot tell whether Smooth Map is installed.", raw)
-
     def test_eleven_existing_startup_paths_submit_provider_names(self):
         cases = [
             ("all-quest-objectives", "modAQOOMRemastered", "CMFRegisterLegendRow"),
