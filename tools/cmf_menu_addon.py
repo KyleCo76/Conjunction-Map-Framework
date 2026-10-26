@@ -96,7 +96,8 @@ PAGES = [
      [('pick', 'Colours_' + key, label) for key, label in GROUP_NAMES]),
     ('CMFMenuAdvSize', 'cmf_advanced.cmf_adv_size', 'Pin size and labels', [
         ('pick', 'Size_Scale', 'Pin size'),
-        ('pick', 'Labels_Text', 'Level tags and label text')]),
+        ('pick', 'Labels_Text', 'Level tags and label text'),
+        ('pick', 'Size_Place', 'Pin place and draw order')]),
     ('CMFMenuAdvLegend', 'cmf_advanced.cmf_adv_legend', 'Legend and filters', [
         ('pick', 'Legend_Rows', 'Legend rows'),
         ('pick', 'Legend_Names', 'Row names'),
@@ -110,7 +111,10 @@ PAGES = [
         ('pick', 'Look_InfoBox', 'Info box'),
         ('pick', 'Look_InfoText', 'Info box text'),
         ('pick', 'Look_Hints', 'Key hints'),
-        ('pick', 'Look_PinText', 'Pin text style')]),
+        ('pick', 'Look_PinText', 'Pin text style'),
+        ('pick', 'Look_Sounds', 'Map sounds'),
+        ('pick', 'Look_Badges', 'Pictures under pin icons'),
+        ('pick', 'Look_PinLook', 'Pin highlights and glow')]),
     ('CMFMenuAdvMovement', 'cmf_advanced.cmf_adv_movement', 'Map movement', [
         ('pick', 'Movement_Area', 'Map area'),
         ('pick', 'Movement_Pan', 'Pan and zoom feel'),
@@ -126,8 +130,12 @@ PAGES = [
         ('pick', 'Size_Lead', 'Which pin leads a spread'),
         ('pick', 'Labels_Place', 'Label place and hiding'),
         ('pick', 'Behaviour_InfoBoxDodge', 'Info box moves out of the way'),
-        ('pick', 'Behaviour_InfoBoxHeight', 'Info box height and scrolling'),
-        ('pick', 'Behaviour_HoverNames', 'Names only on hover')]),
+        ('pick', 'Behaviour_InfoBoxHeight', 'Info box size and scrolling'),
+        ('pick', 'Behaviour_HoverNames', 'Names only on hover'),
+        ('pick', 'Behaviour_InfoBoxMotion', 'Info box motion'),
+        ('pick', 'Behaviour_InfoFold', 'Info box folding'),
+        ('pick', 'Behaviour_PanelModes', 'Panel visibility'),
+        ('pick', 'Behaviour_PinZoom', 'Pin zoom range')]),
     ('CMFMenuAdvPainting', 'cmf_advanced.cmf_adv_painting', 'Map painting', [
         ('pick', 'Painting_WhiteOrchard', 'White Orchard'),
         ('pick', 'Painting_WhiteOrchardWinter', 'White Orchard (winter)'),
@@ -161,7 +169,8 @@ PAGES = [
      [('win', 'Colours_' + key, label) for key, label in GROUP_NAMES]),
     ('CMFMenuWinSize', 'cmf_status.cmf_win_size', 'Who wins: pin size and labels', [
         ('win', 'Size_Scale', 'Pin size'),
-        ('win', 'Labels_Text', 'Level tags and label text')]),
+        ('win', 'Labels_Text', 'Level tags and label text'),
+        ('win', 'Size_Place', 'Pin place and draw order')]),
     ('CMFMenuWinLegend', 'cmf_status.cmf_win_legend', 'Who wins: legend and filters', [
         ('win', 'Legend_Rows', 'Legend rows'),
         ('win', 'Legend_Names', 'Row names'),
@@ -173,7 +182,10 @@ PAGES = [
         ('win', 'Look_InfoBox', 'Info box'),
         ('win', 'Look_InfoText', 'Info box text'),
         ('win', 'Look_Hints', 'Key hints'),
-        ('win', 'Look_PinText', 'Pin text style')]),
+        ('win', 'Look_PinText', 'Pin text style'),
+        ('win', 'Look_Sounds', 'Map sounds'),
+        ('win', 'Look_Badges', 'Pictures under pin icons'),
+        ('win', 'Look_PinLook', 'Pin highlights and glow')]),
     ('CMFMenuWinMovement', 'cmf_status.cmf_win_movement', 'Who wins: map movement', [
         ('win', 'Movement_Area', 'Map area'),
         ('win', 'Movement_Pan', 'Pan and zoom feel'),
@@ -187,8 +199,12 @@ PAGES = [
         ('win', 'Size_Lead', 'Which pin leads a spread'),
         ('win', 'Labels_Place', 'Label place and hiding'),
         ('win', 'Behaviour_InfoBoxDodge', 'Info box moves out of the way'),
-        ('win', 'Behaviour_InfoBoxHeight', 'Info box height and scrolling'),
-        ('win', 'Behaviour_HoverNames', 'Names only on hover')]),
+        ('win', 'Behaviour_InfoBoxHeight', 'Info box size and scrolling'),
+        ('win', 'Behaviour_HoverNames', 'Names only on hover'),
+        ('win', 'Behaviour_InfoBoxMotion', 'Info box motion'),
+        ('win', 'Behaviour_InfoFold', 'Info box folding'),
+        ('win', 'Behaviour_PanelModes', 'Panel visibility'),
+        ('win', 'Behaviour_PinZoom', 'Pin zoom range')]),
     ('CMFMenuWinPainting', 'cmf_status.cmf_win_painting', 'Who wins: map painting', [
         ('win', 'Painting_WhiteOrchard', 'White Orchard'),
         ('win', 'Painting_WhiteOrchardWinter', 'White Orchard (winter)'),

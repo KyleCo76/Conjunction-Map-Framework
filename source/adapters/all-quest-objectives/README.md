@@ -8,6 +8,8 @@
 
 It also gives the mod its name in CMF's in-game menu: `CMFSetProviderName("modAQOOMRemastered", "All Quest Objectives")` (API version 8, adapter 1.1.0), called once per game start beside the row. Without it the menu tidies the provider's folder name to "AQOOMRemastered" (seen in the CMF 1.2.1 release test). The name is the mod's own text for its row (`FILTER_LABEL`) and changes nothing on the map.
 
+With The Stable 2.2.1 installed, the three features above need one more step (adapter 1.2.0, `modcmfadapterallquestobjectives_stable.ws`). The Stable's precompiled `CR4MapMenu.UpdateEntityPins` skips All Quest Objectives' hook (`aqoomMapHooks.ws` 52-63), so its icons, suggested levels, row label and cached merchant pins are never written, with or without CMF (Show Chests starts A and D, 2026-10-25: no `icon=` lines with The Stable in, two without). The adapter wraps the game's `UpdateUserMapPins`, which still runs next with the same list, and on full builds makes the hook's own call, `AqoomGetMap().UpdateEntityPins(this, m_shownArea, flashArray)`, before the user pins, only when that method has not run during the build. A wrapper on All Quest Objectives' own `AqoomMap.UpdateEntityPins` records each run: All Quest Objectives changes pins already in the list (the level on every quest pin's text), so the list itself cannot tell whether it ran, and running it twice would print the level twice. Spec: [a design note kept in the private development repository](../../../a design note kept in the private development repository), section 3.2.
+
 All Quest Objectives is unchanged. The adapter adds no rule of its own. The page for the mod's authors is [`docs/authors/all-quest-objectives-adapter.md`](../../../docs/authors/all-quest-objectives-adapter.md).
 
 ## Teaching example
@@ -68,6 +70,7 @@ Read for its interface only. Nothing is copied: the frame colours were read from
 
 - First eight difficulty icons of a session: `CMF adapter provider=modAQOOMRemastered icon=<name> type=QuestObjectiveOther result=styled|refused|unknown`.
 - First eight cached pins of a session: `CMF adapter provider=modAQOOMRemastered cached=<n> type=<pin type> result=claimed|refused`.
+- Once per session, when the adapter made All Quest Objectives' map call itself (another mod replaced the entity step): `CMF adapter provider=modAQOOMRemastered fallback=1`.
 - Each click: CMF's own `CMF click provider=modAQOOMRemastered input=use type=... pin=... tag=... value=<n>`, then `CMF adapter provider=modAQOOMRemastered click input=use value=<n> tag=<tag> result=used|notcached`. `notcached` means All Quest Objectives' own test refused it (for example a stale index), as its own wrapper would have.
 
 ## Dependencies
@@ -81,6 +84,7 @@ Read for its interface only. Nothing is copied: the frame colours were read from
 | Path | What |
 |---|---|
 | `modCMFAdapterAllQuestObjectives/content/scripts/local/modcmfadapterallquestobjectives_cmf.ws` | the icon table, the `OnPinReady` icon styling and click claim, and the `OnPinClicked` answer |
+| `modCMFAdapterAllQuestObjectives/content/scripts/local/modcmfadapterallquestobjectives_stable.ws` | adapter 1.2.0: All Quest Objectives' own map call when another mod's `UpdateEntityPins` skipped its hook |
 | `modCMFAdapterAllQuestObjectives/art/badge.png`, `mark.png` | the two placeholder pictures, cooked into the pack's `content/texture.cache` by `tools/cmf_pack.py build` |
 | `modCMFAdapterAllQuestObjectives/README.txt` | for players |
 | `adapter_art.py` | draws the two pictures (developer only; kept beside the adapter) |
@@ -96,6 +100,8 @@ Launch P6+C2 run 2 (2026-10-20 ~20:05Z, record a launch record kept in the priva
 - Difficulty icons: proven. Green badges showed on untracked objectives, and the tracked quest kept the game's gold marker.
 - Legend row: proven. The "All Quest Objectives" row showed in the Quests tab; hiding it removed those objectives and kept the tracked gold marker.
 - Cached merchant pin click: not tried in game. It needs a merchant the game has stopped showing, and the step was optional.
+
+Adapter 1.2.0 (The Stable) is code-checked only until its launch.
 
 Adapter 1.1.0 (the menu name) passed on 2026-10-22 in two launches, the second from its release archive in the CMF 1.2.2 release test: the menu's Legend row read "Automatic (All Quest Objectives)", with no rejection or compile error.
 

@@ -263,7 +263,7 @@ class ScriptTests(unittest.TestCase):
         for body, expected in cases.items():
             report = self.run_pack(body)
             self.assertTrue(any(expected in e for e in report.errors), (body, report.errors))
-        report = self.run_pack('\tCMFRegister("modAcmeIcons", 31, \'AcmePin\', \'\', "", 1);\n')
+        report = self.run_pack('\tCMFRegister("modAcmeIcons", 45, \'AcmePin\', \'\', "", 1);\n')
         self.assertTrue(any('unknown to CMF 6' in w for w in report.warnings), report.warnings)
 
     def test_version3_calls(self):
@@ -416,7 +416,11 @@ class ScriptTests(unittest.TestCase):
             self.assertTrue(claims or calls & {'CMFRegisterBackground', 'CMFRegisterDisabled', 'CMFStylePinScale'} or
                             pack in ('modZZCMFTestClick', 'modCMFTestHoverNames') and 'CMFRegister' in calls or
                             pack == 'modZZCMFTestSmooth' and 'CMFStylePart' in calls or
-                            pack == 'modCMFTestMapSpace' and 'CMFDrawSetList' in calls, script)
+                            pack == 'modCMFTestMapSpace' and 'CMFDrawSetList' in calls or
+                            pack == 'modCMFTestRev13Movie' and 'CMFDraw' in calls or
+                            pack == 'modCMFTestRev13Look' and 'CMFStyle' in calls or
+                            pack in ('modCMFTestRev13AskEarly', 'modCMFTestRev13AskLate') and
+                            any('append-only cmfAskBy' in note for note in report.notes), script)
             # CMF's own test packs may use the CMF prefix; their art is cooked by tools/cmf_pin_stage.py.
             # modcmfTestCaseA declares the vanilla 'Quests' category and the exemption "bogus" on purpose to
             # show core's rejections.

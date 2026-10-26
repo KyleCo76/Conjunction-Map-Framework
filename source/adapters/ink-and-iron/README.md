@@ -1,6 +1,6 @@
 # Ink and Iron adapter
 
-`modCMFAdapterInkAndIron` is a separate mod that sits between Conjunction Map Framework (CMF) and Ink and Iron (0.8.7 to 0.9.0 read; the separate `modInkAndIronUI` folder or the All In One file's `modInkAndIron` folder, proven with 0.8.9 on 2026-10-21). With CMF installed, CMF's world map replaces Ink and Iron's map, while Ink and Iron's HUD, compass and menus load as normal. This adapter brings back what Ink and Iron's map adds, through CMF's general calls:
+`modCMFAdapterInkAndIron` is a separate mod that sits between Conjunction Map Framework (CMF) and Ink and Iron (0.8.10 and later supported from adapter 1.2.2; 0.8.7 to 0.9.0 read; the separate `modInkAndIronUI` folder or the All In One file's `modInkAndIron` folder, proven with 0.8.9 on 2026-10-21). With CMF installed, CMF's world map replaces Ink and Iron's map, while Ink and Iron's HUD, compass and menus load as normal. This adapter brings back what Ink and Iron's map adds, through CMF's general calls:
 - its look (CMF 5's `CMFStylePart`, `CMFDraw` and `CMFDrawSet`);
 - its quest-level tags (`OnPinReady`, `CMFStylePinLabel`, property 17 `LabelColor`);
 - its key-hint row (`cmf.map.hints`);
@@ -71,7 +71,7 @@ Every claim names `modInkAndIronUI`, Ink and Iron's own folder, as its provider 
 
 ## Dependencies
 
-- **Ink and Iron 0.8.8, the version the adapter targets.** 0.8.7 has the same map file and the same scripts the adapter calls, so it works there too (Kyle plays 0.8.7). Recheck `InkGatherHints`, `iaiLv` and `iaiDiff` against each new Ink and Iron version.
+- **Ink and Iron 0.8.10 or later, from adapter 1.2.2** (Kyle's pick, 2026-10-25). The adapter cannot tell which Ink and Iron version is installed, and its info box frame, backing and clear area are 0.8.10 behaviours, so on 0.8.7 to 0.8.9 it would add a look those versions never had. The scripts it calls are the same from 0.8.7. Recheck `InkGatherHints`, `iaiLv` and `iaiDiff` against each new Ink and Iron version.
 - **modInkAndIronUI, a compile dependency.** The adapter calls `InkGatherHints`, so the scripts fail to compile without it. Install and remove the two together; remove the adapter first.
 - **When Ink and Iron ships its own CMF support, uninstall this adapter.** With both installed, the game stops at the script compile screen (both add `OnCMFMapHintsReady` to `CR4MapMenu`); removing the adapter fixes it. This is accepted.
 - **CMF 9 (CMF 1.3.0) to compile, from adapter 1.2.0:** `CMFRegisterChoiceOnly`, `CMFRegisterWorldPainting`, `CMFRegisterWorldCrest` (and CMF 8's `CMFSetProviderName`). Earlier CMF versions stop at the compile screen; players on them keep adapter 1.1.0.
@@ -94,7 +94,9 @@ Build: `python tools/cmf_pack.py build source/adapters/ink-and-iron/modCMFAdapte
 
 ## Status
 
-Adapter 1.2.1 (2026-10-24) adds Ink and Iron's larger clear area round the cursor for a long info box (`MapMenu.inkTipPlace`, read from the 0.8.10 and 0.9.0 code; the separate-files setup read 2026-10-24), each key behind `CMFHasAbility`, so it still compiles and runs on CMF 9 and 10; it passed its launch on 2026-10-24 (revision 11 launch, start D).
+Adapter 1.2.2 (2026-10-25) supports Ink and Iron 0.8.10 and later only, and sends `clearCursor` 70 only when CMF has `clearCursorAbove` (CMF 11, 1.5.0), so on CMF 1.3.0 to 1.4.2 a tall box keeps the panel's own 40 px gap; it passed in game on 2026-10-25.
+
+Adapter 1.2.1 (2026-10-24) adds Ink and Iron's larger clear area round the cursor for a long info box (`MapMenu.inkTipPlace`, read from the 0.8.10 and 0.9.0 code; the separate-files setup read 2026-10-24), each key behind `CMFHasAbility` (except `clearCursor`, fixed in 1.2.2), so it still compiles and runs on CMF 9 and 10; it passed its launch on 2026-10-24 (revision 11 launch, start D).
 
 Adapter 1.2.0 (world overview and button art) passed its launch on CMF 1.3.0 on 2026-10-23 (revision 9 launch, start C, in `source/probes/rev9_launch/README.md`): the engraved overview and crests when picked, and the gold buttons, which were seen only through a test copy of CMF's map that shows controller buttons while the mouse is used, so not yet with a real controller.
 

@@ -15,12 +15,13 @@ API version 4 adds six properties. Pin size, label text and the scrolling info b
 | `14` `CMFPropertyInfoBoxHeight()` | `''` only, through `CMFRegister` only | unused | the info box's text height in px, `100` to `1080`; `0` withdraws |
 | `15` `CMFPropertyTabHide()` | a pin type, a tag, one pin, or `''` for every pin | filter tab names: `"Quests"`, `"Exploration"`, `"NPCs"`, `"Buffs"` or a tab id, separated by commas or spaces | nonzero hides, `0` withdraws |
 
-- **Size** scales the pin's icon, its highlight ring and its glow together. The player marker and the player's own pins are never resized.
+- **Size** scales the pin's icon, its highlight ring and its glow together. The player marker and the player's own pins are never resized. To draw a larger picture without a larger ring and glow (a badge, say), keep the size and grow the picture with id 44 (API version 13): it multiplies the size for the icon and the picture under it (42) only.
 - **Labels** sit below signposts and above other pins, as the game places them. A label place moves it further from the pin.
 - **Which label to hide.** `"pin"` hides the label drawn on the map next to the pin; `"crosshair"` hides the name the crosshair shows when it rests on the pin. In script the two flags are `CMFLabelHidePin()` (1) and `CMFLabelHideCrosshair()` (2), so you can add them up while you decide and then pass the matching text.
 - **The info box** scrolls when its text is taller than the height you give, with a scroll bar and the inputs Map Quest Insight's map uses. Only one height applies: the earliest folder among the claims wins. `0` keeps the game's box.
+- **Label hides (13)** merge eligible contributions by union. Eligibility is recomputed when a selected direct-only provider first contributes, so wrapper order cannot leave an ineligible hide behind; zero never removes an eligible hide.
 - **Tab hides** leave a pin out of the filter tabs you name; it stays in the others and under All. Like hide claims, every tab hide applies; there is no winner.
-- **Conflicts** for 10 to 13 work as for icons: a per-pin call beats a tag claim, a tag claim beats a type claim, and within one level the earlier folder name wins.
+- **Conflicts** for 10 to 12 work as for icons: a per-pin call beats a tag claim, a tag claim beats a type claim, and within one level the earlier folder name wins.
 - `CMFRegisterForTag` accepts 10 to 13 and 15. Size and label tag claims never apply to an undiscovered "?" pin or a completed pin.
 
 The per-pin calls, all API version 4:

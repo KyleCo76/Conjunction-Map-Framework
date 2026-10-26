@@ -1,0 +1,20 @@
+{
+  "mod": "modCMFTestRev13Claims",
+  "idBase": 2000200800,
+  "strings": [
+    {
+      "id": 2000200801,
+      "key": "cmf_rev13_added_pin_label",
+      "text": {
+        "en": "CMF added sample pin"
+      }
+    },
+    {
+      "id": 2000200802,
+      "key": "cmf_rev13_added_pin_description",
+      "text": {
+        "en": "API13 review sample, placed 200 m east of Geralt when first opening the current-area map."
+      }
+    }
+  ]
+}

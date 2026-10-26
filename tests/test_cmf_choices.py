@@ -68,8 +68,8 @@ def pin_group(pin_type, lists):
 class ChoiceKeyTests(unittest.TestCase):
     def test_keys_are_features_then_pieces(self):
         keys = choice_keys()
-        self.assertEqual(len(keys), 72)
-        self.assertEqual(len(set(keys)), 72)
+        self.assertEqual(len(keys), 80)
+        self.assertEqual(len(set(keys)), 80)
         self.assertEqual(keys[:11], FEATURES)
         # Version 10: the Behaviour feature (62) follows the version 9 pieces; its new pieces carry its name.
         self.assertEqual(keys[62], 'Behaviour')
@@ -88,7 +88,7 @@ class ChoiceKeyTests(unittest.TestCase):
         self.assertEqual(keys[62:69], ['Behaviour', 'Behaviour_InfoBoxDodge', 'Behaviour_InfoBoxHeight', 'Movement_ZoomOut',
                                        'Movement_Controller', 'Behaviour_HoverNames', 'Movement_Wide'])
         # Version 11 appends two pieces after the reserved index.
-        self.assertEqual(keys[70:], ['Icons_Undiscovered', 'Look_InfoText'])
+        self.assertEqual(keys[70:72], ['Icons_Undiscovered', 'Look_InfoText'])
 
     def test_index_comments_name_the_right_keys(self):
         keys = choice_keys()
@@ -570,7 +570,7 @@ class MenuScriptTests(unittest.TestCase):
         # there, and a change the game still reports is kept out; the General page (Reset) is left alone.
         text = self.script()
         page = function_body(text, 'function CMFMenuFillPage(storage : CScriptedFlashValueStorage, groupName : name, groupRootObject : CScriptedFlashObject)')
-        self.assertIn('theGame.CMFMenuGetState().SetTitleScreen(!theGame.IsActive());', page)
+        self.assertIn('theGame.CMFMenuGetState().SetTitleScreen(remembered || !theGame.IsActive());', page)
         self.assertIn('providers, remembered);', page.split('CMFMenuFillOrder(')[1].split('\n')[0])
         self.assertIn('remembered || (!offeredAny && stored == "")', text)
         order = function_body(text, 'function CMFMenuFillOrder(storage : CScriptedFlashValueStorage, row : CScriptedFlashObject, varName : name,\n\tposition : string, providers : array<string>, remembered : bool)')

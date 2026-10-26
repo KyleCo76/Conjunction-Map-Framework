@@ -24,6 +24,7 @@ case>/world/<name>.png and .../buttons/<name>.png). Needs only the Python standa
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 import struct
@@ -67,7 +68,7 @@ API = {'CMFRegisterIcon', 'CMFRegisterLegendIcon', 'CMFRegisterTint', 'CMFRegist
        # Version 11: one pin at a time (info box title and text, undiscovered and completed art, whole tabs, places).
        'CMFPropertyInfoTitle', 'CMFPropertyInfoText', 'CMFPropertyIconUndiscovered', 'CMFPropertyIconCompleted',
        'CMFPropertyTabHidden', 'CMFInfoReplace', 'CMFInfoAdd', 'CMFLevelPlace', 'CMFPlaceRadius', 'CMFRegisterForPlace',
-       'CMFSetLogPins', 'CMFPropertyPresent', 'CMFDeclareProvider', 'CMFProviderPresent'}
+       'CMFSetLogPins', 'CMFPropertyPresent', 'CMFDeclareProvider', 'CMFProviderPresent', 'CMFStyle', 'CMFAddPin', 'CMFRemovePin', 'CMFDeclareTag', 'CMFClickInputHold'}
 # Categories the vanilla legend defines; a pack's own category id may not reuse one (CMF compares ignoring case).
 VANILLA_CATEGORIES = ('All', 'Default', 'General', 'Quests', 'Exploration', 'NPCs', 'Buffs')
 # Calls that need CMF 2; a pack using them should check CMFRequireVersion(pack, 2) or CMFHasProperty(8).
@@ -106,6 +107,7 @@ VERSION10 = {'CMFPropertyHoverName', 'CMFScreenWidth', 'CMFScreenHeight'}
 VERSION11 = {'CMFPropertyInfoTitle', 'CMFPropertyInfoText', 'CMFPropertyIconUndiscovered', 'CMFPropertyIconCompleted',
              'CMFPropertyTabHidden', 'CMFInfoReplace', 'CMFInfoAdd', 'CMFLevelPlace', 'CMFPlaceRadius',
              'CMFRegisterForPlace', 'CMFSetLogPins', 'CMFPropertyPresent', 'CMFDeclareProvider', 'CMFProviderPresent'}
+VERSION13 = {'CMFStyle', 'CMFAddPin', 'CMFRemovePin', 'CMFDeclareTag', 'CMFClickInputHold'}
 # The world overview's crest names (UniverseMapContainer.configUI); a region another mod adds goes by its area name.
 WORLD_REGIONS = ('kaer_morhen', 'skellige', 'novigrad', 'no_mans_land', 'prolog_village', 'wyzima_castle', 'bob')
 WORLD_MARKERS = ('player', 'quest')
@@ -128,40 +130,49 @@ THEME_PART_KEYS = {
     'screen': (),
     'map': ('top', 'bottom', 'panLimit', 'centerInLimit', 'backdrop'),
     'mapEdge': ('hide',),
-    'title': THEME_TEXT + ('x', 'y', 'screenX', 'screenY', 'wrap', 'hide'),
-    'tracker': THEME_GLOW + ('nameFont', 'nameSize', 'nameColor', 'hide'),
-    'legend': THEME_GLOW,
-    'legendRow': THEME_GLOW + ('color', 'colorSelected', 'colorOff', 'counterColor', 'hide'),
-    'legendTab': THEME_GLOW + ('color', 'spacing', 'hide'),
+    'title': THEME_TEXT + ('x', 'y', 'screenX', 'screenY', 'wrap', 'hide', 'text'),
+    'tracker': THEME_GLOW + ('nameFont', 'nameSize', 'nameColor', 'hide', 'x', 'y', 'scale'),
+    'legend': THEME_GLOW + ('allText', 'x', 'y', 'scale', 'show', 'autoHideMs', 'padShowFirst'),
+    'legendRow': THEME_GLOW + ('color', 'colorSelected', 'colorOff', 'counterColor', 'hide', 'font', 'size'),
+    'legendTab': THEME_GLOW + ('color', 'spacing', 'hide', 'font', 'size'),
     'tooltip': THEME_GLOW + ('titleFont', 'titleSize', 'titleColor', 'bodyFont', 'bodySize', 'bodyColor', 'hide',
                              'clearMinHeight', 'clearView', 'clearSide', 'clearCursor', 'clearLeft', 'clearTop',
                              'clearRight', 'clearBottom', 'x', 'y', 'clearCursorAbove', 'clearCursorBelow', 'clearCursorTitle', 'clearPadX', 'clearPadY',
-                             'clearGap', 'clearBoxPad', 'clearPick', 'clearCursorWeight'),
-    'preview': ('hide',),
-    'worldButton': THEME_GLOW + ('hide',),
-    'worldHint': THEME_GLOW + ('hide',),
-    'hints': THEME_GLOW + ('x', 'y', 'scale', 'align'),
-    'keyCap': THEME_GLOW + ('color', 'iconColor', 'brackets', 'keyGap', 'labelGap', 'hide'),
-    'pinLabel': ('font', 'size', 'rise', 'riseTracked', 'riseOffset', 'riseOffsetTracked') + THEME_SHADOW,
-    'pinName': ('font', 'size') + THEME_SHADOW,
+                             'clearGap', 'clearBoxPad', 'clearPick', 'clearCursorWeight', 'tallMinHeight', 'tallX',
+                             'tallTop', 'tallBottom', 'tallAltX', 'tallAltTop', 'tallAltBottom', 'tallUnderLegend', 'tallClear', 'showSeconds', 'hideSeconds', 'slide',
+                             'plateColor', 'plateAlpha', 'thumbColor', 'trackColor', 'scrollStep', 'titleCase', 'hideScrollBar',
+                             'foldTag', 'foldMoreText', 'foldLessText', 'foldKeyPad', 'foldKeyKb', 'foldOpen', 'clearAnchor') + tuple(prefix + k[0].upper() + k[1:] for prefix in ('title', 'body') for k in THEME_GLOW),
+    'preview': ('hide', 'x', 'y', 'scale', 'show', 'movingMs'),
+    'worldButton': THEME_GLOW + ('hide', 'text', 'x', 'y', 'scale', 'font', 'size'),
+    'worldHint': THEME_GLOW + ('hide', 'text', 'x', 'y', 'scale', 'font', 'size'),
+    'hints': THEME_GLOW + ('x', 'y', 'scale', 'align', 'list', 'font', 'size'),
+    'keyCap': THEME_GLOW + ('color', 'iconColor', 'brackets', 'keyGap', 'labelGap', 'hide', 'font', 'size'),
+    'pinLabel': ('font', 'size', 'color', 'rise', 'riseTracked', 'riseOffset', 'riseOffsetTracked') + THEME_SHADOW,
+    'pinName': ('font', 'size', 'color') + THEME_SHADOW,
     'navigation': ('frameTimed', 'stepMs', 'worldStepMs', 'maxStepMs', 'crosshairRoam', 'safeLeft', 'safeTop',
                    'safeRight', 'safeBottom', 'snapSeconds', 'centerSeconds', 'zoomTimed', 'padHoldMs',
-                   'tweenEveryFrame', 'frameRate', 'zoomOutFit', 'edgeOvershoot'),
+                   'tweenEveryFrame', 'frameRate', 'zoomOutFit', 'edgeOvershoot', 'zoomIn', 'zoomOut', 'zoomStep'),
     'markerPanel': ('minLeft', 'maxRight', 'minTop', 'maxBottom'),
     'pinButton': ('width', 'height', 'curve', 'fill', 'alpha', 'stroke', 'strokeWidth', 'offsetX', 'offsetY') + THEME_TEXT,
     'mapSpace': (),
     'opening': ('slideSeconds', 'slideOffset', 'closeSeconds', 'pinsDuringSlide', 'pinStepMs', 'pinBatch',
                 'pinBudgetMs', 'showDelayMs', 'fadeSeconds', 'tileFadeSeconds', 'revealSeconds', 'readyAtFadeStart',
-                'revealEase'),
+                'revealEase', 'revealLegendSeconds', 'revealTrackerSeconds', 'revealCrosshairSeconds', 'waitForMap'),
     'spread': ('on', 'anyPin', 'enterRadius', 'stackDistance', 'gap', 'maxPins', 'openMs', 'closeMs', 'lockRadius',
                'keepRadius'),
-    'wide': ('fill', 'panels', 'maxRatio', 'world'),
+    'wide': ('fill', 'panels', 'maxRatio', 'world', 'panelsLegend', 'panelsTracker', 'panelsPreview'),
+    'pin': ('highlightColor', 'highlightAlpha', 'glowColor', 'glowAlpha', 'disabledAlpha', 'disabledGrey', 'pulse', 'hide'),
+    'sounds': ('open', 'close', 'select', 'zoom', 'tab', 'click', 'travel'),
+    'world': ('crestX', 'crestY', 'nameX', 'nameY', 'text', 'font', 'size', 'color', 'outlineColor', 'outlineAlpha', 'hide'),
+    'crosshair': THEME_GLOW + ('color', 'alpha', 'scale', 'hide'),
+    'edgePointer': THEME_GLOW + ('color', 'alpha', 'scale', 'hide'),
 }
 # Version 10: the menu row that decides each theme key (cmfCore.ws PartKeyChoice): behaviour keys on a look part and
 # the map's backdrop colour answer their own row; every other key answers its part's row.
-THEME_PART_ROWS = {'screen': 'Map look > Frames and panels', 'mapEdge': 'Map look > Frames and panels', 'title': 'Map look > Frames and panels',
+THEME_PART_ROWS = {'world': 'Map paintings > Region crests and markers', 'sounds': 'Map look > Map sounds', 'pin': 'Map look > Pin highlights and glow', 'screen': 'Map look > Frames and panels', 'mapEdge': 'Map look > Frames and panels', 'title': 'Map look > Frames and panels',
                    'tracker': 'Map look > Frames and panels', 'preview': 'Map look > Frames and panels', 'worldButton': 'Map look > Frames and panels',
-                   'worldHint': 'Map look > Frames and panels', 'markerPanel': 'Map look > Frames and panels',
+                   'worldHint': 'Map look > Frames and panels', 'crosshair': 'Map look > Frames and panels',
+                   'edgePointer': 'Map look > Frames and panels', 'markerPanel': 'Map look > Frames and panels',
                    'legend': 'Map look > Legend', 'legendRow': 'Map look > Legend', 'legendTab': 'Map look > Legend',
                    'tooltip': 'Map look > Info box', 'hints': 'Map look > Key hints', 'keyCap': 'Map look > Key hints',
                    'pinLabel': 'Map look > Pin text style', 'pinName': 'Map look > Pin text style',
@@ -172,7 +183,8 @@ THEME_KEY_ROWS = {
     ('tooltip', k): 'Map behaviour > Info box moves out of the way'
     for k in ('clearMinHeight', 'clearSide', 'clearCursor', 'clearLeft', 'clearTop', 'clearRight', 'clearBottom',
               'clearView', 'clearCursorAbove', 'clearCursorBelow', 'clearCursorTitle', 'clearPadX', 'clearPadY',
-              'clearGap', 'clearBoxPad', 'clearPick', 'clearCursorWeight', 'x', 'y')}
+              'clearGap', 'clearBoxPad', 'clearPick', 'clearCursorWeight', 'x', 'y', 'tallMinHeight', 'tallX', 'tallTop',
+              'tallBottom', 'tallAltX', 'tallAltTop', 'tallAltBottom', 'tallUnderLegend', 'tallClear', 'clearAnchor')}
 THEME_KEY_ROWS.update({('pinLabel', k): 'Map behaviour > Label place and hiding'
                        for k in ('rise', 'riseOffset', 'riseTracked', 'riseOffsetTracked')})
 THEME_KEY_ROWS.update({('navigation', k): 'Map movement > Zoom out to the whole region'
@@ -180,6 +192,11 @@ THEME_KEY_ROWS.update({('navigation', k): 'Map movement > Zoom out to the whole 
 THEME_KEY_ROWS.update({('navigation', k): 'Map movement > Controller crosshair'
                        for k in ('crosshairRoam', 'safeLeft', 'safeTop', 'safeRight', 'safeBottom', 'snapSeconds',
                                  'centerSeconds', 'padHoldMs')})
+THEME_KEY_ROWS.update({('tooltip', k): 'Map behaviour > Info box folding'
+                       for k in ('foldTag', 'foldMoreText', 'foldLessText', 'foldKeyPad', 'foldKeyKb', 'foldOpen')})
+THEME_KEY_ROWS.update({('tooltip', k): 'Map behaviour > Info box motion' for k in ('showSeconds', 'hideSeconds', 'slide')})
+THEME_KEY_ROWS.update({('tooltip', k): 'Map behaviour > Info box size and scrolling' for k in ('scrollStep', 'hideScrollBar')})
+THEME_KEY_ROWS.update({(p, k): 'Map behaviour > Panel visibility' for p, keys in (('legend', ('show', 'autoHideMs', 'padShowFirst')), ('preview', ('show', 'movingMs'))) for k in keys})
 THEME_KEY_ROWS[('map', 'backdrop')] = 'Map look > Frames and panels'
 
 
@@ -193,23 +210,24 @@ THEME_SHAPE_COMMON = ('left', 'top', 'right', 'bottom', 'width', 'height', 'widt
                       'fill2', 'alpha2', 'gradient', 'angle', 'curve', 'stroke', 'strokeAlpha', 'strokeWidth', 'layer',
                       'order', 'view', 'when', 'repeat', 'repeatStep', 'alphaList') + THEME_GLOW + THEME_SHADOW
 # Version 6 (map-space drawing): drawing tabs, clicks and the hover look on the box kinds; the map-space kinds
-# line and movie (mapSpace only) and text (mapSpace, placed at x, y metres, or any part or drawing).
+# line (mapSpace only), movie (every drawable part) and text (mapSpace, placed at x, y metres, or any part or drawing).
 THEME_HOVER = ('fillHover', 'alphaHover', 'strokeHover', 'strokeAlphaHover', 'strokeWidthHover', 'colorHover')
-THEME_BOX = THEME_SHAPE_COMMON + ('tab', 'tabLabel', 'click', 'above') + THEME_HOVER + ('minPartHeight', 'wideAnchor')
+THEME_BOX = THEME_SHAPE_COMMON + ('tab', 'tabLabel', 'click', 'above') + THEME_HOVER + ('minPartHeight', 'wideAnchor', 'pinType', 'pinTag', 'withLook')
 THEME_SPACE = ('layer', 'order', 'alpha', 'view', 'area', 'preview', 'fadeMs', 'tab', 'tabLabel', 'listen',
-               'listenFields')
+               'listenFields', 'withLook')
 THEME_KIND_KEYS = {'rect': THEME_BOX, 'ring': THEME_BOX + ('inset',), 'ellipse': THEME_BOX,
                    'polygon': THEME_BOX + ('points', 'originX', 'originY'),
                    'band': THEME_BOX + ('side', 'size', 'sizeZoom', 'minSize', 'maxShare'),
                    'line': THEME_SPACE + ('stroke', 'strokeAlpha', 'strokeWidth', 'strokeZoom'),
                    'text': THEME_BOX + ('text', 'font', 'size', 'color', 'align', 'wrap', 'padding', 'x', 'y',
                                         'sizeZoom', 'area', 'fadeMs', 'listen', 'listenFields'),
-                   'movie': THEME_SPACE + ('src',)}
+                   'movie': THEME_BOX + ('area', 'preview', 'fadeMs', 'listen', 'listenFields', 'src', 'focus'),
+                   'image': THEME_BOX + ('src', 'fit', 'smooth', 'x', 'y', 'sizeZoom', 'area', 'fadeMs')}
 THEME_SHAPE_KEYS = set(k for keys in THEME_KIND_KEYS.values() for k in keys)
 # CMFDrawSetList keys per kind (a movie takes any list key its author documents).
 THEME_LIST_KEYS = {'line': ('xs', 'ys', 'starts', 'modes', 'colors')}
-# Kinds the mapSpace anchor takes; line and movie take no other anchor.
-THEME_SPACE_KINDS = ('line', 'text', 'movie')
+# Kinds the mapSpace anchor takes; line takes no other anchor.
+THEME_SPACE_KINDS = ('line', 'text', 'movie', 'image')
 # CMFStylePart("provider", 'part', 'key', ...), CMFDraw("provider", 'anchor', 'id', 'kind'),
 # CMFDrawSet("provider", 'id', 'key', ...): literal names only; values are often computed.
 THEME_PART = re.compile(r'\s*"([^"]*)"\s*,\s*\'([^\']*)\'\s*,\s*\'([^\']*)\'')
@@ -219,8 +237,10 @@ THEME_DRAW = re.compile(r'\s*"([^"]*)"\s*,\s*\'([^\']*)\'\s*,\s*\'([^\']*)\'\s*,
 HOOKS = ('OnPinReady', 'OnMapReady', 'OnPinClicked', 'OnDrawingClicked', 'OnMapListening', 'OnMapView', 'OnMapOpening')
 HOOKS6 = ('OnPinClicked', 'OnDrawingClicked', 'OnMapListening')
 HOOKS9 = ('OnMapView', 'OnMapOpening')
+HOOKS13 = ('OnMapTab', 'OnMapHints', 'OnInfoFold', 'OnMovieEvent', 'OnMapAreaReady')
+HOOKS += HOOKS13
 # Input words a PinClick claim accepts (commas or spaces between them, case ignored).
-CLICK_WORDS = ('use', 'doubleclick', 'button')
+CLICK_WORDS = ('use', 'doubleclick', 'button', 'hold')
 # Label words a LabelHide claim accepts (commas or spaces between them, case ignored).
 LABEL_WORDS = ('pin', 'crosshair')
 # Exemption words a hide claim accepts (commas or spaces between them, case ignored).
@@ -472,17 +492,21 @@ PROPERTY_IDS = {'CMFPropertyIcon': 1, 'CMFPropertyLegendIcon': 2, 'CMFPropertyTi
                 'CMFPropertyHoverName': 28, 'CMFPropertyInfoTitle': 18, 'CMFPropertyInfoText': 19,
                 'CMFPropertyIconUndiscovered': 29, 'CMFPropertyIconCompleted': 30, 'CMFPropertyTabHidden': 37, 'CMFPropertyPresent': 38}
 # Property ids this CMF accepts.
-KNOWN_PROPERTIES = set(range(1, 18)) | {18, 19} | {20, 21, 22, 23} | set(range(24, 28)) | {28, 29, 30, 37, 38}
+NUMERIC_PROPERTIES = {31: "IconSelected", 32: "SelectedScale", 33: "PinAlpha", 34: "PinOrder",
+                      35: "PinOffset", 36: "PinZoom", 40: "Withdraw", 41: "LegendRowTint",
+                      39: "InfoBoxWidth", 42: "IconUnder", 43: "IconUnderTint", 44: "PictureScale"}
+KNOWN_PROPERTIES = set(range(1, 45))
 # Version 11: the ids a tag (CMFRegisterForTag) or place (CMFRegisterForPlace) claim takes (cmfCore.ws CMFOnePinProperty).
 # API version 11: the player's arrow and markers, reached by type claims with ids 1, 3 and 10 only.
 MARKER_TYPES = {'Player'} | {'User%d' % n for n in range(1, 8)}
-ONE_PIN_PROPERTIES = {1, 3, 5, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 28, 29, 30}
+ONE_PIN_PROPERTIES = {1, 3, 5, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 28, 29, 30, 31, 32, 33, 34, 35, 36, 39, 42, 43, 44}
+EVERY_PIN_PROPERTIES = {1, 3, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 22, 28, 29, 30, 31, 32, 33, 34, 35, 36, 39, 42, 43, 44}
 # CMFRegisterForPlace("provider", id, 'type', x, y, "text", number)
 PLACE_CLAIM = re.compile(r'\s*"([^"]*)"\s*,\s*(\d+|CMFProperty\w+\(\s*\))\s*,\s*\'([^\']*)\'\s*,\s*(-?[\d.]+)\s*,'
                          r'\s*(-?[\d.]+)\s*,\s*"([^"]*)"\s*,\s*(0[xX][0-9A-Fa-f]+|-?\d+)\s*\)')
 # Version 9: the controller families a button picture (26) may name.
 BUTTON_FAMILIES = ('xbox', 'ps4', 'ps5', 'steam', 'switch')
-GENERIC_KINDS = {1: 'icon', 2: 'legend', 3: 'tint'}
+GENERIC_KINDS = {1: 'icon', 2: 'legend', 3: 'tint', 31: 'selected icon', 42: 'under icon'}
 LITERAL_PROVIDER = re.compile(r'\s*"([^"]*)"\s*[,)]')
 # CMFRegisterLegendRow("provider", 'filteredType', 'category', priority) and
 # CMFRegisterLegendCategory("provider", 'category', "label", priority)
@@ -513,6 +537,157 @@ def exemption_issues(text_value):
             for w in words if w not in EXEMPTIONS]
 
 
+def guarded_revision(code, offset, provider, minimum, ability):
+    """Conservative evidence: a positive enclosing if with the relevant literal guard.
+    Unresolved conditions are advisory, never a certificate of runtime safety.
+    """
+    guard = (r'CMFRequireVersion\(\s*"' + re.escape(provider) + r'"\s*,\s*(\d+)\s*\)'
+             r'|CMFGetVersion\(\s*\)\s*>=\s*(\d+)'
+             r"|CMFHasAbility\(\s*'claims'\s*,\s*'" + re.escape(ability) + r"'\s*\)")
+    shape = re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', lambda m: " " * len(m.group()), code)
+    for match in re.finditer(r'\bif\s*\(', shape[:offset]):
+        depth, end = 1, match.end()
+        while end < len(code) and depth:
+            depth += (shape[end] == "(") - (shape[end] == ")")
+            end += 1
+        condition = code[match.end():end-1].strip()
+        evidence = re.fullmatch(guard, condition)
+        if not evidence:
+            continue
+        versions = [int(v) for v in evidence.groups() if v]
+        if versions and max(versions) < minimum:
+            continue
+        start = end
+        while start < len(code) and code[start].isspace():
+            start += 1
+        if start >= len(code) or code[start] != "{":
+            continue
+        depth, end = 1, start + 1
+        while end < len(code) and depth:
+            depth += (shape[end] == "{") - (shape[end] == "}")
+            end += 1
+        if start < offset < end:
+            return True
+    return False
+
+
+def widening_requirements(call, prop_id, target):
+    if call == "CMFRegisterForPlace":
+        return [(11, "placeClaims")]
+    if call == "CMFRegisterForTag" and prop_id == 3:
+        return [(11, "tagTint")]
+    if call == "CMFRegister":
+        if not target and prop_id in (1,3,10,11,12,13,17,22,42,43,44):
+            return [(13, "everyPin")]
+        if prop_id in (1,3,10) and (target == "Player" or re.fullmatch(r"User[1-7]",target)):
+            return [(11, "playerArt")]
+        if re.search(r"_[0-9]+$",target) and prop_id in ONE_PIN_PROPERTIES:
+            return [(11, "levelVariants")]
+        if prop_id == 14 and target:
+            return [(11, "placeClaims")]
+        if prop_id == 6:
+            table = json.loads((TOOLS / "cmf_pin_types.json").read_text(encoding="utf-8"))
+            if target in {r["name"] for r in table["types"]}:
+                return [(11, "vanillaRows")]
+    return []
+
+
+def added_pin_issues(provider, tag, pin_type, area, x, y):
+    word = r"[A-Za-z0-9_.-]+"
+    if (not re.fullmatch(word, provider) or not re.fullmatch(word, tag)
+            or not tag.lower().startswith(provider.lower() + ".") or len(tag) <= len(provider) + 1):
+        return ["added pin tag must be provider.suffix, using letters, digits, dot, underscore or hyphen"]
+    if not re.fullmatch(word, pin_type) or not re.fullmatch(word, area) or area == "AN_Undefined":
+        return ["added pin needs nonempty type and area identifiers"]
+    if not all(math.isfinite(v) and abs(v) <= 3.4028234663852886e38 for v in (float(x),float(y))):
+        return ["added pin world coordinates must be finite WitcherScript floats"]
+    return []
+
+
+def item_style_issues(part, target, key):
+    if part not in THEME_PART_KEYS or key not in THEME_PART_KEYS[part]:
+        return ["unknown item style part or key"]
+    if not target:
+        return []
+    if part == "legendRow":
+        valid = ":" not in target
+    elif part == "legendTab":
+        valid = ":" not in target or re.fullmatch(r"id:[0-9]+", target)
+    elif part == "title":
+        valid = key == "text" and ":" not in target
+    elif part == "world":
+        valid = ":" not in target
+    elif part in ("tooltip", "pinLabel", "pinName", "pinButton", "pin"):
+        valid = ":" not in target or re.fullmatch(r"(?:type|tag):[^:]+", target)
+    else:
+        valid = False
+    return [] if valid else ["invalid per-item target for %s.%s" % (part, key)]
+
+
+def fold_style_literal_issues(part, key, tail):
+    """Check literal fold values; dynamic expressions remain the core's responsibility."""
+    if part != "tooltip" or key not in ("foldTag", "foldMoreText", "foldLessText", "foldKeyPad", "foldKeyKb", "foldOpen", "clearAnchor"):
+        return []
+    tail = tail.lstrip()
+    if tail.startswith(","):
+        tail = tail[1:]
+    literal = re.match(r'\s*"([^"]*)"\s*,\s*([+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?)\s*\)', tail)
+    if not literal:
+        return []
+    text, number = literal.groups()
+    if text == "unset":
+        return []
+    if key == "foldOpen" and float(number) not in (0., 1.):
+        return ["tooltip.foldOpen must be 0 or 1"]
+    if key == "clearAnchor" and text not in ("cursor", "pin"):
+        return ["tooltip.clearAnchor must be cursor or pin"]
+    if key == "foldTag" and not re.fullmatch(r"[A-Za-z0-9_:\-]*", text):
+        return ["tooltip.foldTag must be empty or use marker-name letters, digits, underscore, hyphen or colon"]
+    return []
+
+
+def rev13_property_issues(prop_id, text_value, number):
+    """Literal validation for the revision 13 values; the core validates dynamic values."""
+    number = int(str(number), 16) if str(number).lower().startswith("0x") else int(number)
+    if prop_id in (31, 42):
+        return [] if re.fullmatch(r"(?:img://|frame:).+", text_value) else ["art must use img:// or frame: with a nonempty path"]
+    if prop_id == 39:
+        return [] if number == 0 or 200 <= number <= 1920 else ["InfoBoxWidth must be 200 through 1920, or 0 to withdraw"]
+    bounds = {32: (25, 400), 44: (25, 400), 33: (0, 100), 34: (-1000, 1000), 41: (0, 0xffffff), 43: (0, 0xffffff)}
+    if prop_id in bounds:
+        lo, hi = bounds[prop_id]
+        return [] if lo <= number <= hi else ["property %s number must be %s through %s" % (prop_id, lo, hi)]
+    if prop_id in (35, 36):
+        parts = text_value.split(",")
+        if len(parts) != 2 or any(not re.fullmatch(r" *[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+) *", v) for v in parts):
+            return ["property %s text must be two signed decimal coordinates x,y" % prop_id]
+        x, y = map(float, parts)
+        if not math.isfinite(x) or not math.isfinite(y) or any(abs(v) > 3.4028234663852886e38 for v in (x,y)):
+            return ["property %s coordinates must be finite WitcherScript floats" % prop_id]
+        if prop_id == 35 and not (-50 <= x <= 50 and -50 <= y <= 50):
+            return ["PinOffset coordinates must each be -50 through 50 world metres"]
+        if prop_id == 36 and x > y:
+            return ["PinZoom minimum must not exceed maximum"]
+    return []
+
+
+def withdrawal_issues(effective, target, context, text_value, level):
+    issues = []
+    if text_value or effective not in KNOWN_PROPERTIES or effective in (38, 40):
+        issues.append("Withdraw needs empty text and a supported claim id other than 38 or 40")
+    if level in ("tag", "place") and effective not in ONE_PIN_PROPERTIES:
+        issues.append("Withdraw property is not supported at this level")
+    if level in ("tag", "place") and not target:
+        issues.append("Withdraw needs a nonempty tag or type at this level")
+    if level == "type" and not target and effective not in EVERY_PIN_PROPERTIES:
+        issues.append("Withdraw property does not support an every-pin target")
+    if context and effective not in (5, 9):
+        issues.append("Withdraw context is only supported for ids 5 and 9")
+    if effective == 37 and target.lower() == "all":
+        issues.append("Withdraw cannot target the All tab")
+    return issues
+
+
 def n4_issues(prop_id, text_value, number):
     """Errors CMF's core would reject for a version 4 to 6 claim (ids 10 to 17, 20 to 22); 0 withdraws ids 14, 16, 20, 21."""
     number = int(number, 16) if number.lower().startswith('0x') else int(number)
@@ -535,7 +710,7 @@ def n4_issues(prop_id, text_value, number):
     if prop_id == 16:
         words = [w for w in re.split(r'[\s,]+', text_value.lower()) if w]
         if not words or any(w not in CLICK_WORDS for w in words):
-            return ['click inputs "%s" must name use, doubleClick or button; CMF rejects the claim' % text_value]
+            return ['click inputs "%s" must name use, doubleClick or button, or hold; CMF rejects the claim' % text_value]
     if prop_id in (20, 21) and not text_value:
         return ['empty %s text; CMF rejects the claim' % ('hint' if prop_id == 20 else 'button')]
     if prop_id == 22 and not 0 <= number <= 1000:
@@ -616,6 +791,24 @@ def legend_issues(prop_id, target, text_value):
     return issues
 
 
+def check_ask_script(path_label, text, report):
+    """Check a standalone ask fixture's compile independence, not its styling rules.
+
+    CMF function/class/global tokens outside string literals would create a script
+    dependency. Payload values deliberately keep the same validation as StylePin.
+    """
+    code = strip_comments(text)
+    symbols = re.sub(r'"[^"\\]*(?:\\.[^"\\]*)*"|\'[^\']*\'', '', code)
+    for match in re.finditer(r'\bCMF\w*\b', symbols):
+        report.error(path_label, 'standalone pin asks must not reference CMF functions, classes or globals (%s)'
+                     % match.group())
+    for match in re.finditer(r'@wrapMethod\(\s*(\w+)\s*\)\s*function\s+(\w+)', code):
+        # UpdateUserMapPins and AddPinTypeData still run when a REDkit-compiled mod replaces UpdateEntityPins.
+        if match.group(1) != 'CR4MapMenu' or match.group(2) not in ('UpdateEntityPins', 'UpdateUserMapPins', 'AddPinTypeData'):
+            report.error(path_label, 'standalone pin ask fixtures wrap only CR4MapMenu.UpdateEntityPins, '
+                         'UpdateUserMapPins or AddPinTypeData')
+
+
 def check_script(path_label, text, pack, report, claims, calls, provider=None):
     # provider: the name every claim must use; the pack folder name, or for an adapter the adapted mod's
     # folder name, so folder order between mods is the same with CMF as without it.
@@ -626,6 +819,8 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
     if any(ord(c) > 127 for c in text):
         report.error(path_label, 'scripts must be plain ASCII')
     code = strip_comments(text)
+    if re.search(r'SetMemberFlashString\(\s*"cmfAsk(?:By|Icon_|Tint_|Scale_|Label_|Ids_|Text|Number)', code):
+        report.note(path_label, 'pin asks use an append-only cmfAskBy list and provider-suffixed payloads; CMF resolves them as CMFStylePin calls')
     line_of = lambda offset: code.count('\n', 0, offset) + 1
     for match in re.finditer(r'\bfunction\s+(CMF\w*)', code):
         report.error('%s:%d' % (path_label, line_of(match.start())), 'do not define functions starting with CMF '
@@ -635,6 +830,9 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
                              r'cmfLabelHide\w*|cmfLabelColor\w*|cmfTabHide\w*|cmfScaleBy|cmfPlaceBy|cmfLabelBy|cmfDescMax\w+|cmfTabName|'
                              r'cmfSpreadRank\w*|cmfInfoTitleBy|cmfInfoTextBy)\b',
                              code):
+        if re.search(r'\bGetMemberFlash(?:String|Int|UInt|Number|Bool)\s*\(\s*"$',
+                     code[max(0, match.start()-80):match.start()]):
+            continue  # Explicit read-only diagnostics do not submit or overwrite a field.
         report.error('%s:%d' % (path_label, line_of(match.start())), 'do not write CMF pin fields (%s) yourself; '
                      'register through CMFRegister... or style one pin with CMFStylePin, so CMF can resolve packs '
                      'against each other' % match.group(1))
@@ -680,6 +878,19 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
             if prop_id is None or prop_id not in KNOWN_PROPERTIES:
                 report.warn(where, 'property %s is unknown to CMF 6; guard the call with CMFHasProperty' % prop)
                 continue
+            for minimum, ability in widening_requirements(name, prop_id, target):
+                if not guarded_revision(code, match.start(), provider, minimum, ability):
+                    report.note(where, 'widened target needs API %s+ or claims.%s; no relevant enclosing guard found'
+                                % (minimum, ability))
+            if prop_id == 40:
+                for issue in withdrawal_issues((int(number, 16) if number.lower().startswith("0x") else int(number)), target, context, text_value,
+                                              "tag" if name == "CMFRegisterForTag" else "type"):
+                    report.error(where, issue)
+                if provider != provider_name:
+                    report.error(where, 'provider "%s" must be %s "%s", exactly' % (provider, owner, provider_name))
+                continue
+            for issue in rev13_property_issues(prop_id, text_value, number):
+                report.error(where, issue)
             for issue in legend_issues(prop_id, target, text_value) if 6 <= prop_id <= 8 or prop_id == 23 else []:
                 report.error(where, issue)
             for issue in exemption_issues(text_value) if prop_id == 9 else []:
@@ -706,11 +917,12 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
                     continue
                 if prop_id != 1 and not target:
                     report.error(where, 'empty pin tag; CMF rejects the claim')
-                kind = 'tag icon' if prop_id == 1 else None
+                kind = {1: 'tag icon', 31: 'tag selected icon', 42: 'tag under icon'}.get(prop_id)
             if kind:
                 value = number if kind == 'tint' else '"%s"' % text_value
                 claims.append({'call': name, 'kind': kind, 'provider': provider, 'target': target,
-                               'value': value, 'where': where})
+                               'value': value, 'where': where,
+                               'every_pin': name == 'CMFRegister' and not target and prop_id in EVERY_PIN_PROPERTIES})
         elif name == 'CMFRegisterForPlace':
             literal = PLACE_CLAIM.match(rest)
             if not literal:
@@ -718,6 +930,18 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
                 continue
             provider, prop, target, _x, _y, text_value, number = literal.groups()
             prop_id = int(prop) if prop.isdigit() else PROPERTY_IDS.get(prop.split('(')[0].strip())
+            for minimum, ability in widening_requirements(name, prop_id, target):
+                if not guarded_revision(code, match.start(), provider, minimum, ability):
+                    report.note(where, 'widened target needs API %s+ or claims.%s; no relevant enclosing guard found'
+                                % (minimum, ability))
+            if prop_id == 40:
+                for issue in withdrawal_issues((int(number, 16) if number.lower().startswith("0x") else int(number)), target, "", text_value, "place"):
+                    report.error(where, issue)
+                if provider != provider_name:
+                    report.error(where, 'provider "%s" must be %s "%s", exactly' % (provider, owner, provider_name))
+                continue
+            for issue in rev13_property_issues(prop_id, text_value, number):
+                report.error(where, issue)
             if prop_id not in ONE_PIN_PROPERTIES:
                 report.error(where, 'CMFRegisterForPlace accepts only CMFPropertyIcon and ids %s'
                              % ', '.join(str(i) for i in sorted(ONE_PIN_PROPERTIES - {1})))
@@ -761,7 +985,7 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
                                     '"img://icons/%s/world/tile{x}x{y}.png"' % pack.lower())
             claims.append({'call': name, 'kind': kind, 'provider': provider, 'target': target,
                            'value': '"%s"' % url, 'columns': columns, 'rows': rows, 'where': where})
-        elif name in ('CMFRegisterChoiceOnly', 'CMFSetOpeningView', 'CMFSetOpeningWorld'):
+        elif name in ('CMFRegisterChoiceOnly', 'CMFSetOpeningView', 'CMFSetOpeningWorld', 'CMFDeclareTag'):
             literal = LITERAL_PROVIDER.match(rest)
             if literal and literal.group(1) != provider_name:
                 report.error(where, '%s names provider "%s"; it must be %s "%s"'
@@ -782,6 +1006,41 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
                 report.error(where, 'empty pin tag; CMF rejects the claim')
             for issue in exemption_issues(text_value):
                 report.error(where, issue)
+        elif name in ('CMFAddPin', 'CMFRemovePin'):
+            head = re.match(r'\s*"([^"]*)"\s*,\s*\'([^\']*)\'', rest)
+            if not head:
+                report.warn(where, '%s uses unresolved provider/tag expressions' % name)
+                continue
+            provider, tag = head.groups()
+            if provider != provider_name:
+                report.error(where, 'provider "%s" must be %s "%s", exactly' % (provider, owner, provider_name))
+            if name == 'CMFRemovePin':
+                issues = added_pin_issues(provider, tag, "Pin", "area", 0, 0)
+            else:
+                tail = re.match(r'\s*,\s*\'([^\']*)\'\s*,\s*\'([^\']*)\'\s*,\s*([+-]?[0-9.]+)\s*,\s*([+-]?[0-9.]+)\s*,', rest[head.end():])
+                if not tail:
+                    report.warn(where, 'CMFAddPin type, area or coordinates are unresolved; the core validates them')
+                    issues = added_pin_issues(provider, tag, "Pin", "area", 0, 0)
+                else:
+                    pin_type, area, x, y = tail.groups()
+                    try:
+                        issues = added_pin_issues(provider, tag, pin_type, area, float(x), float(y))
+                    except ValueError:
+                        issues = ['invalid added-pin coordinate literal']
+            for issue in issues:
+                report.error(where, issue)
+        elif name == 'CMFStyle':
+            literal = re.match(r'\s*"([^"]*)"\s*,\s*\'([^\']*)\'\s*,\s*\'([^\']*)\'\s*,\s*\'([^\']*)\'\s*,', rest)
+            if not literal:
+                report.warn(where, 'CMFStyle uses non-literal arguments, so the pack tool cannot check it')
+                continue
+            provider, part, target, key = literal.groups()
+            if provider != provider_name:
+                report.error(where, 'provider "%s" must be %s "%s", exactly' % (provider, owner, provider_name))
+            for issue in item_style_issues(part, target, key):
+                report.error(where, issue)
+            for issue in fold_style_literal_issues(part, key, rest[literal.end():]):
+                report.error(where, issue)
         elif name in ('CMFStylePart', 'CMFDrawSet'):
             literal = THEME_PART.match(rest)
             if not literal:
@@ -798,6 +1057,8 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
                                         "CMFHasAbility first for a key a later CMF adds)" % (target, key))
                 elif theme_key_row(target, key):
                     report.note(where, "%s.%s is decided by the menu row %s" % (target, key, theme_key_row(target, key)))
+                for issue in fold_style_literal_issues(target, key, rest[literal.end():]):
+                    report.error(where, issue)
             elif key not in THEME_SHAPE_KEYS and target not in movies:
                 report.error(where, "'%s' is not a drawing key in CMF 7; CMF rejects the call (a movie drawing "
                                     "takes its own keys after CMFDraw)" % key)
@@ -824,12 +1085,12 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
             if draw_id in THEME_PART_KEYS or draw_id in THEME_LAYERS or draw_id in THEME_KIND_KEYS or not draw_id:
                 report.error(where, "'%s' cannot be a drawing id: ids are your own names (prefix them with your "
                                     "mod's name)" % draw_id)
-            if anchor in THEME_LAYERS or anchor in THEME_KIND_KEYS or anchor in ('navigation', 'opening', 'spread', 'wide') or not anchor:
+            if anchor in THEME_LAYERS or anchor in THEME_KIND_KEYS or anchor in ('navigation', 'opening', 'spread', 'wide', 'sounds', 'world') or not anchor:
                 report.error(where, "'%s' cannot be an anchor: use a part of the map or a drawing id" % anchor)
             elif anchor == 'mapSpace' and kind and kind not in THEME_SPACE_KINDS:
                 report.error(where, "mapSpace takes only %s drawings; CMF rejects the call"
                              % ', '.join(THEME_SPACE_KINDS))
-            elif anchor != 'mapSpace' and kind in ('line', 'movie'):
+            elif anchor != 'mapSpace' and kind == 'line':
                 report.error(where, "a %s drawing takes only the mapSpace anchor; CMF rejects the call" % kind)
         elif name in ('CMFStylePin', 'CMFStylePinIcon', 'CMFStylePinTint', 'CMFStylePinScale', 'CMFStylePinLabel',
                       'CMFHidePin', 'CMFReleaseProvider', 'CMFRequireVersion', 'CMFDeclareProvider'):
@@ -888,6 +1149,13 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
         report.note(path_label, 'calls %s, so the pack compiles only with CMF 10 (1.4.0) or later; say so in its README '
                                 '(the generic CMFRegister id 28 behind CMFHasProperty(28) still compiles on CMF 1)'
                     % ', '.join(needs10))
+    needs13 = sorted(set(m.group(1) for m in CALL.finditer(code)) & VERSION13)
+    for hook in HOOKS13:
+        if re.search(r'@wrapMethod\(\s*CMFCore\s*\)\s*function\s+%s\s*\(' % hook, code):
+            needs13 = sorted(set(needs13) | {"CMFCore." + hook})
+    if needs13:
+        report.note(path_label, 'calls %s, so the pack compiles only with CMF API 13 or later, even inside a runtime guard; say so in its README'
+                    % ', '.join(needs13))
     needs11 = sorted(set(m.group(1) for m in CALL.finditer(code)) & VERSION11)
     if needs11:
         report.note(path_label, 'calls %s, so the pack compiles only with CMF 11 or later; say so in its README '
@@ -935,8 +1203,8 @@ def check_claims(pack, claims, images, report, types, provider=None, literal=())
             seen[slot] = value
             first.setdefault(slot, where)
             continue
-        if not target:
-            report.error(where, 'empty pin %s; CMF rejects the claim' % ('tag' if kind == 'tag icon' else 'type'))
+        if not target and not claim.get('every_pin'):
+            report.error(where, 'empty pin %s; CMF rejects the claim' % ('tag' if kind.startswith('tag ') else 'type'))
         if kind == 'tint':
             if value.startswith('"'):
                 report.error(where, 'the tint must be a number, not a string')
@@ -970,7 +1238,7 @@ def check_claims(pack, claims, images, report, types, provider=None, literal=())
                                    'holds that image' % url)
             else:
                 report.error(where, 'image paths start with img:// (%s...)' % prefix)
-        if kind != 'tag icon' and target:
+        if not kind.startswith('tag ') and target:
             entry = types.get(target)
             if entry is None:
                 close = [name for name in types if name.lower() == target.lower()]

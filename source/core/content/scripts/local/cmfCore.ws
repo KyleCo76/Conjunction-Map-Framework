@@ -17,10 +17,11 @@
 // art for one pin or one real kind while undiscovered or completed, the info box's title and text replaced or added to,
 // its height per type, tag or pin, art for a level variant type, claims by place (CMFRegisterForPlace), the player marker
 // and the player's own markers restyled by type, the game's own legend rows moved and whole filter tabs hidden, and the
-// pin list in the log, [CMFSettings] CMFLogPins, and provider presence without feature ownership).
+// pin list in the log, [CMFSettings] CMFLogPins, and provider presence without feature ownership); version 12: the info box's
+// place apart from its height (the tooltip keys tallMinHeight and the tall* places).
 // Never remove a call once published.
 
-function CMFGetVersion() : int { return 11; }
+function CMFGetVersion() : int { return 13; }
 
 function CMFPropertyIcon() : int { return 1; }
 function CMFPropertyLegendIcon() : int { return 2; }
@@ -226,12 +227,13 @@ function CMFLabelHideText(flags : int) : string
 
 // Version 6. Inputs a PinClick claim takes, as flags: use (E, Enter or gamepad A on the selected pin, and a
 // touch tap on it except on user pins), doubleClick (a mouse double-click on the selected pin) and button
-// (a button drawn beside the pin).
+// (a button drawn beside the pin). API 13 adds hold (8), after navigation.padHoldMs or the native delay.
 function CMFClickInputUse() : int { return 1; }
 function CMFClickInputDoubleClick() : int { return 2; }
 function CMFClickInputButton() : int { return 4; }
+function CMFClickInputHold() : int { return 8; }
 
-// Parses "use", "doubleClick" and "button", separated by commas or spaces, ignoring case, into input flags.
+// Parses "use", "doubleClick", "button" and "hold", separated by commas or spaces, ignoring case, into input flags.
 // False for any other word or for none, so a typo never claims an input.
 function CMFParsePinClick(text : string, out flags : int) : bool
 {
@@ -264,6 +266,13 @@ function CMFParsePinClick(text : string, out flags : int) : bool
 				flags += CMFClickInputButton();
 			}
 		}
+		else if (word == "hold")
+		{
+			if (!CMFHasFlag(flags, CMFClickInputHold()))
+			{
+				flags += CMFClickInputHold();
+			}
+		}
 		else if (word != "")
 		{
 			return false;
@@ -272,7 +281,7 @@ function CMFParsePinClick(text : string, out flags : int) : bool
 	return flags > 0;
 }
 
-// The inputs as the pin's cmfClick field carries them: "use", "doubleClick" and "button" joined with commas.
+// The pin's cmfClick field carries use, doubleClick, button and hold joined with commas.
 function CMFPinClickText(flags : int) : string
 {
 	var text : string;
@@ -288,6 +297,10 @@ function CMFPinClickText(flags : int) : string
 	if (CMFHasFlag(flags, CMFClickInputButton()))
 	{
 		text += "button,";
+	}
+	if (CMFHasFlag(flags, CMFClickInputHold()))
+	{
+		text += "hold,";
 	}
 	if (text != "")
 	{
@@ -333,7 +346,9 @@ function CMFPropertyTextFree(propertyId : int) : bool
 		propertyId == CMFPropertyPinScale() || propertyId == CMFPropertyLabelPlace() ||
 		propertyId == CMFPropertyInfoBoxHeight() || propertyId == CMFPropertyLabelColor() ||
 		propertyId == CMFPropertyCategoryNoDefault() || propertyId == CMFPropertySpreadRank() ||
-		propertyId == CMFPropertyHoverName() || propertyId == CMFPropertyTabHidden();
+		propertyId == CMFPropertyHoverName() || propertyId == CMFPropertyTabHidden() ||
+		propertyId == 32 || propertyId == 33 || propertyId == 34 || propertyId == 39 || propertyId == 41 || propertyId == 43 ||
+		propertyId == 44;
 }
 
 // Version 6: the click properties (16, 20, 21), which reach user pins and follow the click's winner.
@@ -410,6 +425,8 @@ function CMFOwnerField(propertyId : int) : string
 		// Version 11.
 		case 14:
 			return "cmfDescMaxHBy";
+		case 39:
+			return "cmfDescMaxWBy";
 		case 18:
 			return "cmfInfoTitleBy";
 		case 19:
@@ -417,6 +434,25 @@ function CMFOwnerField(propertyId : int) : string
 		case 29:
 		case 30:
 			return "cmfIconBy";
+		case 31:
+			return "cmfIconSelectedBy";
+		case 32:
+			return "cmfSelectedScaleBy";
+		case 33:
+			return "cmfPinAlphaBy";
+		case 34:
+			return "cmfPinOrderBy";
+		case 35:
+			return "cmfPinOffsetBy";
+		case 36:
+			return "cmfPinZoomBy";
+		case 42:
+			return "cmfIconUnderBy";
+		case 43:
+			return "cmfIconUnderTintBy";
+		case 44:
+			return "cmfPictureScaleBy";
+
 	}
 	return "";
 }
@@ -456,11 +492,14 @@ function CMFChoiceKeys() : string
 		"Painting_Velen,Painting_Skellige,Painting_KaerMorhen,Painting_Vizima,Painting_IsleOfMists,Painting_Spiral," +
 		"Painting_Toussaint,Drawings_Ignore1,Drawings_Ignore2,Drawings_Ignore3,Painting_World,Painting_Crests," +
 		"Movement_View,Behaviour,Behaviour_InfoBoxDodge,Behaviour_InfoBoxHeight,Movement_ZoomOut,Movement_Controller," +
-		"Behaviour_HoverNames,Movement_Wide,Reserved69,Icons_Undiscovered,Look_InfoText";
+		"Behaviour_HoverNames,Movement_Wide,Reserved69,Icons_Undiscovered,Look_InfoText," +
+		"Behaviour_InfoBoxMotion,Look_Sounds,Behaviour_InfoFold,Behaviour_PanelModes,Look_Badges,Look_PinLook," +
+		"Size_Place,Behaviour_PinZoom";
 }
 
 // Version 10: the feature of the three pieces that moved under Behaviour (62) without a new name, or -1 when the key's
 // prefix names its feature.
+// Piece-parent inheritance is separate: CMFCore.PieceParentTable (empty in revision 13).
 function CMFChoiceParent(choice : int) : int
 {
 	if (choice == 28 || choice == 29 || choice == 31)
@@ -656,6 +695,8 @@ struct SCMFClaim
 	var order : int;
 	var placeX : float;
 	var placeY : float;
+	var valueX : float;
+	var valueY : float;
 }
 
 // Version 9: one provider's opening view for one map area ('' = every area), as CMFSetOpeningView or
@@ -669,6 +710,28 @@ struct SCMFOpeningView
 	var zoom : float;
 	var keepPlace : bool;
 	var worldPlace : bool;
+}
+
+// Revision 13: session-only provider data. Never retain Flash objects or write save data.
+struct SCMFAddedPin
+{
+	var provider : string;
+	var tag : name;
+	var pinType : name;
+	var area : name;
+	var x : float;
+	var y : float;
+	var label : string;
+	var description : string;
+	var order : int;
+}
+
+struct SCMFLabelHideState
+{
+	var pin : CScriptedFlashObject;
+	var providers : array<string>;
+	var flags : array<int>;
+	var next : int;
 }
 
 class CMFCore extends CObject
@@ -687,8 +750,22 @@ class CMFCore extends CObject
 	private var categories : array<SCMFClaim>;
 	private var hideClaims : array<SCMFClaim>;
 	private var tabHideClaims : array<SCMFClaim>;
+	private var labelHideClaims : array<SCMFClaim>;
+	private var labelHidePins : array<SCMFLabelHideState>;
+	private var labelHideBuckets : array<int>;
+	private var labelHideOffers : array<string>;
 	private var listOpen : bool;
+	private var inBuild : bool;
+	private var entityStepRan : bool;
+	private var entitySkipLogged : bool;
+	private var fieldsStepCount : int;
 	private var themeEntries : array<SCMFThemeEntry>;
+	private var itemStyles : array<SCMFThemeEntry>;
+	private var itemStyleOwners : array<string>;
+	private var itemStylesSent : bool;
+	private var addedPins : array<SCMFAddedPin>;
+	private var hintListOwnerSent : string;
+	private var hintListPreparedOwner : string;
 	private var themeNotes : array<string>;
 	private var providerOrder : string;
 	private var clickNotes : array<string>;
@@ -696,6 +773,7 @@ class CMFCore extends CObject
 	private var spaceArea : name;
 	private var catchArray : CScriptedFlashArray;
 	private var catching : bool;
+	private var askedPins : array<CScriptedFlashObject>;
 	// Version 8: per-feature choices, indexed as CMFChoiceKeys. menuChoices come from the menu add-on
 	// (ReadMenuChoices), fileChoices from [CMFSettings] CMFFile_<key>; "" is Automatic. Both are read, and each
 	// choice's deciding answer worked out, each time winners are prepared.
@@ -717,6 +795,15 @@ class CMFCore extends CObject
 	private var offerFlags : array<bool>;
 	private var styledOffers : array<string>;
 	private var lastStyledOffer : string;
+	// The info box keys of the pin whose OnPinReady runs, once WritePinInfo wrote it (a replace there re-adds the lines).
+	private var infoWritten : bool;
+	// Version 12: the game's own pin is being written (its legend row is one of the game's), and the game rows a
+	// legend row claim left in their own tab, logged once per preparation.
+	private var gamePinNow : bool;
+	private var rowsKept : array<string>;
+	private var infoKey : string;
+	private var infoLegend : string;
+	private var infoTag : name;
 	private var nameProviders : array<string>;
 	private var nameTexts : array<string>;
 	private var groupCacheType : string;
@@ -747,7 +834,20 @@ class CMFCore extends CObject
 	private var listedPins : array<string>;
 	// Version 11, opening speed: which properties have a winner, how many claims name a place, and the tag claims' game
 	// ids, worked out once per preparation so a pin's lookups skip what no provider asked for.
+	private var drawingRootIds : array<name>;
+	private var drawingRootParts : array<name>;
+	private var declaredTagProviders : array<string>;
+	private var declaredTagNames : array<name>;
+	private var unknownTagProviders : array<string>;
+	private var unknownTagTexts : array<string>;
 	private var propertyWon : array<bool>;
+	// Revision 13: prepared indices preserve candidate order and avoid unrelated per-pin scans.
+	// A single global winner is reusable; its pin-group choice is still checked by Find.
+	private var globalWinner : array<int>;
+	private var specificWon : array<bool>;
+	private var propertyFirst : array<int>;
+	private var propertyNext : array<int>;
+	private var activeWriteSlots : array<int>;
 	private var placeClaims : int;
 	private var tagIds : array<int>;
 	private var tagNames : array<name>;
@@ -801,6 +901,46 @@ class CMFCore extends CObject
 		return true;
 	}
 
+
+	// Session-long typed names for text targets. No string-to-name conversion or hash reconstruction.
+	public function DeclareTag(provider : string, tag : name) : bool
+	{
+		var i : int;
+		NoteProviderPresent(provider);
+		if (provider == "" || !IsNameValid(tag)) { return false; }
+		for (i = 0; i < declaredTagNames.Size(); i += 1)
+		{
+			if (StrLower(declaredTagProviders[i]) == StrLower(provider) &&
+				StrLower(NameToString(declaredTagNames[i])) == StrLower(NameToString(tag))) { return true; }
+		}
+		declaredTagProviders.PushBack(provider);
+		declaredTagNames.PushBack(tag);
+		dirty = true;
+		return true;
+	}
+
+	private function ResolveKnownTag(provider : string, text : string) : int
+	{
+		var i : int;
+		var lowered : string;
+		lowered = StrLower(text);
+		for (i = 0; i < declaredTagNames.Size(); i += 1)
+		{
+			if (StrLower(NameToString(declaredTagNames[i])) == lowered)
+			{
+				return NameToFlashUInt(declaredTagNames[i]);
+			}
+		}
+		for (i = 0; i < unknownTagTexts.Size(); i += 1)
+		{
+			if (StrLower(unknownTagProviders[i]) == StrLower(provider) && unknownTagTexts[i] == lowered) { return 0; }
+		}
+		unknownTagProviders.PushBack(provider);
+		unknownTagTexts.PushBack(lowered);
+		CMFLog("tag unknown, declare it with CMFDeclareTag provider=" + provider + " tag=" + text);
+		return 0;
+	}
+
 	public function ProviderPresent(provider : string) : bool
 	{
 		return provider != "" && presentIdentities.FindFirst(StrLower(provider)) >= 0;
@@ -822,13 +962,176 @@ class CMFCore extends CObject
 		CMFLog("refresh requested claims=" + claims.Size());
 	}
 
+
+	// Revision 13: target validation shared by stored claims and withdrawal commands.
+	public function EveryPinProperty(propertyId : int) : bool
+	{
+		return propertyId == 1 || propertyId == 3 || propertyId == 9 ||
+			(propertyId >= 10 && propertyId <= 15) || propertyId == 17 || propertyId == 18 ||
+			propertyId == 19 || propertyId == 22 || (propertyId >= 28 && propertyId <= 36) ||
+			propertyId == 39 || propertyId == 42 || propertyId == 43 || propertyId == 44;
+	}
+
+	private function ClaimTargetOk(claim : SCMFClaim) : bool
+	{
+		if (claim.provider == "" || !CMFHasProperty(claim.propertyId) ||
+			claim.propertyId == 38 || claim.propertyId == 40)
+		{
+			return false;
+		}
+		if (IsNameValid(claim.mapContext) && claim.propertyId != 5 && claim.propertyId != 9)
+		{
+			return false;
+		}
+		if (claim.level == 0)
+		{
+			return EveryPinProperty(claim.propertyId) && !IsNameValid(claim.pinType) && !IsNameValid(claim.pinTag);
+		}
+		if (claim.level == 2)
+		{
+			return CMFOnePinProperty(claim.propertyId) && IsNameValid(claim.pinTag);
+		}
+		if (claim.level == CMFLevelPlace())
+		{
+			return CMFOnePinProperty(claim.propertyId) && IsNameValid(claim.pinType) &&
+				claim.placeX - claim.placeX == 0.0 && claim.placeY - claim.placeY == 0.0;
+		}
+		if (claim.level != 1 || !IsNameValid(claim.pinType))
+		{
+			return false;
+		}
+		if (CMFIsPictureProperty(claim.propertyId))
+		{
+			return CMFPictureTargetOk(claim.propertyId, NameToString(claim.pinType));
+		}
+		return claim.propertyId != 37 || StrLower(NameToString(claim.pinType)) != "all";
+	}
+
+	// Keep the public rejection words stable. Value parsing remains a single registration step.
+	private function ClaimRejectReason(claim : SCMFClaim) : string
+	{
+		if (claim.provider == "" ||
+			((claim.level == 1 || claim.level == CMFLevelPlace()) && !IsNameValid(claim.pinType)) ||
+			(claim.level == 2 && !IsNameValid(claim.pinTag))) { return "empty"; }
+		if (!CMFHasProperty(claim.propertyId) || claim.propertyId == 38 ||
+			claim.propertyId == 40) { return "unknown"; }
+		if ((claim.level == 2 || claim.level == CMFLevelPlace()) && !CMFOnePinProperty(claim.propertyId))
+		{
+			return "level";
+		}
+		if (IsNameValid(claim.mapContext) && claim.propertyId != 5 && claim.propertyId != 9) { return "context"; }
+		if (claim.level == 0)
+		{
+			if (!EveryPinProperty(claim.propertyId)) { return "level"; }
+			if (IsNameValid(claim.pinType) || IsNameValid(claim.pinTag)) { return "target"; }
+		}
+		else if (claim.level == 1)
+		{
+			if ((CMFIsPictureProperty(claim.propertyId) &&
+				!CMFPictureTargetOk(claim.propertyId, NameToString(claim.pinType))) ||
+				(claim.propertyId == 37 && StrLower(NameToString(claim.pinType)) == "all")) { return "target"; }
+		}
+		else if (claim.level == CMFLevelPlace())
+		{
+			if (claim.placeX - claim.placeX != 0.0 || claim.placeY - claim.placeY != 0.0) { return "range"; }
+		}
+		else if (claim.level != 2) { return "level"; }
+		return "";
+	}
+
+	private function WithdrawClaim(command : SCMFClaim) : bool
+	{
+		var incoming : SCMFClaim;
+		var i : int;
+		incoming = command;
+		incoming.propertyId = command.number;
+		if (command.text != "" || !ClaimTargetOk(incoming))
+		{
+			CMFLog("rejected provider=" + command.provider + " property=40 reason=withdraw");
+			return false;
+		}
+		for (i = claims.Size() - 1; i >= 0; i -= 1)
+		{
+			if (claims[i].provider == incoming.provider && SameSlot(claims[i], incoming))
+			{
+				claims.Erase(i);
+				dirty = true;
+				Report("withdrawn", incoming);
+			}
+		}
+		return true;
+	}
+
+	// Signed decimal grammar; conversion only after validation. Pairs are cached at registration.
+	private function ClaimNumber(text : string, out value : float) : bool
+	{
+		var i, digits, dots : int;
+		var ch : string;
+		while (StrBeginsWith(text, " ")) { text = StrRight(text, StrLen(text) - 1); }
+		while (StrEndsWith(text, " ")) { text = StrLeft(text, StrLen(text) - 1); }
+		if (text == "") { return false; }
+		for (i = 0; i < StrLen(text); i += 1)
+		{
+			ch = StrMid(text, i, 1);
+			if (i == 0 && (ch == "-" || ch == "+")) { continue; }
+			if (ch == ".")
+			{
+				dots += 1;
+				if (dots > 1) { return false; }
+			}
+			else if (StrFindFirst("0123456789", ch) >= 0) { digits += 1; }
+			else { return false; }
+		}
+		if (digits == 0) { return false; }
+		value = StringToFloat(text);
+		return value - value == 0.0;
+	}
+
+	private function NewPinValueOk(propertyId : int, text : string, number : int, out x : float, out y : float) : bool
+	{
+		x = 0.0;
+		y = 0.0;
+		if (propertyId == 31 || propertyId == 42)
+		{
+			return (StrBeginsWith(text, "img://") && StrLen(text) > 6) ||
+				(StrBeginsWith(text, "frame:") && StrLen(text) > 6);
+		}
+		if (propertyId == 39) { return number == 0 || (number >= 200 && number <= 1920); }
+		if (propertyId == 32 || propertyId == 44) { return number >= 25 && number <= 400; }
+		if (propertyId == 33) { return number >= 0 && number <= 100; }
+		if (propertyId == 34) { return number >= -1000 && number <= 1000; }
+		if (propertyId == 41 || propertyId == 43) { return number >= 0 && number <= 16777215; }
+		if (propertyId == 35 || propertyId == 36)
+		{
+			if (StrFindFirst(text, ",") < 0 || !ClaimNumber(StrBeforeFirst(text, ","), x) ||
+				!ClaimNumber(StrAfterFirst(text, ","), y)) { return false; }
+			if (propertyId == 35) { return x >= -50.0 && x <= 50.0 && y >= -50.0 && y <= 50.0; }
+			return x <= y;
+		}
+		return true;
+	}
+
 	public function Upsert(claim : SCMFClaim) : bool
 	{
 		var incoming : SCMFClaim;
 		var i : int;
 		var flags : int;
-		var tabs : string;
+		var tabs, reason : string;
 		incoming = claim;
+		if (incoming.propertyId == 40)
+		{
+			return WithdrawClaim(incoming);
+		}
+		reason = ClaimRejectReason(incoming);
+		if (reason == "" && !NewPinValueOk(incoming.propertyId, incoming.text, incoming.number, incoming.valueX, incoming.valueY))
+		{
+			reason = "range";
+		}
+		if (reason != "")
+		{
+			CMFLog("rejected provider=" + incoming.provider + " property=" + incoming.propertyId + " reason=" + reason);
+			return false;
+		}
 		if ((incoming.propertyId == CMFPropertyLegendCategory() || incoming.propertyId == CMFPropertyCategoryNoDefault()) &&
 			CMFIsVanillaCategory(NameToString(incoming.pinType), true))
 		{
@@ -950,10 +1253,16 @@ class CMFCore extends CObject
 			CMFLog("rejected provider=" + incoming.provider + " property=" + incoming.propertyId + " reason=empty");
 			return false;
 		}
+		if (incoming.level == 2) { DeclareTag(incoming.provider, incoming.pinTag); }
 		for (i = 0; i < claims.Size(); i += 1)
 		{
 			if (claims[i].provider == incoming.provider && SameSlot(claims[i], incoming))
 			{
+				// Version 12: the same claim again changes nothing, so the winners are not prepared again.
+				if (claims[i].text == incoming.text && claims[i].number == incoming.number)
+				{
+					return true;
+				}
 				incoming.order = claims[i].order;
 				claims[i] = incoming;
 				dirty = true;
@@ -992,6 +1301,24 @@ class CMFCore extends CObject
 			{
 				themeEntries.Erase(i);
 				released += 1;
+				dirty = true;
+			}
+		}
+		for (i = itemStyles.Size() - 1; i >= 0; i -= 1)
+		{
+			if (itemStyles[i].provider == provider) { itemStyles.Erase(i); released += 1; dirty = true; }
+		}
+		for (i = addedPins.Size() - 1; i >= 0; i -= 1)
+		{
+			if (StrLower(addedPins[i].provider) == StrLower(provider)) { addedPins.Erase(i); released += 1; }
+		}
+		for (i = declaredTagProviders.Size() - 1; i >= 0; i -= 1)
+		{
+			if (StrLower(declaredTagProviders[i]) == StrLower(provider))
+			{
+				declaredTagProviders.Erase(i);
+				declaredTagNames.Erase(i);
+				dirty = true;
 			}
 		}
 		// Version 9: its opening views and choice-only registrations go too.
@@ -1013,12 +1340,356 @@ class CMFCore extends CObject
 				dirty = true;
 			}
 		}
+		for (i = labelHideOffers.Size() - 1; i >= 0; i -= 1)
+		{
+			if (labelHideOffers[i] == provider) { labelHideOffers.Erase(i); }
+		}
 		CMFLog("released provider=" + provider + " claims=" + released);
+	}
+
+	private function AddedPinWordOk(text : string) : bool
+	{
+		var i : int;
+		if (text == "") { return false; }
+		for (i = 0; i < StrLen(text); i += 1)
+		{
+			if (StrFindFirst("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-", StrMid(text, i, 1)) < 0)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private function AddedPinTagOk(provider : string, tag : name) : bool
+	{
+		var text : string;
+		text = NameToString(tag);
+		return AddedPinWordOk(provider) && IsNameValid(tag) && AddedPinWordOk(text) &&
+			StrBeginsWith(StrLower(text), StrLower(provider) + ".") && StrLen(text) > StrLen(provider) + 1;
+	}
+
+	public function UpsertAddedPin(pin : SCMFAddedPin) : bool
+	{
+		var i : int;
+		if (!AddedPinTagOk(pin.provider, pin.tag) || !IsNameValid(pin.pinType) || !IsNameValid(pin.area) ||
+			pin.area == 'AN_Undefined' || !AddedPinWordOk(NameToString(pin.pinType)) ||
+			!AddedPinWordOk(NameToString(pin.area)) || pin.x - pin.x != 0.0 || pin.y - pin.y != 0.0)
+		{
+			CMFLog("added pin rejected provider=" + pin.provider + " tag=" + NameToString(pin.tag));
+			return false;
+		}
+		DeclareTag(pin.provider, pin.tag);
+		for (i = 0; i < addedPins.Size(); i += 1)
+		{
+			if (StrLower(addedPins[i].provider) == StrLower(pin.provider) &&
+				StrLower(NameToString(addedPins[i].tag)) == StrLower(NameToString(pin.tag)))
+			{
+				if (addedPins[i].pinType == pin.pinType && addedPins[i].area == pin.area && addedPins[i].x == pin.x &&
+					addedPins[i].y == pin.y && addedPins[i].label == pin.label && addedPins[i].description == pin.description)
+				{
+					return true;
+				}
+				pin.provider = addedPins[i].provider;
+				pin.tag = addedPins[i].tag;
+				pin.order = addedPins[i].order;
+				addedPins[i] = pin;
+				return true;
+			}
+		}
+		nextOrder += 1;
+		pin.order = nextOrder;
+		addedPins.PushBack(pin);
+		return true;
+	}
+
+	public function RemoveAddedPin(provider : string, tag : name) : bool
+	{
+		var i : int;
+		if (!AddedPinTagOk(provider, tag)) { return false; }
+		for (i = addedPins.Size() - 1; i >= 0; i -= 1)
+		{
+			if (StrLower(addedPins[i].provider) == StrLower(provider) &&
+				StrLower(NameToString(addedPins[i].tag)) == StrLower(NameToString(tag)))
+			{
+				addedPins.Erase(i);
+			}
+		}
+		return true;
+	}
+
+	private function AddedPinDistance(currentArea : bool, position : Vector, playerPosition : Vector) : float
+	{
+		if (currentArea) { return VecDistanceSquared2D(playerPosition, position); }
+		return 0.0;
+	}
+
+	public function AppendAddedPins(menu : CR4MapMenu, out pins : CScriptedFlashArray, area : name)
+	{
+		var storage : CScriptedFlashValueStorage;
+		var item : CScriptedFlashObject;
+		var ids : array<int>;
+		var position, playerPosition : Vector;
+		var currentArea : bool;
+		var i, id : int;
+		if (addedPins.Size() == 0 || !menu || !pins) { return; }
+		storage = menu.GetMenuFlashValueStorage();
+		if (!storage) { return; }
+		currentArea = menu.IsCurrentAreaShown();
+		if (thePlayer) { playerPosition = thePlayer.GetWorldPosition(); }
+		else { currentArea = false; }
+		// Conditional on registry content; never overwrite an existing pin sharing an id.
+		for (i = 0; i < pins.GetLength(); i += 1)
+		{
+			item = pins.GetElementFlashObject(i);
+			if (item) { ids.PushBack(item.GetMemberFlashUInt("id")); }
+		}
+		for (i = 0; i < addedPins.Size(); i += 1)
+		{
+			if (addedPins[i].area != area) { continue; }
+			id = NameToFlashUInt(addedPins[i].tag);
+			if (ids.Contains(id)) { continue; }
+			position.X = addedPins[i].x;
+			position.Y = addedPins[i].y;
+			position.Z = 0.0;
+			item = storage.CreateTempFlashObject("red.game.witcher3.data.StaticMapPinData");
+			item.SetMemberFlashUInt("id", id);
+			item.SetMemberFlashUInt("areaId", NameToFlashUInt(area));
+			item.SetMemberFlashUInt("journalAreaId", NameToFlashUInt(theGame.GetCommonMapManager().GetJournalAreaByPosition(area, position)));
+			item.SetMemberFlashNumber("posX", addedPins[i].x);
+			item.SetMemberFlashNumber("posY", addedPins[i].y);
+			item.SetMemberFlashNumber("distance", AddedPinDistance(currentArea, position, playerPosition));
+			item.SetMemberFlashString("type", NameToString(addedPins[i].pinType));
+			item.SetMemberFlashString("filteredType", NameToString(addedPins[i].pinType));
+			item.SetMemberFlashString("label", addedPins[i].label);
+			item.SetMemberFlashString("description", addedPins[i].description);
+			item.SetMemberFlashBool("isPlayer", false);
+			item.SetMemberFlashBool("isUserPin", false);
+			item.SetMemberFlashBool("isQuest", false);
+			item.SetMemberFlashBool("isFastTravel", false);
+			item.SetMemberFlashNumber("radius", 0);
+			pins.PushBackFlashObject(item);
+			ids.PushBack(id);
+		}
+	}
+
+	// Revision 13: normalize the explicit item grammar once, without guessing prefixes.
+	public function ItemTarget(part : name, key : name, target : string, out item : string, out kind : string) : bool
+	{
+		var i : int;
+		item = target;
+		kind = "";
+		if (target == "") { return false; }
+		if (part == 'legendRow') { kind = "type"; return StrFindFirst(target, ":") < 0; }
+		if (part == 'legendTab')
+		{
+			kind = "tabName";
+			if (StrFindFirst(target, ":") < 0) { return true; }
+			if (!StrBeginsWith(target, "id:")) { return false; }
+			item = StrAfterFirst(target, ":");
+			if (item == "") { return false; }
+			for (i = 0; i < StrLen(item); i += 1)
+			{
+				if (StrFindFirst("0123456789", StrMid(item, i, 1)) < 0) { return false; }
+			}
+			while (StrLen(item) > 1 && StrBeginsWith(item, "0")) { item = StrRight(item, StrLen(item) - 1); }
+			kind = "tabId";
+			return true;
+		}
+		if ((part == 'title' && key == 'text') || part == 'world') { kind = "area"; return StrFindFirst(target, ":") < 0; }
+		if (part != 'tooltip' && part != 'pinLabel' && part != 'pinName' && part != 'pinButton' && part != 'pin') { return false; }
+		kind = "type";
+		if (StrFindFirst(target, ":") < 0) { return true; }
+		if (!StrBeginsWith(target, "type:") && !StrBeginsWith(target, "tag:")) { return false; }
+		kind = StrBeforeFirst(target, ":");
+		item = StrAfterFirst(target, ":");
+		return item != "" && StrFindFirst(item, ":") < 0;
+	}
+
+	public function UpsertItemStyle(styleEntry : SCMFThemeEntry) : bool
+	{
+		var i : int;
+		for (i = 0; i < itemStyles.Size(); i += 1)
+		{
+			if (itemStyles[i].provider == styleEntry.provider && itemStyles[i].target == styleEntry.target &&
+				itemStyles[i].item == styleEntry.item && itemStyles[i].itemKind == styleEntry.itemKind && itemStyles[i].key == styleEntry.key)
+			{
+				if (styleEntry.text == "unset") { itemStyles.Erase(i); dirty = true; return true; }
+				if (itemStyles[i].text == styleEntry.text && itemStyles[i].number == styleEntry.number) { return true; }
+				styleEntry.order = itemStyles[i].order;
+				itemStyles[i] = styleEntry;
+				dirty = true;
+				return true;
+			}
+		}
+		if (styleEntry.text == "unset") { return true; }
+		nextOrder += 1;
+		styleEntry.order = nextOrder;
+		itemStyles.PushBack(styleEntry);
+		dirty = true;
+		return true;
+	}
+
+	private function ItemStyleOwner(styleEntry : SCMFThemeEntry) : string
+	{
+		var i, choice : int;
+		var owner, answer : string;
+		choice = PartKeyChoice(styleEntry.target, styleEntry.key);
+		if (choicesActive && choice >= 0) { answer = decideAnswer[choice]; }
+		if (answer == "vanilla") { return ""; }
+		if (answer == "@order") { answer = ""; }
+		for (i = 0; i < itemStyles.Size(); i += 1)
+		{
+			if (itemStyles[i].target == styleEntry.target && itemStyles[i].item == styleEntry.item &&
+				itemStyles[i].itemKind == styleEntry.itemKind && PartKeyChoice(styleEntry.target, itemStyles[i].key) == choice &&
+				!ChoiceOnlySkips(choice, itemStyles[i].provider))
+			{
+				if (answer != "" && itemStyles[i].provider == answer) { return answer; }
+				if (owner == "" || PieceBeats(choice, itemStyles[i].provider, owner)) { owner = itemStyles[i].provider; }
+			}
+		}
+		if (answer != "" && fallVanilla) { return ""; }
+		return owner;
+	}
+
+	private function PrepareItemStyles()
+	{
+		var i : int;
+		hintListPreparedOwner = ThemeStyleOwner('hints', 'list');
+		itemStyleOwners.Clear();
+		for (i = 0; i < itemStyles.Size(); i += 1) { itemStyleOwners.PushBack(ItemStyleOwner(itemStyles[i])); }
+	}
+
+	// Native binding codes and localized prompts travel with the winning style payload.
+	private function WriteFoldMetadata(item : CScriptedFlashObject, styleEntry : SCMFThemeEntry, storage : CScriptedFlashValueStorage)
+	{
+		var keys : array<EInputKey>;
+		var codes : CScriptedFlashArray;
+		var words : string;
+		var i : int;
+		if (styleEntry.target != 'tooltip') { return; }
+		if (styleEntry.key == 'foldKeyKb' || styleEntry.key == 'foldKeyPad')
+		{
+			if (styleEntry.key == 'foldKeyPad') { theInput.GetPadKeysForActionStr(styleEntry.text, keys); }
+			else { theInput.GetPCKeysForActionStr(styleEntry.text, keys); }
+			codes = storage.CreateTempFlashArray();
+			words = "";
+			for (i = 0; i < keys.Size(); i += 1)
+			{
+				// Keyboard folds never capture pointer buttons or wheel/axis events used by native dragging.
+				if (styleEntry.key == 'foldKeyKb' && ((int)keys[i] <= 7 || (int)keys[i] >= 1000)) { continue; }
+				codes.PushBackFlashInt((int)keys[i]);
+				if (words == "") { words = GetIconForKey(keys[i], true); }
+			}
+			item.SetMemberFlashArray("fk", codes);
+			item.SetMemberFlashString("fg", words);
+		}
+		else if (styleEntry.key == 'foldMoreText' || styleEntry.key == 'foldLessText')
+		{
+			words = styleEntry.text;
+			if (StrBeginsWith(words, "[[") && StrEndsWith(words, "]]"))
+			{
+				words = GetLocStringByKeyExt(StrMid(words, 2, StrLen(words) - 4));
+			}
+			item.SetMemberFlashString("fl", words);
+		}
+	}
+
+	// Same precedence as cmfPartFor: whole part, filtered type, own type, typed tag.
+	private function InfoFoldOwner(pin : CScriptedFlashObject) : string
+	{
+		var owner, ownType, filtered : string;
+		var i, rank, bestRank, pinId : int;
+		if (!pin) { return ""; }
+		if (dirty) { Prepare(); }
+		owner = ThemeStyleOwner('tooltip', 'foldTag');
+		ownType = pin.GetMemberFlashString("type");
+		filtered = pin.GetMemberFlashString("filteredType");
+		pinId = pin.GetMemberFlashUInt("id");
+		bestRank = 0;
+		for (i = 0; i < itemStyles.Size(); i += 1)
+		{
+			if (itemStyles[i].target != 'tooltip' || itemStyles[i].key != 'foldTag' ||
+				itemStyleOwners[i] != itemStyles[i].provider) { continue; }
+			rank = 0;
+			if (itemStyles[i].itemKind == "type" && itemStyles[i].item == filtered) { rank = 1; }
+			if (itemStyles[i].itemKind == "type" && itemStyles[i].item == ownType) { rank = 2; }
+			if (pinId != 0 && itemStyles[i].itemKind == "tag" &&
+				ResolveKnownTag(itemStyles[i].provider, itemStyles[i].item) == pinId) { rank = 3; }
+			if (rank > bestRank) { bestRank = rank; owner = itemStyles[i].provider; }
+		}
+		return owner;
+	}
+
+	public function InfoFold(menu : CR4MapMenu, provider : string, open : bool)
+	{
+		var rootFlash, box, pin : CScriptedFlashObject;
+		if (!menu || provider == "") { return; }
+		rootFlash = menu.GetMenuFlash();
+		if (!rootFlash) { return; }
+		box = rootFlash.GetMemberFlashObject("tooltipInstance");
+		if (!box || !box.GetMemberFlashBool("visible") || !box.GetMemberFlashBool("cmfFoldHas") ||
+			box.GetMemberFlashString("cmfFoldOwner") != provider || box.GetMemberFlashBool("cmfFoldOpen") != open) { return; }
+		pin = box.GetMemberFlashObject("cmfPinContext");
+		if (InfoFoldOwner(pin) != provider) { return; }
+		OnInfoFold(menu, provider, open);
+	}
+
+	// Chainable provider hook; the default has no map behaviour.
+	public function OnInfoFold(menu : CR4MapMenu, provider : string, open : bool)
+	{
+	}
+
+	private function SendItemStyles(storage : CScriptedFlashValueStorage)
+	{
+		var list : CScriptedFlashArray;
+		var item : CScriptedFlashObject;
+		var i : int;
+		if (itemStyles.Size() == 0 && !itemStylesSent) { return; }
+		list = storage.CreateTempFlashArray();
+		for (i = 0; i < itemStyles.Size(); i += 1)
+		{
+			if (itemStyleOwners[i] != itemStyles[i].provider) { continue; }
+			item = storage.CreateTempFlashObject();
+			item.SetMemberFlashString("p", NameToString(itemStyles[i].target));
+			item.SetMemberFlashString("q", itemStyles[i].itemKind);
+			if (itemStyles[i].itemKind == "tag")
+			{
+				item.SetMemberFlashUInt("u", ResolveKnownTag(itemStyles[i].provider, itemStyles[i].item));
+			}
+			item.SetMemberFlashString("t", itemStyles[i].item);
+			item.SetMemberFlashString("y", NameToString(itemStyles[i].key));
+			item.SetMemberFlashString("s", itemStyles[i].text);
+			item.SetMemberFlashNumber("n", itemStyles[i].number);
+			item.SetMemberFlashString("o", itemStyles[i].provider);
+			WriteFoldMetadata(item, itemStyles[i], storage);
+			item.SetMemberFlashInt("c", PartKeyChoice(itemStyles[i].target, itemStyles[i].key));
+			list.PushBackFlashObject(item);
+		}
+		storage.SetFlashArray("cmf.map.itemStyles", list);
+		itemStylesSent = itemStyles.Size() > 0;
+	}
+
+	private function HintListOwner() : string
+	{
+		return hintListPreparedOwner;
 	}
 
 	// Version 5. Stores one theme themeEntry (part style, drawing or drawing key). A provider calling again with the
 	// same part and key, the same drawing id, or the same drawing id and key replaces its own earlier value.
 	// CMFDraw with kind '' withdraws the provider's drawing and its keys.
+	private function ThemeEntryEqual(a : SCMFThemeEntry, b : SCMFThemeEntry) : bool
+	{
+		var i : int;
+		if (a.kind != b.kind || a.anchor != b.anchor || a.key != b.key || a.text != b.text ||
+			a.number != b.number || a.values.Size() != b.values.Size()) { return false; }
+		for (i = 0; i < a.values.Size(); i += 1)
+		{
+			if (a.values[i] != b.values[i]) { return false; }
+		}
+		return true;
+	}
+
 	public function UpsertTheme(themeEntry : SCMFThemeEntry) : bool
 	{
 		var i : int;
@@ -1029,6 +1700,7 @@ class CMFCore extends CObject
 				if (themeEntries[i].provider == themeEntry.provider && themeEntries[i].kind != 1 && themeEntries[i].target == themeEntry.target)
 				{
 					themeEntries.Erase(i);
+					dirty = true;
 				}
 			}
 			CMFLog("theme drawing withdrawn provider=" + themeEntry.provider + " id=" + NameToString(themeEntry.target));
@@ -1043,10 +1715,13 @@ class CMFCore extends CObject
 				if (themeEntry.kind == 4 && themeEntry.values.Size() == 0)
 				{
 					themeEntries.Erase(i);
+					dirty = true;
 					return true;
 				}
+				if (ThemeEntryEqual(themeEntries[i], themeEntry)) { return true; }
 				themeEntry.order = themeEntries[i].order;
 				themeEntries[i] = themeEntry;
+				dirty = true;
 				return true;
 			}
 		}
@@ -1057,6 +1732,7 @@ class CMFCore extends CObject
 		nextOrder += 1;
 		themeEntry.order = nextOrder;
 		themeEntries.PushBack(themeEntry);
+		dirty = true;
 		return true;
 	}
 
@@ -1073,6 +1749,7 @@ class CMFCore extends CObject
 				themeEntries[i].key == key)
 			{
 				themeEntries.Erase(i);
+					dirty = true;
 				removed += 1;
 			}
 		}
@@ -1086,12 +1763,25 @@ class CMFCore extends CObject
 	// that made the part's choice choice-only (CMFRegisterChoiceOnly) owns it only when picked. Version 10: through the
 	// key's choice (PartKeyChoice); on a look part one provider owns each piece, worked out among the providers that
 	// sent a key of that piece, so a mod sending only the info box's clear keys never owns its look.
+	// Shorthand and element longhands select one provider before any element falls back to its shorthand.
+	private function ThemeOwnershipKey(part : name, key : name) : name
+	{
+		if (part == 'opening' && (key == 'revealSeconds' || key == 'revealLegendSeconds' ||
+			key == 'revealTrackerSeconds' || key == 'revealCrosshairSeconds')) { return 'revealSeconds'; }
+		if (part == 'wide' && (key == 'panels' || key == 'panelsLegend' || key == 'panelsTracker' ||
+			key == 'panelsPreview')) { return 'panels'; }
+		return key;
+	}
+
 	private function ThemeStyleOwner(part : name, key : name) : string
 	{
 		var i, choice, keyChoice : int;
 		var owner, answer : string;
 		var perKey : bool;
-		perKey = part == 'map' || part == 'navigation' || part == 'opening' || part == 'spread' || part == 'wide';
+		var ownershipKey : name;
+		ownershipKey = ThemeOwnershipKey(part, key);
+		perKey = part == 'map' || part == 'navigation' || part == 'opening' || part == 'spread' || part == 'wide' ||
+			(part == 'hints' && key == 'list');
 		owner = "";
 		keyChoice = PartKeyChoice(part, key);
 		choice = -1;
@@ -1115,7 +1805,9 @@ class CMFCore extends CObject
 		for (i = 0; i < themeEntries.Size(); i += 1)
 		{
 			if (themeEntries[i].kind == 1 && themeEntries[i].target == part &&
-				((perKey && themeEntries[i].key == key) || (!perKey && PartKeyChoice(part, themeEntries[i].key) == keyChoice)) &&
+				((perKey && ThemeOwnershipKey(part, themeEntries[i].key) == ownershipKey) ||
+				(!perKey && themeEntries[i].key != 'list' &&
+				PartKeyChoice(part, themeEntries[i].key) == keyChoice)) &&
 				!ChoiceOnlySkips(keyChoice, themeEntries[i].provider))
 			{
 				if (answer != "" && themeEntries[i].provider == answer)
@@ -1137,6 +1829,49 @@ class CMFCore extends CObject
 
 	// The provider that owns a drawing id: the earliest folder that made it with CMFDraw, or "". Version 8: a
 	// provider the Drawings choice leaves out owns nothing.
+	// A part's look piece is independent from its motion, placement and input pieces.
+	private function ThemeLookChoice(part : name) : int
+	{
+		if (part == 'map' || part == 'crosshair' || part == 'edgePointer') { return 39; }
+		if (part == 'mapSpace' || part == 'navigation' || part == 'opening' || part == 'spread' || part == 'wide' || part == 'sounds') { return -1; }
+		return PartChoice(part);
+	}
+
+	private function PreparedLookOwner(part : name) : string
+	{
+		var i, choice : int;
+		choice = ThemeLookChoice(part);
+		if (choice < 0) { return ""; }
+		for (i = 0; i < themeEntries.Size(); i += 1)
+		{
+			if (themeEntries[i].kind == 1 && themeEntries[i].target == part && themeEntries[i].key != 'list' &&
+				PartKeyChoice(part, themeEntries[i].key) == choice)
+			{
+				return ThemeStyleOwner(part, themeEntries[i].key);
+			}
+		}
+		return "";
+	}
+
+	private function SendLookOwners(storage : CScriptedFlashValueStorage)
+	{
+		var list : CScriptedFlashArray;
+		var item : CScriptedFlashObject;
+		var parts : array<name>;
+		var i : int;
+		list = storage.CreateTempFlashArray();
+		for (i = 0; i < themeEntries.Size(); i += 1)
+		{
+			if (themeEntries[i].kind != 1 || parts.Contains(themeEntries[i].target)) { continue; }
+			parts.PushBack(themeEntries[i].target);
+			item = storage.CreateTempFlashObject();
+			item.SetMemberFlashString("p", NameToString(themeEntries[i].target));
+			item.SetMemberFlashString("o", PreparedLookOwner(themeEntries[i].target));
+			list.PushBackFlashObject(item);
+		}
+		storage.SetFlashArray("cmf.map.lookOwners", list);
+	}
+
 	private function ThemeDrawingOwner(id : name) : string
 	{
 		var i : int;
@@ -1169,19 +1904,100 @@ class CMFCore extends CObject
 
 	// Map-space drawing: true when the drawing's owner tied it to the mapSpace anchor. Such a drawing and its
 	// keys and lists go to the map per build (SendSpace), not in the theme.
-	private function IsSpaceDrawing(id : name) : bool
+
+	private function ResolveDrawingRoot(id : name) : name
+	{
+		var cursor : name;
+		var owner : string;
+		var seen : array<name>;
+		var depth, i : int;
+		var found : bool;
+		cursor = id;
+		for (depth = 0; depth < 9; depth += 1)
+		{
+			if (CMFListHas(CMFThemeParts(), NameToString(cursor))) { return cursor; }
+			if (seen.Contains(cursor)) { return ''; }
+			seen.PushBack(cursor);
+			owner = ThemeDrawingOwner(cursor);
+			if (owner == "") { return ''; }
+			found = false;
+			for (i = 0; i < themeEntries.Size(); i += 1)
+			{
+				if (themeEntries[i].kind == 2 && themeEntries[i].target == cursor && themeEntries[i].provider == owner)
+				{
+					cursor = themeEntries[i].anchor;
+					found = true;
+					break;
+				}
+			}
+			if (!found) { return ''; }
+		}
+		return '';
+	}
+
+	private function PrepareDrawingRoots()
 	{
 		var i : int;
-		var owner : string;
-		owner = ThemeDrawingOwner(id);
+		drawingRootIds.Clear();
+		drawingRootParts.Clear();
 		for (i = 0; i < themeEntries.Size(); i += 1)
 		{
-			if (themeEntries[i].kind == 2 && themeEntries[i].provider == owner && themeEntries[i].target == id)
+			if (themeEntries[i].kind == 2 && !drawingRootIds.Contains(themeEntries[i].target))
 			{
-				return themeEntries[i].anchor == 'mapSpace';
+				drawingRootIds.PushBack(themeEntries[i].target);
+				drawingRootParts.PushBack(ResolveDrawingRoot(themeEntries[i].target));
 			}
 		}
-		return false;
+	}
+
+	private function DrawingRoot(id : name) : name
+	{
+		var at : int;
+		if (dirty) { return ResolveDrawingRoot(id); }
+		at = drawingRootIds.FindFirst(id);
+		if (at >= 0) { return drawingRootParts[at]; }
+		return ResolveDrawingRoot(id);
+	}
+
+	private function TrimFilterWord(text : string) : string
+	{
+		while (StrLen(text) > 0 && (StrBeginsWith(text, " ") || StrBeginsWith(text, "	")))
+		{
+			text = StrRight(text, StrLen(text) - 1);
+		}
+		while (StrLen(text) > 0 && (StrEndsWith(text, " ") || StrEndsWith(text, "	")))
+		{
+			text = StrLeft(text, StrLen(text) - 1);
+		}
+		return text;
+	}
+
+	private function PinTagFilters(provider : string, text : string, storage : CScriptedFlashValueStorage) : CScriptedFlashArray
+	{
+		var list : CScriptedFlashArray;
+		var item : CScriptedFlashObject;
+		var rest, word, identity : string;
+		var seen : array<string>;
+		list = storage.CreateTempFlashArray();
+		rest = text + ",";
+		while (StrLen(rest) > 0)
+		{
+			word = TrimFilterWord(StrBeforeFirst(rest, ","));
+			rest = StrAfterFirst(rest, ",");
+			identity = StrLower(word);
+			if (word == "" || seen.Contains(identity)) { continue; }
+			seen.PushBack(identity);
+			item = storage.CreateTempFlashObject();
+			item.SetMemberFlashString("t", word);
+			item.SetMemberFlashUInt("u", ResolveKnownTag(provider, word));
+			list.PushBackFlashObject(item);
+		}
+		return list;
+	}
+
+	private function IsSpaceDrawing(id : name) : bool
+	{
+		return DrawingRoot(id) == 'mapSpace';
 	}
 
 	// Map-space drawing: true when the owner's "area" key is unset, empty or names the shown area.
@@ -1231,21 +2047,45 @@ class CMFCore extends CObject
 	// with k (1 style, 2 drawing, 3 drawing key), t (part or drawing id), a (anchor), y (key or kind),
 	// s (text), n (number), p (folder rank of the provider) and o (registration order). Entries that lose
 	// (another folder owns the part, key or drawing id) are left out and named once in the log.
+	private function WriteDrawingMetadata(item : CScriptedFlashObject, entryValue : SCMFThemeEntry, storage : CScriptedFlashValueStorage)
+	{
+		var rootPart : name;
+		item.SetMemberFlashString("b", entryValue.provider);
+		if (entryValue.kind != 3 || entryValue.key != 'pinTag') { return; }
+		rootPart = DrawingRoot(entryValue.target);
+		if (rootPart == 'pin' || rootPart == 'pinLabel' || rootPart == 'pinName')
+		{
+			item.SetMemberFlashArray("f", PinTagFilters(entryValue.provider, entryValue.text, storage));
+		}
+	}
+
+	private function DrawingSourceOk(entryValue : SCMFThemeEntry) : bool
+	{
+		var kind : name;
+		if (entryValue.kind != 3 || entryValue.key != 'src') { return true; }
+		kind = DrawingKind(entryValue.provider, entryValue.target);
+		if ((kind == 'image' && StrBeginsWith(entryValue.text, "img://")) ||
+			(kind == 'movie' && StrBeginsWith(entryValue.text, "swf/"))) { return true; }
+		NoteTheme("theme source refused provider=" + entryValue.provider + " id=" + NameToString(entryValue.target));
+		return false;
+	}
+
 	public function SendTheme(storage : CScriptedFlashValueStorage)
 	{
 		var flashArray : CScriptedFlashArray;
 		var item : CScriptedFlashObject;
 		var owner : string;
-		var i, sent, ownMotion : int;
+		var i, k, sent, ownMotion : int;
 		if (!storage)
 		{
 			return;
 		}
+		if (dirty) { Prepare(); }
 		flashArray = storage.CreateTempFlashArray();
 		sent = 0;
 		for (i = 0; i < themeEntries.Size(); i += 1)
 		{
-			if (themeEntries[i].kind == 4 || (themeEntries[i].kind != 1 && IsSpaceDrawing(themeEntries[i].target)))
+			if (themeEntries[i].kind != 1 && IsSpaceDrawing(themeEntries[i].target))
 			{
 				continue;
 			}
@@ -1282,6 +2122,7 @@ class CMFCore extends CObject
 					continue;
 				}
 			}
+			if (themeEntries[i].kind != 1 && !DrawingSourceOk(themeEntries[i])) { continue; }
 			item = storage.CreateTempFlashObject();
 			item.SetMemberFlashInt("k", themeEntries[i].kind);
 			item.SetMemberFlashString("t", NameToString(themeEntries[i].target));
@@ -1291,14 +2132,27 @@ class CMFCore extends CObject
 			item.SetMemberFlashNumber("n", themeEntries[i].number);
 			item.SetMemberFlashInt("p", ThemeFolderRank(themeEntries[i].provider));
 			item.SetMemberFlashInt("o", themeEntries[i].order);
+			WriteDrawingMetadata(item, themeEntries[i], storage);
+			WriteFoldMetadata(item, themeEntries[i], storage);
+			if (themeEntries[i].kind == 4)
+			{
+				item.SetMemberFlashInt("c", themeEntries[i].values.Size());
+				for (k = 0; k < themeEntries[i].values.Size(); k += 1)
+				{
+					item.SetMemberFlashNumber("v" + k, themeEntries[i].values[k]);
+				}
+			}
 			flashArray.PushBackFlashObject(item);
 			sent += 1;
 		}
 		ownMotion = SendDefaultMotion(storage, flashArray);
 		SendWideVanilla(storage, flashArray);
+		SendLookOwners(storage);
+		SendMovieTags(storage);
 		storage.SetFlashArray("cmf.map.theme", flashArray);
 		NoteTheme("theme sent entries=" + sent + " of=" + themeEntries.Size() + " cmfMotion=" + ownMotion);
 		SendWorld(storage);
+		SendItemStyles(storage);
 	}
 
 	// Version 9: sends the winning picture claims (24 to 27, through the choices as Find) under "cmf.map.world",
@@ -1528,6 +2382,7 @@ class CMFCore extends CObject
 			{
 				continue;
 			}
+			if (themeEntries[i].kind != 1 && !DrawingSourceOk(themeEntries[i])) { continue; }
 			item = storage.CreateTempFlashObject();
 			item.SetMemberFlashInt("k", themeEntries[i].kind);
 			item.SetMemberFlashString("t", NameToString(themeEntries[i].target));
@@ -1537,6 +2392,7 @@ class CMFCore extends CObject
 			item.SetMemberFlashNumber("n", themeEntries[i].number);
 			item.SetMemberFlashInt("p", ThemeFolderRank(themeEntries[i].provider));
 			item.SetMemberFlashInt("o", themeEntries[i].order);
+			WriteDrawingMetadata(item, themeEntries[i], storage);
 			if (themeEntries[i].kind == 4)
 			{
 				item.SetMemberFlashInt("c", themeEntries[i].values.Size());
@@ -1617,6 +2473,80 @@ class CMFCore extends CObject
 	// Version 8: reads the file choices ([CMFSettings] values named CMFFile_<key>, plus CMFFile_Fallthrough), asks
 	// the menu add-on for its rows (ReadMenuChoices), and works out each choice's deciding answer once, so every
 	// lookup of one preparation uses one set of choices. A folder name is matched to a provider ignoring case.
+	// Version 13: child:parent piece keys. No piece is split in this revision.
+	private function PieceParentTable() : string
+	{
+		return "";
+	}
+
+	private function ResolvePieceParents()
+	{
+		var table, rest, pair : string;
+		var parents, seen : array<int>;
+		var rawMenu, rawFile : array<string>;
+		var i, childIndex, parentIndex, cursor : int;
+		table = PieceParentTable();
+		if (table == "")
+		{
+			return;
+		}
+		for (i = 0; i < choiceKeys.Size(); i += 1)
+		{
+			parents.PushBack(-1);
+			rawMenu.PushBack(menuChoices[i]);
+			rawFile.PushBack(fileChoices[i]);
+		}
+		rest = table + ",";
+		while (rest != "")
+		{
+			pair = StrBeforeFirst(rest, ",");
+			rest = StrAfterFirst(rest, ",");
+			childIndex = choiceKeys.FindFirst(StrBeforeFirst(pair, ":"));
+			parentIndex = choiceKeys.FindFirst(StrAfterFirst(pair, ":"));
+			if (childIndex < 0 || parentIndex < 0 || childIndex == parentIndex)
+			{
+				return;
+			}
+			if (parents[childIndex] >= 0 || choiceFeature[childIndex] == childIndex ||
+				choiceFeature[parentIndex] == parentIndex)
+			{
+				return;
+			}
+			parents[childIndex] = parentIndex;
+		}
+		// Validate the whole table before changing either tier.
+		for (i = 0; i < parents.Size(); i += 1)
+		{
+			seen.Clear();
+			cursor = i;
+			while (cursor >= 0)
+			{
+				if (seen.Contains(cursor))
+				{
+					return;
+				}
+				seen.PushBack(cursor);
+				cursor = parents[cursor];
+			}
+		}
+		for (i = 0; i < parents.Size(); i += 1)
+		{
+			cursor = parents[i];
+			while (cursor >= 0)
+			{
+				if (menuChoices[i] == "")
+				{
+					menuChoices[i] = rawMenu[cursor];
+				}
+				if (fileChoices[i] == "")
+				{
+					fileChoices[i] = rawFile[cursor];
+				}
+				cursor = parents[cursor];
+			}
+		}
+	}
+
 	private function ReadChoices()
 	{
 		var config : CInGameConfigWrapper;
@@ -1659,6 +2589,7 @@ class CMFCore extends CObject
 			}
 		}
 		ReadMenuChoices();
+		ResolvePieceParents();
 		if (menuFall != "")
 		{
 			fallVanilla = menuFall == "vanilla";
@@ -1702,6 +2633,10 @@ class CMFCore extends CObject
 			{
 				return themeEntries[i].provider;
 			}
+		}
+		for (i = 0; i < itemStyles.Size(); i += 1)
+		{
+			if (StrLower(itemStyles[i].provider) == lowered) { return itemStyles[i].provider; }
 		}
 		for (i = 0; i < styledOffers.Size(); i += 1)
 		{
@@ -1917,17 +2852,29 @@ class CMFCore extends CObject
 		{
 			case 1:
 			case 2:
+			case 31:
 				if (pinType == "")
 				{
 					return 0; // Icons
 				}
 				return 11 + PinGroupOf(pinType); // Icons_General
 			case 3:
+			case 41:
 				if (pinType == "")
 				{
 					return 1; // Colours
 				}
 				return 19 + PinGroupOf(pinType); // Colours_General
+			case 33:
+				return PropertyChoice(3, pinType);
+			case 34:
+			case 35:
+				return 78; // Size_Place
+			case 36:
+				return 79; // Behaviour_PinZoom
+			case 42:
+			case 43:
+				return 76; // Look_Badges
 			case 4:
 				choice = CMFPaintingChoice(pinType);
 				if (choice < 0)
@@ -1947,6 +2894,8 @@ class CMFCore extends CObject
 			case 23:
 				return 35; // Legend_Tabs
 			case 10:
+			case 32:
+			case 44:
 				return 27; // Size_Scale
 			case 22:
 				return 28; // Size_Lead
@@ -1957,6 +2906,7 @@ class CMFCore extends CObject
 			case 13:
 				return 31; // Labels_Place
 			case 14:
+			case 39:
 				return 64; // Behaviour_InfoBoxHeight (version 10; Look_InfoBox before)
 			case 28:
 				return 67; // Behaviour_HoverNames
@@ -1998,6 +2948,8 @@ class CMFCore extends CObject
 			case 'worldButton':
 			case 'worldHint':
 			case 'markerPanel':
+			case 'crosshair':
+			case 'edgePointer':
 				return 39; // Look_Frames
 			case 'legend':
 			case 'legendRow':
@@ -2008,6 +2960,12 @@ class CMFCore extends CObject
 			case 'hints':
 			case 'keyCap':
 				return 42; // Look_Hints
+			case 'world':
+				return 60; // Painting_Crests
+			case 'sounds':
+				return 73; // Look_Sounds
+			case 'pin':
+				return 77; // Look_PinLook
 			case 'pinLabel':
 			case 'pinName':
 			case 'pinButton':
@@ -2033,6 +2991,10 @@ class CMFCore extends CObject
 		switch (part)
 		{
 			case 'tooltip':
+				if (CMFListHas("foldTag,foldMoreText,foldLessText,foldKeyPad,foldKeyKb,foldOpen", NameToString(key))) { return 74; }
+				if (key == 'clearAnchor') { return 63; }
+				if (key == 'scrollStep' || key == 'hideScrollBar') { return 64; }
+				if (key == 'showSeconds' || key == 'hideSeconds' || key == 'slide') { return 72; }
 				// Version 11: x and y place the box too, so a mod that only moves the box never owns its look.
 				if (CMFListHas("clearMinHeight,clearSide,clearCursor,clearLeft,clearTop,clearRight,clearBottom,clearView," +
 					"clearCursorAbove,clearCursorBelow,clearCursorTitle,clearPadX,clearPadY,clearGap,clearBoxPad,clearPick," +
@@ -2040,6 +3002,18 @@ class CMFCore extends CObject
 				{
 					return 63; // Behaviour_InfoBoxDodge
 				}
+				// Version 12: the tall-box place is placement too, apart from the box height (scrolling).
+				if (CMFListHas("tallMinHeight,tallX,tallTop,tallBottom,tallAltX,tallAltTop,tallAltBottom,tallUnderLegend,tallClear",
+					NameToString(key)))
+				{
+					return 63; // Behaviour_InfoBoxDodge
+				}
+				break;
+			case 'legend':
+				if (key == 'show' || key == 'autoHideMs' || key == 'padShowFirst') { return 75; }
+				break;
+			case 'preview':
+				if (key == 'show' || key == 'movingMs') { return 75; }
 				break;
 			case 'pinLabel':
 				if (CMFListHas("rise,riseOffset,riseTracked,riseOffsetTracked", NameToString(key)))
@@ -2187,11 +3161,12 @@ class CMFCore extends CObject
 		{
 			return false;
 		}
-		if (FindOwn(propertyId, answer, dataObject.GetMemberFlashString("type"), '', 1, claim) ||
-			FindOwn(propertyId, answer, dataObject.GetMemberFlashString("filteredType"), '', 1, claim))
+		if ((FindOwn(propertyId, answer, dataObject.GetMemberFlashString("type"), '', 1, claim) && claim.level > 0) ||
+			(FindOwn(propertyId, answer, dataObject.GetMemberFlashString("filteredType"), '', 1, claim) && claim.level > 0))
 		{
 			return false;
 		}
+		if (FindOwn(propertyId, answer, "", '', 0, claim)) { return true; }
 		return !fallVanilla;
 	}
 
@@ -2225,6 +3200,10 @@ class CMFCore extends CObject
 		for (i = 0; i < openingViews.Size(); i += 1)
 		{
 			NoteOfferFor(61, openingViews[i].provider);
+		}
+		for (i = 0; i < itemStyles.Size(); i += 1)
+		{
+			NoteOfferFor(PartKeyChoice(itemStyles[i].target, itemStyles[i].key), itemStyles[i].provider);
 		}
 	}
 
@@ -2591,9 +3570,11 @@ class CMFCore extends CObject
 		winners.Clear();
 		hideClaims.Clear();
 		tabHideClaims.Clear();
+		labelHideClaims.Clear();
 		choiceOnlySkipped.Clear();
 		infoAdds.Clear();
 		tabsHidden.Clear();
+		rowsKept.Clear();
 		for (i = 0; i < claims.Size(); i += 1)
 		{
 			// Version 9: a claim whose choice its provider made choice-only waits until that provider is picked.
@@ -2610,6 +3591,11 @@ class CMFCore extends CObject
 				{
 					hideClaims.PushBack(claims[i]);
 				}
+				continue;
+			}
+			if (claims[i].propertyId == CMFPropertyLabelHide())
+			{
+				if (claims[i].number != 0) { labelHideClaims.PushBack(claims[i]); }
 				continue;
 			}
 			if (claims[i].propertyId == CMFPropertyTabHide())
@@ -2641,7 +3627,7 @@ class CMFCore extends CObject
 				continue;
 			}
 			// A withdrawn label hide or info box height leaves the slot to the next folder.
-			if ((claims[i].propertyId == CMFPropertyLabelHide() || claims[i].propertyId == CMFPropertyInfoBoxHeight()) &&
+			if ((claims[i].propertyId == CMFPropertyLabelHide() || claims[i].propertyId == CMFPropertyInfoBoxHeight() || claims[i].propertyId == 39) &&
 				claims[i].number == 0)
 			{
 				continue;
@@ -2659,6 +3645,14 @@ class CMFCore extends CObject
 					winners.PushBack(claims[i]);
 					continue;
 				}
+			}
+			// Version 12: every provider's tag claim stays a candidate (not for greyed pins or clicks); Find decides
+			// between them by the pin's own piece, so the player's pick for that pin's group wins there.
+			if (claims[i].level == 2 && claims[i].propertyId != CMFPropertyDisabled() &&
+				!CMFIsClickProperty(claims[i].propertyId))
+			{
+				winners.PushBack(claims[i]);
+				continue;
 			}
 			found = false;
 			for (w = 0; w < winners.Size(); w += 1)
@@ -2685,6 +3679,8 @@ class CMFCore extends CObject
 			}
 		}
 		NoteLookups();
+		PrepareItemStyles();
+		PrepareDrawingRoots();
 		dirty = false;
 		revision += 1;
 		if (providerOrder != "")
@@ -2723,11 +3719,21 @@ class CMFCore extends CObject
 	// tags in LateTag's order: winners, hides, tab hides, info adds).
 	private function NoteLookups()
 	{
-		var i : int;
+		var i, propertyId : int;
+		var tails : array<int>;
 		propertyWon.Clear();
+		globalWinner.Clear();
+		specificWon.Clear();
+		propertyFirst.Clear();
+		propertyNext.Clear();
+		activeWriteSlots.Clear();
 		for (i = 0; i < 64; i += 1)
 		{
 			propertyWon.PushBack(false);
+			globalWinner.PushBack(-1);
+			specificWon.PushBack(false);
+			propertyFirst.PushBack(-1);
+			tails.PushBack(-1);
 		}
 		placeClaims = 0;
 		tagIds.Clear();
@@ -2739,14 +3745,25 @@ class CMFCore extends CObject
 		infoEveryOrPlace = false;
 		for (i = 0; i < winners.Size(); i += 1)
 		{
-			if (winners[i].propertyId >= 0 && winners[i].propertyId < 64)
+			propertyId = winners[i].propertyId;
+			propertyNext.PushBack(-1);
+			if (propertyId >= 0 && propertyId < 64)
 			{
-				propertyWon[winners[i].propertyId] = true;
+				propertyWon[propertyId] = true;
+				if (tails[propertyId] < 0) { propertyFirst[propertyId] = i; }
+				else { propertyNext[tails[propertyId]] = i; }
+				tails[propertyId] = i;
+				if (winners[i].level == 0)
+				{
+					if (globalWinner[propertyId] == -1) { globalWinner[propertyId] = i; }
+					else { globalWinner[propertyId] = -2; }
+				}
+				else { specificWon[propertyId] = true; }
 			}
 			NoteLookupClaim(winners[i]);
 			NoteInfoClaim(winners[i]);
 			// The every-pin info box height is the menu's (WriteFields takes only a type, tag or place height).
-			if (winners[i].level == 0 && winners[i].propertyId != CMFPropertyInfoBoxHeight())
+			if (winners[i].level == 0 && winners[i].propertyId != CMFPropertyInfoBoxHeight() && winners[i].propertyId != 39)
 			{
 				everyPinClaims += 1;
 			}
@@ -2755,6 +3772,11 @@ class CMFCore extends CObject
 				claimedTypes.PushBack(NameToString(winners[i].pinType));
 			}
 		}
+		for (i = 0; i < 64; i += 1)
+		{
+			if (propertyWon[i] && (i == 10 || i == 11 || i == 12 || i == 17 || i == 22 || i == 28 ||
+				(i >= 31 && i <= 36) || i == 42 || i == 43 || i == 44)) { activeWriteSlots.PushBack(i); }
+		}
 		for (i = 0; i < hideClaims.Size(); i += 1)
 		{
 			NoteLookupClaim(hideClaims[i]);
@@ -2762,6 +3784,10 @@ class CMFCore extends CObject
 		for (i = 0; i < tabHideClaims.Size(); i += 1)
 		{
 			NoteLookupClaim(tabHideClaims[i]);
+		}
+		for (i = 0; i < labelHideClaims.Size(); i += 1)
+		{
+			NoteLookupClaim(labelHideClaims[i]);
 		}
 		for (i = 0; i < infoAdds.Size(); i += 1)
 		{
@@ -2871,7 +3897,8 @@ class CMFCore extends CObject
 	}
 
 	// Version 11: whether a provider's never-arbitrated claim of one choice applies: Vanilla none, a picked mod only its
-	// own, Automatic every one.
+	// own, Automatic every one. Version 12: a picked mod counts only while it sends something of that kind (added info
+	// box lines for 71, whole-tab hides for 35); otherwise the pick reads Automatic, as for the added-together features.
 	private function AnswerAllows(choice : int, provider : string) : bool
 	{
 		var answer : string;
@@ -2884,7 +3911,44 @@ class CMFCore extends CObject
 		{
 			return false;
 		}
-		return answer == "" || answer == "@order" || answer == provider;
+		return answer == "" || answer == "@order" || answer == provider || !AnswerSends(choice, answer);
+	}
+
+	// Version 12: whether a picked mod sends lines added to the info box (71) or hides a whole tab (35).
+	private function AnswerSends(choice : int, provider : string) : bool
+	{
+		var i : int;
+		if (choice == 31)
+		{
+			for (i = 0; i < labelHideClaims.Size(); i += 1)
+			{
+				if (labelHideClaims[i].provider == provider) { return true; }
+			}
+			return labelHideOffers.Contains(provider);
+		}
+		if (choice == 71)
+		{
+			for (i = 0; i < infoAdds.Size(); i += 1)
+			{
+				if (infoAdds[i].provider == provider)
+				{
+					return true;
+				}
+			}
+			return styledOffers.Contains("71/" + provider);
+		}
+		if (choice == 35)
+		{
+			for (i = 0; i < tabsHidden.Size(); i += 1)
+			{
+				if (tabsHidden[i].provider == provider)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+		return true;
 	}
 
 	// Version 11: the filter tabs hidden whole (CMFPropertyTabHidden), joined with commas.
@@ -3127,6 +4191,10 @@ class CMFCore extends CObject
 			MarkHidden(dataObject, HideOwner(dataObject, dataObject.GetMemberFlashString("type"), pinKey,
 				pinTag, CMFLevelPlace(), mapContext));
 		}
+		if (labelHideClaims.Size() > 0)
+		{
+			WriteLabelHides(dataObject, dataObject.GetMemberFlashString("type"), pinKey, pinTag, CMFLevelPlace());
+		}
 		if (tabHideClaims.Size() > 0)
 		{
 			WriteTabHide(dataObject, dataObject.GetMemberFlashString("type"), pinKey, pinTag, CMFLevelPlace());
@@ -3136,7 +4204,9 @@ class CMFCore extends CObject
 			if (PinCovered(pinKey, pinKey, pinTag))
 			{
 				NotePin(pinType, pinTag);
+				gamePinNow = true;
 				WriteFields(dataObject, pinKey, pinKey, pinTag, CMFLevelPlace(), mapContext);
+				gamePinNow = false;
 			}
 			WriteStateIcon(dataObject, pinKey, NameToString(realType), pinTag);
 		}
@@ -3174,6 +4244,7 @@ class CMFCore extends CObject
 			(kind != pinKey && Find(propertyId, pinKey, pinTag, CMFLevelPlace(), claim)))
 		{
 			dataObject.SetMemberFlashString("cmfIconPath", claim.text);
+			dataObject.SetMemberFlashString("cmfIconSourceBy", claim.provider);
 		}
 	}
 
@@ -3183,8 +4254,6 @@ class CMFCore extends CObject
 	private function WriteInfo(dataObject : CScriptedFlashObject, pinKey : string, legendKey : string, pinTag : name)
 	{
 		var claim : SCMFClaim;
-		var field : string;
-		var i : int;
 		if (CMFPinOwner(dataObject, "cmfInfoTitleBy") == "" &&
 			(Find(CMFPropertyInfoTitle(), pinKey, pinTag, CMFLevelPlace(), claim) ||
 			Find(CMFPropertyInfoTitle(), legendKey, '', 1, claim)))
@@ -3197,6 +4266,15 @@ class CMFCore extends CObject
 		{
 			dataObject.SetMemberFlashString("description", claim.text);
 		}
+		AppendInfoAdds(dataObject, pinKey, legendKey, pinTag, "");
+	}
+
+	// Every add claim's line (number 1) on one pin, for one field ("label" or "description") or both ("").
+	private function AppendInfoAdds(dataObject : CScriptedFlashObject, pinKey : string, legendKey : string, pinTag : name,
+		only : string)
+	{
+		var field : string;
+		var i : int;
 		for (i = 0; i < infoAdds.Size(); i += 1)
 		{
 			if (!AnswerAllows(71, infoAdds[i].provider) ||
@@ -3211,7 +4289,10 @@ class CMFCore extends CObject
 			{
 				field = "label";
 			}
-			AddInfoText(dataObject, field, infoAdds[i].text);
+			if (only == "" || only == field)
+			{
+				AddInfoText(dataObject, field, infoAdds[i].text);
+			}
 		}
 	}
 
@@ -3256,6 +4337,7 @@ class CMFCore extends CObject
 		if (Find(CMFPropertyIcon(), pinType, '', 1, claim) && claim.level == 1)
 		{
 			dataObject.SetMemberFlashString("cmfIconPath", claim.text);
+			dataObject.SetMemberFlashString("cmfIconSourceBy", claim.provider);
 		}
 		if (Find(CMFPropertyTint(), pinType, '', 1, claim) && claim.level == 1)
 		{
@@ -3289,7 +4371,8 @@ class CMFCore extends CObject
 		logPins = on || CMFSettingsLogPins();
 	}
 
-	// Version 11: with the pin list on, up to 200 lines per area on how CMF changed a pin's info box and legend row.
+	// Version 11: with the pin list on, up to 200 lines per area for the game session (the count restarts only when
+	// the area changes) on how CMF changed a pin's info box and legend row.
 	private function LogPinDetail(line : string)
 	{
 		if (logPins && logPinsLines < 200)
@@ -3310,6 +4393,12 @@ class CMFCore extends CObject
 		if (pinKeyName == "")
 		{
 			pinKeyName = "#" + dataObject.GetMemberFlashUInt("id") + "/" + dataObject.GetMemberFlashString("type");
+			// Version 12: many game pins have no id, so an untagged pin without one is told apart by its place.
+			if (dataObject.GetMemberFlashUInt("id") == 0)
+			{
+				pinKeyName += "@" + FloatToString(dataObject.GetMemberFlashNumber("posX")) + "," +
+					FloatToString(dataObject.GetMemberFlashNumber("posY"));
+			}
 		}
 		if (listedPins.Contains(pinKeyName))
 		{
@@ -3357,8 +4446,8 @@ class CMFCore extends CObject
 			{
 				continue;
 			}
-			// Each read crosses into the map panel, so the pin's two kind flags are read once (many pins with All
-			// Quest Markers).
+			// Each read crosses into the map panel, so the pin's two kind flags are read once (a mod with many
+			// pins).
 			isPlayer = dataObject.GetMemberFlashBool("isPlayer");
 			isUser = dataObject.GetMemberFlashBool("isUserPin");
 			if (!isPlayer && !isUser && !dataObject.GetMemberFlashBool("cmfDone"))
@@ -3395,6 +4484,10 @@ class CMFCore extends CObject
 				{
 					MarkHidden(dataObject, HideOwner(dataObject, pinType, filtered, pinTag, maxLevel, mapContext));
 				}
+				if (labelHideClaims.Size() > 0)
+				{
+					WriteLabelHides(dataObject, pinType, filtered, pinTag, maxLevel);
+				}
 				if (tabHideClaims.Size() > 0)
 				{
 					WriteTabHide(dataObject, pinType, filtered, pinTag, maxLevel);
@@ -3415,6 +4508,7 @@ class CMFCore extends CObject
 				WriteMarkerFields(dataObject);
 			}
 			// Version 11: the info box's title and text, after every mod's AddPinTypeData wrapper wrote its own.
+			infoWritten = false;
 			if (fullList && !isPlayer && !isUser && (fresh || !catching) &&
 				(PropertyWon(CMFPropertyInfoTitle()) || PropertyWon(CMFPropertyInfoText()) || infoAdds.Size() > 0))
 			{
@@ -3431,8 +4525,13 @@ class CMFCore extends CObject
 			// second pass for pins pushed after the first (CatchLatePins) reaches only those.
 			if (fullList && !isPlayer && !isUser && (fresh || !catching))
 			{
+				if (ProcessPinAsks(dataObject) && !askedPins.Contains(dataObject))
+				{
+					askedPins.PushBack(dataObject);
+				}
 				OnPinReady(dataObject, mapContext);
 			}
+			infoWritten = false;
 		}
 		if (fullList)
 		{
@@ -3470,6 +4569,10 @@ class CMFCore extends CObject
 		SetPinContext(dataObject, pinType);
 		WriteInfo(dataObject, pinType, filtered, pinTag);
 		ClearPinContext();
+		infoWritten = true;
+		infoKey = pinType;
+		infoLegend = filtered;
+		infoTag = pinTag;
 	}
 
 	// The tag of a tag claim (any property) whose game id (NameToFlashUInt) is this pin's id, or None.
@@ -3507,6 +4610,40 @@ class CMFCore extends CObject
 	// Version 4 hook, called once per full map build after OnPinReady has run for every pin and before CMF
 	// writes the info box height: wrap it to read the menu (menuFlash) and register or withdraw claims for
 	// this map opening, such as CMFPropertyInfoBoxHeight.
+	// Revision 13 hooks: dispatched only by the new panel event names (part 2).
+	public function OnMapTab(menu : CR4MapMenu, category : string)
+	{
+	}
+
+	public function OnMapHints(menu : CR4MapMenu, owner : string)
+	{
+	}
+
+	public function MapHintsReady(menu : CR4MapMenu)
+	{
+		var storage : CScriptedFlashValueStorage;
+		var list : CScriptedFlashArray;
+		var metadata : CScriptedFlashObject;
+		var owner : string;
+		if (!menu) { return; }
+		if (dirty) { Prepare(); }
+		owner = HintListOwner();
+		if (owner == "" && hintListOwnerSent == "") { return; }
+		storage = menu.GetMenuFlashValueStorage();
+		if (!storage) { return; }
+		list = storage.CreateTempFlashArray();
+		if (owner != "")
+		{
+			metadata = storage.CreateTempFlashObject();
+			metadata.SetMemberFlashString("owner", owner);
+			list.PushBackFlashObject(metadata);
+		}
+		// Empty releases only the owned channel. Legacy writers remain independent.
+		storage.SetFlashArray("cmf.map.hints.owned", list);
+		hintListOwnerSent = owner;
+		if (owner != "") { OnMapHints(menu, owner); }
+	}
+
 	public function OnMapReady(menuFlash : CScriptedFlashSprite)
 	{
 	}
@@ -3540,6 +4677,11 @@ class CMFCore extends CObject
 			menuFlash.SetMemberFlashNumber("cmfDescMaxAll", 0);
 			menuFlash.SetMemberFlashString("cmfDescMaxBy", "");
 		}
+		if (Find(39, "", '', 0, claim))
+		{
+			menuFlash.SetMemberFlashNumber("cmfDescMaxWAll", claim.number);
+		}
+		else { menuFlash.SetMemberFlashNumber("cmfDescMaxWAll", 0); }
 		SendHiddenTabs(menuFlash);
 	}
 
@@ -3567,6 +4709,101 @@ class CMFCore extends CObject
 
 	// Merges every tab hide claim covering this pin into cmfTabHide. A type claim matches the pin's own
 	// type or its filteredType; tag claims apply where the tag is known. Player and user pins never.
+	private function WriteLabelHides(dataObject : CScriptedFlashObject, pinType : string, filtered : string,
+		pinTag : name, maxLevel : int)
+	{
+		var i : int;
+		var matches : bool;
+		if (dataObject.GetMemberFlashBool("isPlayer") || dataObject.GetMemberFlashBool("isUserPin")) { return; }
+		for (i = 0; i < labelHideClaims.Size(); i += 1)
+		{
+			matches = Covers(labelHideClaims[i], pinType, pinTag, maxLevel) ||
+				(labelHideClaims[i].level == 1 && NameToString(labelHideClaims[i].pinType) == filtered);
+			if ((labelHideClaims[i].level == 2 || labelHideClaims[i].level == CMFLevelPlace()) &&
+				(CMFKindHidden(pinType) || CMFKindHidden(filtered))) { matches = false; }
+			if (matches)
+			{
+				MergeLabelHide(dataObject, labelHideClaims[i].provider, labelHideClaims[i].number);
+			}
+		}
+	}
+
+	// Recompute from contributions when a newly seen selected provider changes eligibility.
+	// Hash buckets avoid a walk over unrelated pins; storage lasts only through this full build.
+	private function MergeLabelHide(dataObject : CScriptedFlashObject, provider : string, flags : int)
+	{
+		var bucket, index, i, merged : int;
+		var hideState : SCMFLabelHideState;
+		if (labelHideBuckets.Size() == 0)
+		{
+			for (i = 0; i < 256; i += 1) { labelHideBuckets.PushBack(-1); }
+		}
+		bucket = (int)dataObject.GetMemberFlashUInt("id") % 256;
+		if (bucket < 0) { bucket += 256; }
+		index = labelHideBuckets[bucket];
+		while (index >= 0 && labelHidePins[index].pin != dataObject) { index = labelHidePins[index].next; }
+		if (index < 0)
+		{
+			hideState.pin = dataObject;
+			hideState.next = labelHideBuckets[bucket];
+			index = labelHidePins.Size();
+			labelHidePins.PushBack(hideState);
+			labelHideBuckets[bucket] = index;
+		}
+		hideState = labelHidePins[index];
+		i = hideState.providers.FindFirst(provider);
+		if (i < 0)
+		{
+			hideState.providers.PushBack(provider);
+			hideState.flags.PushBack(flags);
+		}
+		else
+		{
+			merged = hideState.flags[i];
+			if (CMFHasFlag(flags, 1) && !CMFHasFlag(merged, 1)) { merged += 1; }
+			if (CMFHasFlag(flags, 2) && !CMFHasFlag(merged, 2)) { merged += 2; }
+			hideState.flags[i] = merged;
+		}
+		labelHidePins[index] = hideState;
+		ApplyLabelHideState(index);
+	}
+
+	private function ApplyLabelHideState(index : int)
+	{
+		var i, merged, flags : int;
+		var owner, provider : string;
+		var dataObject : CScriptedFlashObject;
+		dataObject = labelHidePins[index].pin;
+		for (i = 0; i < labelHidePins[index].providers.Size(); i += 1)
+		{
+			provider = labelHidePins[index].providers[i];
+			if (!AnswerAllows(31, provider)) { continue; }
+			flags = labelHidePins[index].flags[i];
+			if (CMFHasFlag(flags, 1) && !CMFHasFlag(merged, 1)) { merged += 1; }
+			if (CMFHasFlag(flags, 2) && !CMFHasFlag(merged, 2)) { merged += 2; }
+			if (owner == "" || CMFProviderBeats(provider, owner)) { owner = provider; }
+		}
+		dataObject.SetMemberFlashInt("cmfLabelHide", merged);
+		dataObject.SetMemberFlashString("cmfLabelHideBy", owner);
+	}
+
+	private function NoteLabelHideOffer(provider : string)
+	{
+		var i : int;
+		if (labelHideOffers.Contains(provider)) { return; }
+		labelHideOffers.PushBack(provider);
+		if (!choicesActive || decideAnswer[31] != provider) { return; }
+		// At most once when this selected direct-only provider first offers a hide.
+		for (i = 0; i < labelHidePins.Size(); i += 1) { ApplyLabelHideState(i); }
+	}
+
+	public function ClearLabelHideState()
+	{
+		labelHidePins.Clear();
+		labelHideBuckets.Clear();
+	}
+
+
 	private function WriteTabHide(dataObject : CScriptedFlashObject, pinType : string, filtered : string, pinTag : name,
 		maxLevel : int)
 	{
@@ -3617,11 +4854,57 @@ class CMFCore extends CObject
 		}
 	}
 
-	// Opened by CMF's UpdateEntityPins wrapper; closed by the late pass. A per-pin hide asked for while the
-	// list is closed comes after the list was sent.
+	// Opened by CMF's UpdateData and UpdateEntityPins wrappers; closed by the late pass. A per-pin hide asked for while
+	// the list is closed comes after the list was sent.
 	public function OpenPinList()
 	{
 		listOpen = true;
+	}
+
+	// A precompiled CR4MapMenu.UpdateEntityPins of another mod (The Stable 2.2.1) skips every loose wrapper on that
+	// method, so CMF's UpdateData wrapper opens the pin list for the whole build (BeginBuild, EndBuild) and CMF's
+	// UpdateEntityPins wrapper records that it ran (NoteEntityStep). The first full build of a session without it logs
+	// one line (CheckEntityStep).
+	public function BeginBuild(area : name)
+	{
+		askedPins.Clear();
+		ClearLabelHideState();
+		inBuild = true;
+		entityStepRan = false;
+		fieldsStepCount = 0;
+		OpenPinList();
+		NoteListArea(area);
+	}
+
+	public function EndBuild()
+	{
+		inBuild = false;
+		listOpen = false;
+	}
+
+	public function NoteEntityStep()
+	{
+		entityStepRan = true;
+	}
+
+	// Version 13: CMF's AddPinTypeData wrapper counts the game pins it saw this build. When the entity step was
+	// skipped, CheckEntityStep logs the count, so a launch shows whether AddPinTypeData wrappers still run.
+	public function NoteFieldsStep()
+	{
+		fieldsStepCount += 1;
+	}
+
+	public function CheckEntityStep()
+	{
+		if (inBuild && !entityStepRan && !entitySkipLogged)
+		{
+			entitySkipLogged = true;
+			CMFLog("entity step skipped: another mod replaced CR4MapMenu.UpdateEntityPins; pin list opened by UpdateData");
+		}
+		if (inBuild && !entityStepRan)
+		{
+			CMFLog("entity fields step ran n=" + fieldsStepCount);
+		}
 	}
 
 	// The full list of the build being made, kept by CMF's UpdateUserMapPins wrapper for CatchLatePins.
@@ -3822,15 +5105,19 @@ class CMFCore extends CObject
 		var keepGold : bool;
 		var legendFromPin : bool;
 		var rowHide : bool;
-		var disabledAt : int;
+		var disabledAt, slot : int;
 		var categoryAt : int;
 		var noDefault : SCMFClaim;
 		// The followed quest keeps vanilla's gold meaning.
-		keepGold = dataObject.GetMemberFlashBool("tracked") || dataObject.GetMemberFlashBool("highlighted");
-		if (CMFPinOwner(dataObject, "cmfIconBy") == "" &&
-			(Find(CMFPropertyIcon(), pinKey, pinTag, maxLevel, claim) || Find(CMFPropertyIcon(), legendKey, '', 1, claim)))
+		if (PropertyWon(CMFPropertyTint()))
+		{
+			keepGold = dataObject.GetMemberFlashBool("tracked") || dataObject.GetMemberFlashBool("highlighted");
+		}
+		if (PropertyWon(CMFPropertyIcon()) && CMFPinOwner(dataObject, "cmfIconBy") == "" &&
+			(FindPinClaim(CMFPropertyIcon(), pinKey, legendKey, pinTag, maxLevel, claim)))
 		{
 			dataObject.SetMemberFlashString("cmfIconPath", claim.text);
+			dataObject.SetMemberFlashString("cmfIconSourceBy", claim.provider);
 		}
 		// Version 11: a "frame:<label>" icon names a frame of the pin's own art, which the legend row cannot show, so the
 		// row keeps its picture.
@@ -3849,24 +5136,36 @@ class CMFCore extends CObject
 				legendFromPin = true;
 			}
 		}
-		if (!keepGold && CMFPinOwner(dataObject, "cmfTintBy") == "" && (Find(CMFPropertyTint(), pinKey, pinTag, maxLevel, claim) ||
-			Find(CMFPropertyTint(), legendKey, '', 1, claim)))
+		if (PropertyWon(CMFPropertyTint()) && !keepGold && CMFPinOwner(dataObject, "cmfTintBy") == "" && (FindPinClaim(CMFPropertyTint(), pinKey, legendKey, pinTag, maxLevel, claim)))
 		{
 			dataObject.SetMemberFlashUInt("cmfIconTint", claim.number);
 			dataObject.SetMemberFlashBool("cmfIconTintEnabled", true);
 		}
 		// One legend row stands for every pin type sharing its filteredType, so its tint comes from the
 		// legend name; the pin's own type only when the row's art came from it too.
-		if (Find(CMFPropertyTint(), legendKey, '', 1, claim) || (legendFromPin && Find(CMFPropertyTint(), pinKey, '', 1, claim)))
+		if (Find(41, legendKey, '', 1, claim) ||
+			Find(CMFPropertyTint(), legendKey, '', 1, claim) || (legendFromPin && Find(CMFPropertyTint(), pinKey, '', 1, claim)))
 		{
 			dataObject.SetMemberFlashUInt("cmfLegendTint", claim.number);
 			dataObject.SetMemberFlashBool("cmfLegendTintEnabled", true);
 		}
-		// The panel ignores row placement for the filteredTypes it defines itself; labels apply to any row
-		// except the shared quest and user-pin rows. A category nobody declared leaves the row under All.
-		// Version 6: a row claim on a quest pin's filteredType gives those quest pins that row instead of
-		// the shared quest row (the panel reads cmfLegendPriority > 0 on a quest pin as that claim).
-		if (Find(CMFPropertyLegendRow(), legendKey, '', 1, claim))
+		// Every won row claim moves its row, the game's own rows too (every claim reaches the panel with a priority of
+		// at least 1); labels apply to any row except the shared quest and user-pin rows. A category nobody declared
+		// leaves a mod's row under All. Version 6: a row claim on a quest pin's filteredType gives those quest pins that
+		// row instead of the shared quest row (the panel reads cmfLegendPriority > 0 on a quest pin as that claim).
+		// Version 12: a claim on one of the game's own rows whose tab is empty or nobody declared keeps the row in its
+		// own tab (Kyle 2026-10-25: a misspelt tab never pulls a game row out of its tab).
+		if (Find(CMFPropertyLegendRow(), legendKey, '', 1, claim) && gamePinNow && !CMFIsVanillaCategory(claim.text, false) &&
+			CategoryIndex(claim.text) < 0)
+		{
+			if (!rowsKept.Contains(legendKey))
+			{
+				rowsKept.PushBack(legendKey);
+				CMFLog("legend row kept type=" + legendKey + " category=" + claim.text + " provider=" + claim.provider +
+					" reason=category");
+			}
+		}
+		else if (Find(CMFPropertyLegendRow(), legendKey, '', 1, claim))
 		{
 			rowHide = true;
 			LogPinDetail("pin legend row type=" + dataObject.GetMemberFlashString("type") + " filteredType=" + legendKey +
@@ -3907,36 +5206,108 @@ class CMFCore extends CObject
 		{
 			dataObject.SetMemberFlashBool("cmfDisabled", true);
 		}
-		WriteSlot(dataObject, CMFPropertyPinScale(), pinKey, legendKey, pinTag, maxLevel);
-		WriteSlot(dataObject, CMFPropertyLabelPlace(), pinKey, legendKey, pinTag, maxLevel);
-		WriteSlot(dataObject, CMFPropertyLabelText(), pinKey, legendKey, pinTag, maxLevel);
-		WriteSlot(dataObject, CMFPropertyLabelHide(), pinKey, legendKey, pinTag, maxLevel);
-		WriteSlot(dataObject, CMFPropertyLabelColor(), pinKey, legendKey, pinTag, maxLevel);
-		WriteSlot(dataObject, CMFPropertySpreadRank(), pinKey, legendKey, pinTag, maxLevel);
-		WriteSlot(dataObject, CMFPropertyHoverName(), pinKey, legendKey, pinTag, maxLevel);
-		// Version 11: the info box height of this pin's type, tag or place; an every-pin height stays the menu's.
-		if (CMFPinOwner(dataObject, "cmfDescMaxHBy") == "" &&
-			(Find(CMFPropertyInfoBoxHeight(), pinKey, pinTag, maxLevel, claim) ||
-			Find(CMFPropertyInfoBoxHeight(), legendKey, '', 1, claim)) && claim.level > 0)
+		for (slot = 0; slot < activeWriteSlots.Size(); slot += 1)
+		{
+			WriteSlot(dataObject, activeWriteSlots[slot], pinKey, legendKey, pinTag, maxLevel);
+		}
+
+		// Version 11: the info box height of this pin's type, tag or place; an every-pin height stays the menu's. Version
+		// 12: each key is asked on its own, so an every-pin height never hides a height on a pushed pin's legend name.
+		if (PropertyWon(CMFPropertyInfoBoxHeight()) && specificWon[CMFPropertyInfoBoxHeight()] &&
+			CMFPinOwner(dataObject, "cmfDescMaxHBy") == "" &&
+			((Find(CMFPropertyInfoBoxHeight(), pinKey, pinTag, maxLevel, claim) && claim.level > 0) ||
+			(Find(CMFPropertyInfoBoxHeight(), legendKey, '', 1, claim) && claim.level > 0)))
 		{
 			SetSlot(dataObject, CMFPropertyInfoBoxHeight(), claim.text, claim.number);
+		}
+		if (PropertyWon(39) && specificWon[39] && CMFPinOwner(dataObject, "cmfDescMaxWBy") == "" &&
+			((Find(39, pinKey, pinTag, maxLevel, claim) && claim.level > 0) ||
+			(Find(39, legendKey, '', 1, claim) && claim.level > 0)))
+		{
+			SetSlot(dataObject, 39, claim.text, claim.number);
 		}
 		WriteClickFields(dataObject, pinKey, legendKey, pinTag, maxLevel);
 	}
 
 	// Size and label slots from tag and type claims (the pin's type, then its filteredType), unless a
 	// per-pin claim already owns the slot on this pin.
+	// Preserve the historical own-type preference, except a global cannot mask a specific filtered type.
+	private function FindPinClaim(propertyId : int, pinKey : string, legendKey : string, pinTag : name,
+		maxLevel : int, out result : SCMFClaim) : bool
+	{
+		var primary, secondary : SCMFClaim;
+		if (Find(propertyId, pinKey, pinTag, maxLevel, primary))
+		{
+			if (primary.level == 0 && specificWon[propertyId] && pinKey != legendKey && Find(propertyId, legendKey, '', 1, secondary) &&
+				secondary.level > 0)
+			{
+				result = secondary;
+			}
+			else { result = primary; }
+			return true;
+		}
+		return Find(propertyId, legendKey, '', 1, result);
+	}
+
 	private function WriteSlot(dataObject : CScriptedFlashObject, propertyId : int, pinKey : string, legendKey : string,
 		pinTag : name, maxLevel : int)
 	{
 		var claim : SCMFClaim;
+		if (!PropertyWon(propertyId)) { return; }
 		if (CMFPinOwner(dataObject, CMFOwnerField(propertyId)) != "")
 		{
 			return;
 		}
-		if (Find(propertyId, pinKey, pinTag, maxLevel, claim) || Find(propertyId, legendKey, '', 1, claim))
+		if (FindPinClaim(propertyId, pinKey, legendKey, pinTag, maxLevel, claim))
 		{
 			SetSlot(dataObject, propertyId, claim.text, claim.number);
+			SetNewPinFields(dataObject, propertyId, claim.text, claim.number, claim.valueX, claim.valueY, claim.provider);
+		}
+	}
+
+	private function SetNewPinFields(dataObject : CScriptedFlashObject, propertyId : int, text : string,
+		number : int, x : float, y : float, provider : string)
+	{
+		switch (propertyId)
+		{
+			case 31:
+				dataObject.SetMemberFlashString("cmfIconSelectedPath", text);
+				dataObject.SetMemberFlashString("cmfIconSelectedSourceBy", provider);
+				break;
+			case 32:
+				dataObject.SetMemberFlashNumber("cmfSelectedScale", (float)number / 100);
+				dataObject.SetMemberFlashBool("cmfSelectedScaleEnabled", true);
+				break;
+			case 33:
+				dataObject.SetMemberFlashNumber("cmfPinAlpha", (float)number / 100);
+				dataObject.SetMemberFlashBool("cmfPinAlphaEnabled", true);
+				break;
+			case 34:
+				dataObject.SetMemberFlashInt("cmfPinOrder", number);
+				dataObject.SetMemberFlashBool("cmfPinOrderEnabled", true);
+				break;
+			case 42:
+				dataObject.SetMemberFlashString("cmfIconUnderPath", text);
+				dataObject.SetMemberFlashString("cmfIconUnderSourceBy", provider);
+				break;
+			case 43:
+				dataObject.SetMemberFlashUInt("cmfIconUnderTint", number);
+				dataObject.SetMemberFlashBool("cmfIconUnderTintEnabled", true);
+				break;
+			case 44:
+				dataObject.SetMemberFlashNumber("cmfPictureScale", (float)number / 100);
+				dataObject.SetMemberFlashBool("cmfPictureScaleEnabled", true);
+				break;
+			case 35:
+				dataObject.SetMemberFlashNumber("cmfPinOffsetX", x);
+				dataObject.SetMemberFlashNumber("cmfPinOffsetY", y);
+				dataObject.SetMemberFlashBool("cmfPinOffsetEnabled", true);
+				break;
+			case 36:
+				dataObject.SetMemberFlashNumber("cmfPinZoomMin", x);
+				dataObject.SetMemberFlashNumber("cmfPinZoomMax", y);
+				dataObject.SetMemberFlashBool("cmfPinZoomEnabled", true);
+				break;
 		}
 	}
 
@@ -3968,6 +5339,10 @@ class CMFCore extends CObject
 				break;
 			case 14:
 				dataObject.SetMemberFlashNumber("cmfDescMaxH", number);
+				break;
+			case 39:
+				dataObject.SetMemberFlashNumber("cmfDescMaxW", number);
+				dataObject.SetMemberFlashBool("cmfDescMaxWEnabled", number > 0);
 				break;
 		}
 	}
@@ -4041,7 +5416,7 @@ class CMFCore extends CObject
 	// when it has none the most specific other claim does, or nothing when the General row says Vanilla.
 	private function Find(propertyId : int, pinType : string, pinTag : name, maxLevel : int, out result : SCMFClaim) : bool
 	{
-		var i, best, picked, choice, rank, bestRank, pickedRank : int;
+		var i, next, best, picked, choice, rank, bestRank, pickedRank : int;
 		var matches : bool;
 		var answer : string;
 		if (propertyId < 0 || propertyId >= propertyWon.Size() || !propertyWon[propertyId])
@@ -4069,8 +5444,19 @@ class CMFCore extends CObject
 				}
 			}
 		}
-		for (i = 0; i < winners.Size(); i += 1)
+		// Only the candidate is cached. A group's Vanilla or strict explicit choice still applies above/below.
+		if (!specificWon[propertyId] && globalWinner[propertyId] >= 0)
 		{
+			i = globalWinner[propertyId];
+			if (maxLevel < 0 || (answer != "" && answer != winners[i].provider && fallVanilla)) { return false; }
+			result = winners[i];
+			return true;
+		}
+		next = propertyFirst[propertyId];
+		while (next >= 0)
+		{
+			i = next;
+			next = propertyNext[i];
 			matches = winners[i].propertyId == propertyId && Covers(winners[i], pinType, pinTag, maxLevel);
 			if (matches && (winners[i].level == 2 || winners[i].level == CMFLevelPlace()))
 			{
@@ -4084,7 +5470,7 @@ class CMFCore extends CObject
 				continue;
 			}
 			rank = Specific(winners[i]);
-			if (best < 0 || rank > bestRank)
+			if (best < 0 || rank > bestRank || (rank == bestRank && TagBeats(choice, winners[i], winners[best])))
 			{
 				best = i;
 				bestRank = rank;
@@ -4094,6 +5480,12 @@ class CMFCore extends CObject
 				picked = i;
 				pickedRank = rank;
 			}
+		}
+		// A selected global offer is a fallback; any eligible specific claim still wins.
+		if (picked >= 0 && pickedRank == 0 && bestRank > 0)
+		{
+			result = winners[best];
+			return true;
 		}
 		if (picked >= 0)
 		{
@@ -4106,6 +5498,20 @@ class CMFCore extends CObject
 		}
 		result = winners[best];
 		return true;
+	}
+
+	// Version 12: between two providers' tag claims on one tag, the one whose provider wins the pin's piece (choice).
+	private function TagBeats(choice : int, a : SCMFClaim, b : SCMFClaim) : bool
+	{
+		if (a.level != 2 || b.level != 2 || a.provider == b.provider)
+		{
+			return false;
+		}
+		if (choicesActive && choice >= 0)
+		{
+			return PieceBeats(choice, a.provider, b.provider);
+		}
+		return ProviderBeats(a.provider, b.provider);
 	}
 
 	// Version 11: whether a claim covers the pin asked about (its type, tag, and while a pin is being written its level
@@ -4239,6 +5645,102 @@ class CMFCore extends CObject
 		return CMFFolderBeats(a, b);
 	}
 
+	// Decimal text only. Accumulate negatively so INT_MIN never overflows while it is parsed.
+	private function ParseAskInt(text : string, out number : int) : bool
+	{
+		var negative : bool;
+		var digit, lastDigit, i : int;
+		number = 0;
+		negative = StrBeginsWith(text, "-");
+		if (negative || StrBeginsWith(text, "+")) { text = StrRight(text, StrLen(text) - 1); }
+		if (text == "") { return false; }
+		lastDigit = 7;
+		if (negative) { lastDigit = 8; }
+		for (i = 0; i < StrLen(text); i += 1)
+		{
+			digit = StrFindFirst("0123456789", StrMid(text, i, 1));
+			if (digit < 0 || number < -214748364 || (number == -214748364 && digit > lastDigit))
+			{
+				return false;
+			}
+			number = number * 10 - digit;
+		}
+		if (!negative) { number = -number; }
+		return true;
+	}
+
+	// A CMF-free provider appends its folder, and owns only the payload carrying that exact suffix.
+	// Parsing is the only work here: StylePin keeps every value, choice, ownership and diagnostic rule.
+	private function ProcessPinAsks(dataObject : CScriptedFlashObject) : bool
+	{
+		var rest, provider, identity, suffix, text, ids, idText, numberText : string;
+		var seen : array<string>;
+		var propertyId, number : int;
+		var asked : bool;
+		rest = dataObject.GetMemberFlashString("cmfAskBy");
+		if (rest == "") { return false; }
+		rest += ",";
+		while (StrLen(rest) > 0)
+		{
+			provider = TrimFilterWord(StrBeforeFirst(rest, ","));
+			rest = StrAfterFirst(rest, ",");
+			identity = StrLower(provider);
+			if (provider == "" || seen.Contains(identity)) { continue; }
+			seen.PushBack(identity);
+			asked = true;
+			suffix = "_" + provider;
+			text = dataObject.GetMemberFlashString("cmfAskIcon" + suffix);
+			if (text != "") { StylePin(provider, dataObject, CMFPropertyIcon(), text, 0); }
+			text = dataObject.GetMemberFlashString("cmfAskTint" + suffix);
+			if (text != "")
+			{
+				if (ParseAskInt(text, number)) { StylePin(provider, dataObject, CMFPropertyTint(), "", number); }
+				else { NoteProviderPresent(provider); NoteStyleRejected(provider, CMFPropertyTint(), "range"); }
+			}
+			text = dataObject.GetMemberFlashString("cmfAskScale" + suffix);
+			if (text != "")
+			{
+				if (ParseAskInt(text, number)) { StylePin(provider, dataObject, CMFPropertyPinScale(), "", number); }
+				else { NoteProviderPresent(provider); NoteStyleRejected(provider, CMFPropertyPinScale(), "range"); }
+			}
+			text = dataObject.GetMemberFlashString("cmfAskLabel" + suffix);
+			if (text != "") { StylePin(provider, dataObject, CMFPropertyLabelText(), text, 0); }
+			ids = dataObject.GetMemberFlashString("cmfAskIds" + suffix);
+			if (ids == "") { continue; }
+			ids += ",";
+			while (StrLen(ids) > 0)
+			{
+				idText = TrimFilterWord(StrBeforeFirst(ids, ","));
+				ids = StrAfterFirst(ids, ",");
+				if (idText == "") { continue; }
+				if (!ParseAskInt(idText, propertyId))
+				{
+					NoteProviderPresent(provider);
+					NoteStyleRejected(provider, 0, "range");
+					continue;
+				}
+				text = dataObject.GetMemberFlashString("cmfAskText" + idText + suffix);
+				numberText = dataObject.GetMemberFlashString("cmfAskNumber" + idText + suffix);
+				number = 0;
+				if (numberText != "" && !ParseAskInt(numberText, number))
+				{
+					NoteProviderPresent(provider);
+					NoteStyleRejected(provider, propertyId, "range");
+					continue;
+				}
+				StylePin(provider, dataObject, propertyId, text, number);
+			}
+		}
+		return asked;
+	}
+
+	// UpdateData calls after CatchLatePins so the one build total includes its late pass.
+	public function ReportPinAsks()
+	{
+		if (askedPins.Size() > 0) { CMFLog("asks pins=" + askedPins.Size()); }
+		askedPins.Clear();
+	}
+
 	// Per-pin style (CMFStylePin). The winning provider is stored on the pin in an owner field, so the
 	// result does not depend on which wrapper runs first; CMF's own writers skip owned properties.
 	public function StylePin(provider : string, dataObject : CScriptedFlashObject, propertyId : int, text : string,
@@ -4249,6 +5751,7 @@ class CMFCore extends CObject
 		var flags : int;
 		var tabs : string;
 		var choice : int;
+		var valueX, valueY : float;
 		NoteProviderPresent(provider);
 		// Version 6: clicks, hints and buttons have their own rules (StyleClick).
 		if (CMFIsClickProperty(propertyId))
@@ -4270,6 +5773,16 @@ class CMFCore extends CObject
 			NoteStyleRejected(provider, propertyId, "empty");
 			return false;
 		}
+		// Width zero releases only this provider's direct width; another owner is untouched.
+		if (propertyId == 39 && number == 0)
+		{
+			owner = CMFPinOwner(dataObject, ownerField);
+			if (owner == "") { return true; }
+			if (owner != provider) { return false; }
+			SetSlot(dataObject, 39, "", 0);
+			dataObject.SetMemberFlashString(ownerField, "");
+			return true;
+		}
 		// Version 4 slots: never the player marker or a user pin.
 		if (propertyId >= CMFPropertyPinScale() &&
 			(dataObject.GetMemberFlashBool("isPlayer") || dataObject.GetMemberFlashBool("isUserPin")))
@@ -4285,6 +5798,11 @@ class CMFCore extends CObject
 			(propertyId == CMFPropertyInfoBoxHeight() && (number < 100 || number > 1080)) ||
 			((propertyId == CMFPropertyInfoTitle() || propertyId == CMFPropertyInfoText()) &&
 			number != CMFInfoReplace() && number != CMFInfoAdd()))
+		{
+			NoteStyleRejected(provider, propertyId, "range");
+			return false;
+		}
+		if (!NewPinValueOk(propertyId, text, number, valueX, valueY))
 		{
 			NoteStyleRejected(provider, propertyId, "range");
 			return false;
@@ -4321,6 +5839,14 @@ class CMFCore extends CObject
 		{
 			NoteStyleRejected(provider, propertyId, "text");
 			return false;
+		}
+		if (propertyId == CMFPropertyLabelHide())
+		{
+			if (ChoiceOnlySkips(31, provider)) { return false; }
+			NoteStyledOffer(31, provider);
+			NoteLabelHideOffer(provider);
+			MergeLabelHide(dataObject, provider, flags);
+			return AnswerAllows(31, provider);
 		}
 		// Version 8: the Hidden pins choice can leave a provider's hides out.
 		if ((propertyId == CMFPropertyTabHide() || propertyId == CMFPropertyHidden()) && !AdditiveAllows(6, provider))
@@ -4379,14 +5905,24 @@ class CMFCore extends CObject
 			propertyId == CMFPropertyIconCompleted())
 		{
 			dataObject.SetMemberFlashString("cmfIconPath", text);
+			dataObject.SetMemberFlashString("cmfIconSourceBy", provider);
 		}
 		else if (propertyId == CMFPropertyInfoTitle())
 		{
 			dataObject.SetMemberFlashString("label", text);
+			// In OnPinReady, after the add claims' lines were written: they stay below the new title.
+			if (infoWritten)
+			{
+				AppendInfoAdds(dataObject, infoKey, infoLegend, infoTag, "label");
+			}
 		}
 		else if (propertyId == CMFPropertyInfoText())
 		{
 			dataObject.SetMemberFlashString("description", text);
+			if (infoWritten)
+			{
+				AppendInfoAdds(dataObject, infoKey, infoLegend, infoTag, "description");
+			}
 		}
 		else if (propertyId == CMFPropertyTint())
 		{
@@ -4401,6 +5937,7 @@ class CMFCore extends CObject
 		{
 			SetSlot(dataObject, propertyId, text, number);
 		}
+		SetNewPinFields(dataObject, propertyId, text, number, valueX, valueY, provider);
 		dataObject.SetMemberFlashString(ownerField, provider);
 		return true;
 	}
@@ -4442,6 +5979,7 @@ class CMFCore extends CObject
 	{
 		var claim : SCMFClaim;
 		var flags : int;
+		if (!PropertyWon(CMFPropertyPinClick())) { return; }
 		if (dataObject.GetMemberFlashBool("isPlayer") || dataObject.GetMemberFlashBool("cmfClickPin"))
 		{
 			return;
@@ -4465,7 +6003,7 @@ class CMFCore extends CObject
 	}
 
 	// The game keeps its own inputs: use and doubleClick are dropped on fast-travel and quest pins (logged once
-	// per provider and pin type); button stays.
+	// per provider and pin type); button and hold stay. A short hold press keeps the game action.
 	private function GameClickInputs(dataObject : CScriptedFlashObject, provider : string, flags : int) : int
 	{
 		if (!dataObject.GetMemberFlashBool("isFastTravel") && !dataObject.GetMemberFlashBool("isQuest"))
@@ -4476,6 +6014,14 @@ class CMFCore extends CObject
 		{
 			NoteClick("click refused provider=" + provider + " type=" + dataObject.GetMemberFlashString("type") +
 				" reason=game");
+		}
+		if (CMFHasFlag(flags, CMFClickInputHold()))
+		{
+			if (CMFHasFlag(flags, CMFClickInputButton()))
+			{
+				return CMFClickInputButton() + CMFClickInputHold();
+			}
+			return CMFClickInputHold();
 		}
 		if (CMFHasFlag(flags, CMFClickInputButton()))
 		{
@@ -4657,7 +6203,7 @@ class CMFCore extends CObject
 	public function PinClicked(menu : CR4MapMenu, pinTag : name, pinId : int, provider : string, pinType : string,
 		input : string, value : int)
 	{
-		if (provider == "" || (input != "use" && input != "doubleClick" && input != "button"))
+		if (provider == "" || (input != "use" && input != "doubleClick" && input != "button" && input != "hold"))
 		{
 			return;
 		}
@@ -4669,7 +6215,7 @@ class CMFCore extends CObject
 	// Version 6 hook, called once per click a provider won (PinClick). It does nothing and logs
 	// "click provider= pin= reason=nohandler": the winning provider wraps it (@wrapMethod(CMFCore)), acts when
 	// provider is its own id and returns true, and otherwise returns wrappedMethod(...). Each wrapper tests its
-	// own provider id, so wrapper order never matters. input is "use", "doubleClick" or "button"; value is the
+	// own provider id, so wrapper order never matters. input is "use", "doubleClick", "button" or "hold"; value is the
 	// claim's number.
 	public function OnPinClicked(menu : CR4MapMenu, provider : string, pinTag : name, pinId : int, pinType : string,
 		input : string, value : int) : bool
@@ -4678,9 +6224,102 @@ class CMFCore extends CObject
 		return false;
 	}
 
+	// Managed hints are not drawing ids. Recheck both the prepared list and its current winner.
+	public function HintClicked(menu : CR4MapMenu, owner : string, value : int)
+	{
+		if (value <= 0 || owner == "" || owner != hintListPreparedOwner || owner != ThemeStyleOwner('hints', 'list'))
+		{
+			return;
+		}
+		OnDrawingClicked(menu, owner, 'hints', "hint", value);
+	}
+
 	// Map-space drawing: called by the map panel (OnCMFDrawingClicked) once per click on a drawing whose click
 	// key is 1 or more (value). Logs it and hands it to OnDrawingClicked for the drawing's owner (the earliest
 	// folder that made the id).
+	// Resolve the current drawing owner from its string id; never convert an arbitrary string to a name.
+	// Typed-name metadata only; the panel walks pins only when a live movie reads map.pins.
+	public function MovieControlsWanted() : bool
+	{
+		var i : int;
+		for (i = 0; i < themeEntries.Size(); i += 1)
+		{
+			if (themeEntries[i].kind == 2 && themeEntries[i].key == 'movie' && !IsSpaceDrawing(themeEntries[i].target) &&
+				ThemeDrawingOwner(themeEntries[i].target) == themeEntries[i].provider) { return true; }
+		}
+		return false;
+	}
+
+	private function SendMovieTags(storage : CScriptedFlashValueStorage)
+	{
+		var tags : CScriptedFlashArray;
+		var item : CScriptedFlashObject;
+		var areas : array<SAreaMapPinInfo>;
+		var i : int;
+		if (!MovieControlsWanted()) { return; }
+		tags = storage.CreateTempFlashArray();
+		for (i = 0; i < declaredTagNames.Size(); i += 1)
+		{
+			item = storage.CreateTempFlashObject();
+			item.SetMemberFlashString("k", "tag");
+			item.SetMemberFlashUInt("id", NameToFlashUInt(declaredTagNames[i]));
+			item.SetMemberFlashString("text", NameToString(declaredTagNames[i]));
+			tags.PushBackFlashObject(item);
+		}
+		areas = theGame.GetCommonMapManager().GetAreaMapPins();
+		for (i = 0; i < areas.Size(); i += 1)
+		{
+			item = storage.CreateTempFlashObject();
+			item.SetMemberFlashString("k", "area");
+			item.SetMemberFlashUInt("id", NameToFlashUInt(areas[i].areaName));
+			item.SetMemberFlashString("text", NameToString(areas[i].areaName));
+			tags.PushBackFlashObject(item);
+		}
+		storage.SetFlashArray("cmf.map.movieTags", tags);
+	}
+
+	// Unknown movie text shares the session-long provider/tag diagnostic table.
+	public function MovieTagUnknown(id : string, text : string)
+	{
+		var i : int;
+		var owner : string;
+		for (i = 0; i < themeEntries.Size(); i += 1)
+		{
+			if (themeEntries[i].kind == 2 && themeEntries[i].key == 'movie' && NameToString(themeEntries[i].target) == id)
+			{
+				owner = ThemeDrawingOwner(themeEntries[i].target);
+				if (owner != "" && owner == themeEntries[i].provider) { ResolveKnownTag(owner, text); return; }
+			}
+		}
+	}
+
+	public function OnMapAreaReady(menu : CR4MapMenu, area : name)
+	{
+	}
+
+	public function MovieEvent(menu : CR4MapMenu, id : string, eventName : string, value : string)
+	{
+		var i : int;
+		var owner : string;
+		for (i = 0; i < themeEntries.Size(); i += 1)
+		{
+			if (themeEntries[i].kind == 2 && themeEntries[i].key == 'movie' && NameToString(themeEntries[i].target) == id)
+			{
+				owner = ThemeDrawingOwner(themeEntries[i].target);
+				if (owner != "" && owner == themeEntries[i].provider)
+				{
+					OnMovieEvent(menu, owner, id, eventName, value);
+					return;
+				}
+			}
+		}
+	}
+
+	public function OnMovieEvent(menu : CR4MapMenu, provider : string, id : string, eventName : string, value : string) : bool
+	{
+		return false;
+	}
+
 	public function DrawingClicked(menu : CR4MapMenu, id : string, value : int)
 	{
 		var i : int;
@@ -5089,7 +6728,8 @@ function CMFHasProperty(propertyId : int) : bool
 		propertyId == CMFPropertySpreadRank() || CMFIsClickProperty(propertyId) || propertyId == CMFPropertyHoverName() ||
 		propertyId == CMFPropertyInfoTitle() || propertyId == CMFPropertyInfoText() ||
 		propertyId == CMFPropertyIconUndiscovered() || propertyId == CMFPropertyIconCompleted() ||
-		propertyId == CMFPropertyTabHidden() || propertyId == CMFPropertyPresent();
+		propertyId == CMFPropertyTabHidden() || propertyId == CMFPropertyPresent() ||
+		(propertyId >= 31 && propertyId <= 36) || (propertyId >= 39 && propertyId <= 44);
 }
 
 // One pin type (a map area for CMFPropertyBackground, a filteredType for the legend row and label, a
@@ -5123,7 +6763,10 @@ function CMFRegister(provider : string, propertyId : int, target : name, mapCont
 	number : int) : bool
 {
 	var claim : SCMFClaim;
+	var effectiveId : int;
 	var present : bool;
+	effectiveId = propertyId;
+	if (propertyId == 40) { effectiveId = number; }
 	present = theGame.CMFGetCore().NoteProviderPresent(provider);
 	if (propertyId == CMFPropertyPresent())
 	{
@@ -5138,7 +6781,7 @@ function CMFRegister(provider : string, propertyId : int, target : name, mapCont
 		CMFLog("rejected provider=" + provider + " property=" + propertyId + " reason=unknown");
 		return false;
 	}
-	if (IsNameValid(mapContext) && propertyId != CMFPropertyDisabled() && propertyId != CMFPropertyHidden())
+	if (IsNameValid(mapContext) && effectiveId != CMFPropertyDisabled() && effectiveId != CMFPropertyHidden())
 	{
 		CMFLog("rejected provider=" + provider + " property=" + propertyId + " reason=context");
 		return false;
@@ -5146,10 +6789,7 @@ function CMFRegister(provider : string, propertyId : int, target : name, mapCont
 	claim.provider = provider;
 	claim.propertyId = propertyId;
 	claim.level = 1;
-	if ((propertyId == CMFPropertyHidden() || propertyId == CMFPropertyInfoBoxHeight() ||
-		propertyId == CMFPropertyTabHide() || propertyId == CMFPropertyHoverName() || propertyId == CMFPropertyInfoTitle() ||
-		propertyId == CMFPropertyInfoText() || propertyId == CMFPropertyIconUndiscovered() ||
-		propertyId == CMFPropertyIconCompleted()) && !IsNameValid(target))
+	if (theGame.CMFGetCore().EveryPinProperty(effectiveId) && !IsNameValid(target))
 	{
 		claim.level = 0;
 	}
@@ -5171,6 +6811,13 @@ function CMFDeclareProvider(provider : string) : bool
 }
 
 // Query only: asking about an absent provider never declares it.
+// Revision 13: make a typed tag available to item styles, drawing filters and movie controls for this session.
+// Idempotent per provider and tag; CMFReleaseProvider removes only this provider's registrations.
+function CMFDeclareTag(provider : string, tag : name) : bool
+{
+	return theGame.CMFGetCore().DeclareTag(provider, tag);
+}
+
 function CMFProviderPresent(provider : string) : bool
 {
 	return theGame.CMFGetCore().ProviderPresent(provider);
@@ -5188,13 +6835,16 @@ function CMFRegisterForTag(provider : string, propertyId : int, pinTag : name, m
 	number : int) : bool
 {
 	var claim : SCMFClaim;
+	var effectiveId : int;
+	effectiveId = propertyId;
+	if (propertyId == 40) { effectiveId = number; }
 	theGame.CMFGetCore().NoteProviderPresent(provider);
-	if (!CMFOnePinProperty(propertyId))
+	if (!CMFOnePinProperty(effectiveId))
 	{
 		CMFLog("rejected provider=" + provider + " property=" + propertyId + " reason=level");
 		return false;
 	}
-	if (IsNameValid(mapContext) && propertyId != CMFPropertyDisabled() && propertyId != CMFPropertyHidden())
+	if (IsNameValid(mapContext) && effectiveId != CMFPropertyDisabled() && effectiveId != CMFPropertyHidden())
 	{
 		CMFLog("rejected provider=" + provider + " property=" + propertyId + " reason=context");
 		return false;
@@ -5220,19 +6870,24 @@ function CMFOnePinProperty(propertyId : int) : bool
 		propertyId == CMFPropertyHidden() || (propertyId >= CMFPropertyPinScale() && propertyId <= CMFPropertyTabHide()) ||
 		propertyId == CMFPropertyLabelColor() || CMFIsClickProperty(propertyId) || propertyId == CMFPropertySpreadRank() ||
 		propertyId == CMFPropertyHoverName() || propertyId == CMFPropertyInfoTitle() || propertyId == CMFPropertyInfoText() ||
-		propertyId == CMFPropertyIconUndiscovered() || propertyId == CMFPropertyIconCompleted();
+		propertyId == CMFPropertyIconUndiscovered() || propertyId == CMFPropertyIconCompleted() ||
+		(propertyId >= 31 && propertyId <= 36) || propertyId == 39 || propertyId == 42 || propertyId == 43 ||
+		propertyId == 44;
 }
 
 // Version 11: one pin by place, for a pin with no tag (pins a mod pushes with plain numbers) or with a tag nobody knows:
-// the pin of pinType (its own type or its legend name) within CMFPlaceRadius metres of the world position x, y. Takes
+// the pin of pinType (a pin a mod pushes: its own type; a game pin: its own type or its legend name) within CMFPlaceRadius metres of the world position x, y. Takes
 // what CMFRegisterForTag takes and sits between them: a tag claim beats it on that pin, and it beats a type claim.
 // It covers every map context. Calling again with the same type and position replaces the provider's claim.
 function CMFRegisterForPlace(provider : string, propertyId : int, pinType : name, x : float, y : float, text : string,
 	number : int) : bool
 {
 	var claim : SCMFClaim;
+	var effectiveId : int;
+	effectiveId = propertyId;
+	if (propertyId == 40) { effectiveId = number; }
 	theGame.CMFGetCore().NoteProviderPresent(provider);
-	if (!CMFOnePinProperty(propertyId))
+	if (!CMFOnePinProperty(effectiveId))
 	{
 		CMFLog("rejected provider=" + provider + " property=" + propertyId + " reason=level");
 		return false;
@@ -5713,6 +7368,8 @@ function CMFHidePin(provider : string, dataObject : CScriptedFlashObject) : bool
 // Returns false (and logs) when the installed CMF is older than the pack needs.
 function CMFRequireVersion(provider : string, minVersion : int) : bool
 {
+	// Version 12: asking counts as talking to CMF, so a provider that stops here because this CMF is older is present.
+	theGame.CMFGetCore().NoteProviderPresent(provider);
 	if (CMFGetVersion() >= minVersion)
 	{
 		return true;
@@ -5726,7 +7383,7 @@ function CMFReleaseProvider(provider : string)
 	theGame.CMFGetCore().ReleaseProvider(provider);
 }
 
-// Version 8: the name CMF's in-game menu shows for a provider (for example "Ink and Iron"); without it the menu
+// Version 8: the name CMF's in-game menu shows for a provider (for example a tidy display name); without it the menu
 // shows the folder name tidied (CMFTidyName). Call it once, where the provider registers its claims.
 function CMFSetProviderName(provider : string, displayName : string) : bool
 {
@@ -5764,6 +7421,9 @@ struct SCMFThemeEntry
 	var text : string;
 	var number : float;
 	var order : int;
+	// Revision 13 item styles use kind 5 in a separate collection and payload.
+	var item : string;
+	var itemKind : string;
 	// Map-space drawing: a list key's values (kind 4, CMFDrawSetList).
 	var values : array<float>;
 }
@@ -5776,7 +7436,7 @@ struct SCMFThemeEntry
 function CMFThemeParts() : string
 {
 	return "screen,map,mapEdge,title,tracker,legend,legendRow,legendTab,tooltip,preview,worldButton,worldHint,hints," +
-		"keyCap,pinLabel,pinName,navigation,markerPanel,pinButton,mapSpace,opening,spread,wide";
+		"keyCap,pinLabel,pinName,navigation,markerPanel,pinButton,mapSpace,opening,spread,wide,pin,sounds,world,crosshair,edgePointer";
 }
 
 function CMFThemeLayers() : string
@@ -5786,7 +7446,7 @@ function CMFThemeLayers() : string
 
 function CMFThemeKinds() : string
 {
-	return "rect,ring,ellipse,polygon,band,line,text,movie";
+	return "rect,ring,ellipse,polygon,band,line,text,movie,image";
 }
 
 // Map-space drawing: the hover look of a drawing that takes clicks (click 1 or more), while the pointer is over
@@ -5826,7 +7486,7 @@ function CMFThemeTextKeys() : string
 // "frameRate asked=60 now=24", frameRate leaves this list and CMFHasAbility('navigation', 'frameRate') answers false.
 function CMFThemeNavigationKeys() : string
 {
-	return "zoomTimed,padHoldMs,tweenEveryFrame,frameRate,zoomOutFit,edgeOvershoot";
+	return "zoomTimed,padHoldMs,tweenEveryFrame,frameRate,zoomOutFit,edgeOvershoot,zoomIn,zoomOut,zoomStep";
 }
 
 // CMF's own movement (1.0.0): the value CMF sends for a navigation key no folder set (SendDefaultMotion).
@@ -5846,7 +7506,7 @@ function CMFDefaultNavigationValue(key : name) : float
 function CMFThemeOpeningKeys() : string
 {
 	return "slideSeconds,slideOffset,closeSeconds,pinsDuringSlide,pinStepMs,pinBatch,pinBudgetMs,showDelayMs," +
-		"fadeSeconds,tileFadeSeconds,revealSeconds,readyAtFadeStart,revealEase";
+		"fadeSeconds,tileFadeSeconds,revealSeconds,readyAtFadeStart,revealEase,revealLegendSeconds,revealTrackerSeconds,revealCrosshairSeconds,waitForMap";
 }
 
 // Version 10: the map on a screen that is not 16:9. fill 1 fills the screen (the default with no provider), 0 keeps
@@ -5854,7 +7514,7 @@ function CMFThemeOpeningKeys() : string
 // maxRatio (0, or 1.78 to 4) caps the shape the map fills; world 1 scales the world overview to the screen's width.
 function CMFThemeWideKeys() : string
 {
-	return "fill,panels,maxRatio,world";
+	return "fill,panels,maxRatio,world,panelsLegend,panelsTracker,panelsPreview";
 }
 
 // Version 10: the range of a wide key.
@@ -5866,6 +7526,9 @@ function CMFThemeWideValueOk(key : name, number : float) : bool
 		case 'world':
 			return number == 0 || number == 1;
 		case 'panels':
+		case 'panelsLegend':
+		case 'panelsTracker':
+		case 'panelsPreview':
 			return number >= 0 && number <= 1;
 		case 'maxRatio':
 			return number == 0 || (number >= 1.78 && number <= 4);
@@ -5908,6 +7571,7 @@ function CMFThemeMotionValueOk(key : name, number : float) : bool
 		case 'tweenEveryFrame':
 		case 'zoomOutFit':
 		case 'pinsDuringSlide':
+		case 'waitForMap':
 		case 'readyAtFadeStart':
 		case 'revealEase':
 			return number == 0 || number == 1;
@@ -5938,43 +7602,58 @@ function CMFThemePartKeys(part : name) : string
 {
 	switch (part)
 	{
+		case 'world':
+			return "crestX,crestY,nameX,nameY,text,font,size,color,outlineColor,outlineAlpha,hide";
+		case 'sounds':
+			return "open,close,select,zoom,tab,click,travel";
+		case 'pin':
+			return "highlightColor,highlightAlpha,glowColor,glowAlpha,disabledAlpha,disabledGrey,pulse,hide";
 		case 'map':
 			return "top,bottom,panLimit,centerInLimit,backdrop";
 		case 'mapEdge':
 			return "hide";
 		case 'title':
-			return CMFThemeTextKeys() + ",x,y,screenX,screenY,wrap,hide";
+			return CMFThemeTextKeys() + ",x,y,screenX,screenY,wrap,hide,text";
 		case 'tracker':
-			return CMFThemeGlowKeys() + ",nameFont,nameSize,nameColor,hide";
+			return CMFThemeGlowKeys() + ",nameFont,nameSize,nameColor,hide,x,y,scale";
 		case 'legend':
-			return CMFThemeGlowKeys();
+			return CMFThemeGlowKeys() + ",allText,x,y,scale,show,autoHideMs,padShowFirst";
 		case 'legendRow':
-			return CMFThemeGlowKeys() + ",color,colorSelected,colorOff,counterColor,hide";
+			return CMFThemeGlowKeys() + ",color,colorSelected,colorOff,counterColor,hide,font,size";
 		case 'legendTab':
-			return CMFThemeGlowKeys() + ",color,spacing,hide";
+			return CMFThemeGlowKeys() + ",color,spacing,hide,font,size";
 		case 'tooltip':
 			// Version 7: clear* moves a tall info box clear of the cursor and the other panels. Version 11: x and y move
 			// the box from the game's place by px, and clearCursorAbove and the keys after it widen the area kept clear
-			// and the places tried.
+			// and the places tried. Version 12: tallMinHeight and the tall* places put a taller box beside the panels (the
+			// layout a map file may give its scrolling box), apart from the box height (property 14).
 			return CMFThemeGlowKeys() + ",titleFont,titleSize,titleColor,bodyFont,bodySize,bodyColor,hide," +
 				"clearMinHeight,clearView,clearSide,clearCursor,clearLeft,clearTop,clearRight,clearBottom,x,y," +
-				"clearCursorAbove,clearCursorBelow,clearCursorTitle,clearPadX,clearPadY,clearGap,clearBoxPad,clearPick,clearCursorWeight";
+				"clearCursorAbove,clearCursorBelow,clearCursorTitle,clearPadX,clearPadY,clearGap,clearBoxPad,clearPick,clearCursorWeight," +
+				"tallMinHeight,tallX,tallTop,tallBottom,tallAltX,tallAltTop,tallAltBottom,tallUnderLegend,tallClear,showSeconds,hideSeconds,slide," +
+				"plateColor,plateAlpha,thumbColor,trackColor,scrollStep,titleCase,hideScrollBar," +
+				"foldTag,foldMoreText,foldLessText,foldKeyPad,foldKeyKb,foldOpen,clearAnchor," +
+				"titleGlow1Color,titleGlow1Alpha,titleGlow1Blur,titleGlow1Strength,titleGlow2Color,titleGlow2Alpha,titleGlow2Blur,titleGlow2Strength," +
+				"bodyGlow1Color,bodyGlow1Alpha,bodyGlow1Blur,bodyGlow1Strength,bodyGlow2Color,bodyGlow2Alpha,bodyGlow2Blur,bodyGlow2Strength";
 		case 'preview':
-			return "hide";
+			return "hide,x,y,scale,show,movingMs";
 		case 'worldButton':
-			return CMFThemeGlowKeys() + ",hide";
+			return CMFThemeGlowKeys() + ",hide,text,x,y,scale,font,size";
 		case 'worldHint':
-			return CMFThemeGlowKeys() + ",hide";
+			return CMFThemeGlowKeys() + ",hide,text,x,y,scale,font,size";
 		case 'hints':
-			return CMFThemeGlowKeys() + ",x,y,scale,align";
+			return CMFThemeGlowKeys() + ",x,y,scale,align,list,font,size";
 		case 'keyCap':
-			return CMFThemeGlowKeys() + ",color,iconColor,brackets,keyGap,labelGap,hide";
+			return CMFThemeGlowKeys() + ",color,iconColor,brackets,keyGap,labelGap,hide,font,size";
 		case 'pinLabel':
-			return "font,size,rise,riseTracked,riseOffset,riseOffsetTracked," + CMFThemeShadowKeys();
+			return "font,size,color,rise,riseTracked,riseOffset,riseOffsetTracked," + CMFThemeShadowKeys();
 		case 'pinName':
-			return "font,size," + CMFThemeShadowKeys();
+			return "font,size,color," + CMFThemeShadowKeys();
 		case 'pinButton':
 			return "width,height,curve,fill,alpha,stroke,strokeWidth,offsetX,offsetY," + CMFThemeTextKeys();
+		case 'crosshair':
+		case 'edgePointer':
+			return CMFThemeGlowKeys() + ",color,alpha,scale,hide";
 		case 'navigation':
 			return "frameTimed,stepMs,worldStepMs,maxStepMs,crosshairRoam,safeLeft,safeTop,safeRight,safeBottom," +
 				"snapSeconds,centerSeconds," + CMFThemeNavigationKeys();
@@ -5995,6 +7674,14 @@ function CMFThemeHideWords(part : name) : string
 {
 	switch (part)
 	{
+		case 'crosshair':
+			return "all,label";
+		case 'edgePointer':
+			return "all";
+		case 'world':
+			return "outline,names";
+		case 'pin':
+			return "highlight,glow,pulse";
 		case 'mapEdge':
 			return "edgeFade";
 		case 'title':
@@ -6017,7 +7704,7 @@ function CMFThemeHideWords(part : name) : string
 }
 
 // The keys each drawing kind takes in this CMF (CMFDrawSet). Version 6 adds tab, tabLabel, click, above and the
-// hover keys to the box kinds, and the map-space kinds: line and movie on mapSpace only, text on mapSpace (placed
+// hover keys to the box kinds, and the map-space kinds: line on mapSpace only and movie on any drawable part, text on mapSpace (placed
 // at x, y metres) or on any part or drawing; line, text and movie also take listen and listenFields. A movie
 // also takes any key its author documents for the movie. Version 7 adds minPartHeight to the box kinds and text:
 // the drawing shows only while its part's box is at least that many pixels tall. Version 10 adds wideAnchor to the box
@@ -6030,8 +7717,8 @@ function CMFThemeShapeKeys(kind : name) : string
 	keys = "left,top,right,bottom,width,height,widthShare,heightShare,minWidth,minHeight,alignX,alignY,offsetX,offsetY," +
 		"minLeft,maxRight,minTop,maxBottom,screenLeft,screenRight,screenTop,screenBottom,measure,fill,alpha,fill2,alpha2," +
 		"gradient,angle,curve,stroke,strokeAlpha,strokeWidth,layer,order,view,when,repeat,repeatStep,alphaList," +
-		CMFThemeGlowKeys() + "," + CMFThemeShadowKeys() + ",tab,tabLabel,click,above," + CMFThemeHoverKeys() + ",minPartHeight,wideAnchor";
-	space = "layer,order,alpha,view,area,preview,fadeMs,tab,tabLabel,listen,listenFields";
+		CMFThemeGlowKeys() + "," + CMFThemeShadowKeys() + ",tab,tabLabel,click,above," + CMFThemeHoverKeys() + ",minPartHeight,wideAnchor,pinType,pinTag,withLook";
+	space = "layer,order,alpha,view,area,preview,fadeMs,tab,tabLabel,listen,listenFields,withLook";
 	switch (kind)
 	{
 		case 'rect':
@@ -6043,12 +7730,14 @@ function CMFThemeShapeKeys(kind : name) : string
 			return keys + ",points,originX,originY";
 		case 'band':
 			return keys + ",side,size,sizeZoom,minSize,maxShare";
+		case 'image':
+			return keys + ",src,fit,smooth,x,y,sizeZoom,area,fadeMs";
 		case 'text':
 			return keys + ",text,font,size,color,align,wrap,padding,x,y,sizeZoom,area,fadeMs,listen,listenFields";
 		case 'line':
 			return space + ",stroke,strokeAlpha,strokeWidth,strokeZoom";
 		case 'movie':
-			return space + ",src";
+			return keys + ",area,preview,fadeMs,listen,listenFields,src,focus";
 	}
 	return "";
 }
@@ -6057,14 +7746,15 @@ function CMFThemeShapeKeys(kind : name) : string
 function CMFThemeAllShapeKeys() : string
 {
 	return CMFThemeShapeKeys('polygon') + ",inset,side,size,sizeZoom,minSize,maxShare," + CMFThemeShapeKeys('text') + "," +
-		CMFThemeShapeKeys('line') + "," + CMFThemeShapeKeys('movie');
+		CMFThemeShapeKeys('line') + "," + CMFThemeShapeKeys('movie') + "," + CMFThemeShapeKeys('image');
 }
 
 // Keys whose value is the text argument; every other key takes the number argument.
 function CMFThemeTextKey(key : name) : bool
 {
 	return CMFListHas("font,nameFont,titleFont,bodyFont,align,wrap,panLimit,hide,layer,when,gradient,side,measure,view," +
-		"points,alphaList,area,src,tab,tabLabel,text,listen,listenFields,clearView,clearSide,wideAnchor", NameToString(key));
+		"points,alphaList,area,src,tab,tabLabel,text,allText,listen,listenFields,clearView,clearSide,wideAnchor,fit,pinType,pinTag,titleCase,show," +
+		"foldTag,foldMoreText,foldLessText,foldKeyPad,foldKeyKb,clearAnchor", NameToString(key));
 }
 
 // Map-space drawing: a word with no space or comma (area names, tab ids).
@@ -6101,7 +7791,45 @@ function CMFThemeWordsOk(text : string, allowed : string) : bool
 function CMFThemeValueOk(part : name, key : name, text : string, number : float) : bool
 {
 	var k : string;
+	var i : int;
 	k = NameToString(key);
+	if (part == 'tooltip' && key == 'foldOpen') { return number == 0 || number == 1; }
+	if (part == 'tooltip' && key == 'clearAnchor') { return text == "cursor" || text == "pin"; }
+	if (part == 'tooltip' && key == 'foldTag')
+	{
+		// Match the panel marker scanner's attribute-name grammar; empty disables folding.
+		for (i = 0; i < StrLen(text); i += 1)
+		{
+			if (StrFindFirst("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-:", StrMid(text, i, 1)) < 0) { return false; }
+		}
+		return true;
+	}
+	if (part == 'tooltip' && (key == 'foldMoreText' || key == 'foldLessText' || key == 'foldKeyPad' || key == 'foldKeyKb'))
+	{
+		// Prompts may be literal HTML or [[key]]; empty removes a prompt or native input binding.
+		return true;
+	}
+	if (part == 'legend' && key == 'show') { return text == "always" || text == "auto"; }
+	if (part == 'preview' && key == 'show') { return text == "always" || text == "moving" || text == "never"; }
+	if (key == 'autoHideMs' || key == 'movingMs') { return number >= 0 && number <= 600000; }
+	if (key == 'padShowFirst') { return number == 0 || number == 1; }
+	if (part == 'tooltip' && key == 'titleCase') { return text == "upper" || text == "keep"; }
+	if (part == 'tooltip' && key == 'hideScrollBar') { return number == 0 || number == 1; }
+	if (part == 'tooltip' && key == 'scrollStep') { return number >= 1 && number <= 1000 && number == (int)number; }
+	if (part == 'navigation' && key == 'zoomStep') { return number >= 1.01 && number <= 2; }
+	if (part == 'navigation' && (key == 'zoomIn' || key == 'zoomOut')) { return number > 0 && number <= 100000; }
+	if (part == 'world' && key == 'text') { return true; }
+	if (part == 'tooltip' && (key == 'showSeconds' || key == 'hideSeconds')) { return number >= 0 && number <= 30; }
+	if (part == 'sounds') { return CMFThemeWordOk(text); }
+	if (key == 'fit') { return text == "stretch" || text == "contain" || text == "cover" || text == "tile"; }
+	if (key == 'focus' || key == 'withLook') { return number == 0 || number == 1; }
+	if (key == 'smooth') { return number == 0 || number == 1; }
+	if (key == 'pinType' || key == 'pinTag') { return true; }
+	if (part == 'pin' && key == 'disabledGrey') { return number >= 0 && number <= 1; }
+	if (part == 'pin' && key == 'pulse') { return number == 0 || number == 1; }
+	if (part == 'hints' && key == 'list') { return text == "" && number == 1; }
+	if ((part == 'title' || part == 'worldHint' || part == 'worldButton') && key == 'text') { return true; }
+	if (part == 'legend' && key == 'allText') { return true; }
 	if (CMFThemeTextKey(key))
 	{
 		switch (key)
@@ -6141,7 +7869,8 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 					!StrBeginsWith(text, "worldmap.global.") && !StrBeginsWith(text, "worldmap.title.");
 			case 'src':
 				// The author's own movie, by game path: swf/<folder>/<name>.swf.
-				return StrBeginsWith(text, "swf/") && StrEndsWith(text, ".swf") && CMFThemeWordOk(text) &&
+				return ((StrBeginsWith(text, "swf/") && StrEndsWith(text, ".swf")) ||
+					(StrBeginsWith(text, "img://") && StrLen(text) > 6)) && CMFThemeWordOk(text) &&
 					StrReplaceAll(text, "..", "") == text && StrReplaceAll(text, "\\", "") == text;
 		}
 		return text != "";
@@ -6193,6 +7922,15 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 	{
 		return number == 0 || number == 1;
 	}
+	if (k == "tallUnderLegend" || k == "tallClear")
+	{
+		return number == 0 || number == 1;
+	}
+	if (k == "tallMinHeight" || k == "tallX" || k == "tallTop" || k == "tallBottom" || k == "tallAltX" || k == "tallAltTop" ||
+		k == "tallAltBottom")
+	{
+		return number >= 0 && number <= 4000;
+	}
 	if (k == "clearCursorAbove" || k == "clearCursorBelow" || k == "clearPadX" || k == "clearPadY" || k == "clearGap" ||
 		k == "clearBoxPad" || k == "clearCursorWeight")
 	{
@@ -6226,12 +7964,19 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 // keys, ('rect', 'wideAnchor') on every box kind and text, and ('opening', 'readyAtFadeStart') and ('opening',
 // 'revealEase'). Version 11 adds ('tooltip', 'x') and ('tooltip', 'y'), and ('tooltip', 'clearCursorAbove') and the
 // other new clear keys (clearCursorBelow, clearCursorTitle, clearPadX, clearPadY, clearGap, clearBoxPad, clearPick,
-// clearCursorWeight). Abilities designed for later (images,
+// clearCursorWeight). Version 12 adds ('tooltip', 'tallMinHeight') and the other tall keys (tallX, tallTop, tallBottom,
+// tallAltX, tallAltTop, tallAltBottom, tallUnderLegend, tallClear). Abilities designed for later (images,
 // the map hold) answer false until a CMF version adds them.
 function CMFHasAbility(part : name, key : name) : bool
 {
 	var p : string;
 	p = NameToString(part);
+	if (part == 'map' && key == 'rootValues') { return true; }
+	if (part == 'claims')
+	{
+		return CMFListHas("tagTint,placeClaims,playerArt,levelVariants,vanillaRows,everyPinIcon,withdraw,labelHideMerge,everyPin",
+			NameToString(key));
+	}
 	if (!IsNameValid(key))
 	{
 		return CMFListHas(CMFThemeParts(), p) || CMFListHas(CMFThemeLayers(), p) || CMFListHas(CMFThemeKinds(), p);
@@ -6268,6 +8013,52 @@ function CMFScreenHeight() : float
 // Version 10: on a look part, a key that is a behaviour (the info box's clear keys, the label's rise keys) is owned
 // apart from the look (CMFCore.PartKeyChoice).
 // Unset keys keep the game's look.
+// Revision 13: session-only content. A pin added while the map is open shows at the next opening.
+function CMFAddPin(provider : string, tag : name, pinType : name, area : name, x : float, y : float,
+	label : string, description : string) : bool
+{
+	var pin : SCMFAddedPin;
+	theGame.CMFGetCore().NoteProviderPresent(provider);
+	pin.provider = provider;
+	pin.tag = tag;
+	pin.pinType = pinType;
+	pin.area = area;
+	pin.x = x;
+	pin.y = y;
+	pin.label = label;
+	pin.description = description;
+	return theGame.CMFGetCore().UpsertAddedPin(pin);
+}
+
+function CMFRemovePin(provider : string, tag : name) : bool
+{
+	theGame.CMFGetCore().NoteProviderPresent(provider);
+	return theGame.CMFGetCore().RemoveAddedPin(provider, tag);
+}
+
+// Revision 13: per-item overrides. An empty target is exactly CMFStylePart.
+function CMFStyle(provider : string, part : name, target : name, key : name, text : string, number : float) : bool
+{
+	var styleEntry : SCMFThemeEntry;
+	if (!IsNameValid(target)) { return CMFStylePart(provider, part, key, text, number); }
+	theGame.CMFGetCore().NoteProviderPresent(provider);
+	if (provider == "" || !CMFHasAbility(part, key) ||
+		!theGame.CMFGetCore().ItemTarget(part, key, NameToString(target), styleEntry.item, styleEntry.itemKind) ||
+		(text != "unset" && !CMFThemeValueOk(part, key, text, number)))
+	{
+		CMFLog("theme item rejected provider=" + provider + " part=" + NameToString(part) + " target=" +
+			NameToString(target) + " key=" + NameToString(key));
+		return false;
+	}
+	styleEntry.provider = provider;
+	styleEntry.kind = 5;
+	styleEntry.target = part;
+	styleEntry.key = key;
+	styleEntry.text = text;
+	styleEntry.number = number;
+	return theGame.CMFGetCore().UpsertItemStyle(styleEntry);
+}
+
 function CMFStylePart(provider : string, part : name, key : name, text : string, number : float) : bool
 {
 	var themeEntry : SCMFThemeEntry;
@@ -6279,10 +8070,13 @@ function CMFStylePart(provider : string, part : name, key : name, text : string,
 		return false;
 	}
 	// Smooth map movement (P6): the text "unset" withdraws this provider's own value for this key; it is never a value.
+	// Version 12: logged only when a value was there to withdraw.
 	if (text == "unset")
 	{
-		theGame.CMFGetCore().UnsetTheme(provider, part, key);
-		CMFLog("theme unset provider=" + provider + " part=" + NameToString(part) + " key=" + NameToString(key));
+		if (theGame.CMFGetCore().UnsetTheme(provider, part, key) > 0)
+		{
+			CMFLog("theme unset provider=" + provider + " part=" + NameToString(part) + " key=" + NameToString(key));
+		}
 		return true;
 	}
 	if (!CMFThemeValueOk(part, key, text, number))
@@ -6304,7 +8098,7 @@ function CMFStylePart(provider : string, part : name, key : name, text : string,
 // is rect, ring, ellipse, polygon or band (version 6 adds line, text and movie); '' withdraws this provider's
 // drawing and its keys. The earliest folder that makes an id owns it; another folder's drawing with the same id
 // is refused and logged. Set the drawing's place, paint, layer and conditions with CMFDrawSet. Version 6: the
-// anchor mapSpace takes line, text and movie drawings, and line and movie drawings take only mapSpace.
+// anchor mapSpace takes line, text, movie and image drawings; line takes only mapSpace.
 function CMFDraw(provider : string, anchor : name, id : name, kind : name) : bool
 {
 	var themeEntry : SCMFThemeEntry;
@@ -6312,9 +8106,9 @@ function CMFDraw(provider : string, anchor : name, id : name, kind : name) : boo
 	if (provider == "" || !IsNameValid(anchor) || !IsNameValid(id) || anchor == id ||
 		CMFListHas(CMFThemeParts() + "," + CMFThemeLayers() + "," + CMFThemeKinds(), NameToString(id)) ||
 		(IsNameValid(kind) && !CMFListHas(CMFThemeKinds(), NameToString(kind))) ||
-		CMFListHas(CMFThemeLayers() + "," + CMFThemeKinds() + ",navigation,opening,spread,wide", NameToString(anchor)) ||
-		(anchor == 'mapSpace' && IsNameValid(kind) && kind != 'line' && kind != 'text' && kind != 'movie') ||
-		(anchor != 'mapSpace' && (kind == 'line' || kind == 'movie')))
+		CMFListHas(CMFThemeLayers() + "," + CMFThemeKinds() + ",navigation,opening,spread,wide,sounds,world", NameToString(anchor)) ||
+		(anchor == 'mapSpace' && IsNameValid(kind) && kind != 'line' && kind != 'text' && kind != 'movie' && kind != 'image') ||
+		(anchor != 'mapSpace' && kind == 'line'))
 	{
 		CMFLog("theme rejected provider=" + provider + " anchor=" + NameToString(anchor) + " id=" + NameToString(id) +
 			" kind=" + NameToString(kind) + " reason=unknown");
@@ -6337,19 +8131,20 @@ function CMFDrawSet(provider : string, id : name, key : name, text : string, num
 {
 	var themeEntry : SCMFThemeEntry;
 	var own : bool;
+	var kind : name;
 	theGame.CMFGetCore().NoteProviderPresent(provider);
-	own = false;
-	if (provider != "" && IsNameValid(id) && IsNameValid(key) && !CMFListHas(CMFThemeAllShapeKeys(), NameToString(key)))
-	{
-		own = theGame.CMFGetCore().DrawingKind(provider, id) == 'movie';
-	}
-	if (provider == "" || !IsNameValid(id) || (!own && !CMFListHas(CMFThemeAllShapeKeys(), NameToString(key))))
+	kind = theGame.CMFGetCore().DrawingKind(provider, id);
+	// A movie's own keys remain opaque even if a different drawing kind gains a key with that spelling.
+	own = kind == 'movie' && !CMFListHas(CMFThemeShapeKeys('movie'), NameToString(key));
+	if (provider == "" || !IsNameValid(id) || !IsNameValid(key) || (!own && !CMFListHas(CMFThemeAllShapeKeys(), NameToString(key))))
 	{
 		CMFLog("theme rejected provider=" + provider + " id=" + NameToString(id) + " key=" + NameToString(key) +
 			" reason=unknown");
 		return false;
 	}
-	if (!own && !CMFThemeValueOk('', key, text, number))
+	if ((!own && !CMFThemeValueOk('', key, text, number)) ||
+		(key == 'src' && ((kind == 'image' && !StrBeginsWith(text, "img://")) ||
+		(kind == 'movie' && !StrBeginsWith(text, "swf/")))))
 	{
 		CMFLog("theme rejected provider=" + provider + " id=" + NameToString(id) + " key=" + NameToString(key) +
 			" reason=value");
@@ -6429,6 +8224,8 @@ function UpdateUserMapPins(out flashArray : CScriptedFlashArray, indexToUpdate :
 	if (indexToUpdate < 0)
 	{
 		CMFStamp("late");
+		theGame.CMFGetCore().CheckEntityStep();
+		theGame.CMFGetCore().AppendAddedPins(this, flashArray, m_shownArea);
 	}
 	theGame.CMFGetCore().FillMissingPinFields(flashArray, CMFMapContext(), indexToUpdate, m_shownArea);
 	if (indexToUpdate < 0)
@@ -6449,8 +8246,11 @@ function UpdateUserMapPins(out flashArray : CScriptedFlashArray, indexToUpdate :
 function UpdateData(optional ignoreSelectionChange : bool)
 {
 	var flashArray : CScriptedFlashArray;
+	cmfMovieBuild += 1;
 	CMFStamp("data");
+	theGame.CMFGetCore().BeginBuild(m_shownArea);
 	wrappedMethod(ignoreSelectionChange);
+	theGame.CMFGetCore().EndBuild();
 	CMFStamp("sent");
 	flashArray = theGame.CMFGetCore().CatchLatePins(CMFMapContext(), m_shownArea);
 	if (flashArray)
@@ -6467,6 +8267,9 @@ function UpdateData(optional ignoreSelectionChange : bool)
 			GetMenuFlashValueStorage().SetFlashArray("worldmap.global.pins.static", flashArray);
 		}
 	}
+	CMFMovieBuildSent();
+	theGame.CMFGetCore().ReportPinAsks();
+	theGame.CMFGetCore().ClearLabelHideState();
 	CMFStamp("end");
 }
 
@@ -6501,10 +8304,12 @@ function CMFStamp(step : string)
 	}
 }
 
-// Opens the pin list for per-pin hides; the late pass closes it.
+// Opens the pin list for per-pin hides; the late pass closes it. CMF's UpdateData wrapper opens it too, for when
+// another mod's precompiled UpdateEntityPins skips this wrapper.
 @wrapMethod(CR4MapMenu)
 function UpdateEntityPins(out flashArray : CScriptedFlashArray) : void
 {
+	theGame.CMFGetCore().NoteEntityStep();
 	theGame.CMFGetCore().OpenPinList();
 	theGame.CMFGetCore().NoteListArea(m_shownArea);
 	wrappedMethod(flashArray);
@@ -6514,6 +8319,7 @@ function UpdateEntityPins(out flashArray : CScriptedFlashArray) : void
 function AddPinTypeData(out dataObject : CScriptedFlashObject, targetPin : SCommonMapPinInstance) : void
 {
 	wrappedMethod(dataObject, targetPin);
+	theGame.CMFGetCore().NoteFieldsStep();
 	theGame.CMFGetCore().WritePinFields(dataObject, targetPin.visibleType, targetPin.tag, CMFMapContext(), targetPin.type);
 }
 
@@ -6561,6 +8367,13 @@ event OnCMFPinClicked(pinTag : name, pinId : int, provider : string, pinType : s
 event OnCMFDrawingClicked(id : string, value : int)
 {
 	theGame.CMFGetCore().DrawingClicked(this, id, value);
+}
+
+// Managed hint list click, validated against the current list owner by the core.
+@addMethod(CR4MapMenu)
+event OnCMFHintClicked(owner : string, value : int)
+{
+	theGame.CMFGetCore().HintClicked(this, owner, value);
 }
 
 // Version 6 (map-space drawing): the map panel started listening to the storage keys drawings named with listen.
@@ -6660,12 +8473,15 @@ function CMFMapCheckShown()
 function OnMenuShown()
 {
 	var mapMenu : CR4MapMenu;
-	wrappedMethod();
+	var result : bool;
+	// The game declares OnMenuShown an event (menuBase.ws), so its result is passed on.
+	result = wrappedMethod();
 	mapMenu = (CR4MapMenu)this;
 	if (mapMenu)
 	{
 		mapMenu.CMFMapCheckShown();
 	}
+	return result;
 }
 
 @addMethod(CR4MapMenu)
@@ -6760,4 +8576,110 @@ function CMFMapContext() : name
 		return 'Boat';
 	}
 	return 'GlobalMap';
+}
+
+
+// Revision 13: these event names coexist with the adapter-owned legacy events.
+// They remain inactive until the part 2 panel dispatches them.
+@addMethod(CR4MapMenu)
+event OnCMFMapTab(category : string)
+{
+	theGame.CMFGetCore().OnMapTab(this, category);
+}
+
+@addMethod(CR4MapMenu)
+event OnCMFMapHints()
+{
+	theGame.CMFGetCore().MapHintsReady(this);
+}
+
+
+@addMethod(CR4MapMenu)
+event OnCMFInfoFold(provider : string, open : bool)
+{
+	theGame.CMFGetCore().InfoFold(this, provider, open);
+}
+
+// Revision 13: a live movie sends a string event to its current drawing owner.
+@addMethod(CR4MapMenu)
+event OnCMFMovieEvent(id : string, eventName : string, value : string)
+{
+	theGame.CMFGetCore().MovieEvent(this, id, eventName, value);
+}
+
+// The end-of-build marker follows the late pass. The panel reports only after drawing finishes.
+@addField(CR4MapMenu)
+var cmfMovieBuild : int;
+
+@addMethod(CR4MapMenu)
+function CMFMovieBuildSent()
+{
+	var data : CScriptedFlashObject;
+	data = GetMenuFlashValueStorage().CreateTempFlashObject();
+	data.SetMemberFlashString("area", NameToString(m_shownArea));
+	data.SetMemberFlashInt("build", cmfMovieBuild);
+	GetMenuFlashValueStorage().SetFlashObject("cmf.map.movieBuild", data);
+}
+
+@addMethod(CR4MapMenu)
+event OnCMFMovieAreaReady(areaText : string, build : int)
+{
+	if (build != cmfMovieBuild || areaText != NameToString(m_shownArea)) { return false; }
+	theGame.CMFGetCore().OnMapAreaReady(this, m_shownArea);
+}
+
+@addMethod(CR4MapMenu)
+event OnCMFMovieShowArea(areaText : string)
+{
+	CMFMovieShowArea(areaText);
+}
+
+@addMethod(CR4MapMenu)
+function CMFMovieShowArea(areaText : string)
+{
+	var manager : CCommonMapManager;
+	var areas : array<SAreaMapPinInfo>;
+	var area, shown, requested : name;
+	var i : int;
+	var menuFlash : CScriptedFlashSprite;
+	var entered : CScriptedFlashFunction;
+	manager = theGame.GetCommonMapManager();
+	area = manager.GetAreaFromFlashName(areaText);
+	if (!IsNameValid(area))
+	{
+		areas = manager.GetAreaMapPins();
+		for (i = 0; i < areas.Size(); i += 1)
+		{
+			if (NameToString(areas[i].areaName) == areaText) { area = areas[i].areaName; break; }
+		}
+	}
+	if (!IsNameValid(area) || area == 'AN_Undefined')
+	{
+		// Version 13 fix round 1: say why nothing happens, so an author can fix the name.
+		CMFLog("movie showArea unknown area=" + areaText);
+		return;
+	}
+	requested = area;
+	shown = m_shownArea;
+	if (area == 'AN_Velen') { area = 'AN_NMLandNovigrad'; }
+	if (shown == 'AN_Velen') { shown = 'AN_NMLandNovigrad'; }
+	if (area == shown) { return; }
+	SwitchToHubMap(requested, false);
+	// Version 13 fix round 1: the panel enters the hub again, as the world view's region pick does, so the new
+	// region's pins are drawn.
+	menuFlash = GetMenuFlash();
+	if (menuFlash)
+	{
+		entered = menuFlash.GetMemberFlashFunction("cmfMovieAreaEntered");
+		if (entered)
+		{
+			entered.InvokeSelf();
+		}
+	}
+}
+
+@addMethod(CR4MapMenu)
+event OnCMFMovieTagUnknown(id : string, tagText : string)
+{
+	theGame.CMFGetCore().MovieTagUnknown(id, tagText);
 }

@@ -101,7 +101,8 @@ class AdapterStartupPresenceTests(unittest.TestCase):
         core = cmf_pack.strip_comments((ROOT / "source/core/content/scripts/local/cmfCore.ws").read_text())
         self.assertIn("CMFGetCore().ReleaseProvider(provider);", body(core, "CMFReleaseProvider"))
         self.assertIn("NoteProviderPresent(provider);", body(core, "ReleaseProvider"))
-        self.assertNotIn("NoteProviderPresent", body(core, "CMFRequireVersion"))
+        # Version 12 (review C6): asking for a version counts as talking to CMF.
+        self.assertIn("NoteProviderPresent(provider);", body(core, "CMFRequireVersion"))
 
     def test_startup_submission_helpers_reach_core_presence_recording(self):
         core = cmf_pack.strip_comments((ROOT / "source/core/content/scripts/local/cmfCore.ws").read_text())
@@ -111,8 +112,10 @@ class AdapterStartupPresenceTests(unittest.TestCase):
         for mutation in ("CMFRegister", "CMFSetProviderName", "CMFStylePart", "CMFDraw"):
             with self.subTest(mutation=mutation):
                 self.assertIn("NoteProviderPresent(provider);", body(core, mutation))
-        # Neither a version-only adapter nor a capability query can declare presence.
-        for query in ("CMFRequireVersion", "CMFHasProperty", "CMFHasAbility"):
+        # A capability query cannot declare presence. From version 12 (review C6) asking for a version does, so an
+        # adapter that stops on an older CMF is not reported missing.
+        self.assertIn("NoteProviderPresent(provider);", body(core, "CMFRequireVersion"))
+        for query in ("CMFHasProperty", "CMFHasAbility"):
             self.assertNotIn("NoteProviderPresent", body(core, query))
 
     def test_stable_missing_localization_key_stays_inert(self):

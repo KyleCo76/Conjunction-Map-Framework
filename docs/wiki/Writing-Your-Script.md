@@ -49,38 +49,62 @@ Presence adds no feature offers, priority or selectable choices. The updated men
 
 API version 2 adds legend rows, filter tabs and per-pin styling to the API version 1 calls, API version 3 adds hiding pins, and API version 4 adds pin size, labels, the info box and hiding pins in filter tabs; nothing earlier was removed. Two generic calls take a property id, so later CMF versions can add properties without adding functions. A pack that uses only `CMFRegister`, `CMFRegisterForTag` and `CMFHasProperty` compiles against any CMF from 1 on and skips what the installed CMF lacks. A call to a function CMF does not have stops the game at the script compile screen, which `CMFRequireVersion` cannot prevent. The named calls further down are shorthand for the generic ones.
 
-| Property id | Named shorthand | `text` | `number` |
-| --- | --- | --- | --- |
-| `1` `CMFPropertyIcon()` | `CMFRegisterIcon`, `CMFRegisterIconForTag` | image path | unused (`0`) |
-| `2` `CMFPropertyLegendIcon()` | `CMFRegisterLegendIcon` | image path | unused |
-| `3` `CMFPropertyTint()` | `CMFRegisterTint` | unused (`""`) | colour, decimal 0xRRGGBB |
-| `4` `CMFPropertyBackground()` | `CMFRegisterBackground` (target is the map area) | image root | unused |
-| `5` `CMFPropertyDisabled()` | `CMFRegisterDisabled`, `CMFRegisterDisabledForTag` | unused | nonzero greys, `0` withdraws |
-| `6` `CMFPropertyLegendRow()` (API version 2; target is a `filteredType`) | `CMFRegisterLegendRow` | category id, or `""` for All only | row priority; `0` puts it after every vanilla row |
-| `7` `CMFPropertyLegendLabel()` (API version 2; target is a `filteredType`) | `CMFRegisterLegendLabel` | the row's name, `"[[string_key]]"` or plain text | unused |
-| `8` `CMFPropertyLegendCategory()` (API version 2; target is your category id) | `CMFRegisterLegendCategory` | the tab's name, `"[[string_key]]"` or plain text | tab order among CMF tabs, low first |
-| `9` `CMFPropertyHidden()` (API version 3; target is a pin type or `filteredType`, or `''` for every pin) | `CMFRegisterHidden`, `CMFRegisterHiddenForTag` | exemptions: `""` or any of `tracked`, `quest`, `fasttravel` | nonzero hides, `0` withdraws |
-| `10` `CMFPropertyPinScale()` (API version 4) | `CMFStylePinScale` (one pin) | unused | percent, `25` to `400` |
-| `11` `CMFPropertyLabelPlace()` (API version 4) | none | unused | tenths of a pin unit from the pin centre, `0` to `10000` (`0` = the game's place) |
-| `12` `CMFPropertyLabelText()` (API version 4) | `CMFStylePinLabel` (one pin) | the label, HTML, not empty | unused |
-| `13` `CMFPropertyLabelHide()` (API version 4) | none | `"pin"`, `"crosshair"` or both | nonzero hides, `0` withdraws |
-| `14` `CMFPropertyInfoBoxHeight()` (API version 4; target `''`; from API version 11 also a type, a tag, a place or one pin) | none | unused | px, `100` to `1080`; `0` withdraws |
-| `15` `CMFPropertyTabHide()` (API version 4; target `''` means every pin) | none | filter tab names | nonzero hides, `0` withdraws |
-| `16` `CMFPropertyPinClick()` (API version 6) | none | inputs: any of `use`, `doubleClick`, `button` | nonzero, handed back with each click; `0` withdraws |
-| `18` `CMFPropertyInfoTitle()` (API version 11) | none | the info box title, HTML, not empty | `0` (`CMFInfoReplace()`) replaces the game's title, `1` (`CMFInfoAdd()`) adds a line below it |
-| `19` `CMFPropertyInfoText()` (API version 11) | none | the info box text, HTML, not empty | `0` (`CMFInfoReplace()`) replaces the game's text, `1` (`CMFInfoAdd()`) adds lines below it |
-| `20` `CMFPropertyPinClickHint()` (API version 6) | none | the button bar's words for the click | nonzero; `0` withdraws |
-| `21` `CMFPropertyPinClickButton()` (API version 6) | none | the words on the pin's button | nonzero; `0` withdraws |
-| `22` `CMFPropertySpreadRank()` (API version 6) | none | unused | which pin of a spread stack is selected first, `0` to `1000`, highest first |
-| `23` `CMFPropertyCategoryNoDefault()` (API version 6; target is your category id) | `CMFRegisterCategoryNoDefault` | unused | nonzero keeps the tab's rows out of Default; `0` lists them there |
-| `24` `CMFPropertyWorldPainting()` (API version 9; target `'painting'`, `CMFRegister` only) | `CMFRegisterWorldPainting`, `CMFRegisterWorldPaintingTiles` | image path, `""` withdraws | `0` for one picture, or columns x 10 + rows for tiles, each 1 to 8 |
-| `25` `CMFPropertyWorldCrest()` (API version 9; target is a region name) | `CMFRegisterWorldCrest` | image path, `""` withdraws | unused |
-| `26` `CMFPropertyButtonPicture()` (API version 9; target `'family_button'`, for example `'xbox_gamepad_Y'`, with a dash in the map's name written as `_`: `'xbox_enter_gamepad_A'`) | `CMFRegisterButtonPicture` | image path, `""` withdraws | unused |
-| `27` `CMFPropertyWorldMarker()` (API version 9; target `'player'` or `'quest'`) | `CMFRegisterWorldMarker` | image path, `""` withdraws | unused |
-| `28` `CMFPropertyHoverName()` (API version 10; target `''` means every pin) | none | unused | bits: `1` the label line only on the hovered pin, `2` the name on the hovered pin; `0` as the game shows it |
-| `29` `CMFPropertyIconUndiscovered()` (API version 11; target is the pin's real type, such as `'RoadSign'`) | none | image path or `frame:<label>`, art while the pin is an undiscovered "?" | unused |
-| `30` `CMFPropertyIconCompleted()` (API version 11; target is the pin's real type) | none | image path or `frame:<label>`, art while the pin is completed (greyed) | unused |
-| `37` `CMFPropertyTabHidden()` (API version 11; target is a filter tab name or id, `CMFRegister` only) | none | unused | nonzero hides the whole tab, `0` withdraws |
+| Property id | Named shorthand | `text` | `number` | Withdraw |
+| --- | --- | --- | --- | --- |
+| `1` `CMFPropertyIcon()` (widened player/user art and level variants needs `CMFGetVersion() >= 11`) | `CMFRegisterIcon`, `CMFRegisterIconForTag` | image path | unused (`0`) | 40 with this id at the same slot |
+| `2` `CMFPropertyLegendIcon()` | `CMFRegisterLegendIcon` | image path | unused | 40 with this id at the same slot |
+| `3` `CMFPropertyTint()` (widened tag tint, player/user art and level variants needs `CMFGetVersion() >= 11`) | `CMFRegisterTint` | unused (`""`) | colour, decimal 0xRRGGBB | 40 with this id at the same slot |
+| `4` `CMFPropertyBackground()` | `CMFRegisterBackground` (target is the map area) | image root | unused | 40 with this id at the same slot |
+| `5` `CMFPropertyDisabled()` | `CMFRegisterDisabled`, `CMFRegisterDisabledForTag` | unused | nonzero greys, `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `6` `CMFPropertyLegendRow()` (API version 2; target is a `filteredType`) (widened vanilla rows needs `CMFGetVersion() >= 11`) | `CMFRegisterLegendRow` | category id, or `""` for All only | row priority; `0` puts it after every vanilla row. One claim sets both coupled values. | 40 with this id at the same slot |
+| `7` `CMFPropertyLegendLabel()` (API version 2; target is a `filteredType`) | `CMFRegisterLegendLabel` | the row's name, `"[[string_key]]"` or plain text | unused | 40 with this id at the same slot |
+| `8` `CMFPropertyLegendCategory()` (API version 2; target is your category id) | `CMFRegisterLegendCategory` | the tab's name, `"[[string_key]]"` or plain text | tab order among CMF tabs, low first  One claim sets both coupled values. | 40 with this id at the same slot |
+| `9` `CMFPropertyHidden()` (API version 3; target is a pin type or `filteredType`, or `''` for every pin) | `CMFRegisterHidden`, `CMFRegisterHiddenForTag` | exemptions: `""` or any of `tracked`, `quest`, `fasttravel` | nonzero hides, `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `10` `CMFPropertyPinScale()` (API version 4) (widened player/user size needs `CMFGetVersion() >= 11`) | `CMFStylePinScale` (one pin) | unused | percent, `25` to `400` | 40 with this id at the same slot |
+| `11` `CMFPropertyLabelPlace()` (API version 4) | none | unused | tenths of a pin unit from the pin centre, `0` to `10000` (`0` = the game's place) | 40 with this id at the same slot |
+| `12` `CMFPropertyLabelText()` (API version 4) | `CMFStylePinLabel` (one pin) | the label, HTML, not empty | unused | 40 with this id at the same slot |
+| `13` `CMFPropertyLabelHide()` (API version 4) | none | `"pin"`, `"crosshair"` or both | nonzero hides, `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `14` `CMFPropertyInfoBoxHeight()` (API version 4; target `''`; from API version 11 also a type, a tag, a place or one pin) (widened type/tag/place height needs `CMFGetVersion() >= 11`) | none | unused | px, `100` to `1080`; `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `15` `CMFPropertyTabHide()` (API version 4; target `''` means every pin) | none | filter tab names | nonzero hides, `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `16` `CMFPropertyPinClick()` (API version 6) | none | inputs: any of `use`, `doubleClick`, `button`, `hold` | nonzero, handed back with each click; `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `18` `CMFPropertyInfoTitle()` (API version 11) | none | the info box title, HTML, not empty | `0` (`CMFInfoReplace()`) replaces the game's title, `1` (`CMFInfoAdd()`) adds a line below it | 40 with this id at the same slot |
+| `19` `CMFPropertyInfoText()` (API version 11) | none | the info box text, HTML, not empty | `0` (`CMFInfoReplace()`) replaces the game's text, `1` (`CMFInfoAdd()`) adds lines below it | 40 with this id at the same slot |
+| `20` `CMFPropertyPinClickHint()` (API version 6) | none | the button bar's words for the click | nonzero; `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `21` `CMFPropertyPinClickButton()` (API version 6) | none | the words on the pin's button | nonzero; `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `22` `CMFPropertySpreadRank()` (API version 6) | none | unused | which pin of a spread stack is selected first, `0` to `1000`, highest first | 40 with this id at the same slot |
+| `23` `CMFPropertyCategoryNoDefault()` (API version 6; target is your category id) | `CMFRegisterCategoryNoDefault` | unused | nonzero keeps the tab's rows out of Default; `0` lists them there | 40 with this id at the same slot |
+| `24` `CMFPropertyWorldPainting()` (API version 9; target `'painting'`, `CMFRegister` only) | `CMFRegisterWorldPainting`, `CMFRegisterWorldPaintingTiles` | image path, `""` withdraws | `0` for one picture, or columns x 10 + rows for tiles, each 1 to 8 | 40 with this id at the same slot; or original empty text |
+| `25` `CMFPropertyWorldCrest()` (API version 9; target is a region name) | `CMFRegisterWorldCrest` | image path, `""` withdraws | unused | 40 with this id at the same slot; or original empty text |
+| `26` `CMFPropertyButtonPicture()` (API version 9; target `'family_button'`, for example `'xbox_gamepad_Y'`, with a dash in the map's name written as `_`: `'xbox_enter_gamepad_A'`) | `CMFRegisterButtonPicture` | image path, `""` withdraws | unused | 40 with this id at the same slot; or original empty text |
+| `27` `CMFPropertyWorldMarker()` (API version 9; target `'player'` or `'quest'`) | `CMFRegisterWorldMarker` | image path, `""` withdraws | unused | 40 with this id at the same slot; or original empty text |
+| `28` `CMFPropertyHoverName()` (API version 10; target `''` means every pin) | none | unused | bits: `1` the label line only on the hovered pin, `2` the name on the hovered pin; `0` as the game shows it  One claim sets both coupled values. | 40 with this id at the same slot |
+| `29` `CMFPropertyIconUndiscovered()` (API version 11; target is the pin's real type, such as `'RoadSign'`) | none | image path or `frame:<label>`, art while the pin is an undiscovered "?" | unused | 40 with this id at the same slot |
+| `30` `CMFPropertyIconCompleted()` (API version 11; target is the pin's real type) | none | image path or `frame:<label>`, art while the pin is completed (greyed) | unused | 40 with this id at the same slot |
+| `37` `CMFPropertyTabHidden()` (API version 11; target is a filter tab name or id, `CMFRegister` only) | none | unused | nonzero hides the whole tab, `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `17` LabelColor (API version 5) | none | unused | RGB 0..16777215 | 40 with this id at the same slot |
+| `31` IconSelected (API version 13) | none | img:// path or frame:label | unused | 40 with this id at the same slot |
+| `32` SelectedScale (API version 13) | none | unused | 25..400 percent | 40 with this id at the same slot |
+| `33` PinAlpha (API version 13) | none | unused | 0..100 percent; zero is valid | 40 with this id at the same slot |
+| `34` PinOrder (API version 13) | none | unused | -1000..1000; higher draws above | 40 with this id at the same slot |
+| `35` PinOffset (API version 13) | none | signed decimal x,y; each -50..50 world metres | unused | 40 with this id at the same slot |
+| `36` PinZoom (API version 13) | none | signed decimal min,max; finite and ordered, no extra absolute clamp | unused | 40 with this id at the same slot |
+| `38` Present (API version 11) | none | unused | presence only | not a stored claim |
+| `39` InfoBoxWidth (API version 13) | none | unused | 200..1920 logical content pixels; 0 withdraws | 40 with this id at the same slot; or number 0 |
+| `40` Withdraw (API version 13) | none | empty | effective property id; removes only your matching slot | not a stored claim |
+| `41` LegendRowTint (API version 13) | none | unused; target is a filteredType, type level only | RGB 0..16777215; row only, ahead of id 3 | 40 with this id at the same slot |
+| `42` IconUnder (API version 13) | none | img:// path or frame:label | unused | 40 with this id at the same slot |
+| `43` IconUnderTint (API version 13) | none | unused | RGB 0..16777215, multiplied into the picture as id 3 is into the icon (white keeps it, black blacks it out) | 40 with this id at the same slot |
+| `44` PictureScale (API version 13) | none | unused | 25..400 percent of the pin's size: grows the icon and the picture under it (42) only, not the pin's highlight ring and glow | 40 with this id at the same slot |
+
+The map root supports arbitrary public script-set values when `CMFHasAbility('map', 'rootValues')` is true. Native `SetMemberFlash*` / `GetMemberFlash*` calls may store a mod's own number or string before `OnConfigUI` and read it back there. Existing declared fields and methods retain their meaning; use your own names.
+
+**Revision 13 changes.** Label hides (13) now merge the union of every eligible provider's pin/crosshair hides, including direct per-pin contributions. A zero contribution never unhides another provider's labels. Row tint 41 overrides the row's tint 3 without changing its pin tint. Ids 6 and 8 still couple row/tab placement and priority; 28 still couples its two hover-name bits.
+
+The every-pin target `''` now accepts 1,3,10,11,12,13,17,22,42,43,44, as well as ids 31 to 36 and the earlier every-pin properties. A type, tag, place or direct pin claim beats a global claim even when the player selected the global provider, including strict fallthrough. Vanilla and choice-only exclusions still apply. Every-pin styling does not remove the existing player/user/unknown/completed-pin protections.
+
+Ids 31 to 36, 39 and 42 to 44 support type, tag, place and direct per-pin styling. Id 39 answers true from `CMFHasProperty`. Its every-pin value is the menu default; a selected pin's type, tag, place or direct width overrides it. Width measures the description field in 1920 x 1080 units, preserving native padding and staying the same width on wide screens. There are no new `CMFProperty...` helpers for numeric ids 31 to 36 and 39 to 44. `CMFRegister(p, 40, target, context, "", id)` withdraws your exact slot; tag/place calls accept 40 too, using the effective id's level/context rules. Valid absent withdrawal returns true without dirtying or logging; actual removal logs once. Presence 38 and recursive 40 cannot be withdrawn. A direct width zero releases only the calling provider's direct width.
+
+`CMFHasAbility('claims', word)` discovers `tagTint`, `placeClaims`, `playerArt`, `levelVariants`, `vanillaRows`, `everyPinIcon`, `withdraw`, `labelHideMerge` and `everyPin`. The first six describe the API version 11 widened-claim family; the last three are revision 13 behavior. Older cores may not recognize this capability namespace, so `CMFGetVersion() >= 11` is also a guard for the API version 11 cases. The newly listed every-pin forms need API version 13. The pack checker recognizes positive enclosing version/ability guards with matching provider identity; other expressions remain an unresolved advisory, not proof.
 
 Section [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md) explains 10 to 15, [Pin clicks](Pin-Clicks.md) explains 16, 20 and 21, [Spreading stacked pins](Spreading-Stacked-Pins.md) explains 22, [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md) explains 23, [World overview pictures](World-Overview-Pictures.md) and [Controller button pictures](Controller-Button-Pictures.md) explain 24 to 27, and [Names only on hover](Names-Only-on-Hover.md) explains 28, and [Changing one pin](Changing-One-Pin.md) explains 14 for one pin, 18, 19, 29, 30 and 37.
 
@@ -95,6 +119,10 @@ Write a property newer than the CMF version you require as its number, not as it
 
 | Call | What it does |
 | --- | --- |
+| `CMFDeclareTag(provider : string, tag : name) : bool` | API version 13. Makes a typed tag available to item styles, drawing filters and movie controls for this game session. Repeating it changes nothing; releasing your provider removes only your registration. |
+| `CMFStyle(provider : string, part : name, target : name, key : name, text : string, number : float) : bool` | API version 13. Registers a per-item style; empty target is exactly CMFStylePart. |
+| `CMFAddPin(provider : string, tag : name, pinType : name, area : name, x : float, y : float, label : string, description : string) : bool` | API version 13. Adds or updates your session-only pin at world X/Y with supplied display text. |
+| `CMFRemovePin(provider : string, tag : name) : bool` | API version 13. Removes only your own added pin; valid absent removal succeeds. Independent claims targeting the tag remain. |
 | `CMFHasProperty(propertyId : int) : bool` | `true` when the installed CMF understands that property id. Test an id before registering it, above all an id newer than API version 1. |
 | `CMFRegister(provider : string, propertyId : int, target : name, mapContext : name, text : string, number : int) : bool` | One claim for a pin type (a map area for property 4). `mapContext` is `''` except for properties 5 and 9. Returns `false` and logs `rejected ... reason=unknown`, `reason=context`, `reason=empty` or `reason=exemption` when CMF does not accept the claim. |
 | `CMFRegisterForTag(provider : string, propertyId : int, pinTag : name, mapContext : name, text : string, number : int) : bool` | The same for one pin by its tag; accepts properties 1, 5, 9, (API version 4) 10 to 13 and 15, (API version 5) 17, (API version 6) 16, 20, 21 and 22, (API version 10) 28 and (API version 11) 3, 14, 18, 19, 29 and 30 (`reason=level` otherwise). The game's own pins carry their tag; from API version 4 a pin another mod pushes is reached when that mod set its id to `NameToFlashUInt(tag)` ([section 6](Choosing-Pin-Types.md)). |
@@ -122,7 +150,7 @@ Write a property newer than the CMF version you require as its number, not as it
 | `CMFRegisterBackground(provider : string, area : name, imageRoot : string)` | Replaces the map image of one area, such as `'AN_NMLandNovigrad'` (Velen and Novigrad). The tiles live in your pack's texture cache at `gameplay\gui_new\maps\<imageRoot>\level<L>\tile<X>x<Y>.jpg`, with the same tile size, level range and tile count as the area's vanilla image; CMF logs those values per area (`background area=...`) the first time the map shows it. The map draws level 0 as its background layer, then the area's own levels. |
 | `CMFRequireVersion(provider : string, minVersion : int) : bool` | Returns `false` and logs a line when the installed CMF is older than `minVersion`. Wrap your calls in it as above. |
 | `CMFReleaseProvider(provider : string)` | Withdraws everything your pack registered. Only needed if your pack can be switched off without being uninstalled. |
-| `CMFGetVersion() : int` | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0, `9` in 1.3.0, `10` in 1.4.1, `11` in 1.5.0). |
+| `CMFGetVersion() : int` | The installed CMF script API revision; this source returns 13. API revisions and release versions are independent. |
 | `CMFSetProviderName(provider : string, displayName : string) : bool` | API version 8. The name CMF's in-game menu shows for your mod, for example `"Acme Icons"`; without it the menu shows your folder name tidied. Returns `false` and logs for an empty provider or name. See [Players' choices](Who-Wins-Each-Feature.md). |
 | `CMFChoicesChanged()` | API version 8. Tells CMF that a player's choice changed, so it prepares its winners again before the next lookup. CMF's menu add-on calls it; a pack never needs to. |
 | `CMFRegisterWorldPainting(provider : string, url : string) : bool` | API version 9. Your picture for the world overview's painting. See [World overview pictures](World-Overview-Pictures.md). |

@@ -24,6 +24,11 @@ Find what your mod wants to do on the map, then follow the page. Every call take
 | Fan out pins stacked on one spot | the `spread` part, property `22` | [Spreading stacked pins](Spreading-Stacked-Pins.md) |
 | Change a pin another mod added | the same calls, by its type name, or by its tag when that mod gives its pin a tag id | [Porting a map mod](Porting-a-Map-Mod.md) |
 
+| Add or remove your own session pin | `CMFAddPin`, `CMFRemovePin` (API version 13) | [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
+| Withdraw one exact claim | numeric id 40 (API version 13) | [Writing your script](Writing-Your-Script.md) |
+| Set selected art/size, opacity, order, offsets, zoom range or under-art | ids 31 to 36 and 42 to 43 (API version 13) | [Writing your script](Writing-Your-Script.md) |
+| Style one row, tab, pin or area's title | `CMFStyle` (API version 13) | [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
+
 ## The legend and filter tabs
 
 | You want to | Call | Page |
@@ -33,7 +38,7 @@ Find what your mod wants to do on the map, then follow the page. Every call take
 | Keep your tab's rows out of Default | `CMFRegisterCategoryNoDefault` (property `23`) | [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md) |
 | Give some quest pins their own row | a row claim on their `filteredType` | [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md) |
 | Leave pins out of some tabs | property `15` | [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md) |
-| React when the player switches tab | add the event `OnCMFMapFilter` on `CR4MapMenu` | [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
+| React when the player switches tab | wrap `CMFCore.OnMapTab` (API version 13) | [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
 
 ## The map's look and behaviour
 
@@ -41,7 +46,7 @@ Find what your mod wants to do on the map, then follow the page. Every call take
 | --- | --- | --- |
 | Restyle the title, legend, tooltip, tracker or key caps (fonts, colours, glows, hiding the game's plates) | `CMFStylePart` | [The map theme](Map-Theme.md), [Theme parts and keys](Theme-Parts-and-Keys.md) |
 | Draw frames, plates, bands or shapes tied to any part of the screen | `CMFDraw`, `CMFDrawSet` | [The map theme](Map-Theme.md) |
-| Show your own key hints inside the map | `"cmf.map.hints"`, the event `OnCMFMapHintsReady` | [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
+| Show your own key hints inside the map | `CMFStylePart` hints.list, wrap `CMFCore.OnMapHints`, use `cmf.map.hints.owned` (API version 13) | [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
 | Replace the map image of an area | `CMFRegisterBackground` | [Writing your script](Writing-Your-Script.md) |
 | Change how the map pans, zooms, opens and closes | the `navigation` and `opening` parts (from API version 10 also `readyAtFadeStart`, `revealEase`) | [Smooth map movement](Map-Movement.md) |
 | Choose how the map fills wide and tall screens | the `wide` part, the drawing key `wideAnchor`, `CMFScreenWidth`, `CMFScreenHeight` (API version 10) | [Wide and tall screens](Wide-Screens.md) |
@@ -53,6 +58,9 @@ Find what your mod wants to do on the map, then follow the page. Every call take
 | Show drawings only in one filter tab, even one with no pins | the drawing keys `tab`, `tabLabel` | [Drawing on the map itself](Drawing-on-the-Map.md) |
 | Clickable boxes on the screen | the drawing keys `click` and the hover keys, wrap `CMFCore.OnDrawingClicked` | [Drawing on the map itself](Drawing-on-the-Map.md) |
 | Feed drawings from data your script already sends | the drawing keys `listen`, `listenFields`, wrap `CMFCore.OnMapListening` | [Drawing on the map itself](Drawing-on-the-Map.md) |
+
+| Put your own interactive movie on a screen part | `CMFDraw` movie, `cmfScreen`, map controls and core movie hook (API version 13) | [Your own movie on the screen](Your-Own-Movie-on-the-Screen.md) |
+| Ask for per-pin art while compiling without CMF | Own-folder `cmfAskBy` text fields (API version 13) | [Porting a map mod](Porting-a-Map-Mod.md) |
 
 ## Your mod itself
 
@@ -67,7 +75,7 @@ Find what your mod wants to do on the map, then follow the page. Every call take
 
 ## What CMF does not do yet
 
-Some things are not in this version: new pin types of CMF's own, changes to the player arrow other than hiding it, the world overview's layout, tooltip text, images as drawings, and clicks on drawings on the map itself. [Limits](Limits.md) lists them.
+Some things are not in this version: new pin types of CMF's own, new world regions or changes to the common menu bars. [Limits](Limits.md) lists them.
 
 ---
 

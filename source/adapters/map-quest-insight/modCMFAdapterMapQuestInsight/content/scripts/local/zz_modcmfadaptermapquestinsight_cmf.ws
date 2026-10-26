@@ -1,17 +1,18 @@
-// Map Quest Insight adapter for Conjunction Map Framework. Requires CMF 6 with spreading of stacked pins
-// (CMFPropertySpreadRank) and Map Quest Insight 1.6.1 or later (Nexus 14219), which stays unchanged. Install and
-// remove the two together: this file calls Map Quest Insight's own functions (QMI_OptZoomOut,
-// QMI_SpreadStackedMarkers and QMI_SpreadRank exist from 1.6.0), so the game stops at the script compile screen
-// when Map Quest Insight is missing or older, and it uses CMF's spread rank, CMF 5's theme calls and CMF 4's pin
-// hook, which earlier CMF versions do not have.
+// Map Quest Insight adapter 2.0.0 for Conjunction Map Framework. Requires CMF 1.6.0 (API version 13) and Map Quest
+// Insight 2.0.0 or later (Nexus 14219), which stays unchanged. Install and remove the two together: this file calls
+// Map Quest Insight's own functions (QMI_OptTypeIcons, QMI_IconKind, QMI_LevelBandTint and QMI_ColorTrackedIcon exist
+// from 2.0.0, which Wolfer named stable), so the game stops at the script compile screen when Map Quest Insight is
+// missing or older, and it uses CMF 13's per-type theme call (CMFStyle) and info box fold hook (OnInfoFold), which
+// earlier CMF versions do not have. Players on an older CMF or Map Quest Insight keep adapter 1.2.0.
 //
 // Map Quest Insight talks to its own map file: it asks the map for its handshake number (MapMenu.qmiApi),
 // then writes icon sizes, quest icons by type, level and signpost labels, the crosshair-label switch,
 // level colours and the scrolling info box height into the map, and hides signposts per filter tab. CMF's
 // map answers none of those names. This adapter gives Map Quest Insight its handshake in script, then turns
 // each value into CMF's general calls, as Map Quest Insight's author would when porting. It copies no code.
-// Its three quest icons are Map Quest Insight's own, sent by its author for the adapter and shipped with their
-// permission (2026-10-21). Every claim uses Map Quest Insight's own folder name as its provider, so folder order
+// Its pictures are Map Quest Insight's own, sent by its author, Wolfer, for the adapter and shipped with their
+// permission: three quest icons (2026-10-21) and the 2.0.1 Sticker icons, round badges and type symbols
+// (2026-10-25). Map Quest Insight 2.0's map features are carried with permission from Wolfer. Every claim uses Map Quest Insight's own folder name as its provider, so folder order
 // between mods is the same with CMF as without it.
 //
 // The pin values ride on the pin objects, which the game builds from the map's pin class: CMF's map
@@ -44,9 +45,6 @@ function MqiAdapterSetNoSignTabs(tabs : string)
 {
 	mqiAdapterNoSignTabs = tabs;
 }
-
-@addField(CMFCore)
-var mqiAdapterLogged : int;
 
 // The icon for a Map Quest Insight quest kind (questMapInfo.ws QMI_IconKind): a frame of the game's pin
 // icon for kinds 4 and 6-10, Map Quest Insight's own icons (art/, in this adapter's texture.cache) for kinds
@@ -84,12 +82,51 @@ function MqiAdapterKindIcon(kind : int) : string
 @wrapMethod(CR4MapMenu)
 function OnConfigUI()
 {
+	var result : bool;
+	var descMore : bool;
 	QMI_swfApi = 3;
 	QMI_swfApiRead = true;
-	wrappedMethod();
+	// Map Quest Insight reads its Show more handshake once per opening, inside its own wrapper.
+	descMore = MqiAdapterAskDescMore();
+	MqiAdapterAskHubOver();
+	mqiAdapterPinsReady = false;
+	result = wrappedMethod();
+	MqiAdapterPinsInit();
 	MqiAdapterSendMotion();
-	MqiAdapterSendSpread();
+	MqiAdapterSendSpread(mqiAdapterTravelMap);
 	MqiAdapterSendWide();
+	MqiAdapterSendBox();
+	MqiAdapterSendBeside();
+	MqiAdapterSendPanels();
+	MqiAdapterSendFold(descMore, GetMenuFlash());
+	MqiAdapterSendFullScreen();
+	MqiAdapterSendCornerHud();
+	MqiAdapterLogOpening(descMore, GetMenuFlash(), mqiAdapterTravelMap);
+	return result;
+}
+
+// This opening is the fast travel map (or the player sails), from OnConfigUI to the pins.
+@addField(CR4MapMenu)
+var mqiAdapterTravelMap : bool;
+
+@addField(CR4MapMenu)
+var mqiAdapterPinsReady : bool;
+
+// What the pins of this opening follow: the travel map and the quest icons. The game adds its pins inside
+// OnConfigUI, after Map Quest Insight's wrapper has loaded its settings and before the adapter's wrapper returns,
+// so the first pin reads them; values kept from the last opening would draw the first opening's pins without
+// the badges.
+@addMethod(CR4MapMenu)
+function MqiAdapterPinsInit()
+{
+	if (mqiAdapterPinsReady)
+	{
+		return;
+	}
+	mqiAdapterPinsReady = true;
+	// Map Quest Insight 2.0.1 spreads nothing on the fast travel map or while sailing; the same test.
+	mqiAdapterTravelMap = QMI_MapCanFastTravel();
+	theGame.MqiAdapterSetIcons(MqiAdapterIconMode(), MqiAdapterIconPercent(), MqiAdapterHexColour(QMI_ColorTrackedIcon()));
 }
 
 // Map Quest Insight's "Faster map" and "Zoom out to whole region" switches (Map markers, both default On;
@@ -142,7 +179,7 @@ function MqiAdapterSendMotion()
 // apart, 150 ms to open and 120 ms to close, the pick kept within 24 px and the row within 48 px) become CMF's
 // spread keys, and a switch that is off withdraws them ("unset"). Its ALSO HERE list stays: Map Quest Insight
 // drops it only when its own map file answers qmiSpreadMap, which CMF's map does not.
-function MqiAdapterSendSpread()
+function MqiAdapterSendSpread(travelMap : bool)
 {
 	var spread : string;
 	if (!CMFHasAbility('spread', ''))
@@ -150,7 +187,7 @@ function MqiAdapterSendSpread()
 		return;
 	}
 	spread = "unset";
-	if (QMI_SpreadStackedMarkers())
+	if (QMI_SpreadStackedMarkers() && !travelMap)
 	{
 		spread = "";
 	}
@@ -170,24 +207,32 @@ function MqiAdapterSendSpread()
 // the side panels position qmiUwSidePos, 0 to 100 %, default 100). Its own map file then fills a screen wider than
 // 16:9 and moves the side panels outward by that share; under CMF 10 the same choice becomes CMF's wide keys: off sends
 // fill 0, so the switch keeps its meaning, and on sends fill 1 with panels at that share. The values are read by their
-// menu names, not through QMI_OptUwMap and QMI_OptUwSidePos, so Map Quest Insight 1.6.1, which has no such page and
-// answers "", still compiles and sends nothing (CMF's own layout then applies).
+// menu names, not through QMI_OptUwMap and QMI_OptUwSidePos, so Map Quest Insight 1.6.1, which has no such page, still
+// compiles and sends nothing (CMF's own layout then applies). A value never saved reads "" or "-1" and means Map Quest
+// Insight's own default (On, 100 %).
 function MqiAdapterSendWide()
 {
 	var config : CInGameConfigWrapper;
 	var on, side : string;
 	var panels : float;
+	var i : int;
+	var found : bool;
 	if (!CMFHasAbility('wide', 'fill'))
 	{
 		return;
 	}
 	config = theGame.GetInGameConfigWrapper();
-	on = config.GetVarValue('qmiWide', 'qmiUwMap');
-	if (on == "")
+	found = false;
+	for (i = 0; i < config.GetGroupsNum() && !found; i += 1)
+	{
+		found = config.GetGroupName(i) == 'qmiWide';
+	}
+	if (!found)
 	{
 		return;
 	}
-	if (on != "true" && on != "1")
+	on = config.GetVarValue('qmiWide', 'qmiUwMap');
+	if (on != "" && on != "-1" && on != "true" && on != "1")
 	{
 		MqiAdapterMotion('wide', 'fill', "", 0);
 		MqiAdapterMotion('wide', 'panels', "unset", 0);
@@ -195,12 +240,44 @@ function MqiAdapterSendWide()
 	}
 	panels = 1;
 	side = config.GetVarValue('qmiWide', 'qmiUwSidePos');
-	if (side != "")
+	if (side != "" && side != "-1")
 	{
 		panels = ClampF(StringToFloat(side) / 100, 0, 1);
 	}
 	MqiAdapterMotion('wide', 'fill', "", 1);
 	MqiAdapterMotion('wide', 'panels', "", panels);
+}
+
+// Where Map Quest Insight's own map file puts a tall info box (1.6.2 and 2.0.0 MapMenu.as alike, read 2026-10-25,
+// probe info_box_place): a box over 330 px goes to x 1300 between y 130 and 906, or to x 112 between y 206 and 1006
+// when the cursor is on the right half or the quest tracker is not in its normal state, under the legend, scaled down
+// to fit; a shorter box keeps the game's place. CMF 12 takes that place apart from the box height (the info box height
+// claim only makes the text scroll), so the adapter sends it as CMF's tall tooltip keys. A CMF before 12 has no such
+// keys and places the scrolling box this way by itself. Its map file does this only while "Info box height" is set,
+// so with the height at 0 the keys are withdrawn ("unset") and the game's place stays. Its map hides its category panel
+// and shows its overview only while moving, so those corners are free there; CMF's map keeps its legend and overview,
+// so tallClear keeps the places off them (Kyle 2026-10-25).
+function MqiAdapterSendBox()
+{
+	var text : string;
+	if (!CMFHasAbility('tooltip', 'tallMinHeight'))
+	{
+		return;
+	}
+	text = "";
+	if ((int)(QMI_InfoBoxMaxHeight() + 0.5) <= 0)
+	{
+		text = "unset";
+	}
+	MqiAdapterMotion('tooltip', 'tallMinHeight', text, 330);
+	MqiAdapterMotion('tooltip', 'tallX', text, 1300);
+	MqiAdapterMotion('tooltip', 'tallTop', text, 130);
+	MqiAdapterMotion('tooltip', 'tallBottom', text, 906);
+	MqiAdapterMotion('tooltip', 'tallAltX', text, 112);
+	MqiAdapterMotion('tooltip', 'tallAltTop', text, 206);
+	MqiAdapterMotion('tooltip', 'tallAltBottom', text, 1006);
+	MqiAdapterMotion('tooltip', 'tallUnderLegend', text, 1);
+	MqiAdapterMotion('tooltip', 'tallClear', text, 1);
 }
 
 // One key under Map Quest Insight's folder name, only when this CMF takes it.
@@ -236,6 +313,16 @@ function UpdateDisabledMapPins()
 			tabs += ",";
 		}
 		tabs += "Exploration,NPCs,Buffs";
+		// Map Quest Insight 2.0 widened "Signposts in other filters" to All and Default, and to General while fast
+		// travel is not possible here. 2.0 is told apart by the flag its one-time settings update leaves.
+		if (MqiAdapterIs20())
+		{
+			tabs += ",All,Default";
+			if (!canTravel)
+			{
+				tabs += ",General";
+			}
+		}
 	}
 	theGame.MqiAdapterSetNoSignTabs(tabs);
 	// CMF takes 100-1080 px; 0 keeps the game's box.
@@ -251,6 +338,15 @@ function UpdateDisabledMapPins()
 	CMFRegister("modMapQuestInsight", CMFPropertyInfoBoxHeight(), '', '', "", height);
 }
 
+// Map Quest Insight 2.0 or later: its one-time update to the 2.0.0 defaults sets [qmiGeneral] qmiMigrated200, which no
+// older version has.
+function MqiAdapterIs20() : bool
+{
+	var done : string;
+	done = StrLower(theGame.GetInGameConfigWrapper().GetVarValue('qmiGeneral', 'qmiMigrated200'));
+	return done == "true" || done == "1";
+}
+
 // Which quest pin of a spread stack is selected first: Map Quest Insight's own rank of the pin's quest
 // (QMI_SpreadRank: main quests first, then quests with a level, then the rest, one more when tracked), from the
 // quest and level it uses itself (objective to quest as the game does, QMI_GetQuestLevel), claimed as CMF's
@@ -261,9 +357,18 @@ function AddPinTypeData(out dataObject : CScriptedFlashObject, targetPin : SComm
 	var curObjective : CJournalQuestObjective;
 	var curQuest : CJournalQuest;
 	var rank : int;
+	var level : int;
+	var spread : bool;
+	var file : string;
+	var picture : float;
 	wrappedMethod(dataObject, targetPin);
-	if (!dataObject || !dataObject.GetMemberFlashBool("isQuest") || dataObject.GetMemberFlashBool("isFastTravel") ||
-		!QMI_SpreadStackedMarkers())
+	if (!dataObject || !dataObject.GetMemberFlashBool("isQuest") || dataObject.GetMemberFlashBool("isFastTravel"))
+	{
+		return;
+	}
+	MqiAdapterPinsInit();
+	spread = QMI_SpreadStackedMarkers() && !mqiAdapterTravelMap;
+	if (!spread && theGame.mqiAdapterIconMode == 0)
 	{
 		return;
 	}
@@ -277,10 +382,32 @@ function AddPinTypeData(out dataObject : CScriptedFlashObject, targetPin : SComm
 	{
 		return;
 	}
-	rank = QMI_SpreadRank(curQuest, QMI_GetQuestLevel(curQuest));
-	if (rank > 0)
+	level = QMI_GetQuestLevel(curQuest);
+	if (spread)
 	{
-		CMFStylePin("modMapQuestInsight", dataObject, CMFPropertySpreadRank(), "", rank);
+		rank = QMI_SpreadRank(curQuest, level);
+		if (rank > 0)
+		{
+			CMFStylePin("modMapQuestInsight", dataObject, CMFPropertySpreadRank(), "", rank);
+		}
+	}
+	if (theGame.mqiAdapterIconMode > 0)
+	{
+		file = MqiAdapterKindFile(QMI_IconKind(curQuest));
+		picture = 0;
+		if (file == "")
+		{
+			// A quest without a type keeps the diamond, with Map Quest Insight's own size and tint.
+			MqiAdapterOwnScale(dataObject);
+			MqiAdapterOwnTint(dataObject);
+		}
+		else
+		{
+			// The tracked quest's pins are the ones the game does not draw as another quest's objective.
+			picture = MqiAdapterQuestIcon(dataObject, file, QMI_LevelBandTint(level),
+				targetPin.visibleType != 'QuestObjectiveOther');
+		}
+		MqiAdapterLabelPlace(dataObject, picture);
 	}
 }
 
@@ -290,23 +417,23 @@ function OnPinReady(dataObject : CScriptedFlashObject, mapContext : name)
 	var number : float;
 	var text : string;
 	var flags : int;
-	var tint : int;
 	var questPin : bool;
+	var drawn : bool;
 	var travel : bool;
 	wrappedMethod(dataObject, mapContext);
 	questPin = dataObject.GetMemberFlashBool("isQuest");
 	travel = dataObject.GetMemberFlashBool("isFastTravel");
-	number = dataObject.GetMemberFlashNumber("qmiIconScale");
-	if (number > 0 && number != 1)
+	// With quest icons by type on, AddPinTypeData already styled the quest pins' pictures.
+	drawn = questPin && !travel && theGame.mqiAdapterIconMode > 0;
+	if (!drawn)
 	{
-		CMFStylePinScale("modMapQuestInsight", dataObject, (int)(number * 100 + 0.5));
+		MqiAdapterOwnScale(dataObject);
 	}
-	number = dataObject.GetMemberFlashNumber("qmiIconTop");
-	if (number > 0)
+	if (!drawn)
 	{
-		CMFStylePin("modMapQuestInsight", dataObject, CMFPropertyLabelPlace(), "", (int)(number * 10 + 0.5));
+		MqiAdapterLabelPlace(dataObject, 0);
 	}
-	if (questPin && !travel)
+	if (questPin && !travel && !drawn)
 	{
 		text = MqiAdapterKindIcon(dataObject.GetMemberFlashInt("qmiIconKind"));
 		if (text != "")
@@ -341,22 +468,549 @@ function OnPinReady(dataObject : CScriptedFlashObject, mapContext : name)
 	{
 		CMFStylePin("modMapQuestInsight", dataObject, CMFPropertyLabelHide(), "pin,crosshair", 1);
 	}
-	tint = dataObject.GetMemberFlashUInt("qmiIconTint");
-	if (tint != 0)
+	if (!drawn)
 	{
-		CMFStylePinTint("modMapQuestInsight", dataObject, tint);
+		MqiAdapterOwnTint(dataObject);
 	}
 	if (travel && theGame.mqiAdapterNoSignTabs != "")
 	{
 		CMFStylePin("modMapQuestInsight", dataObject, CMFPropertyTabHide(), theGame.mqiAdapterNoSignTabs, 1);
 	}
-	// Launch evidence: the first eight quest pins of each game session (the count lives on CMFCore).
-	if (questPin && mqiAdapterLogged < 8)
+}
+
+// One of Map Quest Insight's own settings by its menu name, lower case; a value never saved ("" or "-1") is its
+// own default, given here from its menu XML.
+function MqiAdapterVar(group : name, item : name, fallback : string) : string
+{
+	var value : string;
+	value = StrLower(theGame.GetInGameConfigWrapper().GetVarValue(group, item));
+	if (value == "" || value == "-1")
 	{
-		mqiAdapterLogged += 1;
-		LogChannel('CMF', "CMF adapter provider=modMapQuestInsight scale=" +
-			FloatToString(dataObject.GetMemberFlashNumber("qmiIconScale")) + " kind=" +
-			dataObject.GetMemberFlashInt("qmiIconKind") + " label=" + dataObject.GetMemberFlashString("qmiLevelText") +
-			" tint=" + tint + " noSignTabs=" + theGame.mqiAdapterNoSignTabs);
+		return fallback;
 	}
+	return value;
+}
+
+function MqiAdapterOn(group : name, item : name, fallback : bool) : bool
+{
+	var value : string;
+	value = MqiAdapterVar(group, item, "");
+	if (value == "")
+	{
+		return fallback;
+	}
+	return value == "true" || value == "1";
+}
+
+// The game's quest pin types: the ones Map Quest Insight 2.0 puts its info box beside.
+function MqiAdapterQuestTypes() : array<name>
+{
+	var types : array<name>;
+	types.PushBack('StoryQuest');
+	types.PushBack('ChapterQuest');
+	types.PushBack('SideQuest');
+	types.PushBack('MonsterQuest');
+	types.PushBack('TreasureQuest');
+	types.PushBack('QuestObjective');
+	types.PushBack('QuestObjectiveOther');
+	types.PushBack('QuestReturn');
+	types.PushBack('QuestGiverStory');
+	types.PushBack('QuestGiverChapter');
+	types.PushBack('QuestGiverSide');
+	types.PushBack('QuestAvailable');
+	types.PushBack('QuestAvailableHoS');
+	types.PushBack('QuestAvailableBaW');
+	types.PushBack('QuestAvailableLy');
+	types.PushBack('Quest');
+	types.PushBack('QuestBelgard');
+	types.PushBack('QuestCoronata');
+	types.PushBack('QuestVermentino');
+	return types;
+}
+
+// Map Quest Insight 2.0's "Info box beside the marker" ([qmiBox] qmiQjBoxBeside, default on): a quest marker's
+// box sits beside the marker, on the right or, without room, the left, above or below, and never covers it. Its
+// own map file does this from the pin's drawn bounds; CMF 13 does the same with clearAnchor pin, for the quest
+// pin types only, and every quest box takes that place (clearMinHeight 1). Other pins keep their place. Off
+// withdraws both keys.
+function MqiAdapterSendBeside()
+{
+	var types : array<name>;
+	var on, anchor : string;
+	var i : int;
+	if (!CMFHasAbility('tooltip', 'clearAnchor'))
+	{
+		return;
+	}
+	on = "unset";
+	anchor = "unset";
+	if (MqiAdapterOn('qmiBox', 'qmiQjBoxBeside', true))
+	{
+		on = "";
+		anchor = "pin";
+	}
+	types = MqiAdapterQuestTypes();
+	for (i = 0; i < types.Size(); i += 1)
+	{
+		CMFStyle("modMapQuestInsight", 'tooltip', types[i], 'clearMinHeight', on, 1);
+		CMFStyle("modMapQuestInsight", 'tooltip', types[i], 'clearAnchor', anchor, 0);
+	}
+}
+
+// Map Quest Insight 2.0's "Map category panel" ([qmiGeneral] qmiCatPanel: 0 Auto-hide, the default, 1 Always
+// shown) and "Map overview" ([qmiGeneral] qmiMapOverview: 0 On, 1 Only while moving, the default, 2 Off). Its own
+// map file hides the panel 3 s after its last use (the first pad Up press only shows it) and shows the overview
+// while the map moves and 1.5 s after; CMF 13's panel visibility keys do the same.
+function MqiAdapterSendPanels()
+{
+	var overview : string;
+	if (!CMFHasAbility('legend', 'show'))
+	{
+		return;
+	}
+	if (MqiAdapterVar('qmiGeneral', 'qmiCatPanel', "0") == "1")
+	{
+		MqiAdapterMotion('legend', 'show', "always", 0);
+		MqiAdapterMotion('legend', 'autoHideMs', "unset", 0);
+		MqiAdapterMotion('legend', 'padShowFirst', "unset", 0);
+	}
+	else
+	{
+		MqiAdapterMotion('legend', 'show', "auto", 0);
+		MqiAdapterMotion('legend', 'autoHideMs', "", 3000);
+		MqiAdapterMotion('legend', 'padShowFirst', "", 1);
+	}
+	overview = MqiAdapterVar('qmiGeneral', 'qmiMapOverview', "1");
+	if (overview == "0")
+	{
+		MqiAdapterMotion('preview', 'show', "always", 0);
+		MqiAdapterMotion('preview', 'movingMs', "unset", 0);
+	}
+	else if (overview == "2")
+	{
+		MqiAdapterMotion('preview', 'show', "never", 0);
+		MqiAdapterMotion('preview', 'movingMs', "unset", 0);
+	}
+	else
+	{
+		MqiAdapterMotion('preview', 'show', "moving", 0);
+		MqiAdapterMotion('preview', 'movingMs', "", 1500);
+	}
+}
+
+// Quest icons by type for this opening, from OnConfigUI to the pins: 0 the adapter's 1.x icons (Map Quest Insight's
+// "Quest icons by type" off), 1 round badges ("Round quest icons" on too), 2 the type symbols alone.
+@addField(CR4Game)
+var mqiAdapterIconMode : int;
+
+@addField(CR4Game)
+var mqiAdapterIconPct : float;
+
+@addField(CR4Game)
+var mqiAdapterTrackedRgb : int;
+
+@addMethod(CR4Game)
+function MqiAdapterSetIcons(mode : int, percent : float, trackedRgb : int)
+{
+	mqiAdapterIconMode = mode;
+	mqiAdapterIconPct = percent;
+	mqiAdapterTrackedRgb = trackedRgb;
+}
+
+function MqiAdapterIconMode() : int
+{
+	if (!QMI_OptTypeIcons() || !CMFHasProperty(44))
+	{
+		return 0;
+	}
+	if (QMI_OptUniformIcons())
+	{
+		return 1;
+	}
+	return 2;
+}
+
+// Map Quest Insight's "Quest marker size" ([qmiPins] qmiQuestIconSize, 50 to 150 %, default 100).
+function MqiAdapterIconPercent() : float
+{
+	return ClampF(StringToFloat(MqiAdapterVar('qmiPins', 'qmiQuestIconSize', "100")), 50, 150);
+}
+
+// "#RRGGBB" as 0xRRGGBB; 0 when it is not a colour.
+function MqiAdapterHexColour(text : string) : int
+{
+	var digits, hex : string;
+	var value, digit, i : int;
+	digits = "0123456789abcdef";
+	hex = StrLower(StrReplace(text, "#", ""));
+	if (StrLen(hex) != 6)
+	{
+		return 0;
+	}
+	value = 0;
+	for (i = 0; i < 6; i += 1)
+	{
+		digit = StrFindFirst(digits, StrMid(hex, i, 1));
+		if (digit < 0)
+		{
+			return 0;
+		}
+		value = value * 16 + digit;
+	}
+	return value;
+}
+
+// The picture names of Wolfer's badges and symbols for Map Quest Insight's quest kinds 1 to 10 (QMI_IconKind).
+function MqiAdapterKindFile(kind : int) : string
+{
+	switch (kind)
+	{
+		case 1:
+			return "main";
+		case 2:
+			return "secondary";
+		case 3:
+			return "contract";
+		case 4:
+			return "treasure";
+		case 5:
+			return "gwent";
+		case 6:
+			return "horse_race";
+		case 7:
+			return "boat_race";
+		case 8:
+			return "fist_fight";
+		case 9:
+			return "heroes_pursuits";
+		case 10:
+			return "vintners_contract";
+	}
+	return "";
+}
+
+// One quest pin's picture with quest icons by type on, as Map Quest Insight 2.0's own map draws it (its README in
+// Wolfer's icon set): a round badge whose ring takes the level colour (band, QMI_LevelBandTint, white when 0), with
+// the type symbol on it, white, or gold on the tracked quest's pins; or, with round icons off, the symbol alone in
+// the level colour, gold when tracked. The badge is the picture under the icon (42) with its own tint (43), so the
+// two keep their own colours. The pictures are cut so these sizes match its own at the Quest marker size: the
+// badge's 31 map units and the symbol's 18 over the game's quest icon, about 14.5. Only the picture grows (44):
+// the pin's size (10) stays the Quest marker size, so the game's glow and the tracked quest's ring keep Map Quest
+// Insight's size, as on its own map. Returns how much the picture grew.
+function MqiAdapterQuestIcon(dataObject : CScriptedFlashObject, file : string, band : int, tracked : bool) : float
+{
+	var base : string;
+	var picture : float;
+	base = "img://icons/modcmfadaptermapquestinsight/";
+	if (theGame.mqiAdapterIconPct != 100)
+	{
+		CMFStylePinScale("modMapQuestInsight", dataObject, (int)(theGame.mqiAdapterIconPct + 0.5));
+	}
+	if (theGame.mqiAdapterIconMode == 1)
+	{
+		if (band == 0)
+		{
+			band = 16777215;
+		}
+		CMFStylePinIcon("modMapQuestInsight", dataObject, base + "badgesym_" + file + ".png");
+		CMFStylePin("modMapQuestInsight", dataObject, 42, base + "badge_" + file + ".png", 0);
+		CMFStylePin("modMapQuestInsight", dataObject, 43, "", band);
+		if (tracked && theGame.mqiAdapterTrackedRgb != 0)
+		{
+			CMFStylePinTint("modMapQuestInsight", dataObject, theGame.mqiAdapterTrackedRgb);
+		}
+		picture = 31.0 / 14.5;
+	}
+	else
+	{
+		CMFStylePinIcon("modMapQuestInsight", dataObject, base + "symbol_" + file + ".png");
+		if (tracked && theGame.mqiAdapterTrackedRgb != 0)
+		{
+			CMFStylePinTint("modMapQuestInsight", dataObject, theGame.mqiAdapterTrackedRgb);
+		}
+		else if (band != 0)
+		{
+			CMFStylePinTint("modMapQuestInsight", dataObject, band);
+		}
+		picture = 18.0 / 14.5;
+	}
+	CMFStylePin("modMapQuestInsight", dataObject, 44, "", (int)(picture * 100 + 0.5));
+	return picture;
+}
+
+// The label's distance above the pin: Map Quest Insight's own (qmiIconTop, or the game's 14 pin units), grown with
+// the picture so the label keeps the same room above a badge or symbol.
+function MqiAdapterLabelPlace(dataObject : CScriptedFlashObject, picture : float)
+{
+	var number : float;
+	number = dataObject.GetMemberFlashNumber("qmiIconTop");
+	if (picture > 0)
+	{
+		if (number <= 0)
+		{
+			number = 14;
+		}
+		number *= picture;
+	}
+	if (number > 0)
+	{
+		CMFStylePin("modMapQuestInsight", dataObject, CMFPropertyLabelPlace(), "", (int)(number * 10 + 0.5));
+	}
+}
+
+// Map Quest Insight's own size and tint of a pin (its pin fields qmiIconScale and qmiIconTint).
+function MqiAdapterOwnScale(dataObject : CScriptedFlashObject)
+{
+	var number : float;
+	number = dataObject.GetMemberFlashNumber("qmiIconScale");
+	if (number > 0 && number != 1)
+	{
+		CMFStylePinScale("modMapQuestInsight", dataObject, (int)(number * 100 + 0.5));
+	}
+}
+
+function MqiAdapterOwnTint(dataObject : CScriptedFlashObject)
+{
+	var tint : int;
+	tint = dataObject.GetMemberFlashUInt("qmiIconTint");
+	if (tint != 0)
+	{
+		CMFStylePinTint("modMapQuestInsight", dataObject, tint);
+	}
+}
+
+// Map Quest Insight 2.0's Show more ([qmiBox] qmiJournalText and qmiDescOnAsk both on): a quest box opens without
+// its journal text and offers Show more / Show less. Its own way for a map to ask for it (Wolfer, 2026-10-25) is two
+// numbers on the map's root, qmiDmApi and qmiDrApi, which it reads once per opening; it then wraps the hidden text
+// in <font qmimore='1'></font> ... <font qmimore='0'></font>. CMF 13 lets a mod's script set its own numbers on the
+// map's root and folds the box at a marker it is told (foldTag), so the adapter sets the two numbers before Map
+// Quest Insight's wrapper runs and tells CMF its marker, its words and its keys. A toggle goes back to Map Quest
+// Insight's own event, which saves the state ([qmiBox] qmiDescMoreOpen) as on its own map.
+@addMethod(CR4MapMenu)
+function MqiAdapterAskDescMore() : bool
+{
+	var root : CScriptedFlashSprite;
+	if (!CMFHasAbility('map', 'rootValues') || !CMFHasAbility('tooltip', 'foldTag') ||
+		!MqiAdapterOn('qmiBox', 'qmiJournalText', true) || !MqiAdapterOn('qmiBox', 'qmiDescOnAsk', true))
+	{
+		return false;
+	}
+	root = GetMenuFlash();
+	if (!root)
+	{
+		return false;
+	}
+	root.SetMemberFlashNumber("qmiDmApi", 1);
+	root.SetMemberFlashNumber("qmiDrApi", 1);
+	return true;
+}
+
+// Map Quest Insight 2.0.1's menu files draw the game's menu above any map. With its Full-screen map on it hides the
+// menu's dark background and X over another map; with it Off ([qmiGeneral] qmiFullScreen 0) it keeps them, and they
+// cover CMF's whole map. Its own opt-in for a map that is drawn under the menu (Wolfer, 2026-10-25) is the true value
+// qmiHubOver on the map's root, read once per opening inside its wrapper, so the adapter sets it before that runs.
+// With Full-screen on Map Quest Insight hides them anyway; CMF's map keeps the game's height while it is Off.
+@addMethod(CR4MapMenu)
+function MqiAdapterAskHubOver()
+{
+	var root : CScriptedFlashSprite;
+	if (!CMFHasAbility('map', 'rootValues') || MqiAdapterVar('qmiGeneral', 'qmiFullScreen', "3") != "0")
+	{
+		return;
+	}
+	root = GetMenuFlash();
+	if (root)
+	{
+		root.SetMemberFlashBool("qmiHubOver", true);
+	}
+}
+
+// The fold keys, or "unset" for each while Show more is off. The words are the ones Map Quest Insight writes on the
+// map's root inside its wrapper (qmiDmMoreW, qmiDmLessW), in the player's language. Its own keys are X and R3: the
+// game's actions on those keys are SpawnHorse (keyboard X) and CameraLock (pad R3), so CMF shows and takes the keys
+// the player bound to them. The box opens the way the player last left one while "Remember Show more"
+// ([qmiBox] qmiDescRemember, default on) is on.
+function MqiAdapterSendFold(on : bool, root : CScriptedFlashSprite)
+{
+	var text, more, less : string;
+	var open : float;
+	text = "unset";
+	more = "";
+	less = "";
+	if (on && root)
+	{
+		text = "";
+		more = root.GetMemberFlashString("qmiDmMoreW");
+		less = root.GetMemberFlashString("qmiDmLessW");
+	}
+	open = 0;
+	if (MqiAdapterOn('qmiBox', 'qmiDescRemember', true) && MqiAdapterOn('qmiBox', 'qmiDescMoreOpen', false))
+	{
+		open = 1;
+	}
+	MqiAdapterFoldKey('foldTag', text == "", "qmimore", 0);
+	MqiAdapterFoldKey('foldMoreText', text == "" && more != "", more, 0);
+	MqiAdapterFoldKey('foldLessText', text == "" && less != "", less, 0);
+	MqiAdapterFoldKey('foldKeyKb', text == "", "SpawnHorse", 0);
+	MqiAdapterFoldKey('foldKeyPad', text == "", "CameraLock", 0);
+	MqiAdapterMotion('tooltip', 'foldOpen', text, open);
+}
+
+function MqiAdapterFoldKey(key : name, on : bool, text : string, number : float)
+{
+	if (on)
+	{
+		MqiAdapterMotion('tooltip', key, text, number);
+	}
+	else
+	{
+		MqiAdapterMotion('tooltip', key, "unset", number);
+	}
+}
+
+// Map Quest Insight's own map calls this event when the player shows or folds the text (1 shown, 0 folded).
+@addMethod(CR4MapMenu)
+function MqiAdapterDescMore(open : bool)
+{
+	if (open)
+	{
+		OnQmiDescMore(1);
+	}
+	else
+	{
+		OnQmiDescMore(0);
+	}
+}
+
+@wrapMethod(CMFCore)
+function OnInfoFold(menu : CR4MapMenu, provider : string, open : bool)
+{
+	wrappedMethod(menu, provider, open);
+	if (provider == "modMapQuestInsight" && menu)
+	{
+		menu.MqiAdapterDescMore(open);
+	}
+}
+
+// Map Quest Insight 2.0's "Full-screen map" ([qmiGeneral] qmiFullScreen: 0 Off, 1 Clear, 2 Soft fade, 3 Dark fade,
+// the default). Its own map then runs to the top and bottom edges of the screen, under the hub's tabs, which its
+// menu files draw over any map, and fades the two edges. CMF's map area becomes the whole height (map top 0,
+// bottom 1080) and the fades are two gradient bands of the adapter's own on the screen, under every panel (Clear
+// draws none). The panels already sit inside the game's map area, below the tabs, so none moves. Off withdraws
+// all of it: the game's area and no bands. Map Quest Insight itself hides the hub's backdrop and close button only
+// while this setting is on (2.0.1).
+function MqiAdapterSendFullScreen()
+{
+	var mode : string;
+	var alpha : float;
+	if (!CMFHasAbility('map', 'top') || !CMFHasAbility('band', 'side'))
+	{
+		return;
+	}
+	mode = MqiAdapterVar('qmiGeneral', 'qmiFullScreen', "3");
+	if (mode != "1" && mode != "2" && mode != "3")
+	{
+		MqiAdapterMotion('map', 'top', "unset", 0);
+		MqiAdapterMotion('map', 'bottom', "unset", 0);
+		MqiAdapterFade('modMapQuestInsight.fadeTop', "", 0);
+		MqiAdapterFade('modMapQuestInsight.fadeBottom', "", 0);
+		return;
+	}
+	MqiAdapterMotion('map', 'top', "", 0);
+	MqiAdapterMotion('map', 'bottom', "", 1080);
+	alpha = 0;
+	if (mode == "2")
+	{
+		alpha = 0.55;
+	}
+	else if (mode == "3")
+	{
+		alpha = 0.85;
+	}
+	if (alpha <= 0)
+	{
+		MqiAdapterFade('modMapQuestInsight.fadeTop', "", 0);
+		MqiAdapterFade('modMapQuestInsight.fadeBottom', "", 0);
+		return;
+	}
+	MqiAdapterFade('modMapQuestInsight.fadeTop', "top", alpha);
+	MqiAdapterFade('modMapQuestInsight.fadeBottom', "bottom", alpha);
+}
+
+// One fade band along a screen edge, black at the edge and clear 180 px in; side "" withdraws it.
+function MqiAdapterFade(id : name, side : string, alpha : float)
+{
+	if (side == "")
+	{
+		CMFDraw("modMapQuestInsight", 'screen', id, '');
+		return;
+	}
+	CMFDraw("modMapQuestInsight", 'screen', id, 'band');
+	CMFDrawSet("modMapQuestInsight", id, 'side', side, 0);
+	CMFDrawSet("modMapQuestInsight", id, 'size', "", 180);
+	CMFDrawSet("modMapQuestInsight", id, 'fill', "", 0);
+	CMFDrawSet("modMapQuestInsight", id, 'alpha', "", 0);
+	CMFDrawSet("modMapQuestInsight", id, 'fill2', "", 0);
+	CMFDrawSet("modMapQuestInsight", id, 'alpha2', "", alpha);
+	CMFDrawSet("modMapQuestInsight", id, 'gradient', "linear", 0);
+	CMFDrawSet("modMapQuestInsight", id, 'layer', "under", 0);
+}
+
+// Map Quest Insight 2.0's "Corner HUD" ([qmiGeneral] qmiSideHud: 0 Clean, the default, 1 Game look). Clean takes
+// the tracked quest's dark boxes away and keeps its text readable with a black outline and shadow; CMF's tracker
+// part does the same with its plate hidden and two glows. Game look withdraws them.
+function MqiAdapterSendCornerHud()
+{
+	var text : string;
+	if (!CMFHasAbility('tracker', 'hide'))
+	{
+		return;
+	}
+	text = "unset";
+	if (MqiAdapterVar('qmiGeneral', 'qmiSideHud', "0") == "0")
+	{
+		text = "";
+	}
+	if (text == "")
+	{
+		MqiAdapterMotion('tracker', 'hide', "plate", 0);
+	}
+	else
+	{
+		MqiAdapterMotion('tracker', 'hide', "unset", 0);
+	}
+	MqiAdapterMotion('tracker', 'glow1Color', text, 0);
+	MqiAdapterMotion('tracker', 'glow1Alpha', text, 1);
+	MqiAdapterMotion('tracker', 'glow1Blur', text, 2);
+	MqiAdapterMotion('tracker', 'glow1Strength', text, 6);
+	MqiAdapterMotion('tracker', 'glow2Color', text, 0);
+	MqiAdapterMotion('tracker', 'glow2Alpha', text, 0.8);
+	MqiAdapterMotion('tracker', 'glow2Blur', text, 6);
+	MqiAdapterMotion('tracker', 'glow2Strength', text, 2);
+}
+
+// One line per map opening: which of Map Quest Insight's settings the adapter follows now.
+function MqiAdapterLogOpening(descMore : bool, root : CScriptedFlashSprite, travelMap : bool)
+{
+	var words : string;
+	words = "no";
+	if (root && root.GetMemberFlashString("qmiDmMoreW") != "")
+	{
+		words = "yes";
+	}
+	LogChannel('CMF', "CMF mqi adapter opening icons=" + theGame.mqiAdapterIconMode + " size=" +
+		(int)theGame.mqiAdapterIconPct + " sticker=" + MqiAdapterYes(theGame.mqiAdapterStickerOn) + " beside=" +
+		MqiAdapterYes(MqiAdapterOn('qmiBox', 'qmiQjBoxBeside', true)) + " panel=" + MqiAdapterVar('qmiGeneral', 'qmiCatPanel', "0") +
+		" overview=" + MqiAdapterVar('qmiGeneral', 'qmiMapOverview', "1") + " showMore=" + MqiAdapterYes(descMore) + " words=" + words +
+		" fullScreen=" + MqiAdapterVar('qmiGeneral', 'qmiFullScreen', "3") + " cornerHud=" +
+		MqiAdapterVar('qmiGeneral', 'qmiSideHud', "0") + " travelMap=" + MqiAdapterYes(travelMap));
+}
+
+function MqiAdapterYes(on : bool) : string
+{
+	if (on)
+	{
+		return "yes";
+	}
+	return "no";
 }

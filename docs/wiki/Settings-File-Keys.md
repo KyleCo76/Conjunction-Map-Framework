@@ -90,13 +90,21 @@ CMFFile_Painting_Skellige=Vanilla
 | `CMFFile_Movement_View` | Map movement | Advanced choices > Map movement | Opening view |
 | `CMFFile_Behaviour` | Map behaviour | Basic choices | Map behaviour |
 | `CMFFile_Behaviour_InfoBoxDodge` | Map behaviour | Advanced choices > Map behaviour | Info box moves out of the way |
-| `CMFFile_Behaviour_InfoBoxHeight` | Map behaviour | Advanced choices > Map behaviour | Info box height and scrolling |
+| `CMFFile_Behaviour_InfoBoxHeight` | Map behaviour | Advanced choices > Map behaviour | Info box size and scrolling |
 | `CMFFile_Movement_ZoomOut` | Map movement | Advanced choices > Map movement | Zoom out to the whole region |
 | `CMFFile_Movement_Controller` | Map movement | Advanced choices > Map movement | Controller crosshair |
 | `CMFFile_Behaviour_HoverNames` | Map behaviour | Advanced choices > Map behaviour | Names only on hover |
 | `CMFFile_Movement_Wide` | Map movement | Advanced choices > Map movement | Fill wide screens |
 | `CMFFile_Icons_Undiscovered` | Pin icons | Advanced choices > Pin icons | Undiscovered places (?) |
 | `CMFFile_Look_InfoText` | Map look | Advanced choices > Map look | Info box text |
+| `CMFFile_Behaviour_InfoBoxMotion` | Map behaviour | Advanced choices > Map behaviour | Info box motion |
+| `CMFFile_Look_Sounds` | Map look | Advanced choices > Map look | Map sounds |
+| `CMFFile_Behaviour_InfoFold` | Map behaviour | Advanced choices > Map behaviour | Info box folding |
+| `CMFFile_Behaviour_PanelModes` | Map behaviour | Advanced choices > Map behaviour | Panel visibility |
+| `CMFFile_Look_Badges` | Map look | Advanced choices > Map look | Pictures under pin icons |
+| `CMFFile_Look_PinLook` | Map look | Advanced choices > Map look | Pin highlights and glow |
+| `CMFFile_Size_Place` | Pin size | Advanced choices > Pin size and labels | Pin place and draw order |
+| `CMFFile_Behaviour_PinZoom` | Map behaviour | Advanced choices > Map behaviour | Pin zoom range |
 | `CMFFile_Fallthrough` | every feature | General | If the chosen mod has nothing for a pin |
 | `CMFDebug` | the log | General | Write the who-wins report to the log |
 | `CMFProviderOrder1` | the Mod order | Mod order | 1st |

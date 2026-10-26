@@ -70,7 +70,7 @@ class CoreTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_stays_6(self):
-        self.assertIn('function CMFGetVersion() : int { return 11; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 13; }', self.core)
 
     def test_text_drawings_take_wrap_and_fit(self):
         self.assertIn('return text == "keep" || text == "none" || (part == \'\' && (text == "wrap" || text == "fit"));',
@@ -104,7 +104,8 @@ class CoreTests(unittest.TestCase):
         self.assertIn('SpaceAreaMatches(', send)
         self.assertIn('item.SetMemberFlashNumber("v" + k, themeEntries[i].values[k]);', send)
         theme = body(core, '\tpublic function SendTheme(')
-        self.assertIn('themeEntries[i].kind == 4 || (themeEntries[i].kind != 1 && IsSpaceDrawing(', theme)
+        self.assertIn('themeEntries[i].kind != 1 && IsSpaceDrawing(', theme)
+        self.assertIn('item.SetMemberFlashNumber("v" + k, themeEntries[i].values[k]);', theme)
         pins = body(core, 'function UpdateUserMapPins(')
         self.assertIn('SendSpace(GetMenuFlashValueStorage(), m_shownArea, this);', pins)
         refresh = body(core, 'function CMFMapSpaceSend(')
@@ -125,15 +126,38 @@ class CoreTests(unittest.TestCase):
         self.assertIn('CMFLog("late pins caught n=" + missed + " of " + flashArray.GetLength());', catch)
         self.assertLess(catch.index('OpenPinList();'), catch.index('FillMissingPinFields(flashArray, mapContext, -1, area);'))
         fill = body(core, '\tpublic function FillMissingPinFields(')
-        self.assertIn('if (fullList && !isPlayer && !isUser && (fresh || !catching))\n\t\t\t{\n\t\t\t\tOnPinReady(', fill)
+        self.assertIn('if (fullList && !isPlayer && !isUser && (fresh || !catching))\n\t\t\t{\n\t\t\t\tif (ProcessPinAsks(', fill)
+        self.assertLess(fill.index('ProcessPinAsks(dataObject)'), fill.index('OnPinReady(dataObject, mapContext)'))
+
+    def test_pin_list_opens_for_the_whole_build(self):
+        # The Stable 2.2.1's precompiled UpdateEntityPins skips every loose wrapper on that method (Show Chests and
+        # All Quest Objectives starts, 2026-10-25), so CMF's UpdateData wrapper opens the per-pin list itself.
+        core = self.core
+        data = body(core, 'function UpdateData(optional ignoreSelectionChange : bool)')
+        self.assertLess(data.index('BeginBuild(m_shownArea);'), data.index('wrappedMethod(ignoreSelectionChange);'))
+        self.assertLess(data.index('wrappedMethod(ignoreSelectionChange);'), data.index('EndBuild();'))
+        self.assertLess(data.index('EndBuild();'), data.index('CatchLatePins('))
+        begin = body(core, '\tpublic function BeginBuild(')
+        self.assertIn('entityStepRan = false;', begin)
+        self.assertLess(begin.index('OpenPinList();'), begin.index('NoteListArea(area);'))
+        self.assertIn('listOpen = false;', body(core, '\tpublic function EndBuild('))
+        entity = body(core, 'function UpdateEntityPins(out flashArray : CScriptedFlashArray) : void')
+        self.assertLess(entity.index('NoteEntityStep();'), entity.index('wrappedMethod(flashArray);'))
+        self.assertIn('OpenPinList();', entity)
+        pins = body(core, 'function UpdateUserMapPins(')
+        self.assertLess(pins.index('CheckEntityStep();'), pins.index('FillMissingPinFields('))
+        check = body(core, '\tpublic function CheckEntityStep(')
+        self.assertIn('if (inBuild && !entityStepRan && !entitySkipLogged)', check)
+        self.assertIn('CMFLog("entity step skipped: another mod replaced CR4MapMenu.UpdateEntityPins; pin list opened by '
+                      'UpdateData");', check)
 
     def test_anchor_and_kind_rules(self):
         draw = body(self.core, 'function CMFDraw(')
-        self.assertIn("(anchor == 'mapSpace' && IsNameValid(kind) && kind != 'line' && kind != 'text' && kind != 'movie')",
+        self.assertIn("(anchor == 'mapSpace' && IsNameValid(kind) && kind != 'line' && kind != 'text' && kind != 'movie' && kind != 'image')",
                       draw)
-        self.assertIn("(anchor != 'mapSpace' && (kind == 'line' || kind == 'movie'))", draw)
+        self.assertIn("(anchor != 'mapSpace' && kind == 'line')", draw)
         self.assertIn('mapSpace', words(self.core, 'CMFThemeParts()'))
-        self.assertEqual(words(self.core, 'CMFThemeKinds()')[-3:], ['line', 'text', 'movie'])
+        self.assertEqual(words(self.core, 'CMFThemeKinds()')[-4:], ['line', 'text', 'movie', 'image'])
 
     def test_kind_keys_match_the_pack_tool(self):
         for kind, keys in cmf_pack.THEME_KIND_KEYS.items():
@@ -154,8 +178,8 @@ class CoreTests(unittest.TestCase):
 
     def test_movie_takes_its_own_keys_after_cmfdraw(self):
         draw_set = body(self.core, 'function CMFDrawSet(')
-        self.assertIn("own = theGame.CMFGetCore().DrawingKind(provider, id) == 'movie';", draw_set)
-        self.assertIn('if (!own && !CMFThemeValueOk(', draw_set)
+        self.assertIn("own = kind == 'movie' && !CMFListHas(CMFThemeShapeKeys('movie'), NameToString(key));", draw_set)
+        self.assertIn('if ((!own && !CMFThemeValueOk(', draw_set)
         lists = body(self.core, 'function CMFDrawSetList(')
         self.assertIn('values.Size() > 100000', lists)
         self.assertIn("DrawingKind(provider, id) != 'movie'", lists)

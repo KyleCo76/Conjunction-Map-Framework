@@ -65,7 +65,7 @@ class PresenceSourceTests(unittest.TestCase):
 
     def test_property_is_generic_only_and_named_helper_uses_empty_payload(self):
         self.assertEqual(body(self.core, 'CMFPropertyPresent').strip(), 'return 38;')
-        self.assertEqual(body(self.core, 'CMFGetVersion').strip(), 'return 11;')
+        self.assertEqual(body(self.core, 'CMFGetVersion').strip(), 'return 13;')
         self.assertIn('CMFPropertyPresent()', body(self.core, 'CMFHasProperty'))
         self.assertNotIn('CMFPropertyPresent()', body(self.core, 'CMFOnePinProperty'))
         self.assertIn('CMFRegister(provider, CMFPropertyPresent(), \'\', \'\', "", 1)',
@@ -90,7 +90,7 @@ class PresenceSourceTests(unittest.TestCase):
 
     def test_queries_and_feature_enumeration_do_not_declare_or_include_presence(self):
         for name in ('ProviderPresent', 'PresentProviders', 'Providers', 'ProviderName', 'DrawingKind',
-                     'CMFProviderPresent', 'CMFRequireVersion', 'CMFGetVersion', 'CMFHasProperty'):
+                     'CMFProviderPresent', 'CMFGetVersion', 'CMFHasProperty'):
             with self.subTest(name=name):
                 text = body(self.core, name)
                 self.assertNotIn('NoteProviderPresent(', text)
@@ -157,13 +157,18 @@ class PresenceSourceTests(unittest.TestCase):
         self.assertIn("'CMFMenuKnownPresent'", status)
         self.assertNotIn("'CMFMenuKnown'", status)
         self.assertIn('theGame.IsActive()', status)
-        self.assertIn('return providers.Size() > 0;', status)
+        # Review M3: at the title screen the remembered list is used even while empty, and "-1" is no mod.
+        self.assertIn('return true;', status)
+        self.assertNotIn('return providers.Size() > 0;', status)
+        self.assertIn('value != "-1"', status)
         page = body(self.menu, 'CMFMenuFillPage')
         self.assertRegex(page, r"if \(groupName == 'CMFMenuStatusMods'\)\s*\{\s*remembered = CMFMenuStatusProviders\(providers\);")
         self.assertRegex(page, r'else\s*\{\s*remembered = CMFMenuProviders\(providers\);')
         self.assertNotIn('PresentProviders', body(self.menu, 'CMFMenuProviders'))
         self.assertIn('GetLocStringByKeyExt("cmf_menu_support_present")', body(self.menu, 'CMFMenuFillMod'))
-        self.assertNotIn('Nothing yet (open the map)', body(self.menu, 'CMFMenuFillMod'))
+        # Review M4: before the first map opening the hint stays, as in 1.4.2.
+        self.assertRegex(body(self.menu, 'CMFMenuFillMod'),
+                         r'if \(text == "" && !core\.MapSeen\(\)\)\s*\{\s*text = "Nothing yet \(open the map\)";')
 
     def test_empty_status_memory_does_not_unlock_prebuilt_title_screen_picks_or_order(self):
         # Source-bound regression for an upgrade: old choice memory exists while the
@@ -173,10 +178,14 @@ class PresenceSourceTests(unittest.TestCase):
             self.assertIn('theGame.CMFMenuGetState().Remember(varName, CMFMenuJoin(answers));',
                           body(self.menu, name))
         status = body(self.menu, 'CMFMenuStatusProviders')
-        self.assertIn('return providers.Size() > 0;', status)
+        # Review M3: at the title screen the remembered list is used even while empty, and "-1" is no mod.
+        self.assertIn('return true;', status)
+        self.assertNotIn('return providers.Size() > 0;', status)
+        self.assertIn('value != "-1"', status)
         page = body(self.menu, 'CMFMenuFillPage')
         self.assertIn('remembered = CMFMenuStatusProviders(providers);', page)
-        self.assertIn('theGame.CMFMenuGetState().SetTitleScreen(!theGame.IsActive());', page)
+        # Review M2: a remembered list in a live game is guarded too.
+        self.assertIn('theGame.CMFMenuGetState().SetTitleScreen(remembered || !theGame.IsActive());', page)
         self.assertNotIn('SetTitleScreen(remembered)', page)
         changed = body(self.menu, 'CMFMenuValueChanged')
         guard = changed.index('if (theGame.CMFMenuGetState().TitleScreen())')

@@ -86,7 +86,7 @@ class ApiTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_and_header(self):
-        self.assertIn('function CMFGetVersion() : int { return 11; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 13; }', self.core)
         self.assertRegex(self.core.split('function CMFGetVersion')[0], r'version 10: behaviour picked apart from art')
 
     def test_choice_keys_and_parents(self):
@@ -101,7 +101,7 @@ class ApiTests(unittest.TestCase):
 
     def test_property_choices(self):
         choice = body(self.core, 'public function PropertyChoice(propertyId : int, pinType : string) : int')
-        self.assertIn('case 14:\n\t\t\t\treturn 64; // Behaviour_InfoBoxHeight', choice)
+        self.assertIn('case 14:\n\t\t\tcase 39:\n\t\t\t\treturn 64; // Behaviour_InfoBoxHeight', choice)
         self.assertIn('case 28:\n\t\t\t\treturn 67; // Behaviour_HoverNames', choice)
         self.assertIn('case 22:\n\t\t\t\treturn 28; // Size_Lead', choice)
         self.assertIn('case 11:\n\t\t\tcase 13:\n\t\t\t\treturn 31; // Labels_Place', choice)
@@ -121,10 +121,11 @@ class ApiTests(unittest.TestCase):
 
     def test_theme_owner_uses_the_key_choice(self):
         owner = body(self.core, 'private function ThemeStyleOwner(part : name, key : name) : string')
-        self.assertIn("|| part == 'wide';", owner)
+        self.assertIn("|| part == 'wide'", owner)
         self.assertIn('keyChoice = PartKeyChoice(part, key);', owner)
         self.assertIn('choice = keyChoice;', owner)
-        self.assertIn('(!perKey && PartKeyChoice(part, themeEntries[i].key) == keyChoice)', owner)
+        self.assertIn('PartKeyChoice(part, themeEntries[i].key) == keyChoice)', owner)
+        self.assertIn("!perKey && themeEntries[i].key != 'list'", owner)
         self.assertIn('!ChoiceOnlySkips(keyChoice, themeEntries[i].provider)', owner)
         self.assertIn('NoteOfferFor(PartKeyChoice(themeEntries[i].target, themeEntries[i].key), themeEntries[i].provider);',
                       body(self.core, 'private function PrepareOffers()'))
@@ -149,16 +150,18 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(style_owner(entries, 'navigation', 'stepMs', parts), 'modA')
 
     def test_wide_part(self):
-        self.assertIn(',opening,spread,wide";', body(self.core, 'function CMFThemeParts() : string'))
-        self.assertIn('return "fill,panels,maxRatio,world";', body(self.core, 'function CMFThemeWideKeys() : string'))
-        self.assertEqual(list(cmf_pack.THEME_PART_KEYS['wide']), ['fill', 'panels', 'maxRatio', 'world'])
+        parts = ''.join(re.findall(r'"([^"]*)"', body(self.core, 'function CMFThemeParts() : string'))).split(',')
+        self.assertEqual(parts[parts.index('opening'):parts.index('wide') + 1], ['opening', 'spread', 'wide'])
+        wide_keys = ''.join(re.findall(r'"([^"]*)"', body(self.core, 'function CMFThemeWideKeys() : string'))).split(',')
+        self.assertEqual(wide_keys[:4], ['fill', 'panels', 'maxRatio', 'world'])
+        self.assertEqual(wide_keys, list(cmf_pack.THEME_PART_KEYS['wide']))
         values = body(self.core, 'function CMFThemeValueOk(')
         self.assertLess(values.index("if (part == 'wide')"), values.index("if (key == 'fill' && text == \"label\")"))
         ranges = body(self.core, 'function CMFThemeWideValueOk(key : name, number : float) : bool')
         self.assertIn("case 'fill':\n\t\tcase 'world':\n\t\t\treturn number == 0 || number == 1;", ranges)
         self.assertIn("return number >= 0 && number <= 1;", ranges)
         self.assertIn("return number == 0 || (number >= 1.78 && number <= 4);", ranges)
-        self.assertIn('",navigation,opening,spread,wide", NameToString(anchor)', self.core)
+        self.assertRegex(self.core, r'",navigation,opening,spread,wide(?:,[^"]*)?", NameToString\(anchor\)')
 
     def test_wide_vanilla_and_log(self):
         theme = body(self.core, 'public function SendTheme(storage : CScriptedFlashValueStorage)')
@@ -190,12 +193,17 @@ class ApiTests(unittest.TestCase):
         self.assertIn('propertyId == CMFPropertyHoverName()', body(self.core, 'function CMFHasProperty('))
         self.assertIn('propertyId == CMFPropertyHoverName()', body(self.core, 'function CMFPropertyTextFree('))
         # Version 11: CMFRegisterForTag takes every one-pin property (CMFOnePinProperty).
-        self.assertIn('!CMFOnePinProperty(propertyId)', body(self.core, 'function CMFRegisterForTag('))
+        self.assertIn('!CMFOnePinProperty(effectiveId)', body(self.core, 'function CMFRegisterForTag('))
         self.assertIn('propertyId == CMFPropertyHoverName()', body(self.core, 'function CMFOnePinProperty('))
-        self.assertRegex(body(self.core, 'function CMFRegister('),
-                         r'propertyId == CMFPropertyHoverName\(\)[^{]*\) && !IsNameValid\(target\)')
+        self.assertIn('EveryPinProperty(effectiveId) && !IsNameValid(target)', body(self.core, 'function CMFRegister('))
+        self.assertIn('propertyId >= 28 && propertyId <= 36', body(self.core, 'function EveryPinProperty('))
         self.assertIn('case 28:\n\t\t\treturn "cmfHoverNameBy";', body(self.core, 'function CMFOwnerField('))
-        self.assertIn('WriteSlot(dataObject, CMFPropertyHoverName(), pinKey, legendKey, pinTag, maxLevel);', self.core)
+        from test_cmf_rev13_map_contracts import claim, lookup_env
+        self.assertEqual(lookup_env([claim(propertyId=28)])['activeWriteSlots'], [28])
+        self.assertEqual(lookup_env([])['activeWriteSlots'], [])
+        fields = body(self.core, 'private function WriteFields(')
+        self.assertIn('for (slot = 0; slot < activeWriteSlots.Size(); slot += 1)', fields)
+        self.assertIn('WriteSlot(dataObject, activeWriteSlots[slot], pinKey, legendKey, pinTag, maxLevel);', fields)
         self.assertIn('case 28:\n\t\t\t\tdataObject.SetMemberFlashInt("cmfHoverName", number);', self.core)
         self.assertIn('(incoming.propertyId == CMFPropertyHoverName() && (incoming.number < 0 || incoming.number > 3))',
                       self.core)
@@ -206,15 +214,15 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(len(cmf_pack.n4_issues(28, '', '4')), 1)
 
     def test_drawing_and_opening_keys(self):
-        self.assertIn(',minPartHeight,wideAnchor";', body(self.core, 'function CMFThemeShapeKeys('))
-        self.assertIn('clearSide,wideAnchor"', body(self.core, 'function CMFThemeTextKey('))
+        self.assertIn(',minPartHeight,wideAnchor,', body(self.core, 'function CMFThemeShapeKeys('))
+        self.assertIn('clearSide,wideAnchor,', body(self.core, 'function CMFThemeTextKey('))
         self.assertIn("case 'wideAnchor':\n\t\t\t\treturn text == \"edges\" || text == \"panels\" || text == \"centre\";",
                       body(self.core, 'function CMFThemeValueOk('))
-        for kind in ('rect', 'ring', 'ellipse', 'polygon', 'band', 'text'):
+        for kind in ('rect', 'ring', 'ellipse', 'polygon', 'band', 'text', 'movie'):
             self.assertIn('wideAnchor', cmf_pack.THEME_KIND_KEYS[kind])
-        for kind in ('line', 'movie'):
+        for kind in ('line',):
             self.assertNotIn('wideAnchor', cmf_pack.THEME_KIND_KEYS[kind])
-        self.assertIn('revealSeconds,readyAtFadeStart,revealEase";', body(self.core, 'function CMFThemeOpeningKeys()'))
+        self.assertIn('revealSeconds,readyAtFadeStart,revealEase,', body(self.core, 'function CMFThemeOpeningKeys()'))
         motion = body(self.core, 'function CMFThemeMotionValueOk(')
         self.assertIn("case 'readyAtFadeStart':\n\t\tcase 'revealEase':\n\t\t\treturn number == 0 || number == 1;", motion)
 
@@ -232,13 +240,17 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(cmf_pack.theme_key_row('map', 'backdrop'), 'Map look > Frames and panels')
         self.assertEqual(cmf_pack.theme_key_row('wide', 'fill'), 'Map movement > Fill wide screens')
         self.assertEqual(cmf_pack.theme_key_row('spread', 'on'), 'Map behaviour > Stacked pins spread out')
-        parts = part_choices(self.core)
+        from ws_contract_runner import bind
+        env={"NameToString":str,"StrFindFirst":str.find}
+        for name,args in (("CMFListHas",("list","word")),("PartChoice",("part",)),("PartKeyChoice",("part","key"))):
+            env[name]=bind(self.core,name,env,args)
         names = {39: 'Map look > Frames and panels', 63: 'Map behaviour > Info box moves out of the way',
                  31: 'Map behaviour > Label place and hiding', 65: 'Map movement > Zoom out to the whole region',
-                 66: 'Map movement > Controller crosshair'}
+                 66: 'Map movement > Controller crosshair',
+                 74: 'Map behaviour > Info box folding', 75: 'Map behaviour > Panel visibility'}
         for part, keys in cmf_pack.THEME_PART_KEYS.items():
             for key in keys:
-                choice = part_key_choice(parts, part, key)
+                choice = env["PartKeyChoice"](part,key)
                 if choice in names:
                     self.assertEqual(cmf_pack.theme_key_row(part, key), names[choice], (part, key))
 
@@ -250,12 +262,14 @@ class HoverNameEdgeTests(unittest.TestCase):
         import json
         edits = json.loads((ROOT/'source/panel/pin-fields/edits.json').read_text(encoding='utf-8'))['classes']
         spd = ''.join(e['replace'] for e in edits['red/game/witcher3/menus/worldmap/StaticMapPinDescribed.as'])
-        hub = ''.join(e['replace'] for e in edits['red/game/witcher3/menus/worldmap/HubMap.as'])
         self.assertIn('public function cmfKeepLabelOnScreen() : void', spd)
         self.assertIn('import red.game.witcher3.utils.CommonUtils;', spd)
         self.assertIn('(d.cmfHoverName & 2) != 0', spd)
         self.assertIn('rect = CommonUtils.getScreenRect();', spd)
-        self.assertEqual(hub.count('this._selectedPinAvatar.cmfKeepLabelOnScreen();'), 2)
+        call = 'this._selectedPinAvatar.cmfKeepLabelOnScreen();'
+        net_calls = sum((edit['replace'].count(call) - edit['find'].count(call)) * edit['count']
+                        for edit in edits['red/game/witcher3/menus/worldmap/HubMap.as'])
+        self.assertEqual(net_calls, 2)
 
 
 if __name__ == '__main__':

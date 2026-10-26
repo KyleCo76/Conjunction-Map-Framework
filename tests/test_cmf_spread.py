@@ -110,7 +110,11 @@ class CoreTests(unittest.TestCase):
                       body(self.core, 'function CMFOnePinProperty('))
         self.assertIn('propertyId == CMFPropertySpreadRank()', body(self.core, 'function CMFPropertyTextFree('))
         self.assertIn('case 22:\n\t\t\treturn "cmfSpreadRankBy";', body(self.core, 'function CMFOwnerField('))
-        self.assertIn('WriteSlot(dataObject, CMFPropertySpreadRank(), pinKey, legendKey, pinTag, maxLevel);', self.core)
+        from test_cmf_rev13_map_contracts import claim, lookup_env
+        self.assertEqual(lookup_env([claim(propertyId=22)])['activeWriteSlots'], [22])
+        self.assertEqual(lookup_env([])['activeWriteSlots'], [])
+        fields = body(self.core, 'private function WriteFields(')
+        self.assertTrue('WriteSlot(dataObject, activeWriteSlots[slot], pinKey, legendKey, pinTag, maxLevel);' in fields)
         self.assertIn('case 22:\n\t\t\t\tdataObject.SetMemberFlashInt("cmfSpreadRank", number);', self.core)
         # The same range in the registry, the per-pin call and the pack tool.
         self.assertIn('(incoming.propertyId == CMFPropertySpreadRank() && (incoming.number < 0 || incoming.number > '
@@ -126,7 +130,8 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(list(cmf_pack.THEME_PART_KEYS['spread']), SPREAD_KEYS)
         # A behaviour part: won key by key, "unset" withdraws a key, never a drawing anchor.
         self.assertIn("part == 'opening' || part == 'spread' ||", body(self.core, 'private function ThemeStyleOwner('))
-        self.assertIn('",navigation,opening,spread,wide", NameToString(anchor)', self.core)
+        from rev13_legacy_source import check_behavior_anchors
+        check_behavior_anchors(self, self.core, ('spread',))
         self.assertIn("if (part == 'spread')\n\t{\n\t\treturn CMFThemeSpreadValueOk(key, number);\n\t}",
                       body(self.core, 'function CMFThemeValueOk(part : name, key : name, text : string, number : '
                                       'float) : bool'))
@@ -142,7 +147,7 @@ class CoreTests(unittest.TestCase):
             self.assertTrue(value in (0, 1) if expected == 'switch' else expected[0] <= value <= expected[1], key)
 
     def test_version_stays_six(self):
-        self.assertIn('function CMFGetVersion() : int { return 11; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 13; }', self.core)
 
 
 class PanelTests(unittest.TestCase):

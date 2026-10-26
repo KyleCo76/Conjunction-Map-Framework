@@ -1,8 +1,10 @@
 # Map Quest Insight adapter
 
-**Adapter version 1.1.1.** Tells CMF the adapter is installed when the game starts (property 38, behind `CMFHasProperty(38)`, API 11), so CMF's adapter check can see it. Nothing else changes.
+**Adapter version 2.0.0, for Map Quest Insight 2.0.0 or later and CMF API 13 (CMF 1.6.0).** Carries Map Quest Insight 2.0's map through CMF's general abilities: quest icons by type (round badges or symbols, level colours, tracked gold), the Sticker icons for the game's markers, the quest box beside its marker, the category panel and overview visibility, Show more in quest boxes, the full-screen map and its edge fades, and the clean corner HUD (see "2.0 features" below). Map Quest Insight's 2.0 map features carried with permission from Wolfer. Its Quest List is left to the next adapter update (Kyle 2026-10-26). Players on an older CMF or Map Quest Insight 1.6 keep adapter 1.2.0: this version cannot compile there (`CMFStyle` and the `OnInfoFold` hook are API 13, and the 2.0 functions are Map Quest Insight 2.0's).
 
-`modCMFAdapterMapQuestInsight` is a separate mod that sits between Conjunction Map Framework (CMF) and Map Quest Insight 1.6.1 or later (Nexus 14219). Map Quest Insight stays unchanged. It normally talks to its own map file: it asks that file for a handshake number, then writes its values onto the map and onto each pin. CMF's map reads none of those names, so the adapter turns each value into CMF's general calls, the way Map Quest Insight's author would when porting. It is the worked example of an adapter that translates a mod's own field names through CMF's general hooks a design note kept in the private development repository. The author-facing version is [`docs/authors/map-quest-insight-adapter.md`](../../../docs/authors/map-quest-insight-adapter.md).
+Adapter 1.2.0 sends where Map Quest Insight's own map file puts a tall info box as `tooltip` `tall*` keys (CMF API 12), apart from the box height; see Known differences. Adapter 1.1.1 declares `modMapQuestInsight` at game startup with generic property 38 when `CMFHasProperty(38)` succeeds (API 11). Presence is independent of feature settings. The source-mod compile dependency and minimum CMF version remain unchanged.
+
+`modCMFAdapterMapQuestInsight` is a separate mod that sits between Conjunction Map Framework (CMF) and Map Quest Insight 2.0.0 or later (Nexus 14219). Map Quest Insight stays unchanged. It normally talks to its own map file: it asks that file for a handshake number, then writes its values onto the map and onto each pin. CMF's map reads none of those names, so the adapter turns each value into CMF's general calls, the way Map Quest Insight's author would when porting. It is the worked example of an adapter that translates a mod's own field names through CMF's general hooks (N4 spec, [a design note kept in the private development repository](../../../a design note kept in the private development repository), section 8.4). The author-facing version is [`docs/authors/map-quest-insight-adapter.md`](../../../docs/authors/map-quest-insight-adapter.md).
 
 It does not retire: it stays the guide for Map Quest Insight's author until a port exists.
 
@@ -20,15 +22,23 @@ Read only, for its interface: Map Quest Insight 1.5.0's `questMapInfo.ws` (SHA-2
 | pin fields `qmiIconScale`, `qmiIconTop`, `qmiIconKind`, `qmiNoCrosshairLabel`, `qmiLevelText`, `qmiIconTint` | 3889-3968 | what it writes on each pin |
 | `QMI_GetQuestLevel(journalQuest : CJournalQuest) : int` (global) | 1056 | a quest's level, as the journal computes it (its own private `QMI_GetLevelCached` caches this value) |
 | `QMI_SpreadStackedMarkers() : bool`, `QMI_SpreadRank(curQuest : CJournalQuest, questLevel : int) : int` | 1.6.0 and later (not in 1.5.0) | its "Spread stacked quest markers" switch and the rank of a quest in a stack |
+| `QMI_OptTypeIcons() : bool`, `QMI_OptUniformIcons() : bool` (`qmiSettings.ws` 546-547) | 2.0.0 | "Quest icons by type" and "Round quest icons" |
+| `QMI_IconKind(journalQuest : CJournalQuest) : int` | 2.0.0, 2320 | a quest's kind, 1 to 10 |
+| `QMI_LevelBandTint(questLevel : int) : int` | 2.0.0, 2170 | the level colour as 0xRRGGBB, 0 when icons are not coloured |
+| `QMI_ColorTrackedIcon() : string` | 2.0.0, 936 | the tracked symbol's gold, `#RRGGBB` |
+| `event OnQmiDescMore(isOpen : int)` (on `CR4MapMenu`) | 2.0.0, 6030 | its own map's Show more event, which saves the state |
+
+The 2.0.0 lines were read on Kyle's PC (2026-10-26, declarations only; nothing copied). Wolfer named these names stable (2026-10-25). The adapter also reads these settings by their menu names and writes none: `[qmiGeneral]` `qmiMigrated200`, `qmiCatPanel`, `qmiMapOverview`, `qmiFullScreen`, `qmiSideHud`; `[qmiWide]` `qmiUwMap`, `qmiUwSidePos`; `[qmiBox]` `qmiQjBoxBeside`, `qmiJournalText`, `qmiDescOnAsk`, `qmiDescRemember`, `qmiDescMoreOpen`; `[qmiPins]` `qmiQuestIconSize`; `[qmiOther]` `qmiIconStyle`. On the map's root it sets `qmiDmApi` and `qmiDrApi` (Wolfer's Show more handshake) and reads back `qmiDmMoreW` and `qmiDmLessW`. With Full-screen map Off it also sets `qmiHubOver` (true) there: Map Quest Insight 2.0.1's menu files draw the game's menu above any map, and with Full-screen Off it keeps the menu's dark background and X, which then cover CMF's whole map (start C, 2026-10-26). `qmiHubOver` is its own opt-in for a map drawn under the menu; it is not on Wolfer's stable list yet. Adapter 2.0.0 ships with it (Kyle 2026-10-26 21:32Z) while Wolfer is asked to make it stable or to hide the background himself on a map that is not his own; the adapter follows his answer.
 
 ## How it works
 
 | Step | Where | What |
 |---|---|---|
-| Handshake | `@wrapMethod(CR4MapMenu) OnConfigUI`, outermost | sets `QMI_swfApi = 3` and `QMI_swfApiRead = true` before Map Quest Insight's wrapper and the game's body run, so Map Quest Insight sends everything it sends its own map file 3. CMF's panel declares no `qmiApi`. |
+| Handshake | `@wrapMethod(CR4MapMenu) OnConfigUI`, outermost | sets `QMI_swfApi = 3` and `QMI_swfApiRead = true` before Map Quest Insight's wrapper and the game's body run, so Map Quest Insight sends everything it sends its own map file 3. CMF's panel declares no `qmiApi`. The game declares `OnConfigUI` an event, so the wrapper returns its result (from 1.2.0). |
 | Faster map and zoom out | the same wrapper, after `wrappedMethod()` (settings reloaded, before CMF's map asks for its theme) | `MqiAdapterSendMotion`: when CMF has the `opening` part, sends Map Quest Insight's own values as `navigation` and `opening` keys while `QMI_OptFasterMap()` or `QMI_OptZoomOut()` is on, and `"unset"` for each key while it is off; each key only when `CMFHasAbility` answers true |
 | Spreading stacked markers | the same wrapper, after the motion keys | `MqiAdapterSendSpread`: when CMF has the `spread` part, sends Map Quest Insight's own map file values as `spread` keys (`on` 1, `anyPin` 0, `enterRadius` 20, `stackDistance` 24, `maxPins` 8, `gap` 48, `openMs` 150, `closeMs` 120, `lockRadius` 24, `keepRadius` 48) while `QMI_SpreadStackedMarkers()` is on, and `"unset"` for each key while it is off |
-| Ultrawide map | the same wrapper, after the spread keys | `MqiAdapterSendWide`: when CMF has `('wide', 'fill')` (API 10), sends Map Quest Insight 1.6.2's Ultrawide map switch and side panels position as `wide` keys (see Known differences) |
+| Ultrawide map | the same wrapper, after the spread keys | `MqiAdapterSendWide`: when CMF has `('wide', 'fill')` (API 10) and the `qmiWide` settings group exists, sends Map Quest Insight 1.6.2's Ultrawide map switch and side panels position as `wide` keys; a value never saved (`""` or `"-1"`) is Map Quest Insight's default, On and 100 % (see Known differences) |
+| Tall info box place | the same wrapper, after the wide keys | `MqiAdapterSendBox`: when CMF has `('tooltip', 'tallMinHeight')` (API 12), sends the places Map Quest Insight's own map file uses for a box taller than 330 px (see Known differences) |
 | Signpost tabs and box height | `@wrapMethod(CR4MapMenu) UpdateDisabledMapPins`, after Map Quest Insight's (settings loaded, before the pins are sent) | asks Map Quest Insight which filter tabs hide signposts now ("Quests", and "Exploration,NPCs,Buffs") and keeps the list on `theGame` (`@addField(CR4Game) mqiAdapterNoSignTabs`); registers `CMFRegister("modMapQuestInsight", CMFPropertyInfoBoxHeight(), '', '', "", height)` with `QMI_InfoBoxMaxHeight()` rounded and held to 100-1080 (0 withdraws) |
 | Spread rank | `@wrapMethod(CR4MapMenu) AddPinTypeData`, outermost | for each quest pin that is not fast travel, while the switch is on: finds the pin's quest as the game does (objective, then its quest), asks `QMI_SpreadRank(quest, QMI_GetQuestLevel(quest))` and claims a rank above 0 with `CMFStylePin(…, CMFPropertySpreadRank(), "", rank)`, so CMF's spread selects the pin Map Quest Insight's own map file would. The quest is known only here: `OnPinReady` sees the pin object, which carries no quest. |
 | Each pin | `@wrapMethod(CMFCore) OnPinReady` | reads Map Quest Insight's pin fields and calls CMF's per-pin calls, below |
@@ -49,34 +59,61 @@ Every claim names `modMapQuestInsight`, Map Quest Insight's own folder, as its p
 
 **Wrapper order.** Wrappers nest by script file name. The file name starts with `zz_` so it sorts after `qmiSettings.ws` and `questMapInfo.ws`, so its wrappers run around Map Quest Insight's.
 
-**Log.** For the first eight quest pins of each game session, one line:
-`CMF adapter provider=modMapQuestInsight scale=<n> kind=<n> label=<text> tint=<decimal> noSignTabs=<tabs>`.
+**Log.** None of its own from 1.2.0 (up to 1.1.1, one line for each of the first eight quest pins of a session; a log line per pin breaks the log rule). CMF's own lines show its claims (`provider=modMapQuestInsight claims=`).
+
+## 2.0 features
+
+All in `zz_modcmfadaptermapquestinsight_cmf.ws` unless named, each sent only when `CMFHasAbility` answers true, and withdrawn (`"unset"`) when its setting is off.
+
+| Map Quest Insight 2.0 setting | Adapter | CMF 13 ability |
+|---|---|---|
+| "Quest icons by type" + "Round quest icons" | `AddPinTypeData` wrapper, `MqiAdapterQuestIcon`: the icon = `badgesym_<kind>.png` (white, or `QMI_ColorTrackedIcon()` on the tracked quest's pins, those whose `visibleType` is not `QuestObjectiveOther`), the picture under it (42) = `badge_<kind>.png`, its tint (43) = `QMI_LevelBandTint(level)` or white; the pin's size = "Quest marker size", the picture grown 31 / 14.5 (44) so the game's glow and the tracked ring keep that size; the label's distance grows with the picture | properties 42, 43 and 44, per-pin icon, tint, size and label place |
+| "Quest icons by type", round icons off | the icon = `symbol_<kind>.png` in the level colour, gold when tracked; the picture grown 18 / 14.5 (44) over "Quest marker size" | per-pin icon, tint, size, property 44 and label place |
+| "Map icon style" Sticker (`[qmiOther] qmiIconStyle`) | `zz_modcmfadaptermapquestinsight_sticker.ws`: 125 type claims to 121 Sticker pictures when it turns to Sticker, withdrawn with property 40 when it turns to Vanilla, before the pins are built | `CMFRegisterIcon`, property 40 |
+| "Info box beside the marker" | `MqiAdapterSendBeside`: `CMFStyle(…, 'tooltip', <quest type>, 'clearMinHeight', 1)` and `'clearAnchor' "pin"` for the 19 quest pin types | per-type tooltip keys, `clearAnchor` |
+| "Map category panel", "Map overview" | `MqiAdapterSendPanels`: `legend show` auto with `autoHideMs` 3000 and `padShowFirst` 1, or always; `preview show` moving with `movingMs` 1500, always or never | panel visibility keys |
+| "Show more" (`qmiJournalText` and `qmiDescOnAsk`) | `MqiAdapterAskDescMore` sets `qmiDmApi` and `qmiDrApi` on the map's root before Map Quest Insight's wrapper reads them; `MqiAdapterSendFold` sends `foldTag` "qmimore", its words, `foldKeyKb` SpawnHorse (its X), `foldKeyPad` CameraLock (its R3) and `foldOpen`; the `OnInfoFold` hook calls its `OnQmiDescMore` | `rootValues`, fold keys, `OnInfoFold` |
+| "Full-screen map" Clear / Soft fade / Dark fade | `MqiAdapterSendFullScreen`: `map top` 0 and `bottom` 1080, plus two screen `band` drawings (top and bottom, 180 px, black at the edge to clear, alpha 0.55 or 0.85, under every panel) | map area keys, band drawings |
+| "Corner HUD" Clean | `MqiAdapterSendCornerHud`: `tracker hide` plate and two glows (black, 1 / 2 / 6 and 0.8 / 6 / 2) | tracker keys |
+| "Signposts in other filters" (2.0 widened) | `UpdateDisabledMapPins` wrapper adds All, Default and, without fast travel, General | per-pin tab hide |
+| no spreading on the fast travel map (2.0.1) | `MqiAdapterSendSpread(travelMap)` and the rank claim skip it | spread keys |
+
+One log line per opening (`CMF mqi adapter opening icons= size= sticker= beside= panel= overview= showMore= words= fullScreen= cornerHud= travelMap=`) names what the adapter follows. The quest icon settings and the travel map test are read at the opening's first quest pin (`MqiAdapterPinsInit`), because the game adds the pins inside `OnConfigUI`, after Map Quest Insight's wrapper has loaded its settings; read after the opening, the first opening's pins kept the old icons.
+
+**Art.** `art-src/mqi_icons.py` cuts Wolfer's `MQI 2.0.1 icons for CMF.zip` (SHA-256 `2204facd…95d3`, never committed) into `art/`: `sticker_<name>.png` (a square of the game icon's longer side around the Sticker's middle, so CMF draws it at its own size), `badge_<kind>.png` (the badge's middle 31 of 32 map units), `badgesym_<kind>.png` (the symbol scaled by its "symbol on badge" factor on the badge's canvas, Wolfer's two-layer recipe) and `symbol_<kind>.png` (the middle 18 of 20 map units), all 64 × 64, and writes the Sticker table. Only cuts and resizes; no other change to the art. `--check` compares instead of writing.
 
 ## Known differences
+
+- **Quest List not carried yet.** Map Quest Insight 2.0's Quest List and its two hint row entries ("Quests", "Change tracked objective") are left to the next adapter update (Kyle 2026-10-26). CMF's managed hint row replaces the whole row, so the entries come with the list.
 
 - **ALSO HERE stays with spreading on.** Map Quest Insight drops its "ALSO HERE" list only when its own map file answers `qmiSpreadMap`. CMF's map does not declare that name (no mod-specific names in core), and its map class is sealed, so the adapter cannot set it either: the game drops a write to a member the class does not declare. So under CMF the row spreads and the info box still lists the other quests on the spot, as Map Quest Insight does with spreading off. A port that asks `CMFHasAbility('spread', '')` can drop it.
 
 - **Ultrawide map (adapter 1.1.0, CMF API 10).** Map Quest Insight 1.6.2's Ultrawide map page becomes CMF's `wide` keys: `MqiAdapterSendWide` reads `GetVarValue('qmiWide', 'qmiUwMap')` and `('qmiWide', 'qmiUwSidePos')` by menu name, so the adapter still compiles with 1.6.1. Switch on: `wide fill` 1 and `panels` = side panels position / 100; switch off: `wide fill` 0 (the 16:9 map, as its own map file does) and `panels` unset; an empty answer (1.6.1, no page) sends nothing. Only when `CMFHasAbility('wide', 'fill')` answers true. The "Fill wide screens" choice decides between mods.
 
+- **Tall info box (adapter 1.2.0, CMF API 12).** Map Quest Insight's own map file (1.6.2 and 2.0.0 read on the player's PC, 2026-10-25) moves a box taller than 330 px to x 1300 between y 130 and 906, or, while the quest tracker is not in its normal state or the mouse is right of x 960, to x 112 between y 206 and 1006 under the legend, scaled to fit. Up to CMF API 11 CMF's map did this for every box height claim, so any mod sending a height moved tall boxes too. From API 12 the height only makes the text scroll, and `MqiAdapterSendBox` sends those places as `tallMinHeight` 330, `tallX` 1300, `tallTop` 130, `tallBottom` 906, `tallAltX` 112, `tallAltTop` 206, `tallAltBottom` 1006, `tallUnderLegend` 1 and `tallClear` 1, each only when `CMFHasAbility` answers true, and withdraws them (`"unset"`) while its "Info box height" is 0, since its map file moves only the scrolling box. They answer the "Info box moves out of the way" choice, like Ink and Iron's adapter's `clear*` keys. Map Quest Insight 2.0's quest box "beside the marker" is a different box and is not carried. Its map hides its category panel and shows its overview only while moving, so those corners are free there; CMF's map keeps the legend and the overview, so `tallClear` 1 keeps the box off them (launch 2026-10-25 line 3, Kyle's pick "Both"; hiding the panels the way Map Quest Insight 2.0 does is left to the 2.0 build).
+
 ## Dependencies
 
-- **Map Quest Insight 1.6.1 or later, a compile dependency.** The adapter uses its functions and fields, so the scripts fail to compile without it; `QMI_OptZoomOut` exists from 1.6.0. Every other name it uses is unchanged from 1.5.0 to 1.6.2 (smooth map movement record, section 10; 1.6.2 checked 2026-10-23, research/2026-10-23-map-quest-insight-1-6-2-review.md). Install and remove the two together; remove the adapter first.
-- **CMF 6 with spreading.** `CMFPropertySpreadRank` (id 22) arrives with stacked-pin spreading in API version 6, so the adapter compiles only with that CMF. `CMFStylePart` and `CMFHasAbility` do not exist before CMF 5, and `OnPinReady`, ids 10-15 and `CMFStylePinScale`/`CMFStylePinLabel` not before CMF 4. The motion keys, the spread keys and `"unset"` need API version 6.
+- **Map Quest Insight 2.0.0 or later, a compile dependency.** The adapter uses its functions and fields, so the scripts fail to compile without it; the 2.0 names above exist from 2.0.0, and it uses none that only 2.0.1 has (`QMI_OptQjClose`, `QMI_OptQjPan`). Install and remove the two together; remove the adapter first.
+- **CMF API 13 (CMF 1.6.0).** `CMFStyle` and the `OnInfoFold` hook arrive in API 13, so the adapter compiles only with that CMF. Earlier: `CMFPropertySpreadRank` (API 6), `CMFStylePart` and `CMFHasAbility` (5), `OnPinReady` and the per-pin calls (4).
 
 ## Files
 
 | Path | What |
 |---|---|
-| `modCMFAdapterMapQuestInsight/content/scripts/local/zz_modcmfadaptermapquestinsight_cmf.ws` | the startup declaration, four map/pin wrappers and the log line |
+| `modCMFAdapterMapQuestInsight/content/scripts/local/zz_modcmfadaptermapquestinsight_cmf.ws` | the startup declaration, the map/pin wrappers, the 2.0 features and the opening log line |
+| `modCMFAdapterMapQuestInsight/content/scripts/local/zz_modcmfadaptermapquestinsight_sticker.ws` | the Sticker claims (table written by `art-src/mqi_icons.py`) |
+| `modCMFAdapterMapQuestInsight/art/{sticker,badge,badgesym,symbol}_*.png` | Wolfer's 2.0.1 pictures, cut by `art-src/mqi_icons.py`; shipped with their permission (2026-10-25), credited |
+| `art-src/mqi_icons.py` | cuts the 2.0.1 icon set into `art/` and writes the Sticker table |
 | `modCMFAdapterMapQuestInsight/art/quest_*.png` | Map Quest Insight's main quest, contract and Gwent quest icons, 96 × 96, white with its dark outline so the level tints and the tracked gold multiply them; sent by its author, Wolfer, for the adapter and shipped with their permission (2026-10-21) from `MQI icons for CMF.zip` (SHA-256 `d14cc5abbe2b376a11d76194a24cb2bbcad3aa8fdc036ffc43b14b99459cdc86`), unchanged; the zip's 128 × 128 copies are not used |
 | `modCMFAdapterMapQuestInsight/README.txt` | for players |
 | `tests/test_cmf_mqi_adapter.py` | static checks: the Map Quest Insight names it uses exist with these signatures in 1.5.0, wrapper order, every claim names `modMapQuestInsight`, it writes no pin field itself, the kind table, the author's three icons check clean, plus WitcherScript hygiene |
 
-Build: `python tools/cmf_pack.py build source/adapters/map-quest-insight/modCMFAdapterMapQuestInsight --adapts modMapQuestInsight --out <new folder>`, which cooks `art/` into `content/texture.cache`. It reports no errors; its one warning (non-literal arguments in the box height claim) is expected.
+Build: `python tools/cmf_pack.py build source/adapters/map-quest-insight/modCMFAdapterMapQuestInsight --adapts modMapQuestInsight --out <new folder>`, which cooks `art/` into `content/texture.cache`. It reports no errors. Expected warnings: non-literal arguments in the box height claim; art not used by a literal `CMFRegister` call (the Stickers go through one helper, badges and symbols are named per pin); Stickers and badge glows reaching the picture's edge; a few percent of painted pixels changing in compression; the Sticker claims sent from the map's opening instead of `OnGameStarted` (they follow a menu setting).
 
 ## Status
 
-Static checks only. Not yet compiled or run in game with CMF 4: the N4 launch proves the handshake, the conversion and the stand-in icons together. The Faster map and zoom-out keys, the spread keys and the spread rank have not yet run in game.
+2.0.0: static checks only (`tests/test_cmf_mqi_adapter.py`, `tools/ws_lint.py`); its launch with Map Quest Insight 2.0.1 is next. Before that: static checks only. Not yet compiled or run in game with CMF 4: the N4 launch proves the handshake, the conversion and the stand-in icons together. The Faster map and zoom-out keys, the spread keys and the spread rank have not yet run in game.
 
 ## Limits
 

@@ -445,7 +445,7 @@ function CMFMenuStatusProviders(out providers : array<string>) : bool
 			if (!identities.Contains(identity))
 			{
 				identities.PushBack(identity);
-				combined.PushBack(providers[i]);
+				CMFMenuInsertInOrder(core, combined, providers[i]);
 			}
 		}
 		providers = combined;
@@ -470,15 +470,33 @@ function CMFMenuStatusProviders(out providers : array<string>) : bool
 		}
 		return false;
 	}
+	// 1.5.1: at the title screen the list is always the remembered one, also while it is still empty (the first start
+	// after an update), and a value never saved ("-1") is no mod.
 	for (i = 0; i < count; i += 1)
 	{
 		value = config.GetVarValue('CMFMenuKnownPresent', config.GetVarNameByGroupName('CMFMenuKnownPresent', i));
-		if (value != "")
+		if (value != "" && value != "-1")
 		{
 			providers.PushBack(value);
 		}
 	}
-	return providers.Size() > 0;
+	return true;
+}
+
+// 1.5.1: Loaded map mods lists mods in the order that decides between them (folder order, or the Mod order page),
+// also the mods that only told CMF they are installed.
+function CMFMenuInsertInOrder(core : CMFCore, out list : array<string>, provider : string)
+{
+	var i : int;
+	for (i = 0; i < list.Size(); i += 1)
+	{
+		if (core.ProviderBeats(provider, list[i]))
+		{
+			list.Insert(i, provider);
+			return;
+		}
+	}
+	list.PushBack(provider);
 }
 
 // Called by the game for each Options page it builds. CMF's pages get their live rows; every other page is left
@@ -519,7 +537,8 @@ function CMFMenuFillPage(storage : CScriptedFlashValueStorage, groupName : name,
 	{
 		remembered = CMFMenuProviders(providers);
 	}
-	theGame.CMFMenuGetState().SetTitleScreen(!theGame.IsActive());
+	// 1.5.1: a remembered list greys the rows in a live game too, so the title-screen guard covers it as in 1.4.2.
+	theGame.CMFMenuGetState().SetTitleScreen(remembered || !theGame.IsActive());
 	rows = groupRootObject.GetMemberFlashArray("subElements");
 	for (i = rows.GetLength() - 1; i >= 0; i -= 1)
 	{
@@ -871,12 +890,20 @@ function CMFMenuFillMod(storage : CScriptedFlashValueStorage, row : CScriptedFla
 	var core : CMFCore;
 	var labels : array<string>;
 	var text : string;
-	var feature, behaviour : int;
+	var feature, behaviour, shown, more : int;
 	if (index < 0 || index >= providers.Size())
 	{
 		return false;
 	}
 	core = theGame.CMFGetCore();
+	// 1.5.1: the last of the 16 rows says how many more there are when they do not all fit.
+	if (index == 15 && providers.Size() > 16)
+	{
+		row.SetMemberFlashString("label", "+" + IntToString(providers.Size() - 15) + " more map mods");
+		labels.PushBack("-");
+		CMFMenuSetChoices(storage, row, labels, 0, true);
+		return true;
+	}
 	row.SetMemberFlashString("label", core.ProviderName(providers[index]));
 	text = "";
 	if (remembered)
@@ -885,26 +912,53 @@ function CMFMenuFillMod(storage : CScriptedFlashValueStorage, row : CScriptedFla
 	}
 	else
 	{
+		// 1.5.1: three names fit the row; the rest are counted ("+1").
+		shown = 0;
+		more = 0;
 		for (feature = 0; feature <= 10; feature += 1)
 		{
 			if (core.Offers(feature, providers[index]))
 			{
-				if (text != "")
+				if (shown >= 3)
 				{
-					text += ", ";
+					more += 1;
 				}
-				text += CMFMenuFeatureName(feature);
+				else
+				{
+					if (text != "")
+					{
+						text += ", ";
+					}
+					text += CMFMenuFeatureName(feature);
+					shown += 1;
+				}
 			}
 		}
 		// 1.3.0: Behaviour (62) last, when the installed CMF knows it.
 		behaviour = core.ChoiceIndex("Behaviour");
 		if (behaviour >= 0 && core.Offers(behaviour, providers[index]))
 		{
-			if (text != "")
+			if (shown >= 3)
 			{
-				text += ", ";
+				more += 1;
 			}
-			text += CMFMenuFeatureName(behaviour);
+			else
+			{
+				if (text != "")
+				{
+					text += ", ";
+				}
+				text += CMFMenuFeatureName(behaviour);
+			}
+		}
+		if (more > 0)
+		{
+			text += " +" + IntToString(more);
+		}
+		// 1.5.1: an adapter that declared itself at game start brings its features with the first map opening.
+		if (text == "" && !core.MapSeen())
+		{
+			text = "Nothing yet (open the map)";
 		}
 		if (text == "")
 		{
@@ -1149,6 +1203,8 @@ function CMFMenuDescription(varName : name) : string
 			return "Tints the pins for pins that mods add to the map, which the game itself does not have.";
 		case 'CMFPick_Labels_Text':
 			return "Changes the words above pins, such as a quest's level tag, and their colour.";
+		case 'CMFPick_Size_Place':
+			return "Moves pins a little and sets which pin is drawn in front when icons overlap.";
 		case 'CMFPick_Legend_Rows':
 			return "Adds or removes rows in the list of pin types beside the map.";
 		case 'CMFPick_Legend_Names':
@@ -1160,7 +1216,7 @@ function CMFMenuDescription(varName : name) : string
 		case 'CMFPick_Hidden_Ignore3':
 			return "Brings back the pins one mod hides or greys out, while every other mod's hiding stays. Nobody brings none back.";
 		case 'CMFPick_Look_Frames':
-			return "Restyles the frame around the map, the region title, the quest tracker, the corner overview and the world view button.";
+			return "Restyles the map frame, title, tracker, overview and world view controls, including their size and position, the crosshair and edge arrows.";
 		case 'CMFPick_Look_Legend':
 			return "Restyles the list of pin types beside the map: its fonts, colours and backgrounds.";
 		case 'CMFPick_Look_InfoBox':
@@ -1170,7 +1226,13 @@ function CMFMenuDescription(varName : name) : string
 		case 'CMFPick_Look_Hints':
 			return "Restyles the row of key hints on the map and the key pictures in it.";
 		case 'CMFPick_Look_PinText':
-			return "Changes the font and shadow of text on pins, of names under signposts and of buttons beside pins.";
+			return "Changes the font, colour and shadow of pin text, signpost names and buttons beside pins.";
+		case 'CMFPick_Look_Sounds':
+			return "The sounds used when the map opens, closes, zooms or changes its selection.";
+		case 'CMFPick_Look_Badges':
+			return "The picture behind a pin icon and its colour.";
+		case 'CMFPick_Look_PinLook':
+			return "The highlight, glow and grey look around pin icons.";
 		case 'CMFPick_Movement_Area':
 			return "Changes how much of the screen the map fills from top to bottom, and how far you can scroll it.";
 		case 'CMFPick_Movement_Pan':
@@ -1180,11 +1242,11 @@ function CMFMenuDescription(varName : name) : string
 		case 'CMFPick_Movement_Controller':
 			return "Changes how the controller crosshair moves near the screen's edges and how it snaps to pins.";
 		case 'CMFPick_Movement_Opening':
-			return "Changes how the map slides and fades in and out, and how quickly its pins appear.";
+			return "Changes how the map slides and fades in and out, how quickly its pins appear, and when the legend, tracker and crosshair fade in.";
 		case 'CMFPick_Movement_View':
 			return "Changes where the map is centred and how far it is zoomed each time you open it.";
 		case 'CMFPick_Movement_Wide':
-			return "On a screen wider or taller than 16:9, the map fills the whole screen instead of a centred 16:9 picture. Vanilla keeps it centred.";
+			return "Fills wider or taller screens and places panels near the edges. Legend, tracker and overview can move separately. Vanilla keeps the centred map.";
 		case 'CMFPick_Size_Spread':
 			return "Pins sitting on the same spot fan out into a row as the cursor reaches them, so you can pick each one.";
 		case 'CMFPick_Size_Lead':
@@ -1194,9 +1256,17 @@ function CMFMenuDescription(varName : name) : string
 		case 'CMFPick_Behaviour_InfoBoxDodge':
 			return "A tall pin info box moves aside so it does not cover the cursor or the map's panels.";
 		case 'CMFPick_Behaviour_InfoBoxHeight':
-			return "Lets the pin info box grow taller before its text starts to scroll.";
+			return "Controls the pin info box width, text height, scrolling step and scroll-bar visibility.";
 		case 'CMFPick_Behaviour_HoverNames':
 			return "Keeps the map quiet: a pin's name shows only while you point at it.";
+		case 'CMFPick_Behaviour_InfoBoxMotion':
+			return "How the info box appears and disappears, including its fade and slide.";
+		case 'CMFPick_Behaviour_InfoFold':
+			return "Whether extra info box text starts folded, and how its more and less controls work.";
+		case 'CMFPick_Behaviour_PanelModes':
+			return "When the legend and corner overview show, hide or wait for input.";
+		case 'CMFPick_Behaviour_PinZoom':
+			return "Which zoom levels can show a pin.";
 		case 'CMFPick_Painting_WhiteOrchard':
 			return "Replaces the painted map of White Orchard.";
 		case 'CMFPick_Painting_WhiteOrchardWinter':

@@ -4,10 +4,55 @@
 
 *Needs CMF API version 4 or later.*
 
-CMF's map talks to scripts under CMF's own names, so any mod can use them. Both ran in game on 2026-10-20: the key-hint row through the Ink and Iron adapter, the filter tab report through the Gwent Players Map adapter.
+**Revision 13 hooks**
 
-- **Filter tabs.** Each time the legend shows a filter tab, the map calls the event `OnCMFMapFilter(category : string)` on `CR4MapMenu` with the tab's name (CMF tabs by their id). Add it with `@addMethod(CR4MapMenu) event OnCMFMapFilter(category : string) { ... }` to react, for example to move your own pins for that tab. The Gwent Players Map adapter forwards it to that mod's own event ([section 12](Porting-a-Map-Mod.md#12-teaching-examples-moving-a-map-mod-onto-cmf)).
-- **Key hints.** The map draws a display-only row of key hints at the bottom of the screen from a flash array sent to `"cmf.map.hints"` in the map menu's flash storage, built from the common menu's bindings as the game builds its own row. When the map has registered its listener it calls the event `OnCMFMapHintsReady()` on `CR4MapMenu`, once per opening; answer it by sending your current list. The common menu keeps handling every key; the row only shows them. Without a list nothing is drawn. API version 5's `hints` part sets the row's place, scale and glow (next section).
+New integrations wrap the core hooks below. They need API version 13 to compile. These hooks are available from API version 13; the map dispatches them alongside the legacy adapter events.
+
+- Filter tabs: the core declares `OnCMFMapTab(category : string)` on `CR4MapMenu` and forwards it to `CMFCore.OnMapTab(menu, category)`.
+- Key hints: offer a list with `CMFStylePart("modMyPack", 'hints', 'list', "", 1)`. `Look_Hints` selects the owner among list offers only. Withdraw the offer with text `"unset"`. The core declares `OnCMFMapHints()` and calls `CMFCore.OnMapHints(menu, owner)` only for an eligible list offer. The common menu still handles keys.
+
+The old events `OnCMFMapFilter` and `OnCMFMapHintsReady` remain adapter-owned. Do not add either event a second time. Existing adapters keep their declarations and write their legacy list separately from managed hints.
+
+```witcherscript
+@wrapMethod(CMFCore)
+function OnMapTab(menu : CR4MapMenu, category : string)
+{
+    wrappedMethod(menu, category);
+    // React to the tab here.
+}
+
+@wrapMethod(CMFCore)
+function OnMapHints(menu : CR4MapMenu, owner : string)
+{
+    var storage : CScriptedFlashValueStorage;
+    var list : CScriptedFlashArray;
+    var metadata : CScriptedFlashObject;
+    wrappedMethod(menu, owner);
+    if (owner != "modMyPack") { return; }
+    storage = menu.GetMenuFlashValueStorage();
+    if (!storage) { return; }
+    list = storage.CreateTempFlashArray();
+    metadata = storage.CreateTempFlashObject();
+    metadata.SetMemberFlashString("owner", owner);
+    list.PushBackFlashObject(metadata);
+    // Append your current hint objects after the metadata.
+    storage.SetFlashArray("cmf.map.hints.owned", list);
+}
+```
+
+The managed channel is `cmf.map.hints.owned`: a metadata object `{owner: provider}` followed by hint objects. Each hint object takes the game's key-hint fields: `actionId`, `label` (shown as written), `keyboard_keyCode` and `gamepad_navEquivalent`, and optionally `level`, `holdDuration`, `hasHoldPrefix` and `click`. CMF's map copies a plain object (`CreateTempFlashObject()` with no class name) into the game's key-hint class, so either kind works. An empty array releases this channel. Never write or clear the legacy `cmf.map.hints` channel from this hook. With no offer and no prior managed list, the core writes nothing. A changed owner receives a fresh envelope; removing the final offer clears only the managed channel at the next new hints event. The map keeps the latest legacy list separately, selects the managed list while active, and restores the legacy list on release. Flash storage has no supported array readback; providers rebuild their own list.
+
+**Per-item styles and added pins (API version 13).** `CMFStyle` accepts: `legendRow` target = bare filteredType; `legendTab` = internal tab name or `id:<nonnegative decimal>`; `tooltip`, `pinLabel`, `pinName`, `pinButton` = bare type, `type:<type>` or `tag:<tag>`. Empty prefixes and unknown prefixes are rejected. A tag overrides a type, and a matching item key overrides the whole-part key on the map. Items arbitrate independently through the existing part/key choice, including Vanilla and strict fallthrough. Text keys are `title.text` (area target, or empty for whole title), `worldHint.text`, `worldButton.text` and `legend.allText` (empty target for the latter three). `"unset"` removes only your own item/key. Per-item data uses `cmf.map.itemStyles`; old whole-part payloads remain separate.
+
+**Making a tag available to text targets.**
+
+A `tag:<tag>` item target or a drawing's `pinTag` list needs a tag known to CMF. Registering a claim by tag or adding a pin supplies its typed name. To make a tag known without another claim, call `CMFDeclareTag("modAcmeIcons", 'my_tag')`. It is available for this game session; releasing that provider removes its registration while preserving other providers' registrations of the same tag.
+
+Text matching ignores case. CMF resolves the text when it sends styles and drawing filters, so the declaration may come after the style. An unknown tag matches nothing and logs `tag unknown, declare it with CMFDeclareTag` once per provider and tag. A pin with id 0 never matches a tag. For a pin your mod pushes itself, set its id to `NameToFlashUInt('my_tag')`. CMF never reconstructs a name from an arbitrary id.
+
+`CMFAddPin` tags use `provider.suffix` with a nonempty suffix; identifiers use letters, digits, dot, underscore or hyphen. Provider/tag ownership compares without case. Type and area must be nonempty, with area other than `AN_Undefined`; coordinates must be finite. Repeating identical data is a no-op; changing position/area/text updates the same record. The registry lasts only for the game session and retains no Flash objects. Full builds append only pins for the shown area, without duplicate ids, before ordinary claim/hide/click processing. The content is non-quest and non-travel. Releasing a provider removes its content. **A pin added while the map is open shows at the next opening.** No call forces a rebuild. These named calls require API version 13 to compile, even inside a runtime guard.
+
+New choice keys 72 to 79 are Behaviour_InfoBoxMotion, Look_Sounds, Behaviour_InfoFold, Behaviour_PanelModes, Look_Badges, Look_PinLook, Size_Place and Behaviour_PinZoom. The piece-parent table starts empty. A future split inherits Automatic from its parent within the same menu or file tier; explicit child answers remain independent.
 
 ---
 

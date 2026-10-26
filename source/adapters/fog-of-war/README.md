@@ -1,6 +1,6 @@
 # Fog of War adapter (proof of concept)
 
-**Adapter version 1.0.1.** Tells CMF the adapter is installed when the game starts (property 38, behind `CMFHasProperty(38)`, API 11), so CMF's adapter check can see it. Nothing else changes.
+**Adapter version 1.0.2.** Writes one log line per map build and none per pin. Adapter 1.0.1 tells CMF the adapter is installed when the game starts (property 38, behind `CMFHasProperty(38)`, API 11), so CMF's adapter check can see it. Nothing else changes.
 
 `modCMFAdapterFogOfWar` is a separate mod that sits between Conjunction Map Framework (CMF) and Fog of War 1.2.1 (Nexus 13627). Fog of War hides map pins under its fog, but its script cannot reach pins other mods push from a later wrapper, so Witcher Gear Map's markers show through the fog. The adapter asks Fog of War's own filter about every pin in the finished entity list and passes each pin the filter drops to CMF as a hide, through property 9 `Hidden` of CMF API version 3 (Stage 1 spec, sections 7.1 and 10.2; the spec is PR #17). Fog of War is unchanged. The adapter adds no rule of its own and ships no art. The author-facing version is [`docs/authors/fog-of-war-adapter.md`](../../../docs/authors/fog-of-war-adapter.md).
 
@@ -51,7 +51,7 @@ Pins Fog of War already removed are gone before the adapter runs. Pins inside Fo
 
 **CMF API versions.** `CMFStylePin` exists since API version 2, so the file compiles against API versions 2 and 3. Everything is behind `CMFHasProperty(9)`: under API version 2 the adapter does nothing.
 
-**Log.** Per build, one line: `CMF adapter provider=modFogOfWar area=<area> asked=<pins> hidden=<dropped by Fog of War> marked=<accepted by CMF>`. For the first eight dropped pins of each build: `CMF adapter provider=modFogOfWar type=<pin type> hidden=1 result=marked|refused`.
+**Log.** Per build, one line: `CMF adapter provider=modFogOfWar area=<area> asked=<pins> hidden=<dropped by Fog of War> marked=<accepted by CMF>`. Up to adapter 1.0.1 it also wrote one line for each of the first eight dropped pins of a build; 1.0.2 drops those (a log line per pin breaks the log rule).
 
 ## Dependencies
 

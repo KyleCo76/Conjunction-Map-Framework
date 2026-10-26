@@ -1,6 +1,9 @@
 [
   {
     "name": "Map Quest Insight",
+    "aliases": [
+      "MapQuestInsight"
+    ],
     "nexus": 14219,
     "folders": [
       "modMapQuestInsight"
@@ -50,6 +53,9 @@
   },
   {
     "name": "Witcher Gear Map",
+    "aliases": [
+      "WitcherGearMap"
+    ],
     "nexus": 14157,
     "folders": [
       "modWitcherGearMap"
@@ -72,6 +78,9 @@
   },
   {
     "name": "Fog of War",
+    "aliases": [
+      "FogOfWar"
+    ],
     "nexus": 13627,
     "folders": [
       "modFogOfWar"
@@ -200,6 +209,9 @@
   },
   {
     "name": "Map Pin Teleport",
+    "aliases": [
+      "MapPinTeleport"
+    ],
     "nexus": 13541,
     "folders": [
       "modMapPinTeleport"
@@ -236,6 +248,9 @@
   },
   {
     "name": "Coloured Map Markers",
+    "aliases": [
+      "Coloured Map Marker"
+    ],
     "nexus": 938,
     "folders": [
       "modcoloured_map_marker"
@@ -256,16 +271,17 @@
     "name": "Smooth Map",
     "nexus": 13530,
     "folders": [
+      "modSmoothMap_CMF",
       "modSmoothMap"
     ],
     "providers": [
-      "modSmoothMap"
+      "mod000SmoothMap"
     ],
     "groups": [],
     "textKeys": [],
     "adapter": null,
-    "status": "author",
-    "note": "Smooth Map 1.1 needs its CMF-ready update from its author; with it, Smooth Map's timing works under CMF."
+    "status": "works",
+    "note": "Version 1.1 of its Conjunction Map Framework Version (folder modSmoothMap_CMF, from Smooth Map's Nexus page) tested with CMF; the map file alone does not load under CMF."
   },
   {
     "name": "Community Patch - World Map",
@@ -297,6 +313,9 @@
   },
   {
     "name": "Map Remastered",
+    "aliases": [
+      "Map and Icons Remastered"
+    ],
     "nexus": 13347,
     "folders": [
       "modmapredraw"
@@ -306,10 +325,13 @@
     "textKeys": [],
     "adapter": null,
     "status": "works",
-    "note": "Tested with CMF at version 2.4.2; works without an adapter."
+    "note": "Version 2.4.2 tested with CMF."
   },
   {
     "name": "All Quest Markers",
+    "aliases": [
+      "AllQuestMarkersOnMapRemaster"
+    ],
     "nexus": 13087,
     "folders": [
       "modAllQuestMarkersOnMapRemaster"
@@ -319,7 +341,7 @@
     "textKeys": [],
     "adapter": null,
     "status": "works",
-    "note": "Tested with CMF at version 1.7.1; works without an adapter."
+    "note": "Version 1.7.1 tested with CMF."
   },
   {
     "name": "Quest Levels on Map",
@@ -332,7 +354,7 @@
     "textKeys": [],
     "adapter": null,
     "status": "works",
-    "note": "Tested with CMF at version 1; works without an adapter."
+    "note": "Version 1 tested with CMF."
   },
   {
     "name": "Useful Place of Power Map Pin",
@@ -345,7 +367,7 @@
     "textKeys": [],
     "adapter": null,
     "status": "works",
-    "note": "Tested with CMF at version 1.2; works without an adapter."
+    "note": "Version 1.2 tested with CMF."
   },
   {
     "name": "True Map POIs",
@@ -358,7 +380,7 @@
     "textKeys": [],
     "adapter": null,
     "status": "works",
-    "note": "Tested with CMF at version 1.0.3; works without an adapter."
+    "note": "Version 1.0.3 tested with CMF."
   },
   {
     "name": "RevealMapPOI",
@@ -371,10 +393,13 @@
     "textKeys": [],
     "adapter": null,
     "status": "works",
-    "note": "Tested with CMF at version 1.0.4; works without an adapter. Select the All or Exploration filter."
+    "note": "Version 1.0.4 tested with CMF. Select the All or Exploration filter."
   },
   {
     "name": "Reveal Map Icons - Remastered",
+    "aliases": [
+      "RevealMapIcons"
+    ],
     "nexus": 13516,
     "folders": [
       "modRevealMapIcons"
@@ -384,7 +409,7 @@
     "textKeys": [],
     "adapter": null,
     "status": "works",
-    "note": "Tested with CMF at version 1.0.1; works without an adapter. Select the All or Exploration filter."
+    "note": "Version 1.0.1 tested with CMF. Select the All or Exploration filter."
   },
   {
     "name": "Wolf's Bearing",
@@ -397,7 +422,7 @@
     "textKeys": [],
     "adapter": null,
     "status": "works",
-    "note": "Tested with CMF at version 1.0; works without an adapter. Version 1.1 is code checked only."
+    "note": "Version 1.0 tested with CMF. Version 1.1 is code checked only."
   },
   {
     "name": "Wild Monster Hunt",
@@ -410,7 +435,7 @@
     "textKeys": [],
     "adapter": null,
     "status": "works",
-    "note": "Tested with CMF at version 2.1; works without an adapter."
+    "note": "Version 2.1 tested with CMF."
   },
   {
     "name": "Apocrypha Menu Framework",
@@ -423,7 +448,7 @@
     "textKeys": [],
     "adapter": null,
     "status": "works",
-    "note": "Tested with CMF at version 1.0.6; works without an adapter."
+    "note": "Version 1.0.6 tested with CMF."
   },
   {
     "name": "HUD Position Manager",
@@ -436,7 +461,7 @@
     "textKeys": [],
     "adapter": null,
     "status": "works",
-    "note": "Tested with CMF at version 1.0.0; works without an adapter."
+    "note": "Version 1.0.0 tested with CMF."
   },
   {
     "name": "World Map Merger",

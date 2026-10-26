@@ -4,6 +4,8 @@
 
 *Needs CMF API version 2 or later.*
 
+For an archive that also compiles without CMF, see [One download, with and without CMF](Porting-a-Map-Mod.md#one-download-with-and-without-cmf).
+
 Registration calls style every pin of a type. To style one pin from a decision your mod makes while the pin exists (a level, a state), call `CMFStylePin` on the pin object before the map sends it. From API version 4 the simplest place is an `OnPinReady` wrapper, which sees every pin (below). Otherwise use an `AddPinTypeData` wrapper for the game's own pins, or an `UpdateEntityPins` or `UpdateUserMapPins` wrapper, or call it right after creating your own `StaticMapPinData` object:
 
 ```

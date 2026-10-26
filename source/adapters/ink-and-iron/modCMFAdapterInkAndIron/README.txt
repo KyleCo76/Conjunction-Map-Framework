@@ -1,5 +1,5 @@
 Ink and Iron adapter for Conjunction Map Framework
-Version 1.2.1 (carries Ink and Iron's world overview and controller button art, with its
+Version 1.2.2 (carries Ink and Iron's world overview and controller button art, with its
 author's permission)
 
 With Conjunction Map Framework installed, CMF's world map replaces Ink and Iron's
@@ -11,7 +11,7 @@ overview of its optional World Map file. Ink and Iron stays exactly as its autho
 REQUIREMENTS
 - Conjunction Map Framework 1.3.0 (version 9) or later. On an older CMF the game
   stops at the script compile screen: keep adapter 1.1.0 until you update CMF.
-- Ink and Iron 0.8.7 to 0.9.0: the All In One file (its modInkAndIron folder) or
+- Ink and Iron 0.8.10 or later: the All In One file (its modInkAndIron folder) or
   the separate modInkAndIronUI folder. The parts this adapter uses are the same in
   each. This adapter calls Ink and Iron's own functions: without Ink and Iron the
   game stops at the script compile screen.
@@ -33,8 +33,9 @@ WHAT YOU SEE
 - Ink and Iron 0.8.10's info box: framed on every map, and on the region and interior
   maps a long box (a long quest text) gets a darker backing and moves beside the
   cursor, clear of the legend, the quest card and the other panels. With a
-  Conjunction Map Framework newer than 1.4.1 (version 11) it also keeps clear of the
-  hovered pin and its level tag, as Ink and Iron does.
+  Conjunction Map Framework 1.5.0 (version 11) or later it also keeps clear of the
+  hovered pin and its level tag, as Ink and Iron does; an older CMF keeps its own
+  place for the box.
 - With Ink and Iron's option "Quest levels on world map pins" on, quest pins show
   Ink and Iron's "Lv N" tag, coloured by difficulty, on its dark plate. With the
   option off, nothing is added.
@@ -75,8 +76,9 @@ KNOWN LIMITS
   example how fast the map opens) can come from that mod.
 - The controller crosshair and the button pictures have not been tried with a real
   controller.
-- With Ink and Iron 0.8.9 or earlier the info box is framed on the region and interior
-  maps too, as Ink and Iron 0.8.10 does.
+- Ink and Iron 0.8.9 and earlier are not supported: this adapter shows Ink and Iron
+  0.8.10's info box, which older versions never had. Update Ink and Iron to 0.8.10 or
+  later.
 
 INSTALL
 Extract the archive into your The Witcher 3 game folder, or install it with a mod

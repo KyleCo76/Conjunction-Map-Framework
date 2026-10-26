@@ -195,15 +195,17 @@ class AdapterCheckTests(unittest.TestCase):
     def test_public_works_list_and_source_only_exclusions(self):
         rows = self.rows()
         self.assertEqual([(r['name'], r['nexus']) for r in rows if r['status'] == 'works'], [
-            ('Map Remastered', 13347), ('All Quest Markers', 13087), ('Quest Levels on Map', 13691),
+            ('Smooth Map', 13530), ('Map Remastered', 13347), ('All Quest Markers', 13087), ('Quest Levels on Map', 13691),
             ('Useful Place of Power Map Pin', 11300), ('True Map POIs', 13213), ('RevealMapPOI', 13140),
             ('Reveal Map Icons - Remastered', 13516), ("Wolf's Bearing", 14546), ('Wild Monster Hunt', 9426),
             ('Apocrypha Menu Framework', 13656), ('HUD Position Manager', 14337)])
-        for name in ['Smooth Map', 'Community Patch - World Map']:
-            row = next(r for r in rows if r['name'] == name)
-            self.assertEqual((row['status'], row['adapter'], row['groups'], row['textKeys']), ('author', None, [], []))
+        row = next(r for r in rows if r['name'] == 'Community Patch - World Map')
+        self.assertEqual((row['status'], row['adapter'], row['groups'], row['textKeys']), ('author', None, [], []))
+        # Smooth Map's author released its own CMF version (2026-10-25); the example adapter retired.
         smooth = next(r for r in rows if r['name'] == 'Smooth Map')
-        self.assertEqual(smooth['note'], "Smooth Map 1.1 needs its CMF-ready update from its author; with it, Smooth Map's timing works under CMF.")
+        self.assertEqual((smooth['adapter'], smooth['groups'], smooth['textKeys']), (None, [], []))
+        self.assertEqual((smooth['folders'], smooth['providers']), (['modSmoothMap_CMF', 'modSmoothMap'], ['mod000SmoothMap']))
+        self.assertIn('modSmoothMap_CMF', smooth['note'])
 
 
 
@@ -418,6 +420,7 @@ class AdapterBuildTests(unittest.TestCase):
         import hashlib
         tool = self.tool()
         self.assertTrue(callable(getattr(tool, 'build', None)), 'build API is missing')
+        (ROOT / 'build').mkdir(exist_ok=True)
         with tempfile.TemporaryDirectory(dir=ROOT / 'build') as parent:
             out = Path(parent) / 'package'
             files = tool.build(out, None)
@@ -442,6 +445,7 @@ class AdapterBuildTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as outside:
             with self.assertRaises((ValueError, SystemExit)):
                 tool.build(Path(outside) / 'package', None)
+        (ROOT / 'build').mkdir(exist_ok=True)
         with tempfile.TemporaryDirectory(dir=ROOT / 'build') as parent:
             out = Path(parent) / 'stale'
             with patch.object(tool, 'check', return_value=False), self.assertRaises((ValueError, SystemExit)):

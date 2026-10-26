@@ -61,7 +61,7 @@ function CMFSettingsChoiceValue(value : string) : string
 	{
 		return "vanilla";
 	}
-	if (lowered == "" || lowered == "auto" || lowered == "automatic" || lowered == "default")
+	if (lowered == "" || lowered == "-1" || lowered == "auto" || lowered == "automatic" || lowered == "default")
 	{
 		return "";
 	}

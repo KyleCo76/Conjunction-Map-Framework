@@ -217,6 +217,11 @@
      "var": "CMFPick_Labels_Text",
      "row": "Level tags and label text",
      "text": "Changes the words above pins, such as a quest's level tag, and their colour."
+    },
+    {
+     "var": "CMFPick_Size_Place",
+     "row": "Pin place and draw order",
+     "text": "Moves pins a little and sets which pin is drawn in front when icons overlap."
     }
    ]
   },
@@ -261,7 +266,7 @@
     {
      "var": "CMFPick_Look_Frames",
      "row": "Frames and panels",
-     "text": "Restyles the frame around the map, the region title, the quest tracker, the corner overview and the world view button."
+     "text": "Restyles the map frame, title, tracker, overview and world view controls, including their size and position, the crosshair and edge arrows."
     },
     {
      "var": "CMFPick_Look_Legend",
@@ -286,7 +291,22 @@
     {
      "var": "CMFPick_Look_PinText",
      "row": "Pin text style",
-     "text": "Changes the font and shadow of text on pins, of names under signposts and of buttons beside pins."
+     "text": "Changes the font, colour and shadow of pin text, signpost names and buttons beside pins."
+    },
+    {
+     "var": "CMFPick_Look_Sounds",
+     "row": "Map sounds",
+     "text": "The sounds used when the map opens, closes, zooms or changes its selection."
+    },
+    {
+     "var": "CMFPick_Look_Badges",
+     "row": "Pictures under pin icons",
+     "text": "The picture behind a pin icon and its colour."
+    },
+    {
+     "var": "CMFPick_Look_PinLook",
+     "row": "Pin highlights and glow",
+     "text": "The highlight, glow and grey look around pin icons."
     }
    ]
   },
@@ -316,7 +336,7 @@
     {
      "var": "CMFPick_Movement_Opening",
      "row": "Opening and closing",
-     "text": "Changes how the map slides and fades in and out, and how quickly its pins appear."
+     "text": "Changes how the map slides and fades in and out, how quickly its pins appear, and when the legend, tracker and crosshair fade in."
     },
     {
      "var": "CMFPick_Movement_View",
@@ -326,7 +346,7 @@
     {
      "var": "CMFPick_Movement_Wide",
      "row": "Fill wide screens",
-     "text": "On a screen wider or taller than 16:9, the map fills the whole screen instead of a centred 16:9 picture. Vanilla keeps it centred."
+     "text": "Fills wider or taller screens and places panels near the edges. Legend, tracker and overview can move separately. Vanilla keeps the centred map."
     }
    ]
   },
@@ -355,13 +375,33 @@
     },
     {
      "var": "CMFPick_Behaviour_InfoBoxHeight",
-     "row": "Info box height and scrolling",
-     "text": "Lets the pin info box grow taller before its text starts to scroll."
+     "row": "Info box size and scrolling",
+     "text": "Controls the pin info box width, text height, scrolling step and scroll-bar visibility."
     },
     {
      "var": "CMFPick_Behaviour_HoverNames",
      "row": "Names only on hover",
      "text": "Keeps the map quiet: a pin's name shows only while you point at it."
+    },
+    {
+     "var": "CMFPick_Behaviour_InfoBoxMotion",
+     "row": "Info box motion",
+     "text": "How the info box appears and disappears, including its fade and slide."
+    },
+    {
+     "var": "CMFPick_Behaviour_InfoFold",
+     "row": "Info box folding",
+     "text": "Whether extra info box text starts folded, and how its more and less controls work."
+    },
+    {
+     "var": "CMFPick_Behaviour_PanelModes",
+     "row": "Panel visibility",
+     "text": "When the legend and corner overview show, hide or wait for input."
+    },
+    {
+     "var": "CMFPick_Behaviour_PinZoom",
+     "row": "Pin zoom range",
+     "text": "Which zoom levels can show a pin."
     }
    ]
   },

@@ -1,0 +1,41 @@
+{
+  "mod": "modCMFTestRev13Movie",
+  "idBase": 2000230000,
+  "strings": [
+    {
+      "id": 2000230001,
+      "key": "cmf_rev13_movie_caption",
+      "text": {
+        "en": "Pin list"
+      }
+    },
+    {
+      "id": 2000230002,
+      "key": "cmf_rev13_movie_release",
+      "text": {
+        "en": "Release focus"
+      }
+    },
+    {
+      "id": 2000230003,
+      "key": "cmf_rev13_movie_region",
+      "text": {
+        "en": "Other region"
+      }
+    },
+    {
+      "id": 2000230004,
+      "key": "cmf_rev13_movie_empty",
+      "text": {
+        "en": "No pins ready"
+      }
+    },
+    {
+      "id": 2000230005,
+      "key": "cmf_rev13_movie_help",
+      "text": {
+        "en": "Click to focus; arrows choose; Enter centres; Tab changes region; Escape releases focus"
+      }
+    }
+  ]
+}

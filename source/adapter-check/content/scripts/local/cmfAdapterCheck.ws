@@ -109,6 +109,9 @@ var cmfAdapterCheckPending : bool;
 var cmfAdapterCheckChecked : bool;
 @addField(CR4Game)
 var cmfAdapterCheckFallback : bool;
+// The box was shown in this game session (an older adapter can register later in the session and empty the set).
+@addField(CR4Game)
+var cmfAdapterCheckWarned : bool;
 
 // Mutate state through its owning object: theGame is a constant global.
 @addMethod(CR4Game)
@@ -123,6 +126,12 @@ function CMFAdapterCheckConsume()
 function CMFAdapterCheckSetFallback(value : bool)
 {
 	cmfAdapterCheckFallback = value;
+}
+
+@addMethod(CR4Game)
+function CMFAdapterCheckSetWarned()
+{
+	cmfAdapterCheckWarned = true;
 }
 
 function CMFAdapterCheckEnabled() : bool
@@ -229,15 +238,19 @@ function CMFAdapterCheckRun()
 	signature = CMFAdapterCheckSignature(missing);
 	for (i = 0; i < missing.Size(); i += 1)
 	{
-		CMFLog("adapter check missing: " + missing[i].modName + " -> " + missing[i].adapterFolder);
+		CMFLog("adapter check missing mod=" + missing[i].modName + " adapter=" + missing[i].adapterFolder);
 	}
 	CMFLog("adapter check missing count=" + missing.Size() + " set=" + signature);
 	known = theGame.GetInGameConfigWrapper().GetVarValue('CMFAdapterCheck', 'CMFAdapterCheckKnown');
 	if (known == "-1") { known = ""; }
 	if (known == signature) { return; }
+	// An adapter that registers only once the map has opened empties the set on a later load; the warned set stays,
+	// so the box does not come back after a restart.
+	if (signature == "" && theGame.cmfAdapterCheckWarned) { return; }
 	theGame.GetInGameConfigWrapper().SetVarValue('CMFAdapterCheck', 'CMFAdapterCheckKnown', signature);
 	theGame.SaveUserSettings();
 	if (signature == "") { return; }
+	theGame.CMFAdapterCheckSetWarned();
 	title = GetLocStringByKeyExt("panel_cmf_adapter_check");
 	text = GetLocStringByKeyExt("cmf_adapter_check_intro");
 	for (i = 0; i < missing.Size(); i += 1)
@@ -253,7 +266,7 @@ function CMFAdapterCheckSchedule()
 	if (!theGame.cmfAdapterCheckPending || theGame.cmfAdapterCheckChecked) { return; }
 	if (!thePlayer)
 	{
-		if (!theGame.cmfAdapterCheckFallback) { CMFLog("adapter check deferred: no player; waiting for first map close"); }
+		if (!theGame.cmfAdapterCheckFallback) { CMFLog("adapter check deferred reason=noplayer wait=mapclose"); }
 		theGame.CMFAdapterCheckSetFallback(true);
 		return;
 	}

@@ -66,6 +66,7 @@ CMF, its adapters and its example icon pack are published under the Creative Com
 - [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md)
 - [Smooth map movement](Map-Movement.md)
 - [Drawing on the map itself](Drawing-on-the-Map.md)
+- [Your own movie on the screen](Your-Own-Movie-on-the-Screen.md)
 - [World overview pictures](World-Overview-Pictures.md)
 - [Controller button pictures](Controller-Button-Pictures.md)
 - [The map's view](Map-View.md)

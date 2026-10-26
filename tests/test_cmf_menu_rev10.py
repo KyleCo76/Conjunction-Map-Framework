@@ -43,7 +43,8 @@ class TableTests(unittest.TestCase):
 
     def test_advanced_pages(self):
         self.assertEqual(rows_of('CMFMenuAdvSize'), [('pick', 'Size_Scale', 'Pin size'),
-                                                     ('pick', 'Labels_Text', 'Level tags and label text')])
+                                                     ('pick', 'Labels_Text', 'Level tags and label text'),
+                                                     ('pick', 'Size_Place', 'Pin place and draw order')])
         movement = [('Movement_Area', 'Map area'), ('Movement_Pan', 'Pan and zoom feel'),
                     ('Movement_ZoomOut', 'Zoom out to the whole region'), ('Movement_Controller', 'Controller crosshair'),
                     ('Movement_Opening', 'Opening and closing'), ('Movement_View', 'Opening view'),
@@ -51,14 +52,19 @@ class TableTests(unittest.TestCase):
         behaviour = [('Size_Spread', 'Stacked pins spread out'), ('Size_Lead', 'Which pin leads a spread'),
                      ('Labels_Place', 'Label place and hiding'),
                      ('Behaviour_InfoBoxDodge', 'Info box moves out of the way'),
-                     ('Behaviour_InfoBoxHeight', 'Info box height and scrolling'),
-                     ('Behaviour_HoverNames', 'Names only on hover')]
+                     ('Behaviour_InfoBoxHeight', 'Info box size and scrolling'),
+                     ('Behaviour_HoverNames', 'Names only on hover'),
+                     ('Behaviour_InfoBoxMotion', 'Info box motion'),
+                     ('Behaviour_InfoFold', 'Info box folding'),
+                     ('Behaviour_PanelModes', 'Panel visibility'),
+                     ('Behaviour_PinZoom', 'Pin zoom range')]
         self.assertEqual(rows_of('CMFMenuAdvMovement'), [('pick',) + row for row in movement])
         self.assertEqual(rows_of('CMFMenuAdvBehaviour'), [('pick',) + row for row in behaviour])
         self.assertEqual(rows_of('CMFMenuWinMovement'), [('win',) + row for row in movement])
         self.assertEqual(rows_of('CMFMenuWinBehaviour'), [('win',) + row for row in behaviour])
         self.assertEqual(rows_of('CMFMenuWinSize'), [('win', 'Size_Scale', 'Pin size'),
-                                                     ('win', 'Labels_Text', 'Level tags and label text')])
+                                                     ('win', 'Labels_Text', 'Level tags and label text'),
+                                                     ('win', 'Size_Place', 'Pin place and draw order')])
         groups = [g for g, _p, _t, _r in addon.PAGES]
         self.assertEqual(groups.index('CMFMenuAdvBehaviour'), groups.index('CMFMenuAdvMovement') + 1)
         self.assertEqual(groups.index('CMFMenuWinBehaviour'), groups.index('CMFMenuWinMovement') + 1)

@@ -3,7 +3,6 @@
 Fixture cases read ignored build/panel-runs evidence and skip when it is absent;
 a skipped case is not qualification.
 """
-import difflib
 import hashlib
 import json
 from pathlib import Path
@@ -141,69 +140,62 @@ def layered(edits, header):
 
 class SourceTests(unittest.TestCase):
     def test_edits_cover_exactly_fourteen_classes(self):
-        # Smooth map movement (P6) adds UniverseMap and the tween library's GTween to the eleven; version 9 adds
-        # UniverseMapContainer (world overview pictures).
+        # The retained name identifies the old contract; API13 explicitly adds four native classes and one helper.
+        from test_cmf_rev13_map_consumers import applied
         edits = json.loads((ROOT/'source/panel/pin-fields/edits.json').read_text(encoding='utf-8'))
         self.assertEqual(edits['schema'], 'cmf-panel-edits-1')
-        self.assertEqual(len(edits['classes']), 14)
+        native = {
+            'com/gskinner/motion/GTween.as',
+            *('red/game/witcher3/' + name for name in (
+                'data/StaticMapPinData.as', 'menus/worldmap/StaticMapPinDescribed.as',
+                'menus/worldmap/data/CategoryPinData.as', 'menus/worldmap/HubMapPinPanel.as',
+                'menus/worldmap/HubMapPinCategoryItemRenderer.as', 'menus/worldmap/HubMap.as',
+                'menus/worldmap/MapMenu.as', 'menus/worldmap/HubMapContainer.as', 'tooltips/TooltipMap.as',
+                'controls/InputFeedbackButton.as', 'controls/KeyboardButtonIcon.as',
+                'menus/worldmap/UniverseMap.as', 'menus/worldmap/UniverseMapContainer.as',
+                'menus/worldmap/MapCrosshair.as', 'menus/worldmap/PinPointersManager.as',
+                'menus/worldmap/HubMapPreview.as', 'menus/common_menu/ModuleInputFeedback.as')),
+        }
+        self.assertEqual(set(edits['classes']), native)
+        helper = 'red/game/witcher3/menus/worldmap/CMFMovieMap.as'
+        self.assertEqual(edits['addedClasses'], [helper])
+        self.assertEqual(edits['addedScripts'], {'script_476.as':
+            'include "red/game/witcher3/menus/worldmap/MapMenu.as";\n'
+            'include "red/game/witcher3/menus/worldmap/CMFMovieMap.as";\n\n'
+            'Extensions.enabled = true;\nExtensions.noInvisibleAdvance = true;\n'})
         for path, changes in edits['classes'].items():
-            self.assertTrue((path.startswith('red/game/witcher3/') or path == 'com/gskinner/motion/GTween.as') and
-                            path.endswith('.as'), path)
             for change in changes:
                 self.assertGreaterEqual(change['count'], 1)
                 self.assertNotEqual(change['find'], change['replace'])
-                self.assertIn(change['find'].strip().splitlines()[0], change['replace'])
+            # Exact application counts replace the obsolete assumption that every later edit only inserts lines.
+            self.assertTrue(applied(path), path)
 
     def test_hubmap_and_mapmenu_carry_the_recompile_lines_and_n4(self):
-        # Stage 2 round trip: the two lines FFDec 26.3.0 needs, as Map Pin Teleport 1.2.2 (CenterOnPin) and
-        # Fog of War 1.2.1 (pointer-manager init) ship them. The other edits add the Ink and Iron key-hint copy
-        # (P4) and N4 (pin size, labels, the info box, tab hiding); only the lines listed here change vanilla code.
+        from test_cmf_rev13_map_consumers import applied
         classes = json.loads((ROOT/'source/panel/pin-fields/edits.json').read_text(encoding='utf-8'))['classes']
-        hub = classes['red/game/witcher3/menus/worldmap/HubMap.as']
-        menu = classes['red/game/witcher3/menus/worldmap/MapMenu.as']
-        self.assertEqual(hub[0]['find'].replace('param2:Number = NaN, param3:Number = NaN',
-                                                'param2:* = undefined, param3:* = undefined'), hub[0]['replace'])
-        self.assertEqual(menu[0]['find'].replace('.getInstance().init(', '.getInstance()["init"]('), menu[0]['replace'])
-        changed = {'         this.mcHubMapCrosshair.showLabel(_loc3_.label,true);'}
-        # Smooth map movement (P6): the game's timings and zoom limit become theme values whose defaults are the
-        # game's own constants, and a snap keeps the fade tweens when an opening key is set.
-        changed |= {
-            '            _loc2_ = Math2.clamp(_loc2_,this._minZoom,this._maxZoom);',
-            '            _loc3_ = Math2.clamp(_loc3_,this._minZoom,this._maxZoom);',
-            '         return Math.abs(this.mcHubMapZoomContainer.scaleX - this._minZoom) < 0.001 && '
-            'Math.abs(this.mcHubMapZoomContainer.scaleY - this._minZoom) < 0.001;',
-            '            _loc5_ = Math.min(this._mapPinDataIndex + MAX_PROCESSED_PIN_COUNT,this._mapPinDataArray.length);',
-            '         this._initialTimer = new Timer(20);',
-            '         if(this._menuAnimCompleted)',
-            '         this._showMapTimer = new Timer(SHOW_INTERVAL);',
-            '         GTweener.to(this.mcHubMapZoomContainer.mcHubMapContainer.mcGradientContainer,FADING_GRADIENT_DURATION,',
-            '         GTweener.to(this.mcHubMapZoomContainer.mcHubMapContainer.mcLodContainer,FADING_TEXTURES_DURATION,',
-            '         GTweener.to(this.mcHubMapPinContainer,FADING_GRADIENT_DURATION,',
-            '               GTweener.removeTweens(this.mcHubMapZoomContainer.mcHubMapContainer);',
-            '               GTweener.removeTweens(this.mcHubMapPinContainer);',
-        }
-        # Quest rows (API version 6): a quest pin with its own row claim is hidden by that row's key.
-        changed |= {
-            '               if(_loc10_.isPlayer || _loc10_.isUserPin && param2 && !param5.hasOwnProperty(HubMapPinPanel.'
-            'USER_PIN_TYPE) || _loc10_.isFastTravel && param3 || _loc10_.isQuest && param4 && !param5.hasOwnProperty('
-            'HubMapPinPanel.QUEST_PIN_TYPE) || _loc12_.hasOwnProperty(_loc10_.filteredType) && !param5.hasOwnProperty('
-            '_loc10_.filteredType))',
-        }
-        # Spreading stacked pins (launch D3): the selected pin's copy takes its pin's own place while the pin is
-        # in a row; otherwise the game's line places it as before.
-        changed |= {
-            '            _loc2_ = this._selectedPinAvatar.GetWorldPosition();',
-            '            this._selectedPinAvatar.UpdateMapPosition2(this.WorldXToMapX(_loc2_.x) * param1,this.WorldYToMapY'
-            '(_loc2_.y) * param1);',
-        }
-        # Blur at the opening (rerun 4): like the game's CenterOnPlayer, the default place and the middle ask for map
-        # squares only once the menu's opening animation is over.
-        changed |= {'         this.mcHubMapZoomContainer.mcHubMapContainer.ShowTilesFromCurrentLod();'}
-        for edit in hub[1:] + menu[1:]:
-            ops = difflib.SequenceMatcher(None, edit['find'].split('\n'), edit['replace'].split('\n')).get_opcodes()
-            for tag, i1, i2, _j1, _j2 in ops:
-                if tag in ('replace', 'delete'):
-                    self.assertTrue(set(edit['find'].split('\n')[i1:i2]) <= changed, edit['find'])
+        hub_edits = classes['red/game/witcher3/menus/worldmap/HubMap.as']
+        menu_edits = classes['red/game/witcher3/menus/worldmap/MapMenu.as']
+        self.assertEqual(hub_edits[0]['find'].replace('param2:Number = NaN, param3:Number = NaN',
+                          'param2:* = undefined, param3:* = undefined'), hub_edits[0]['replace'])
+        self.assertEqual(menu_edits[0]['find'].replace('.getInstance().init(', '.getInstance()["init"]('),
+                         menu_edits[0]['replace'])
+        hub = applied('red/game/witcher3/menus/worldmap/HubMap.as')
+        menu = applied('red/game/witcher3/menus/worldmap/MapMenu.as')
+        for expected, source in (
+                ('param2:* = undefined, param3:* = undefined', hub),
+                ('PinPointersManager.getInstance()["init"](this.mcPointersCanvas);', menu),
+                ('if((_loc3_.cmfLabelHide & 2) == 0)', hub),
+                ('-38 - Math.max(this._selectedPinAvatar.tfLabel.textHeight,19)', hub),
+                ('this.tooltipInstance.y = this.TOOLTIP_POS - this.tooltipInstance.actualHeight;', menu)):
+            self.assertTrue(expected in source, expected)
+        # Later approved map changes are not N4-only edits. Retain the actual N4 no-claim gate instead.
+        from test_cmf_rev10 import body
+        placement = body(menu, 'private function cmfPlaceTooltip(')
+        gate = 'if(this.cmfDescMaxH <= 0 && MapMenu.cmfNum("tooltip","tallMinHeight",0,this.m_selectedPinData) <= 0)'
+        self.assertTrue(gate in placement, 'no height/tall-box claim keeps the native bottom anchor')
+        branch = body(placement, gate)
+        self.assertTrue('this.TOOLTIP_POS - this.tooltipInstance.actualHeight' in branch)
+        self.assertTrue(branch.rstrip().endswith('return;\n         }'))
 
     def test_version10_panel_names(self):
         # Revision 10 build contract (plans/2026-10-24-cmf-rev10-build-contract.md) sections 4 and 5: wide and tall
@@ -332,7 +324,12 @@ class SourceTests(unittest.TestCase):
         self.assertFalse([n for n in re.findall(r'public var (\w+):', head) if not n.startswith(('cmf', 'objScriptName'))])
         rest = ''.join(e['replace'] for name, edits in classes.items() for e in edits
                        if name != 'red/game/witcher3/data/StaticMapPinData.as')
-        self.assertFalse(re.findall(r'\b(qmi\w*|iai\w*|\w*Gwm\w*|\w*[Ii]nk[A-Z]\w*|inkiron\S*)', rest))
+        pattern = r"\b(?:qmi\w*|iai\w*|\w*Gwm\w*|\w*Ink[A-Z]\w*|(?:[A-Za-z0-9_]*[a-z0-9_])?ink[A-Z]\w*|inkiron\w*)"
+        self.assertIsNone(re.search(pattern, rest))
+        for foreign in ('qmiApi', 'iaiLv', 'OtherGwmField', 'OnInkHints', 'CMFInkHints', 'XInkHints', 'inkHints', 'myinkHints', 'inkironState'):
+            with self.subTest(foreign=foreign):
+                self.assertIsNotNone(re.search(pattern, foreign), foreign)
+        self.assertIsNone(re.search(pattern, 'cmfLinkDrawings'))
 
     def test_n4_panel_reads_only_cmfs_own_fields(self):
         # N4 spec (a design note kept in the private development repository) section 8.1.
@@ -355,65 +352,75 @@ class SourceTests(unittest.TestCase):
                      '"input_feedback_scroll_text"', '_loc5_ - this._cmfStickTime < 450', 'beginFill(12102296,1)'):
             self.assertIn(line, menu)
         self.assertNotIn('qmiFastMap', menu)
-        # The box stays the game's while no claim sets a height.
+        # The box stays the game's while no claim sets a height and no theme sets a tall-box place (version 12).
         self.assertIn('this.tooltipInstance.y = this.TOOLTIP_POS - this.tooltipInstance.actualHeight;\n'
                       '            this.cmfPlaceTooltip();', menu)
-        self.assertIn('if(this.cmfDescMaxH <= 0)\n         {\n            return;', menu)
+        self.assertIn('if(this.cmfDescMaxH <= 0 && MapMenu.cmfNum("tooltip","tallMinHeight",0) <= 0)\n         {\n'
+                      '            return;', menu)
 
     def test_mapmenu_hint_row_listens_on_cmfs_own_names(self):
         # Ink and Iron adapter design (PR #22) P4, under CMF's own names (Kyle 2026-10-20 05:02Z): the map
         # registers "cmf.map.hints" and calls OnCMFMapHintsReady; any mod may send a hint list there (the Ink and
-        # Iron adapter sends Ink and Iron's). The copy never handles a key, a button or the mouse.
-        menu = json.loads((ROOT/'source/panel/pin-fields/edits.json').read_text(encoding='utf-8'))['classes'][
-            'red/game/witcher3/menus/worldmap/MapMenu.as']
-        code = ''.join(e['replace'] for e in menu)
+        # Iron adapter sends Ink and Iron's). The legacy copy keeps ignoring keys and the mouse; API13 owns a separate route.
+        from test_cmf_rev13_map_consumers import applied
+        code = applied('red/game/witcher3/menus/worldmap/MapMenu.as')
         self.assertEqual(code.count('dispatchEvent(new GameEvent(GameEvent.REGISTER,"cmf.map.hints",'
                                     '[this.cmfSetHintCopy]));'), 1)
         self.assertEqual(code.count('dispatchEvent(new GameEvent(GameEvent.CALL,"OnCMFMapHintsReady"));'), 1)
+        self.assertEqual(code.count('dispatchEvent(new GameEvent(GameEvent.CALL,"OnCMFMapHints"));'), 1)
         self.assertNotIn('inkiron', code.lower())
         self.assertNotIn('OnInk', code)
         for line in ('this.cmfHintCopy.filterKeyCodeFunction = this.cmfHintCopyIgnoresInput;',
                      'this.cmfHintCopy.filterNavCodeFunction = this.cmfHintCopyIgnoresInput;',
                      'this.cmfHintCopy.clickable = false;', 'this.cmfHintCopy.mouseEnabled = false;',
-                     'this.cmfHintCopy.mouseChildren = false;', 'this.cmfCreateHintCopy();\n      }\n'):
+                     'this.cmfHintCopy.mouseChildren = false;', 'this.cmfCreateHintCopy();'):
             self.assertIn(line, code)
         self.assertRegex(code, r'cmfHintCopyIgnoresInput\(param1:\*\) : Boolean\n      \{\n         return false;')
-        hints = [e['replace'] for e in menu if 'protected function cmfCreateHintCopy' in e['replace']][0]
+        from test_cmf_rev10 import body
+        hints = body(code, 'protected function cmfCreateHintCopy(')
         self.assertNotIn('appendButton', hints)
+        self.assertEqual(code.count('this.cmfCreateHintCopy();'), 1)
+        self.assertTrue('this.cmfHintCopy.clickable = this._cmfHintOwner != "";' in code)
+        self.assertTrue('this.cmfHintCopy.mouseChildren = this._cmfHintOwner != "";' in code)
 
     def test_theme_panel_listens_on_cmfs_name_and_matches_the_core_lists(self):
-        # Stage 6b (a design note kept in the private development repository 4.6): the map registers
-        # "cmf.map.theme", calls OnCMFMapThemeReady once, and knows the same parts, layers and text keys as cmfCore.
-        # Every theme edit only adds lines to the game's classes.
-        classes = json.loads((ROOT/'source/panel/pin-fields/edits.json').read_text(encoding='utf-8'))['classes']
-        menu = ''.join(e['replace'] for e in classes['red/game/witcher3/menus/worldmap/MapMenu.as'])
-        self.assertEqual(menu.count('dispatchEvent(new GameEvent(GameEvent.REGISTER,"cmf.map.theme",[this.cmfSetTheme]));'), 1)
-        self.assertEqual(menu.count('dispatchEvent(new GameEvent(GameEvent.CALL,"OnCMFMapThemeReady"));'), 1)
+        from test_cmf_rev13_map_consumers import applied
+        from rev13_legacy_source import theme_environment
+        from rev13_panel_vm import load_case
+        from types import SimpleNamespace as Obj
+        import os
+        menu = applied('red/game/witcher3/menus/worldmap/MapMenu.as')
+        for event in ('dispatchEvent(new GameEvent(GameEvent.REGISTER,"cmf.map.theme",[this.cmfSetTheme]));',
+                      'dispatchEvent(new GameEvent(GameEvent.CALL,"OnCMFMapThemeReady"));'):
+            self.assertEqual(menu.count(event), 1, event)
         core = SCRIPTS[0].read_text(encoding='ascii')
-
-        def core_list(function):
-            body = core[core.index('function %s(' % function):]
-            return re.search(r'"([^"]*)"', body[body.index('{'):]).group(1).split(',')
-
+        env = theme_environment(core)
         text_keys = re.search(r'CMF_TEXT_KEYS:String = ",([^"]*),";', menu).group(1).split(',')
-        listed = core[core.index('function CMFThemeTextKey('):]
-        listed = re.search(r'CMFListHas\("([^"]*)" \+\s*"([^"]*)"', listed)
-        self.assertEqual(text_keys, (listed.group(1) + listed.group(2)).split(','))
+        self.assertEqual(len(text_keys), len(set(text_keys)))
+        # Every actual core text key must occur in the applied panel list; ordering is immaterial to membership.
+        from test_cmf_rev10 import body
+        literals = ''.join(re.findall(r'"([^"]*)"', body(core, 'function CMFThemeTextKey(')))
+        self.assertEqual(set(text_keys), set(literals.split(',')))
+        for key in text_keys:
+            self.assertTrue(env['CMFThemeTextKey'](key), key)
+        self.assertFalse(env['CMFThemeTextKey']('notAThemeTextKey'))
+        self.assertIn('allText', text_keys)
+        specimen = Path(os.environ['CMF_REV13_PANEL'])
+        case = load_case(specimen, 'MapMenu', {})
+        self.assertEqual(case.call_static('cmfValue', Obj(y='allText', s='Heading', n=17)), 'Heading')
         self.assertEqual(re.search(r'CMF_LAYERS:Array = \[([^\]]*)\]', menu).group(1).replace('"', '').split(','),
-                         core_list('CMFThemeLayers'))
+                         env['CMFThemeLayers']().split(','))
         drawn = re.search(r'CMF_DRAWN_PARTS:Array = \[([^\]]*)\]', menu).group(1).replace('"', '').split(',')
-        parts = core[core.index('function CMFThemeParts('):]
-        parts = ''.join(re.findall(r'"([^"]*)"', parts[:parts.index('}')])).split(',')
-        # mapSpace drawings go to the map layer (cmf.map.space), not to the screen-part drawer.
-        self.assertEqual(drawn, [p for p in parts if p not in ('keyCap', 'navigation', 'markerPanel', 'pinButton',
-                                                               'mapSpace', 'opening', 'spread', 'wide')])
-        for path in ('red/game/witcher3/menus/worldmap/HubMapContainer.as', 'red/game/witcher3/tooltips/TooltipMap.as',
-                     'red/game/witcher3/controls/InputFeedbackButton.as',
-                     'red/game/witcher3/controls/KeyboardButtonIcon.as'):
-            for edit in classes[path]:
-                ops = difflib.SequenceMatcher(None, edit['find'].split('\n'), edit['replace'].split('\n'),
-                                              autojunk=False).get_opcodes()
-                self.assertEqual([tag for tag, *_ in ops if tag in ('replace', 'delete')], [], (path, edit['find']))
+        excluded = {'keyCap', 'navigation', 'markerPanel', 'pinButton', 'mapSpace', 'opening', 'spread', 'wide',
+                    'sounds', 'world'}
+        self.assertEqual(drawn, [part for part in env['CMFThemeParts']().split(',') if part not in excluded])
+        # Approved later edits replace methods, not just add lines. Require their exact applications and retained hooks.
+        for path, hook in (
+                ('menus/worldmap/HubMapContainer.as', 'cmfCaptureVisibleArea'),
+                ('tooltips/TooltipMap.as', 'cmfTextStyle'),
+                ('controls/InputFeedbackButton.as', 'cmfTextStyleFor'),
+                ('controls/KeyboardButtonIcon.as', 'cmfTextStyleValue')):
+            self.assertTrue(hook in applied('red/game/witcher3/' + path), hook)
 
     def test_theme_fixes_from_launch_t1(self):
         # Launch T1 (2026-10-20): names below fast-travel pins are their own part (pinName), so level-tag styles and
@@ -435,7 +442,10 @@ class SourceTests(unittest.TestCase):
         self.assertIn('Math.abs(o.width - 1920) < 4 && Math.abs(o.height - 880) < 4', menu)
         self.assertIn('this._cmfMapMask.height = param2 - param1;', menu)
         core = SCRIPTS[0].read_text(encoding='ascii')
-        self.assertIn("case 'pinName':\n\t\t\treturn \"font,size,\" + CMFThemeShadowKeys();", core)
+        from rev13_legacy_source import theme_environment
+        env = theme_environment(core)
+        self.assertEqual(env['CMFThemePartKeys']('pinName').split(','),
+                         ['font', 'size', 'color'] + env['CMFThemeShadowKeys']().split(','))
 
     def test_legend_collapses_and_reports_its_box(self):
         # Launch set C (2026-10-20): the legend's long list stayed up over its frame; with a theme the list returns

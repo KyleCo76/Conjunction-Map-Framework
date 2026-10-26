@@ -4,7 +4,7 @@ Conjunction Map Framework (CMF) is a single world map that map mods can share. C
 
 An **icon pack** is the simplest kind of CMF mod. It changes how existing map pins look on the full-screen world map: their icon, their legend icon and their colour. It does not add or move pins; from API version 3 any CMF mod can also hide pins, and from API version 4 resize pins and change their labels (section 5). You do not edit any map file and you do not need Script Merger, FFDec, REDkit or WolvenKit.
 
-This guide is for someone who has made a Witcher 3 mod before but has never seen CMF. Everything it describes is in CMF 1.4.1, which is API version 10 (`CMFGetVersion()` returns `10`; this is the version of CMF's script interface, not a release number). Calls and sections marked API version 2 to 10 need that version or later; the rest works from API version 1 on. Parts that have not yet run in game say so. Section 12 shows how existing map mods move onto CMF. A finished example is in [`examples/modCMFExampleIconPack`](../../examples/modCMFExampleIconPack/).
+This guide is for someone who has made a Witcher 3 mod before but has never seen CMF. It documents API version 13 (`CMFGetVersion()` returns `13`), independently of release numbering. The map applies the registered styles and dispatches the hooks described here. Source and offline package checks are separate from engine compilation, actual loading and gameplay acceptance; features without game-launch evidence say so. Section 12 shows how existing map mods move onto CMF. A finished example is in [`examples/modCMFExampleIconPack`](../../examples/modCMFExampleIconPack/).
 
 ## 1. What you need
 
@@ -109,38 +109,62 @@ Presence adds no feature offers, priority or selectable choices. The updated men
 
 API version 2 adds legend rows, filter tabs and per-pin styling to the API version 1 calls, API version 3 adds hiding pins, and API version 4 adds pin size, labels, the info box and hiding pins in filter tabs; nothing earlier was removed. Two generic calls take a property id, so later CMF versions can add properties without adding functions. A pack that uses only `CMFRegister`, `CMFRegisterForTag` and `CMFHasProperty` compiles against any CMF from 1 on and skips what the installed CMF lacks. A call to a function CMF does not have stops the game at the script compile screen, which `CMFRequireVersion` cannot prevent. The named calls further down are shorthand for the generic ones.
 
-| Property id | Named shorthand | `text` | `number` |
-| --- | --- | --- | --- |
-| `1` `CMFPropertyIcon()` | `CMFRegisterIcon`, `CMFRegisterIconForTag` | image path | unused (`0`) |
-| `2` `CMFPropertyLegendIcon()` | `CMFRegisterLegendIcon` | image path | unused |
-| `3` `CMFPropertyTint()` | `CMFRegisterTint` | unused (`""`) | colour, decimal 0xRRGGBB |
-| `4` `CMFPropertyBackground()` | `CMFRegisterBackground` (target is the map area) | image root | unused |
-| `5` `CMFPropertyDisabled()` | `CMFRegisterDisabled`, `CMFRegisterDisabledForTag` | unused | nonzero greys, `0` withdraws |
-| `6` `CMFPropertyLegendRow()` (API version 2; target is a `filteredType`) | `CMFRegisterLegendRow` | category id, or `""` for All only | row priority; `0` puts it after every vanilla row |
-| `7` `CMFPropertyLegendLabel()` (API version 2; target is a `filteredType`) | `CMFRegisterLegendLabel` | the row's name, `"[[string_key]]"` or plain text | unused |
-| `8` `CMFPropertyLegendCategory()` (API version 2; target is your category id) | `CMFRegisterLegendCategory` | the tab's name, `"[[string_key]]"` or plain text | tab order among CMF tabs, low first |
-| `9` `CMFPropertyHidden()` (API version 3; target is a pin type or `filteredType`, or `''` for every pin) | `CMFRegisterHidden`, `CMFRegisterHiddenForTag` | exemptions: `""` or any of `tracked`, `quest`, `fasttravel` | nonzero hides, `0` withdraws |
-| `10` `CMFPropertyPinScale()` (API version 4) | `CMFStylePinScale` (one pin) | unused | percent, `25` to `400` |
-| `11` `CMFPropertyLabelPlace()` (API version 4) | none | unused | tenths of a pin unit from the pin centre, `0` to `10000` (`0` = the game's place) |
-| `12` `CMFPropertyLabelText()` (API version 4) | `CMFStylePinLabel` (one pin) | the label, HTML, not empty | unused |
-| `13` `CMFPropertyLabelHide()` (API version 4) | none | `"pin"`, `"crosshair"` or both | nonzero hides, `0` withdraws |
-| `14` `CMFPropertyInfoBoxHeight()` (API version 4; target `''`; from API version 11 also a type, a tag, a place or one pin) | none | unused | px, `100` to `1080`; `0` withdraws |
-| `15` `CMFPropertyTabHide()` (API version 4; target `''` means every pin) | none | filter tab names | nonzero hides, `0` withdraws |
-| `16` `CMFPropertyPinClick()` (API version 6) | none | inputs: any of `use`, `doubleClick`, `button` | nonzero, handed back with each click; `0` withdraws |
-| `18` `CMFPropertyInfoTitle()` (API version 11) | none | the info box title, HTML, not empty | `0` (`CMFInfoReplace()`) replaces the game's title, `1` (`CMFInfoAdd()`) adds a line below it |
-| `19` `CMFPropertyInfoText()` (API version 11) | none | the info box text, HTML, not empty | `0` (`CMFInfoReplace()`) replaces the game's text, `1` (`CMFInfoAdd()`) adds lines below it |
-| `20` `CMFPropertyPinClickHint()` (API version 6) | none | the button bar's words for the click | nonzero; `0` withdraws |
-| `21` `CMFPropertyPinClickButton()` (API version 6) | none | the words on the pin's button | nonzero; `0` withdraws |
-| `22` `CMFPropertySpreadRank()` (API version 6) | none | unused | which pin of a spread stack is selected first, `0` to `1000`, highest first |
-| `23` `CMFPropertyCategoryNoDefault()` (API version 6; target is your category id) | `CMFRegisterCategoryNoDefault` | unused | nonzero keeps the tab's rows out of Default; `0` lists them there |
-| `24` `CMFPropertyWorldPainting()` (API version 9; target `'painting'`, `CMFRegister` only) | `CMFRegisterWorldPainting`, `CMFRegisterWorldPaintingTiles` | image path, `""` withdraws | `0` for one picture, or columns x 10 + rows for tiles, each 1 to 8 |
-| `25` `CMFPropertyWorldCrest()` (API version 9; target is a region name) | `CMFRegisterWorldCrest` | image path, `""` withdraws | unused |
-| `26` `CMFPropertyButtonPicture()` (API version 9; target `'family_button'`, for example `'xbox_gamepad_Y'`, with a dash in the map's name written as `_`: `'xbox_enter_gamepad_A'`) | `CMFRegisterButtonPicture` | image path, `""` withdraws | unused |
-| `27` `CMFPropertyWorldMarker()` (API version 9; target `'player'` or `'quest'`) | `CMFRegisterWorldMarker` | image path, `""` withdraws | unused |
-| `28` `CMFPropertyHoverName()` (API version 10; target `''` means every pin) | none | unused | bits: `1` the label line only on the hovered pin, `2` the name on the hovered pin; `0` as the game shows it |
-| `29` `CMFPropertyIconUndiscovered()` (API version 11; target is the pin's real type, such as `'RoadSign'`) | none | image path or `frame:<label>`, art while the pin is an undiscovered "?" | unused |
-| `30` `CMFPropertyIconCompleted()` (API version 11; target is the pin's real type) | none | image path or `frame:<label>`, art while the pin is completed (greyed) | unused |
-| `37` `CMFPropertyTabHidden()` (API version 11; target is a filter tab name or id, `CMFRegister` only) | none | unused | nonzero hides the whole tab, `0` withdraws |
+| Property id | Named shorthand | `text` | `number` | Withdraw |
+| --- | --- | --- | --- | --- |
+| `1` `CMFPropertyIcon()` (widened player/user art and level variants needs `CMFGetVersion() >= 11`) | `CMFRegisterIcon`, `CMFRegisterIconForTag` | image path | unused (`0`) | 40 with this id at the same slot |
+| `2` `CMFPropertyLegendIcon()` | `CMFRegisterLegendIcon` | image path | unused | 40 with this id at the same slot |
+| `3` `CMFPropertyTint()` (widened tag tint, player/user art and level variants needs `CMFGetVersion() >= 11`) | `CMFRegisterTint` | unused (`""`) | colour, decimal 0xRRGGBB | 40 with this id at the same slot |
+| `4` `CMFPropertyBackground()` | `CMFRegisterBackground` (target is the map area) | image root | unused | 40 with this id at the same slot |
+| `5` `CMFPropertyDisabled()` | `CMFRegisterDisabled`, `CMFRegisterDisabledForTag` | unused | nonzero greys, `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `6` `CMFPropertyLegendRow()` (API version 2; target is a `filteredType`) (widened vanilla rows needs `CMFGetVersion() >= 11`) | `CMFRegisterLegendRow` | category id, or `""` for All only | row priority; `0` puts it after every vanilla row. One claim sets both coupled values. | 40 with this id at the same slot |
+| `7` `CMFPropertyLegendLabel()` (API version 2; target is a `filteredType`) | `CMFRegisterLegendLabel` | the row's name, `"[[string_key]]"` or plain text | unused | 40 with this id at the same slot |
+| `8` `CMFPropertyLegendCategory()` (API version 2; target is your category id) | `CMFRegisterLegendCategory` | the tab's name, `"[[string_key]]"` or plain text | tab order among CMF tabs, low first  One claim sets both coupled values. | 40 with this id at the same slot |
+| `9` `CMFPropertyHidden()` (API version 3; target is a pin type or `filteredType`, or `''` for every pin) | `CMFRegisterHidden`, `CMFRegisterHiddenForTag` | exemptions: `""` or any of `tracked`, `quest`, `fasttravel` | nonzero hides, `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `10` `CMFPropertyPinScale()` (API version 4) (widened player/user size needs `CMFGetVersion() >= 11`) | `CMFStylePinScale` (one pin) | unused | percent, `25` to `400` | 40 with this id at the same slot |
+| `11` `CMFPropertyLabelPlace()` (API version 4) | none | unused | tenths of a pin unit from the pin centre, `0` to `10000` (`0` = the game's place) | 40 with this id at the same slot |
+| `12` `CMFPropertyLabelText()` (API version 4) | `CMFStylePinLabel` (one pin) | the label, HTML, not empty | unused | 40 with this id at the same slot |
+| `13` `CMFPropertyLabelHide()` (API version 4) | none | `"pin"`, `"crosshair"` or both | nonzero hides, `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `14` `CMFPropertyInfoBoxHeight()` (API version 4; target `''`; from API version 11 also a type, a tag, a place or one pin) (widened type/tag/place height needs `CMFGetVersion() >= 11`) | none | unused | px, `100` to `1080`; `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `15` `CMFPropertyTabHide()` (API version 4; target `''` means every pin) | none | filter tab names | nonzero hides, `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `16` `CMFPropertyPinClick()` (API version 6) | none | inputs: any of `use`, `doubleClick`, `button`, `hold` | nonzero, handed back with each click; `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `18` `CMFPropertyInfoTitle()` (API version 11) | none | the info box title, HTML, not empty | `0` (`CMFInfoReplace()`) replaces the game's title, `1` (`CMFInfoAdd()`) adds a line below it | 40 with this id at the same slot |
+| `19` `CMFPropertyInfoText()` (API version 11) | none | the info box text, HTML, not empty | `0` (`CMFInfoReplace()`) replaces the game's text, `1` (`CMFInfoAdd()`) adds lines below it | 40 with this id at the same slot |
+| `20` `CMFPropertyPinClickHint()` (API version 6) | none | the button bar's words for the click | nonzero; `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `21` `CMFPropertyPinClickButton()` (API version 6) | none | the words on the pin's button | nonzero; `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `22` `CMFPropertySpreadRank()` (API version 6) | none | unused | which pin of a spread stack is selected first, `0` to `1000`, highest first | 40 with this id at the same slot |
+| `23` `CMFPropertyCategoryNoDefault()` (API version 6; target is your category id) | `CMFRegisterCategoryNoDefault` | unused | nonzero keeps the tab's rows out of Default; `0` lists them there | 40 with this id at the same slot |
+| `24` `CMFPropertyWorldPainting()` (API version 9; target `'painting'`, `CMFRegister` only) | `CMFRegisterWorldPainting`, `CMFRegisterWorldPaintingTiles` | image path, `""` withdraws | `0` for one picture, or columns x 10 + rows for tiles, each 1 to 8 | 40 with this id at the same slot; or original empty text |
+| `25` `CMFPropertyWorldCrest()` (API version 9; target is a region name) | `CMFRegisterWorldCrest` | image path, `""` withdraws | unused | 40 with this id at the same slot; or original empty text |
+| `26` `CMFPropertyButtonPicture()` (API version 9; target `'family_button'`, for example `'xbox_gamepad_Y'`, with a dash in the map's name written as `_`: `'xbox_enter_gamepad_A'`) | `CMFRegisterButtonPicture` | image path, `""` withdraws | unused | 40 with this id at the same slot; or original empty text |
+| `27` `CMFPropertyWorldMarker()` (API version 9; target `'player'` or `'quest'`) | `CMFRegisterWorldMarker` | image path, `""` withdraws | unused | 40 with this id at the same slot; or original empty text |
+| `28` `CMFPropertyHoverName()` (API version 10; target `''` means every pin) | none | unused | bits: `1` the label line only on the hovered pin, `2` the name on the hovered pin; `0` as the game shows it  One claim sets both coupled values. | 40 with this id at the same slot |
+| `29` `CMFPropertyIconUndiscovered()` (API version 11; target is the pin's real type, such as `'RoadSign'`) | none | image path or `frame:<label>`, art while the pin is an undiscovered "?" | unused | 40 with this id at the same slot |
+| `30` `CMFPropertyIconCompleted()` (API version 11; target is the pin's real type) | none | image path or `frame:<label>`, art while the pin is completed (greyed) | unused | 40 with this id at the same slot |
+| `37` `CMFPropertyTabHidden()` (API version 11; target is a filter tab name or id, `CMFRegister` only) | none | unused | nonzero hides the whole tab, `0` withdraws | 40 with this id at the same slot; or original number 0 |
+| `17` LabelColor (API version 5) | none | unused | RGB 0..16777215 | 40 with this id at the same slot |
+| `31` IconSelected (API version 13) | none | img:// path or frame:label | unused | 40 with this id at the same slot |
+| `32` SelectedScale (API version 13) | none | unused | 25..400 percent | 40 with this id at the same slot |
+| `33` PinAlpha (API version 13) | none | unused | 0..100 percent; zero is valid | 40 with this id at the same slot |
+| `34` PinOrder (API version 13) | none | unused | -1000..1000; higher draws above | 40 with this id at the same slot |
+| `35` PinOffset (API version 13) | none | signed decimal x,y; each -50..50 world metres | unused | 40 with this id at the same slot |
+| `36` PinZoom (API version 13) | none | signed decimal min,max; finite and ordered, no extra absolute clamp | unused | 40 with this id at the same slot |
+| `38` Present (API version 11) | none | unused | presence only | not a stored claim |
+| `39` InfoBoxWidth (API version 13) | none | unused | 200..1920 logical content pixels; 0 withdraws | 40 with this id at the same slot; or number 0 |
+| `40` Withdraw (API version 13) | none | empty | effective property id; removes only your matching slot | not a stored claim |
+| `41` LegendRowTint (API version 13) | none | unused; target is a filteredType, type level only | RGB 0..16777215; row only, ahead of id 3 | 40 with this id at the same slot |
+| `42` IconUnder (API version 13) | none | img:// path or frame:label | unused | 40 with this id at the same slot |
+| `43` IconUnderTint (API version 13) | none | unused | RGB 0..16777215, multiplied into the picture as id 3 is into the icon (white keeps it, black blacks it out) | 40 with this id at the same slot |
+| `44` PictureScale (API version 13) | none | unused | 25..400 percent of the pin's size: grows the icon and the picture under it (42) only, not the pin's highlight ring and glow | 40 with this id at the same slot |
+
+The map root supports arbitrary public script-set values when `CMFHasAbility('map', 'rootValues')` is true. Native `SetMemberFlash*` / `GetMemberFlash*` calls may store a mod's own number or string before `OnConfigUI` and read it back there. Existing declared fields and methods retain their meaning; use your own names.
+
+**Revision 13 changes.** Label hides (13) now merge the union of every eligible provider's pin/crosshair hides, including direct per-pin contributions. A zero contribution never unhides another provider's labels. Row tint 41 overrides the row's tint 3 without changing its pin tint. Ids 6 and 8 still couple row/tab placement and priority; 28 still couples its two hover-name bits.
+
+The every-pin target `''` now accepts 1,3,10,11,12,13,17,22,42,43,44, as well as ids 31 to 36 and the earlier every-pin properties. A type, tag, place or direct pin claim beats a global claim even when the player selected the global provider, including strict fallthrough. Vanilla and choice-only exclusions still apply. Every-pin styling does not remove the existing player/user/unknown/completed-pin protections.
+
+Ids 31 to 36, 39 and 42 to 44 support type, tag, place and direct per-pin styling. Id 39 answers true from `CMFHasProperty`. Its every-pin value is the menu default; a selected pin's type, tag, place or direct width overrides it. Width measures the description field in 1920 x 1080 units, preserving native padding and staying the same width on wide screens. There are no new `CMFProperty...` helpers for numeric ids 31 to 36 and 39 to 44. `CMFRegister(p, 40, target, context, "", id)` withdraws your exact slot; tag/place calls accept 40 too, using the effective id's level/context rules. Valid absent withdrawal returns true without dirtying or logging; actual removal logs once. Presence 38 and recursive 40 cannot be withdrawn. A direct width zero releases only the calling provider's direct width.
+
+`CMFHasAbility('claims', word)` discovers `tagTint`, `placeClaims`, `playerArt`, `levelVariants`, `vanillaRows`, `everyPinIcon`, `withdraw`, `labelHideMerge` and `everyPin`. The first six describe the API version 11 widened-claim family; the last three are revision 13 behavior. Older cores may not recognize this capability namespace, so `CMFGetVersion() >= 11` is also a guard for the API version 11 cases. The newly listed every-pin forms need API version 13. The pack checker recognizes positive enclosing version/ability guards with matching provider identity; other expressions remain an unresolved advisory, not proof.
 
 Section "Pin size, labels and the info box" below explains 10 to 15, "Pin clicks" explains 16, 20 and 21, "Spreading stacked pins" explains 22, "Legend rows and filter tabs" explains 23, "World overview pictures" and "Controller button pictures" explain 24 to 27, and "Names only on hover" explains 28, and "Changing one pin" explains 14 for one pin, 18, 19, 29, 30 and 37.
 
@@ -155,6 +179,10 @@ Write a property newer than the CMF version you require as its number, not as it
 
 | Call | What it does |
 | --- | --- |
+| `CMFDeclareTag(provider : string, tag : name) : bool` | API version 13. Makes a typed tag available to item styles, drawing filters and movie controls for this game session. Repeating it changes nothing; releasing your provider removes only your registration. |
+| `CMFStyle(provider : string, part : name, target : name, key : name, text : string, number : float) : bool` | API version 13. Registers a per-item style; empty target is exactly CMFStylePart. |
+| `CMFAddPin(provider : string, tag : name, pinType : name, area : name, x : float, y : float, label : string, description : string) : bool` | API version 13. Adds or updates your session-only pin at world X/Y with supplied display text. |
+| `CMFRemovePin(provider : string, tag : name) : bool` | API version 13. Removes only your own added pin; valid absent removal succeeds. Independent claims targeting the tag remain. |
 | `CMFHasProperty(propertyId : int) : bool` | `true` when the installed CMF understands that property id. Test an id before registering it, above all an id newer than API version 1. |
 | `CMFRegister(provider : string, propertyId : int, target : name, mapContext : name, text : string, number : int) : bool` | One claim for a pin type (a map area for property 4). `mapContext` is `''` except for properties 5 and 9. Returns `false` and logs `rejected ... reason=unknown`, `reason=context`, `reason=empty` or `reason=exemption` when CMF does not accept the claim. |
 | `CMFRegisterForTag(provider : string, propertyId : int, pinTag : name, mapContext : name, text : string, number : int) : bool` | The same for one pin by its tag; accepts properties 1, 5, 9, (API version 4) 10 to 13 and 15, (API version 5) 17, (API version 6) 16, 20, 21 and 22, (API version 10) 28 and (API version 11) 3, 14, 18, 19, 29 and 30 (`reason=level` otherwise). The game's own pins carry their tag; from API version 4 a pin another mod pushes is reached when that mod set its id to `NameToFlashUInt(tag)` (section 6). |
@@ -182,7 +210,7 @@ Write a property newer than the CMF version you require as its number, not as it
 | `CMFRegisterBackground(provider : string, area : name, imageRoot : string)` | Replaces the map image of one area, such as `'AN_NMLandNovigrad'` (Velen and Novigrad). The tiles live in your pack's texture cache at `gameplay\gui_new\maps\<imageRoot>\level<L>\tile<X>x<Y>.jpg`, with the same tile size, level range and tile count as the area's vanilla image; CMF logs those values per area (`background area=...`) the first time the map shows it. The map draws level 0 as its background layer, then the area's own levels. |
 | `CMFRequireVersion(provider : string, minVersion : int) : bool` | Returns `false` and logs a line when the installed CMF is older than `minVersion`. Wrap your calls in it as above. |
 | `CMFReleaseProvider(provider : string)` | Withdraws everything your pack registered. Only needed if your pack can be switched off without being uninstalled. |
-| `CMFGetVersion() : int` | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0, `9` in 1.3.0, `10` in 1.4.1, `11` in 1.5.0). |
+| `CMFGetVersion() : int` | The installed CMF script API revision; this source returns 13. API revisions and release versions are independent. |
 | `CMFSetProviderName(provider : string, displayName : string) : bool` | API version 8. The name CMF's in-game menu shows for your mod, for example `"Acme Icons"`; without it the menu shows your folder name tidied. Returns `false` and logs for an empty provider or name. See [Players' choices](icon-pack-guide.md#players-choices-who-wins-each-feature-api-version-8). |
 | `CMFChoicesChanged()` | API version 8. Tells CMF that a player's choice changed, so it prepares its winners again before the next lookup. CMF's menu add-on calls it; a pack never needs to. |
 | `CMFRegisterWorldPainting(provider : string, url : string) : bool` | API version 9. Your picture for the world overview's painting. See "World overview pictures" below. |
@@ -265,6 +293,8 @@ Written with the generic call and guarded by `CMFHasProperty(8)`, this still com
 
 ### Styling one pin (API version 2)
 
+For an archive that also compiles without CMF, see [One download, with and without CMF](icon-pack-guide.md#one-download-with-and-without-cmf).
+
 Registration calls style every pin of a type. To style one pin from a decision your mod makes while the pin exists (a level, a state), call `CMFStylePin` on the pin object before the map sends it. From API version 4 the simplest place is an `OnPinReady` wrapper, which sees every pin (below). Otherwise use an `AddPinTypeData` wrapper for the game's own pins, or an `UpdateEntityPins` or `UpdateUserMapPins` wrapper, or call it right after creating your own `StaticMapPinData` object:
 
 ```
@@ -325,12 +355,13 @@ API version 4 adds six properties. Pin size, label text and the scrolling info b
 | `14` `CMFPropertyInfoBoxHeight()` | `''` only, through `CMFRegister` only | unused | the info box's text height in px, `100` to `1080`; `0` withdraws |
 | `15` `CMFPropertyTabHide()` | a pin type, a tag, one pin, or `''` for every pin | filter tab names: `"Quests"`, `"Exploration"`, `"NPCs"`, `"Buffs"` or a tab id, separated by commas or spaces | nonzero hides, `0` withdraws |
 
-- **Size** scales the pin's icon, its highlight ring and its glow together. The player marker and the player's own pins are never resized.
+- **Size** scales the pin's icon, its highlight ring and its glow together. The player marker and the player's own pins are never resized. To draw a larger picture without a larger ring and glow (a badge, say), keep the size and grow the picture with id 44 (API version 13): it multiplies the size for the icon and the picture under it (42) only.
 - **Labels** sit below signposts and above other pins, as the game places them. A label place moves it further from the pin.
 - **Which label to hide.** `"pin"` hides the label drawn on the map next to the pin; `"crosshair"` hides the name the crosshair shows when it rests on the pin. In script the two flags are `CMFLabelHidePin()` (1) and `CMFLabelHideCrosshair()` (2), so you can add them up while you decide and then pass the matching text.
 - **The info box** scrolls when its text is taller than the height you give, with a scroll bar and the inputs Map Quest Insight's map uses. Only one height applies: the earliest folder among the claims wins. `0` keeps the game's box.
+- **Label hides (13)** merge eligible contributions by union. Eligibility is recomputed when a selected direct-only provider first contributes, so wrapper order cannot leave an ineligible hide behind; zero never removes an eligible hide.
 - **Tab hides** leave a pin out of the filter tabs you name; it stays in the others and under All. Like hide claims, every tab hide applies; there is no winner.
-- **Conflicts** for 10 to 13 work as for icons: a per-pin call beats a tag claim, a tag claim beats a type claim, and within one level the earlier folder name wins.
+- **Conflicts** for 10 to 12 work as for icons: a per-pin call beats a tag claim, a tag claim beats a type claim, and within one level the earlier folder name wins.
 - `CMFRegisterForTag` accepts 10 to 13 and 15. Size and label tag claims never apply to an undiscovered "?" pin or a completed pin.
 
 The per-pin calls, all API version 4:
@@ -399,10 +430,55 @@ function OnPinReady(dataObject : CScriptedFlashObject, mapContext : name)
 
 ### Key hints and filter tab reports (API version 4)
 
-CMF's map talks to scripts under CMF's own names, so any mod can use them. Both ran in game on 2026-10-20: the key-hint row through the Ink and Iron adapter, the filter tab report through the Gwent Players Map adapter.
+**Revision 13 hooks**
 
-- **Filter tabs.** Each time the legend shows a filter tab, the map calls the event `OnCMFMapFilter(category : string)` on `CR4MapMenu` with the tab's name (CMF tabs by their id). Add it with `@addMethod(CR4MapMenu) event OnCMFMapFilter(category : string) { ... }` to react, for example to move your own pins for that tab. The Gwent Players Map adapter forwards it to that mod's own event (section 12).
-- **Key hints.** The map draws a display-only row of key hints at the bottom of the screen from a flash array sent to `"cmf.map.hints"` in the map menu's flash storage, built from the common menu's bindings as the game builds its own row. When the map has registered its listener it calls the event `OnCMFMapHintsReady()` on `CR4MapMenu`, once per opening; answer it by sending your current list. The common menu keeps handling every key; the row only shows them. Without a list nothing is drawn. API version 5's `hints` part sets the row's place, scale and glow (next section).
+New integrations wrap the core hooks below. They need API version 13 to compile. These hooks are available from API version 13; the map dispatches them alongside the legacy adapter events.
+
+- Filter tabs: the core declares `OnCMFMapTab(category : string)` on `CR4MapMenu` and forwards it to `CMFCore.OnMapTab(menu, category)`.
+- Key hints: offer a list with `CMFStylePart("modMyPack", 'hints', 'list', "", 1)`. `Look_Hints` selects the owner among list offers only. Withdraw the offer with text `"unset"`. The core declares `OnCMFMapHints()` and calls `CMFCore.OnMapHints(menu, owner)` only for an eligible list offer. The common menu still handles keys.
+
+The old events `OnCMFMapFilter` and `OnCMFMapHintsReady` remain adapter-owned. Do not add either event a second time. Existing adapters keep their declarations and write their legacy list separately from managed hints.
+
+```witcherscript
+@wrapMethod(CMFCore)
+function OnMapTab(menu : CR4MapMenu, category : string)
+{
+    wrappedMethod(menu, category);
+    // React to the tab here.
+}
+
+@wrapMethod(CMFCore)
+function OnMapHints(menu : CR4MapMenu, owner : string)
+{
+    var storage : CScriptedFlashValueStorage;
+    var list : CScriptedFlashArray;
+    var metadata : CScriptedFlashObject;
+    wrappedMethod(menu, owner);
+    if (owner != "modMyPack") { return; }
+    storage = menu.GetMenuFlashValueStorage();
+    if (!storage) { return; }
+    list = storage.CreateTempFlashArray();
+    metadata = storage.CreateTempFlashObject();
+    metadata.SetMemberFlashString("owner", owner);
+    list.PushBackFlashObject(metadata);
+    // Append your current hint objects after the metadata.
+    storage.SetFlashArray("cmf.map.hints.owned", list);
+}
+```
+
+The managed channel is `cmf.map.hints.owned`: a metadata object `{owner: provider}` followed by hint objects. Each hint object takes the game's key-hint fields: `actionId`, `label` (shown as written), `keyboard_keyCode` and `gamepad_navEquivalent`, and optionally `level`, `holdDuration`, `hasHoldPrefix` and `click`. CMF's map copies a plain object (`CreateTempFlashObject()` with no class name) into the game's key-hint class, so either kind works. An empty array releases this channel. Never write or clear the legacy `cmf.map.hints` channel from this hook. With no offer and no prior managed list, the core writes nothing. A changed owner receives a fresh envelope; removing the final offer clears only the managed channel at the next new hints event. The map keeps the latest legacy list separately, selects the managed list while active, and restores the legacy list on release. Flash storage has no supported array readback; providers rebuild their own list.
+
+**Per-item styles and added pins (API version 13).** `CMFStyle` accepts: `legendRow` target = bare filteredType; `legendTab` = internal tab name or `id:<nonnegative decimal>`; `tooltip`, `pinLabel`, `pinName`, `pinButton` = bare type, `type:<type>` or `tag:<tag>`. Empty prefixes and unknown prefixes are rejected. A tag overrides a type, and a matching item key overrides the whole-part key on the map. Items arbitrate independently through the existing part/key choice, including Vanilla and strict fallthrough. Text keys are `title.text` (area target, or empty for whole title), `worldHint.text`, `worldButton.text` and `legend.allText` (empty target for the latter three). `"unset"` removes only your own item/key. Per-item data uses `cmf.map.itemStyles`; old whole-part payloads remain separate.
+
+**Making a tag available to text targets.**
+
+A `tag:<tag>` item target or a drawing's `pinTag` list needs a tag known to CMF. Registering a claim by tag or adding a pin supplies its typed name. To make a tag known without another claim, call `CMFDeclareTag("modAcmeIcons", 'my_tag')`. It is available for this game session; releasing that provider removes its registration while preserving other providers' registrations of the same tag.
+
+Text matching ignores case. CMF resolves the text when it sends styles and drawing filters, so the declaration may come after the style. An unknown tag matches nothing and logs `tag unknown, declare it with CMFDeclareTag` once per provider and tag. A pin with id 0 never matches a tag. For a pin your mod pushes itself, set its id to `NameToFlashUInt('my_tag')`. CMF never reconstructs a name from an arbitrary id.
+
+`CMFAddPin` tags use `provider.suffix` with a nonempty suffix; identifiers use letters, digits, dot, underscore or hyphen. Provider/tag ownership compares without case. Type and area must be nonempty, with area other than `AN_Undefined`; coordinates must be finite. Repeating identical data is a no-op; changing position/area/text updates the same record. The registry lasts only for the game session and retains no Flash objects. Full builds append only pins for the shown area, without duplicate ids, before ordinary claim/hide/click processing. The content is non-quest and non-travel. Releasing a provider removes its content. **A pin added while the map is open shows at the next opening.** No call forces a rebuild. These named calls require API version 13 to compile, even inside a runtime guard.
+
+New choice keys 72 to 79 are Behaviour_InfoBoxMotion, Look_Sounds, Behaviour_InfoFold, Behaviour_PanelModes, Look_Badges, Look_PinLook, Size_Place and Behaviour_PinZoom. The piece-parent table starts empty. A future split inherits Automatic from its parent within the same menu or file tier; explicit child answers remain independent.
 
 ### The map theme (API version 5)
 
@@ -453,7 +529,7 @@ Ran in game on 2026-10-20 through the Map Pin Teleport adapter: the button, the 
 
 | Property | `text` | `number` |
 | --- | --- | --- |
-| `16` `CMFPropertyPinClick()` | the inputs: any of `use`, `doubleClick`, `button`, separated by commas or spaces | any nonzero value, handed back with each click; `0` withdraws |
+| `16` `CMFPropertyPinClick()` | the inputs: any of `use`, `doubleClick`, `button`, `hold`, separated by commas or spaces | any nonzero value, handed back with each click; `0` withdraws |
 | `20` `CMFPropertyPinClickHint()` | the words the button bar shows beside E (gamepad A) while the pin is selected | nonzero; `0` withdraws |
 | `21` `CMFPropertyPinClickButton()` | the words on the button drawn beside the pin | nonzero; `0` withdraws |
 
@@ -484,12 +560,13 @@ function OnPinClicked(menu : CR4MapMenu, provider : string, pinTag : name, pinId
 
 The wrapper acts only when `provider` is your own folder name and passes every other click on unchanged. Because each wrapper tests its own name, the order the game runs wrappers in never matters. Your wrapper is called once per click you won; a click is never sent to every mod.
 
-- **The three inputs.** `use` is E, Enter or gamepad A on the selected pin, acted on when the key comes up and only when it went down on the map, so a key carried in from another menu does nothing. It is also a touch tap on the selected pin, except on a placed pin, where the tap still removes the pin as the game does. `doubleClick` is a mouse double-click on the selected pin. `button` draws a button beside the pin that follows pan and zoom and hides with the pin, off screen, and while the world map is not showing or the quest list is open; clicking it sends the click, and the map never sees the press.
+- **The inputs.** `use` is E, Enter or gamepad A on the selected pin, acted on when the key comes up and only when it went down on the map, so a key carried in from another menu does nothing. It is also a touch tap on the selected pin, except on a placed pin, where the tap still removes the pin as the game does. `doubleClick` is a mouse double-click on the selected pin. `button` draws a button beside the pin that follows pan and zoom and hides with the pin, off screen, and while the world map is not showing or the quest list is open; clicking it sends the click, and the map never sees the press.
 - **Which pins.** The usual three calls: `CMFRegister` for every pin of a type (its own `type`, then its `filteredType`), `CMFRegisterForTag` for one pin by its tag, and `CMFStylePin` for one pin object while the map builds. Click claims also reach the pins the player places (`User1` and the other user types), including a pin just placed; no other property does.
 - **One winner per pin.** A per-pin claim beats a tag claim, which beats a type claim. At the same level the earlier provider in CMF's provider order wins (folder order unless the player set one), then the earlier registration. The loser is logged once, for example `CMF click shadowed provider=modZZOther by=modAcmeWells`, and never hears the click.
 - **The hint and button follow the winner.** CMF shows a hint or button only from the mod that won the pin's click, so the words always name the action that runs. Text is shown as you give it; for a translation pass `GetLocStringByKeyExt("your_key")`.
-- **The game keeps its own inputs.** `use` and `doubleClick` are refused on fast-travel and quest pins (`CMF click refused provider=... reason=game`), so signposts still travel and quests still track; `button` works on any pin. The player arrow takes no click, and claimed pins get no hold-to-use ring.
-- **What the hook receives.** `input` is `"use"`, `"doubleClick"` or `"button"`; `value` is your claim's number, so one wrapper can tell its claims apart; `pinType` is the pin's type; `pinId` is the pin's own id as the script's whole number (an id above 2147483647 arrives negative, the same 32 bits the game's own script holds for a placed pin); `pinTag` is the pin's tag for the game's pins and for pins pushed with their id set to `NameToFlashUInt(tag)` (a placed pin's tag is always `None`, because its id is no name; use `pinId` there); `menu` is the open map, for closing it or showing a message. Each click logs `CMF panel click sent input=use pin=...` from the map, then `CMF click provider=modAcmeWells input=use type=AcmeWell pin=... tag=... value=1` from the script. A click nobody answers logs `reason=nohandler`.
+- **Hold (API version 13).** `hold` uses bit `8` (`CMFClickInputHold()`), alongside use `1`, double-click `2` and button `4`. Hold E, Enter, gamepad A or the left mouse button on the selected pin. It sends one `"hold"` event after `navigation.padHoldMs` (milliseconds); zero keeps the game's half-second delay. Repeated down/hold events and release send no second click. A short key or pad press keeps native quest tracking or travel; a pin that also claims `use` keeps its short use click. Short pointer presses and mouse dragging keep their game behavior. Selection, area, focus, fold input, close or removal cancels a pending hold. Hint and button words come from that same click winner.
+- **The game keeps its own inputs.** `use` and `doubleClick` are refused on fast-travel and quest pins (`CMF click refused provider=... reason=game`), so signposts still travel and quests still track; `button` and `hold` work on these pins too. A claimed hold replaces the native hold action, while a short key or pad press preserves the native action. The player arrow takes no click, and claimed holds do not draw the native hold-to-use ring.
+- **What the hook receives.** `input` is `"use"`, `"doubleClick"`, `"button"` or `"hold"`; `value` is your claim's number, so one wrapper can tell its claims apart; `pinType` is the pin's type; `pinId` is the pin's own id as the script's whole number (an id above 2147483647 arrives negative, the same 32 bits the game's own script holds for a placed pin); `pinTag` is the pin's tag for the game's pins and for pins pushed with their id set to `NameToFlashUInt(tag)` (a placed pin's tag is always `None`, because its id is no name; use `pinId` there); `menu` is the open map, for closing it or showing a message. Each click logs `CMF panel click sent input=use pin=...` from the map, then `CMF click provider=modAcmeWells input=use type=AcmeWell pin=... tag=... value=1` from the script. A click nobody answers logs `reason=nohandler`.
 - **The button's look** is the theme part `pinButton`, styled with `CMFStylePart`: `width`, `height`, `curve`, `fill`, `alpha`, `stroke`, `strokeWidth`, `offsetX`, `offsetY` (the button's top-left corner measured from the pin, in px) and the text keys `font`, `size`, `color`, `spacing`, `align` and the glow keys. CMF's own button is plain: 140 x 36 px, a black fill at 0.7, a thin light grey outline and near-white `$NormalFont` text at 18 px, 24 px right of the pin and centred on it. As with every part, the earliest folder that styles `pinButton` owns its look for every button. It takes no drawings.
 - `CMFPropertyPinClick`, `CMFPropertyPinClickHint`, `CMFPropertyPinClickButton` and a wrapper on `OnPinClicked` need API version 6 to compile. Written as the numbers 16, 20 and 21 behind `CMFHasProperty(16)`, the claims alone compile on any CMF. Say so in your README.
 - Gamepad A and touch taps run the same code as E and the mouse, but neither has been tried.
@@ -698,11 +775,11 @@ Your script does not change. Keep registering as before: the player's choices de
 
 When two mods claim the same thing, a level decides between them only when it names one of them; a level that names another mod, Vanilla or nothing passes the question to the next level. A mod chosen for a piece wins every pin it has something for. On a pin where it has nothing, the next mod in order decides, or the game's own look shows when the player sets the General row "If the chosen mod has nothing for a pin" (or `CMFFile_Fallthrough`) to Vanilla. In-game choices come only from the menu add-on: without it every in-game level reads Automatic, and values a removed add-on left behind steer nothing.
 
-**Looks and behaviours are separate choices (API version 10).** From CMF 1.4.1 a player can take one mod's look and another mod's behaviour: pin icons from one mod and the way stacked pins spread out from another. Your script does not change: send behaviours with the same calls as before, and CMF files each key under a look row or a behaviour row by itself. The Basic page gains the row **Map behaviour**, and "Pin size and spreading" becomes **Pin size**. Advanced > Map movement now has Map area, **Pan and zoom feel**, **Zoom out to the whole region**, **Controller crosshair**, Opening and closing, Opening view and **Fill wide screens**, and the new Advanced page **Map behaviour** has Stacked pins spread out, Which pin leads a spread, Label place and hiding, Info box moves out of the way, Info box height and scrolling, and Names only on hover. What moved:
+**Looks and behaviours are separate choices (API version 10).** From CMF 1.4.1 a player can take one mod's look and another mod's behaviour: pin icons from one mod and the way stacked pins spread out from another. Your script does not change: send behaviours with the same calls as before, and CMF files each key under a look row or a behaviour row by itself. The Basic page gains the row **Map behaviour**, and "Pin size and spreading" becomes **Pin size**. Advanced > Map movement now has Map area, **Pan and zoom feel**, **Zoom out to the whole region**, **Controller crosshair**, Opening and closing, Opening view and **Fill wide screens**, and the new Advanced page **Map behaviour** has Stacked pins spread out, Which pin leads a spread, Label place and hiding, Info box moves out of the way, Info box size and scrolling, and Names only on hover. What moved:
 
 - the `spread` part and property `22` (spreading and which pin leads) answer Map behaviour, not Pin size;
 - properties `11` and `13` and the `pinLabel` keys `rise`, `riseOffset`, `riseTracked`, `riseOffsetTracked` answer Label place and hiding, and the label's font stays with its look;
-- the tooltip's `clear` keys, and from API version 11 its `x` and `y`, answer Info box moves out of the way, and property `14` answers Info box height and scrolling; the box's fonts, colours and plates stay on the Map look's Info box row;
+- the tooltip's `clear` keys, and from API version 11 its `x` and `y`, answer Info box moves out of the way, and property `14` answers Info box size and scrolling; the box's fonts, colours and plates stay on the Map look's Info box row;
 - the `navigation` keys `zoomOutFit` and `edgeOvershoot` answer Zoom out to the whole region, and the controller crosshair keys (`crosshairRoam`, the `safe` keys, `snapSeconds`, `centerSeconds`, `padHoldMs`) answer Controller crosshair;
 - the `map` part's `backdrop` colour is paint, so it answers the Map look's frames row.
 
@@ -948,6 +1025,8 @@ if (CMFRequireVersion("modAcmeWorld", 9))
 - **Not reachable in API version 1:** the player arrow (`Player`) and player-placed pins (`User1` to `User7`). From API version 6, click claims reach player-placed pins (section 5, "Pin clicks"). From API version 9, a hide claim that names `'Player'` hides the player arrow (section 5, "Hiding pins"). From API version 11, icon, colour and size claims on exactly those types restyle them (section 5, "Changing one pin").
 - **Finding a tag** for `CMFRegisterIconForTag`: register a type-level icon on that type first, open the map, and read the `CMF pin type=<type> tag=<tag>` lines in the script log (section 8). CMF logs up to 64 distinct type and tag pairs, and only for types that have a type-level icon. From API version 11, `CMFLogPins=true` under `[CMFSettings]` logs every pin the map shows instead, with no limit (section 5, "Changing one pin").
 
+**Claim diagnostics.** Existing author-facing log lines retain their format. Actual withdrawal adds `CMF withdrawn provider=... property=... level=... type=... tag=... context=...` through the existing claim reporter; an absent slot emits no withdrawal line. Inspect compile errors, `rejected`, the provider `claims=` counts and the withdrawal line separately.
+
 ## 7. Check and build
 
 ```
@@ -1029,7 +1108,11 @@ The pack tool carries `content/*.w3strings` and the menu XML into the build. CMF
 
 ### Names CMF answers
 
-CMF's own script functions all start with `CMF`, and CMF's map reads only CMF's own pin fields and talks to scripts only under CMF's names: `OnCMFArtFailed`, `OnCMFMapFilter`, `"cmf.map.hints"`, `OnCMFMapHintsReady`, from API version 5 `"cmf.map.theme"` and `OnCMFMapThemeReady`, from API version 6 `OnCMFPinClicked` (section 5), and from API version 9 `"cmf.map.world"`, `"cmf.map.view"`, `OnCMFMapView`, `OnCMFMapOpening` and `OnCMFPictureNote`. CMF answers no other mod's names. A map mod that used its own names moves onto CMF through these and the general calls, as the adapters in section 12 show.
+CMF's own script functions all start with `CMF`. Its map uses CMF's pin fields and names: `OnCMFArtFailed`, `OnCMFMapFilter`, `OnCMFMapHintsReady`, `OnCMFMapTab`, `OnCMFMapHints`, `OnCMFInfoFold`, `OnCMFMovieEvent`, `OnCMFMapThemeReady`, `OnCMFPinClicked`, `OnCMFMapView`, `OnCMFMapOpening` and `OnCMFPictureNote`; its data channels include `"cmf.map.hints"`, `"cmf.map.hints.owned"`, `"cmf.map.itemStyles"`, `"cmf.map.theme"`, `"cmf.map.world"` and `"cmf.map.view"`. CMF answers no other mod's names. The general calls let a mod keep its own data while sharing the map.
+
+<!-- API hook reference names used by the generated reference. -->
+From API version 13, `CMFCore.OnInfoFold(menu, provider, open)` reports a visible folded box toggle; `CMFCore.OnMovieEvent(menu, provider, id, eventName, value)` receives a live owned movie event and returns whether it handled it; `CMFCore.OnMapAreaReady(menu, area)` reports a completed shown-area pin list. Wrap these with their exact published signatures and preserve other wrappers. See [Your own movie on the screen](own-screen-movie.md).
+
 
 One exception keeps existing mods' values readable for their adapters: the game builds pin objects from the map's pin class and drops any field that class does not declare, so CMF's map declares these pin fields of other mods as compatibility names. CMF itself reads none of them; only the named adapters do.
 
@@ -1078,7 +1161,44 @@ CMF has no calls made for one mod. Each ability is one general call that takes i
 
 Blocks marked API version 4 or 5 ran in game on 2026-10-20 unless they say otherwise.
 
-### One mod, with and without CMF
+### One download, with and without CMF
+
+From API version 13, your script can ask for art on a pin without calling any CMF function or naming any CMF class. The same archive compiles with CMF absent. The game and older CMF versions ignore these fields and retain the game's icon. Put the art in your own mod's `texture.cache`, built with the pack tool; it stays unused when no reader handles the asks. Use your mod's actual folder name everywhere below.
+
+Write the fields on the full pin list in a `CR4MapMenu.UpdateUserMapPins` wrapper, before it calls `wrappedMethod(flashArray, indexToUpdate)`, and only when `indexToUpdate` is below 0 (the full list; 0 or more is one user pin). The game's pins and every pin pushed in an `UpdateEntityPins` wrapper are already in the list there, and CMF reads the asks after that call returns, whatever your script file's name. For a pin your mod pushes itself, you can instead write the fields on the object before you push it.
+
+Do not write them in an `UpdateEntityPins` wrapper. A mod compiled with REDkit, such as Ard Dhu Stable, can carry its own compiled `CR4MapMenu.UpdateEntityPins`, and while it is installed no loose wrapper of that method runs (launch of 2026-10-26: the asks never arrived and CMF logged `entity step skipped`). `UpdateUserMapPins` still runs. In the list, find a pin your mod owns or intentionally styles and append your name once, preserving every other name:
+
+```witcherscript
+var providers : string;
+// dataObject is the pin you pushed or found; declare locals at function start.
+providers = dataObject.GetMemberFlashString("cmfAskBy");
+if (StrFindFirst("," + StrLower(providers) + ",", ",modacmeicons,") < 0)
+{
+    if (providers != "") { providers += ","; }
+    providers += "modAcmeIcons";
+    dataObject.SetMemberFlashString("cmfAskBy", providers);
+}
+dataObject.SetMemberFlashString("cmfAskIcon_modAcmeIcons", "img://icons/modacmeicons/chest.png");
+dataObject.SetMemberFlashString("cmfAskTint_modAcmeIcons", IntToString(16777215));
+```
+
+| Field | Value and withdrawal |
+| --- | --- |
+| `cmfAskBy` | Comma-separated folder names. Empty names are skipped, spaces are trimmed and duplicates are read once. Never remove another mod's name. |
+| `cmfAskIcon_<folder>` | Image URL; nonempty text submits property 1. Empty text makes no request. |
+| `cmfAskTint_<folder>` | Decimal RGB text, property 3; `"0"` is black. Empty text makes no request. |
+| `cmfAskScale_<folder>` | Decimal scale text, 25 to 400, property 10. Empty text makes no request. |
+| `cmfAskLabel_<folder>` | HTML label, property 12. Empty text makes no request. |
+| `cmfAskIds_<folder>` | Comma-separated ids accepted by `CMFStylePin`. |
+| `cmfAskText<id>_<folder>` | The property's text value; absent text is `""`. |
+| `cmfAskNumber<id>_<folder>` | Decimal number text; absent text is zero. |
+
+CMF reads `cmfAskBy` once per eligible pin, before `OnPinReady`, then submits each nonempty ask exactly as the corresponding `CMFStylePin` call. Full and late pins share validation, owner fields, rejection logs, player choices and folder order. Default order compares folder names ignoring case; wrapper append order does not decide the winner. No asks are read when `cmfAskBy` is absent or empty. The usual property withdrawal rules apply through `cmfAskIds`, including id 40; an empty dedicated field simply submits nothing. There is no ability query for this protocol because its scripts name no CMF functions. CMF reports `asks pins=<n>` once per build when any pin asks.
+
+For packaged sources, keep catalogs and procedural art builders outside the clean pack input. Copy only scripts, built tables, README and PNG inputs there, then run `cmf_pack.py check` and `build`. The generated archive contains cooked art in your own cache and excludes the PNG/catalog working inputs. Check every script symbol against the game's actual bindings; a runtime guard cannot make a missing function compile.
+
+## One mod, with and without CMF
 
 You keep one mod for players with and without CMF, plus one small optional folder:
 
@@ -1124,7 +1244,8 @@ function OnGameStarted(restored : bool)
 Mod A adds its own pin, a well. You used to give it any id; now give it the id the game would give a pin with that tag, `NameToFlashUInt(tag)`, and choose a tag other mods can name. Shortened; set the other fields as the game's own pins carry them:
 
 ```
-// Mod A, in its UpdateEntityPins wrapper
+// Mod A, in its UpdateUserMapPins wrapper, when indexToUpdate is below 0 (an UpdateEntityPins
+// wrapper does not run while a REDkit-compiled mod such as Ard Dhu Stable replaces that method)
 pin = m_flashValueStorage.CreateTempFlashObject("red.game.witcher3.data.StaticMapPinData");
 pin.SetMemberFlashUInt("id", NameToFlashUInt('modA_well'));
 pin.SetMemberFlashString("type", "modA_Well");

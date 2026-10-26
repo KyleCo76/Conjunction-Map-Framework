@@ -35,13 +35,11 @@ function UpdateEntityPins(out flashArray : CScriptedFlashArray) : void
 	var asked : int;
 	var hiddenCount : int;
 	var marked : int;
-	var logged : int;
 	var dropped : bool;
 	var pin : CScriptedFlashObject;
 	var marker : CScriptedFlashObject;
 	var scratch : CScriptedFlashArray;
 	var candidates : array<int>;
-	var outcome : string;
 	start = flashArray.GetLength();
 	wrappedMethod(flashArray);
 	// CMF 2 has no hide property; Fog of War switched off in its menu hides nothing.
@@ -79,7 +77,6 @@ function UpdateEntityPins(out flashArray : CScriptedFlashArray) : void
 	k = 0;
 	hiddenCount = 0;
 	marked = 0;
-	logged = 0;
 	dropped = true;
 	for (i = 0; i < scratch.GetLength() && k < asked; i += 1)
 	{
@@ -94,18 +91,9 @@ function UpdateEntityPins(out flashArray : CScriptedFlashArray) : void
 			pin = flashArray.GetElementFlashObject(candidates[k]);
 			hiddenCount += 1;
 			// The one CMF 3 entry this adapter depends on (Stage 1 spec, section 7.1): hide this pin.
-			outcome = "refused";
 			if (CMFStylePin("modFogOfWar", pin, 9, "", 1))
 			{
 				marked += 1;
-				outcome = "marked";
-			}
-			// Launch evidence: the first eight pins of each build that the fog hides here.
-			if (logged < 8)
-			{
-				logged += 1;
-				LogChannel('CMF', "CMF adapter provider=modFogOfWar type=" +
-					pin.GetMemberFlashString("type") + " hidden=1 result=" + outcome);
 			}
 		}
 		k += 1;

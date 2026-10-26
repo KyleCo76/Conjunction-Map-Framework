@@ -34,7 +34,10 @@ The pack tool carries `content/*.w3strings` and the menu XML into the build. CMF
 
 ### Names CMF answers
 
-CMF's own script functions all start with `CMF`, and CMF's map reads only CMF's own pin fields and talks to scripts only under CMF's names: `OnCMFArtFailed`, `OnCMFMapFilter`, `"cmf.map.hints"`, `OnCMFMapHintsReady`, from API version 5 `"cmf.map.theme"` and `OnCMFMapThemeReady`, from API version 6 `OnCMFPinClicked` ([section 5](Writing-Your-Script.md#5-write-your-script)), and from API version 9 `"cmf.map.world"`, `"cmf.map.view"`, `OnCMFMapView`, `OnCMFMapOpening` and `OnCMFPictureNote`. CMF answers no other mod's names. A map mod that used its own names moves onto CMF through these and the general calls, as the adapters in [section 12](Porting-a-Map-Mod.md#12-teaching-examples-moving-a-map-mod-onto-cmf) show.
+CMF's own script functions all start with `CMF`. Its map uses CMF's pin fields and names: `OnCMFArtFailed`, `OnCMFMapFilter`, `OnCMFMapHintsReady`, `OnCMFMapTab`, `OnCMFMapHints`, `OnCMFInfoFold`, `OnCMFMovieEvent`, `OnCMFMapThemeReady`, `OnCMFPinClicked`, `OnCMFMapView`, `OnCMFMapOpening` and `OnCMFPictureNote`; its data channels include `"cmf.map.hints"`, `"cmf.map.hints.owned"`, `"cmf.map.itemStyles"`, `"cmf.map.theme"`, `"cmf.map.world"` and `"cmf.map.view"`. CMF answers no other mod's names. The general calls let a mod keep its own data while sharing the map.
+
+<!-- API hook reference names used by the generated reference. -->
+From API version 13, `CMFCore.OnInfoFold(menu, provider, open)` reports a visible folded box toggle; `CMFCore.OnMovieEvent(menu, provider, id, eventName, value)` receives a live owned movie event and returns whether it handled it; `CMFCore.OnMapAreaReady(menu, area)` reports a completed shown-area pin list. Wrap these with their exact published signatures and preserve other wrappers. See [Your own movie on the screen](Your-Own-Movie-on-the-Screen.md).
 
 One exception keeps existing mods' values readable for their adapters: the game builds pin objects from the map's pin class and drops any field that class does not declare, so CMF's map declares these pin fields of other mods as compatibility names. CMF itself reads none of them; only the named adapters do.
 

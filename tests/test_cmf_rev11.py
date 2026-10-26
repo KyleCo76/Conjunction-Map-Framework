@@ -93,7 +93,7 @@ class ApiTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_and_header(self):
-        self.assertIn('function CMFGetVersion() : int { return 11; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 13; }', self.core)
         self.assertRegex(self.core.split('function CMFGetVersion')[0], r'[Vv]ersion 11')
 
     def test_new_properties_are_declared_known_and_in_the_pack_tool(self):
@@ -119,9 +119,9 @@ class ApiTests(unittest.TestCase):
             self.assertIn(call, one)
         self.assertNotIn('CMFPropertyTabHidden()', one)
         self.assertEqual(cmf_pack.ONE_PIN_PROPERTIES, {1, 3, 5, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-                                                       28, 29, 30})
+                                                       28, 29, 30, 31, 32, 33, 34, 35, 36, 39, 42, 43, 44})
         for head in ('function CMFRegisterForTag(', 'function CMFRegisterForPlace('):
-            self.assertIn('if (!CMFOnePinProperty(propertyId))', body(self.core, head))
+            self.assertIn('if (!CMFOnePinProperty(effectiveId))', body(self.core, head))
 
     def test_place_claims_carry_their_place_and_level(self):
         place = body(self.core, 'function CMFRegisterForPlace(')
@@ -132,7 +132,7 @@ class ApiTests(unittest.TestCase):
 
     def test_choice_keys_and_owners(self):
         keys = choice_keys(self.core)
-        self.assertEqual(keys[69:], ['Reserved69', 'Icons_Undiscovered', 'Look_InfoText'])
+        self.assertEqual(keys[69:72], ['Reserved69', 'Icons_Undiscovered', 'Look_InfoText'])
         choice = body(self.core, 'public function PropertyChoice(propertyId : int, pinType : string) : int')
         for case, value in (('29', 70), ('30', 14), ('19', 71), ('37', 35)):
             self.assertRegex(choice, r'case %s:\n(\t+case \d+:\n)*\t+return %d;' % (case, value))
@@ -334,11 +334,12 @@ class InfoBoxPlaceTests(unittest.TestCase):
 
     def test_pick_keys_are_known_everywhere(self):
         core = CORE.read_text(encoding='ascii')
-        keys = core[core.index("case 'tooltip':\n\t\t\t// Version 7"):][:900]
-        choice = body(core, 'public function PartKeyChoice(part : name, key : name) : int')
+        from rev13_legacy_source import theme_environment
+        env = theme_environment(core)
+        keys = env['CMFThemePartKeys']('tooltip').split(',')
         for key in self.PICK_KEYS:
             self.assertIn(key, keys)
-            self.assertIn(key, choice[:600])
+            self.assertEqual(env['PartKeyChoice']('tooltip', key), 63, key)
             self.assertIn(key, cmf_pack.THEME_PART_KEYS['tooltip'])
             self.assertEqual(cmf_pack.THEME_KEY_ROWS[('tooltip', key)], 'Map behaviour > Info box moves out of the way')
         self.assertIn('if (k == "clearCursorTitle" || k == "clearPick")\n\t{\n\t\treturn number == 0 || number == 1;',

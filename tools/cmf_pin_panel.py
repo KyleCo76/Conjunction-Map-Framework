@@ -21,9 +21,20 @@ import lz4.block
 
 import cmf_package
 import cmf_panel
+from panel.cmf_abc import read_abc
+
+
+def abc(data):
+    """The parsed DoABC tag of a movie (the same reader as cmf_region_build.abc)."""
+    return read_abc(next(t['payload'] for t in cmf_panel.read_movie(data)['tags'] if t['code'] == 82))
 
 ROOT = Path(__file__).resolve().parents[1]
 EDITS = ROOT/'source/panel/pin-fields/edits.json'
+MOVIE_HELPER = "red/game/witcher3/menus/worldmap/CMFMovieMap.as"
+MOVIE_WRAPPER = "script_476.as"
+MOVIE_INITIALIZATION = "Extensions.enabled = true;\nExtensions.noInvisibleAdvance = true;"
+MOVIE_WRAPPER_TEXT = ('include "red/game/witcher3/menus/worldmap/MapMenu.as";\n'
+                      'include "red/game/witcher3/menus/worldmap/CMFMovieMap.as";\n\n' + MOVIE_INITIALIZATION + '\n')
 PROBE_CONTROLLER = ROOT/'source/panel/pin-fields/probe-controller-edits.json'
 
 
@@ -64,11 +75,39 @@ def ffdec(java, jar, *args):
     return result.stdout
 
 
-def changed_classes(before, after):
+def changed_classes(before, after, added=(), scripts=None):
     names = {p.relative_to(before).as_posix() for p in before.rglob('*.as')}
     other = {p.relative_to(after).as_posix() for p in after.rglob('*.as')}
-    need(names == other, 'class set changed: %s' % sorted(names ^ other))
-    return sorted(n for n in names if text(before/n) != text(after/n))
+    allowed = set(added)
+    need(not allowed or allowed == {MOVIE_HELPER}, 'unapproved added-class metadata')
+    scripts = scripts or {}
+    need(not scripts or scripts == {MOVIE_WRAPPER:MOVIE_WRAPPER_TEXT}, 'unapproved added-script metadata')
+    if scripts:
+        need(text(after/MOVIE_WRAPPER).strip() == MOVIE_WRAPPER_TEXT.strip(), 'wrapper content changed')
+        native = text(before/'red/game/witcher3/menus/worldmap/MapMenu.as')
+        need(native.count(MOVIE_INITIALIZATION) == 1, 'original initialization statements changed')
+    allowed |= set(scripts)
+    need(not (names & allowed), 'helper already exists in pinned vanilla')
+    need(other == names | allowed, 'class set changed: %s' % sorted((names | allowed) ^ other))
+    return sorted(allowed | {n for n in names if text(before/n) != text(after/n)})
+
+
+def verify_added_classes(before, after, added):
+    def names(movie):
+        return {(c['name']['namespace']['kind'], c['name']['namespace']['uri'], c['name']['name'])
+                for c in abc(movie)['classes']}
+    original, current = names(before), names(after)
+    # Existing FFDec export/import behavior, independently checked on the reviewed Task9 panel.
+    private_renames = {
+        (5, '', 'MapDebugInfo'): (5, 'MapMenu.as$476', 'MapDebugInfo'),
+        (5, '', 'CategoryDefinition'): (5, 'HubMapPinPanel.as$344', 'CategoryDefinition'),
+        (5, '', 'PinTypeDefinition'): (5, 'HubMapPinPanel.as$344', 'PinTypeDefinition'),
+        (5, '', 'TargetProxy'): (5, 'GTween.as$225', 'TargetProxy'),
+    }
+    original = {private_renames.get(name,name) for name in original}
+    expected = {(23, 'red.game.witcher3.menus.worldmap', 'CMFMovieMap')} if added else set()
+    need(not original & expected, 'helper QName already exists in vanilla')
+    need(current == original | expected, 'unexpected ABC class QName changes')
 
 
 def build(vanilla, java, jar, out, probe_controller=False):
@@ -76,7 +115,10 @@ def build(vanilla, java, jar, out, probe_controller=False):
     need(not out.exists(), 'output directory already exists')
     edits = json.loads(EDITS.read_text(encoding='utf-8'))
     overlay = json.loads(PROBE_CONTROLLER.read_text(encoding='utf-8')) if probe_controller else None
-    expected = sorted(set(edits['classes']) | set(overlay['classes'] if overlay else ()))
+    added = edits.get('addedClasses', [])
+    scripts = edits.get('addedScripts', {})
+    need(not added or added == [MOVIE_HELPER], 'unapproved added-class metadata')
+    expected = sorted(set(edits['classes']) | set(added) | set(scripts) | set(overlay['classes'] if overlay else ()))
     original = Path(vanilla).read_bytes()
     need(sha(original) == edits['vanillaRedswfSha256'], 'vanilla resource hash mismatch')
     before = cmf_panel.read_cr2w(original)
@@ -92,8 +134,9 @@ def build(vanilla, java, jar, out, probe_controller=False):
     cmf_panel.compare_movies(cmf_panel.read_movie(movie), cmf_panel.read_movie(candidate), True)
     (work/'panel.gfx').write_bytes(candidate)
     ffdec(java, jar, '-export', 'script', work/'export-panel', work/'panel.gfx')
-    changed = changed_classes(work/'export-vanilla'/'scripts', work/'export-panel'/'scripts')
+    changed = changed_classes(work/'export-vanilla'/'scripts', work/'export-panel'/'scripts', added, scripts)
     need(changed == expected, 'unexpected changed classes: %s' % changed)
+    verify_added_classes(movie, candidate, added)
     resource = cmf_package.swap_movie(original, candidate)
     cmf_panel.compare_cr2w(before, cmf_panel.read_cr2w(resource), candidate)
     bundle = cmf_package.make_bundle(resource)

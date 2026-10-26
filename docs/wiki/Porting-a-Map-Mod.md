@@ -8,7 +8,7 @@ CMF has no calls made for one mod. Each ability is one general call that takes i
 
 Blocks marked API version 4 or 5 ran in game on 2026-10-20 unless they say otherwise.
 
-### One mod, with and without CMF
+## One mod, with and without CMF
 
 You keep one mod for players with and without CMF, plus one small optional folder:
 
@@ -16,6 +16,43 @@ You keep one mod for players with and without CMF, plus one small optional folde
 - **Your CMF calls go in a separate "CMF support" folder**, such as `modAcmeMapCMF`, that players install only together with CMF. A script that calls a CMF function, or wraps `CMFCore.OnPinReady` or another CMF hook, stops the game at the script compile screen when CMF is not installed, and WitcherScript has no way to call a function only if it exists. So these calls cannot live in your main mod.
 - **That folder claims under your mod's own folder name** as its provider, exactly as CMF's adapter for your mod does (below). Players remove CMF's adapter for your mod and add your support folder, and the map looks the same. Check and build it with the pack tool's `--adapts` and your mod's folder name, as below.
 - **Do not write CMF's pin fields (`cmfIconPath` and the others) or CMF's own flash storage keys (`cmf.map.theme`, `cmf.map.space`) yourself** to keep one folder that compiles without CMF. That skips CMF's claims and winners, overwrites other mods' drawings, cannot reach CMF's hooks, and depends on CMF's internal wiring, which may change in any release; only CMF's functions are kept from 1.0.0 on. Use the support folder.
+
+### One download, with and without CMF
+
+From API version 13, your script can ask for art on a pin without calling any CMF function or naming any CMF class. The same archive compiles with CMF absent. The game and older CMF versions ignore these fields and retain the game's icon. Put the art in your own mod's `texture.cache`, built with the pack tool; it stays unused when no reader handles the asks. Use your mod's actual folder name everywhere below.
+
+Write the fields on the full pin list in a `CR4MapMenu.UpdateUserMapPins` wrapper, before it calls `wrappedMethod(flashArray, indexToUpdate)`, and only when `indexToUpdate` is below 0 (the full list; 0 or more is one user pin). The game's pins and every pin pushed in an `UpdateEntityPins` wrapper are already in the list there, and CMF reads the asks after that call returns, whatever your script file's name. For a pin your mod pushes itself, you can instead write the fields on the object before you push it.
+
+Do not write them in an `UpdateEntityPins` wrapper. A mod compiled with REDkit, such as Ard Dhu Stable, can carry its own compiled `CR4MapMenu.UpdateEntityPins`, and while it is installed no loose wrapper of that method runs (launch of 2026-10-26: the asks never arrived and CMF logged `entity step skipped`). `UpdateUserMapPins` still runs. In the list, find a pin your mod owns or intentionally styles and append your name once, preserving every other name:
+
+```witcherscript
+var providers : string;
+// dataObject is the pin you pushed or found; declare locals at function start.
+providers = dataObject.GetMemberFlashString("cmfAskBy");
+if (StrFindFirst("," + StrLower(providers) + ",", ",modacmeicons,") < 0)
+{
+    if (providers != "") { providers += ","; }
+    providers += "modAcmeIcons";
+    dataObject.SetMemberFlashString("cmfAskBy", providers);
+}
+dataObject.SetMemberFlashString("cmfAskIcon_modAcmeIcons", "img://icons/modacmeicons/chest.png");
+dataObject.SetMemberFlashString("cmfAskTint_modAcmeIcons", IntToString(16777215));
+```
+
+| Field | Value and withdrawal |
+| --- | --- |
+| `cmfAskBy` | Comma-separated folder names. Empty names are skipped, spaces are trimmed and duplicates are read once. Never remove another mod's name. |
+| `cmfAskIcon_<folder>` | Image URL; nonempty text submits property 1. Empty text makes no request. |
+| `cmfAskTint_<folder>` | Decimal RGB text, property 3; `"0"` is black. Empty text makes no request. |
+| `cmfAskScale_<folder>` | Decimal scale text, 25 to 400, property 10. Empty text makes no request. |
+| `cmfAskLabel_<folder>` | HTML label, property 12. Empty text makes no request. |
+| `cmfAskIds_<folder>` | Comma-separated ids accepted by `CMFStylePin`. |
+| `cmfAskText<id>_<folder>` | The property's text value; absent text is `""`. |
+| `cmfAskNumber<id>_<folder>` | Decimal number text; absent text is zero. |
+
+CMF reads `cmfAskBy` once per eligible pin, before `OnPinReady`, then submits each nonempty ask exactly as the corresponding `CMFStylePin` call. Full and late pins share validation, owner fields, rejection logs, player choices and folder order. Default order compares folder names ignoring case; wrapper append order does not decide the winner. No asks are read when `cmfAskBy` is absent or empty. The usual property withdrawal rules apply through `cmfAskIds`, including id 40; an empty dedicated field simply submits nothing. There is no ability query for this protocol because its scripts name no CMF functions. CMF reports `asks pins=<n>` once per build when any pin asks.
+
+For packaged sources, keep catalogs and procedural art builders outside the clean pack input. Copy only scripts, built tables, README and PNG inputs there, then run `cmf_pack.py check` and `build`. The generated archive contains cooked art in your own cache and excludes the PNG/catalog working inputs. Check every script symbol against the game's actual bindings; a runtime guard cannot make a missing function compile.
 
 ### The adapter identity rule
 
@@ -54,7 +91,8 @@ function OnGameStarted(restored : bool)
 Mod A adds its own pin, a well. You used to give it any id; now give it the id the game would give a pin with that tag, `NameToFlashUInt(tag)`, and choose a tag other mods can name. Shortened; set the other fields as the game's own pins carry them:
 
 ```
-// Mod A, in its UpdateEntityPins wrapper
+// Mod A, in its UpdateUserMapPins wrapper, when indexToUpdate is below 0 (an UpdateEntityPins
+// wrapper does not run while a REDkit-compiled mod such as Ard Dhu Stable replaces that method)
 pin = m_flashValueStorage.CreateTempFlashObject("red.game.witcher3.data.StaticMapPinData");
 pin.SetMemberFlashUInt("id", NameToFlashUInt('modA_well'));
 pin.SetMemberFlashString("type", "modA_Well");

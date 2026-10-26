@@ -12,6 +12,8 @@
 - **Not reachable in API version 1:** the player arrow (`Player`) and player-placed pins (`User1` to `User7`). From API version 6, click claims reach player-placed pins ([section 5](Writing-Your-Script.md#5-write-your-script), [Pin clicks](Pin-Clicks.md)). From API version 9, a hide claim that names `'Player'` hides the player arrow ([section 5](Writing-Your-Script.md#5-write-your-script), [Hiding pins](Hiding-Pins.md)). From API version 11, icon, colour and size claims on exactly those types restyle them ([section 5](Writing-Your-Script.md#5-write-your-script), [Changing one pin](Changing-One-Pin.md)).
 - **Finding a tag** for `CMFRegisterIconForTag`: register a type-level icon on that type first, open the map, and read the `CMF pin type=<type> tag=<tag>` lines in the script log ([section 8](Install-and-Test.md)). CMF logs up to 64 distinct type and tag pairs, and only for types that have a type-level icon. From API version 11, `CMFLogPins=true` under `[CMFSettings]` logs every pin the map shows instead, with no limit ([section 5](Writing-Your-Script.md#5-write-your-script), [Changing one pin](Changing-One-Pin.md)).
 
+**Claim diagnostics.** Existing author-facing log lines retain their format. Actual withdrawal adds `CMF withdrawn provider=... property=... level=... type=... tag=... context=...` through the existing claim reporter; an absent slot emits no withdrawal line. Inspect compile errors, `rejected`, the provider `claims=` counts and the withdrawal line separately.
+
 ---
 
 [Previous: Writing your script](Writing-Your-Script.md) · [Contents](Home.md) · [Next: Check and build](Check-and-Build.md)

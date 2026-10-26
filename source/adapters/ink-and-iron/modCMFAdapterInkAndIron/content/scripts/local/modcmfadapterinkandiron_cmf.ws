@@ -425,7 +425,11 @@ function InkAdapterFrameTip()
 		CMFStylePart("modInkAndIronUI", 'tooltip', 'clearTop', "", 124);
 		CMFStylePart("modInkAndIronUI", 'tooltip', 'clearRight', "", 1876);
 		CMFStylePart("modInkAndIronUI", 'tooltip', 'clearBottom', "", 980);
-		CMFStylePart("modInkAndIronUI", 'tooltip', 'clearCursor', "", 70);
+		// clearCursor existed before Ink and Iron's larger clear area, so ask for that area's key: an older CMF keeps its gap
+		if (CMFHasAbility('tooltip', 'clearCursorAbove'))
+		{
+			CMFStylePart("modInkAndIronUI", 'tooltip', 'clearCursor', "", 70);
+		}
 		if (CMFHasAbility('tooltip', 'clearCursorTitle'))
 		{
 			CMFStylePart("modInkAndIronUI", 'tooltip', 'clearCursorTitle', "", 1);

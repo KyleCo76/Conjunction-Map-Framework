@@ -104,6 +104,7 @@ PAGES = [
     ('Map-Movement', None, "The map's look and behaviour", [guide('Smooth map movement (API version 6)')]),
     ('Drawing-on-the-Map', None, "The map's look and behaviour",
      [guide('Drawing on the map itself (API version 6)')]),
+    ('Your-Own-Movie-on-the-Screen', None, "The map's look and behaviour", [page_file('docs/authors/own-screen-movie.md')]),
     ('World-Overview-Pictures', None, "The map's look and behaviour",
      [guide('World overview pictures (API version 9)')]),
     ('Controller-Button-Pictures', None, "The map's look and behaviour",
@@ -111,7 +112,7 @@ PAGES = [
     ('Map-View', None, "The map's look and behaviour", [guide("The map's view (API version 9)")]),
     ('Wide-Screens', None, "The map's look and behaviour", [guide('Wide and tall screens (API version 10)')]),
     ('Porting-a-Map-Mod', 'Porting a map mod', 'Moving a map mod onto CMF',
-     [guide('12. Teaching examples: moving a map mod onto CMF'), guide('One mod, with and without CMF'),
+     [guide('12. Teaching examples: moving a map mod onto CMF'), guide('One mod, with and without CMF'), guide('One download, with and without CMF'),
       guide('The adapter identity rule'),
       guide('A general icon pack'), guide("A mod's own signpost, reached by tag from another mod")]),
     adapter('Adapter-Map-Quest-Insight', 'Map Quest Insight (API version 4)',
@@ -136,8 +137,10 @@ PAGES = [
 ]
 
 # Map events a mod may add on CR4MapMenu (CMF's map calls them under CMF's own names).
-EVENTS = [('OnCMFMapFilter(category : string)', 4, 'each time the legend shows a filter tab, with its name'),
-          ('OnCMFMapHintsReady()', 4, 'once per opening, when the map listens for your key hints')]
+EVENTS = [('OnCMFMapTab(category : string)', 13, 'core-owned; forwards to OnMapTab'),
+          ('OnCMFMapHints()', 13, 'core-owned; forwards to the selected OnMapHints owner'),
+          ('OnCMFMapFilter(category : string)', 4, 'legacy, adapter-owned; do not declare twice'),
+          ('OnCMFMapHintsReady()', 4, 'legacy, adapter-owned; do not declare twice')]
 
 LINK = re.compile(r'\[([^\]]*)\]\(([^)\s]*)\)')
 SPLIT = re.compile(r'(\[[^\]]*\]\([^)\s]*\)|`[^`]*`)')
@@ -192,7 +195,7 @@ def property_since(number):
 
 def hook_since(hook):
     """The API version that added a CMFCore hook."""
-    return 9 if hook in cmf_pack.HOOKS9 else 6 if hook in cmf_pack.HOOKS6 else 4
+    return 13 if hook in cmf_pack.HOOKS13 else 9 if hook in cmf_pack.HOOKS9 else 6 if hook in cmf_pack.HOOKS6 else 4
 
 
 def first_sentence(text):
@@ -496,13 +499,16 @@ class Build:
         lines += ['', '## Property ids', '',
                   'The generic calls `CMFRegister`, `CMFRegisterForTag` and `CMFStylePin` take one of these ids. '
                   'Write an id newer than the CMF you require as its number, behind `CMFHasProperty`. Ids 18 and 19 '
-                  'are kept for later tooltip properties.', '',
+                  'replace or add info-box text; id 39 sets the info-box content width (200..1920 logical pixels, 0 withdraws).', '',
                   '| Id | Function | Since | Explained on |', '| --- | --- | --- | --- |']
         ids = sorted(cmf_pack.PROPERTY_IDS.items(), key=lambda item: item[1])
-        if set(cmf_pack.PROPERTY_IDS.values()) != cmf_pack.KNOWN_PROPERTIES:
+        if set(cmf_pack.PROPERTY_IDS.values()) | set(cmf_pack.NUMERIC_PROPERTIES) != cmf_pack.KNOWN_PROPERTIES:
             self.errors.append('PROPERTY_IDS and KNOWN_PROPERTIES differ in tools/cmf_pack.py')
         for call, number in ids:
             lines.append('| `%d` | `%s()` | %d | %s |' % (number, call, self.version(call), self.mentions(call, texts)))
+        for number, label in sorted(cmf_pack.NUMERIC_PROPERTIES.items()):
+            lines.append('| `%d` | %s (numeric id; no helper) | 13 | [Property values](%s) |'
+                         % (number, label, self.target('Writing-Your-Script')))
         lines += ['', '## Hooks', '',
                   'Wrap these methods of `CMFCore` with `@wrapMethod(CMFCore)` and always call `wrappedMethod` so '
                   'other mods\' wrappers run too. A click hook acts only when `provider` is your own folder name and '
@@ -517,8 +523,8 @@ class Build:
             since = hook_since(hook)
             lines.append('| `%s` | %d | %s |' % (hooks[hook], since, self.mentions(hook, texts)))
         lines += ['', '## Map events', '',
-                  'CMF\'s map calls these events on `CR4MapMenu` under CMF\'s own names. Add one with '
-                  '`@addMethod(CR4MapMenu) event ...` to react.', '',
+                  'CMF\'s map calls these events on `CR4MapMenu`. New events are core-owned; wrap their hooks. '
+                  'Legacy events remain adapter-owned and must not be declared twice.', '',
                   '| Event | Since | When | Explained on |', '| --- | --- | --- | --- |']
         for event, since, when in EVENTS:
             word = event.split('(')[0]
@@ -539,14 +545,14 @@ class Build:
             self.errors.append('the parts in cmfCore.ws CMFThemeParts and tools/cmf_pack.py THEME_PART_KEYS differ')
         groups = [('glow keys', cmf_pack.THEME_GLOW), ('shadow keys', cmf_pack.THEME_SHADOW)]
 
-        def keys(names, extra_groups=()):
+        def keys(names, extra_groups=(), force_text=False):
             names = list(names)
             shown = []
             for label, group in list(extra_groups) + groups:
                 if all(k in names for k in group):
                     names = [k for k in names if k not in group]
                     shown.append(label)
-            shown += ['`%s`%s' % (k, ' (text)' if k in text_keys else '') for k in names]
+            shown += ['`%s`%s' % (k, ' (text)' if k in text_keys or force_text else '') for k in names]
             return ', '.join(shown) or 'none'
         text_group = [('text keys', ('font', 'size', 'color', 'spacing', 'align'))]
         def rows(part, names):
@@ -566,7 +572,7 @@ class Build:
                  '- **text keys**: %s' % mark(('font', 'size', 'color', 'spacing', 'align')),
                  '- **glow keys**: %s' % ', '.join('`%s`' % k for k in cmf_pack.THEME_GLOW),
                  '- **shadow keys**: %s' % ', '.join('`%s`' % k for k in cmf_pack.THEME_SHADOW),
-                 '- **box keys** (every kind but `line` and `movie`): %s' % mark(
+                 '- **box keys** (every kind but `line`): %s' % mark(
                      k for k in cmf_pack.THEME_BOX if k not in cmf_pack.THEME_GLOW + cmf_pack.THEME_SHADOW)
                  + ', glow keys, shadow keys',
                  '- **map-space keys** (`line` and `movie`): %s' % mark(cmf_pack.THEME_SPACE),
@@ -575,12 +581,12 @@ class Build:
                  '| --- | --- | --- | --- |']
         for part, names in cmf_pack.THEME_PART_KEYS.items():
             words = ', '.join('`%s`' % w for w in hide.get(part, '').split(',') if w) or 'none'
-            lines.append('| `%s` | %s | %s | %s |' % (part, keys(names, text_group), words, rows(part, names)))
+            lines.append('| `%s` | %s | %s | %s |' % (part, keys(names, text_group, part == "sounds"), words, rows(part, names)))
         lines += ['', '### Drawing kinds and their keys', '',
                   '| Kind | Anchors | Keys | List keys |', '| --- | --- | --- | --- |']
         for kind, names in cmf_pack.THEME_KIND_KEYS.items():
-            anchors = '`mapSpace` only' if kind in cmf_pack.THEME_SPACE_KINDS and kind != 'text' else (
-                'any part, `mapSpace` or a drawing' if kind == 'text' else 'any part but `mapSpace`, or a drawing')
+            anchors = '`mapSpace` only' if kind in cmf_pack.THEME_SPACE_KINDS and kind not in ('text', 'image', 'movie') else (
+                'any part, `mapSpace` or a drawing' if kind in ('text', 'image', 'movie') else 'any part but `mapSpace`, or a drawing')
             names = list(names)
             shown = []
             for label, group in (('box keys', cmf_pack.THEME_BOX), ('map-space keys', cmf_pack.THEME_SPACE)):

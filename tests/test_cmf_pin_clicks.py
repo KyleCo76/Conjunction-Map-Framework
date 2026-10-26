@@ -45,7 +45,7 @@ def replaced(cls):
 class ApiTests(unittest.TestCase):
     def test_version6_calls(self):
         core = CORE.read_text(encoding='ascii')
-        for line in ('function CMFGetVersion() : int { return 11; }',
+        for line in ('function CMFGetVersion() : int { return 13; }',
                      'function CMFPropertyPinClick() : int { return 16; }',
                      'function CMFPropertyPinClickHint() : int { return 20; }',
                      'function CMFPropertyPinClickButton() : int { return 21; }'):
@@ -65,10 +65,10 @@ class ApiTests(unittest.TestCase):
         core = CORE.read_text(encoding='ascii')
         parse = body(core, 'function CMFParsePinClick(')
         self.assertIn('rest = StrLower(StrReplaceAll(text, ",", " ")) + " ";', parse)
-        self.assertEqual(re.findall(r'word == "(\w+)"', parse), ['use', 'doubleclick', 'button'])
+        self.assertEqual(re.findall(r'word == "(\w+)"', parse), ['use', 'doubleclick', 'button', 'hold'])
         self.assertIn('return flags > 0;', parse)
         self.assertEqual(re.findall(r'text \+= "(\w+),";', body(core, 'function CMFPinClickText(')),
-                         ['use', 'doubleClick', 'button'])
+                         ['use', 'doubleClick', 'button', 'hold'])
         self.assertEqual(parse_click('Button, use'), 'use,button')
         self.assertEqual(parse_click('doubleClick'), 'doubleClick')
         self.assertIsNone(parse_click('use click'))
@@ -191,7 +191,7 @@ class PanelTests(unittest.TestCase):
                       '         this.UseSelectedPin();', hub)
         # The tap on a user pin stays the game's remove; on another pin the winner of "use" takes it.
         self.assertIn('this.setUserMapPin(0,false);\n               }\n               else if(this.cmfClickSelected("use"))', hub)
-        self.assertIn('return param2 == "button" || !param1.isFastTravel && !param1.isQuest;', hub)
+        self.assertIn('return param2 == "button" || param2 == "hold" || !param1.isFastTravel && !param1.isQuest;', hub)
 
     def test_hint_and_buttons(self):
         menu = replaced('menus/worldmap/MapMenu.as')
@@ -203,7 +203,9 @@ class PanelTests(unittest.TestCase):
         for event in ('MOUSE_DOWN,this.cmfPinButtonPress', 'MOUSE_UP,this.cmfPinButtonPress', 'CLICK,this.cmfPinButtonClick'):
             self.assertIn('button.addEventListener(MouseEvent.%s' % event, menu)
         # Two for pin clicks, two for drawing clicks (map-space drawing, tests/test_cmf_map_space.py).
-        self.assertEqual(menu.count('param1.stopPropagation();'), 4)
+        from test_cmf_rev13_map_consumers import applied
+        actual = applied('red/game/witcher3/menus/worldmap/MapMenu.as')
+        self.assertEqual(actual.count('param1.stopPropagation();'), 4)
         self.assertIn('this.mcHubMap.cmfDispatchClick(pin.data as StaticMapPinData,"button");', menu)
         # Every pinButton key the map reads is one the core accepts, and CMF's own look is not a mod's.
         read = set(re.findall(r'cmfNum\("pinButton","(\w+)"', menu))
@@ -216,7 +218,11 @@ class PanelTests(unittest.TestCase):
         for cls in ('data/StaticMapPinData.as', 'menus/worldmap/HubMap.as', 'menus/worldmap/MapMenu.as'):
             names = [i for i, e in enumerate(edits(cls)) if 'cmfClick' in e['replace'] or 'aqoom' in e['replace'] or
                      'cmfUseDown' in e['replace'] or 'cmfPinButton' in e['replace']]
-            self.assertEqual(names, list(range(names[0], names[-1] + 1)), cls)
+            # The original API6 block is contiguous; later revisions append consumers after it.
+            count = 3 if cls.startswith('data/') else 5
+            legacy = names[:count]
+            self.assertEqual(legacy, list(range(legacy[0], legacy[0] + count)), cls)
+            self.assertTrue(all(i > legacy[-1] for i in names[count:]), cls)
 
 
 class PackTests(unittest.TestCase):
@@ -240,7 +246,7 @@ class PackTests(unittest.TestCase):
                 (source/'README.txt').write_text('x\n', encoding='ascii')
                 (source/'content/scripts/local/modacmeclicks_cmf.ws').write_text(
                     '@wrapMethod(CR4Game)\nfunction OnGameStarted(restored : bool)\n{\n\tvar result : bool;\n'
-                    '\tresult = wrappedMethod(restored);\n' + line + '\treturn result;\n}\n', encoding='ascii')
+                    '\tresult = wrappedMethod(restored);\n' + line + '\treturn result;\n}\n', encoding='ascii', newline='\n')
                 return cmf_pack.check_pack(source)[0]
 
         report = check('\tCMFRegister("modAcmeClicks", 16, \'User1\', \'\', "use, button", 7);\n'

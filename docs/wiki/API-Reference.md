@@ -2,13 +2,13 @@
 
 # API reference
 
-Every function, property id, hook and map event CMF offers to mods (API version 11). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
+Every function, property id, hook and map event CMF offers to mods (API version 13). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
 
 ## Functions
 
 | Function | Since | What it does | Explained on |
 | --- | --- | --- | --- |
-| `CMFGetVersion() : int` | 1 | The installed CMF interface version (`6` in CMF 1.0.0, `7` in 1.1.0, `8` in 1.2.0, `9` in 1.3.0, `10` in 1.4.1, `11` in 1.5.0). | [Writing your script](Writing-Your-Script.md), [Getting started](Getting-Started.md) |
+| `CMFGetVersion() : int` | 1 | `CMFRegisterIcon`, `CMFRegisterIconForTag` \| image path \| unused (`0`) \| 40 with this id at the same slot | [Writing your script](Writing-Your-Script.md), [Getting started](Getting-Started.md) |
 | `CMFHasProperty(propertyId : int) : bool` | 1 | `true` when the installed CMF understands that property id. | [Writing your script](Writing-Your-Script.md), [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md), [Hiding pins](Hiding-Pins.md) |
 | `CMFRegister(provider : string, propertyId : int, target : name, mapContext : name, text : string, number : int) : bool` | 1 | One claim for a pin type (a map area for property 4). | [Writing your script](Writing-Your-Script.md), [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Pin clicks](Pin-Clicks.md) |
 | `CMFRegisterBackground(provider : string, area : name, imageRoot : string)` | 1 | Replaces the map image of one area, such as `'AN_NMLandNovigrad'` (Velen and Novigrad). | [Writing your script](Writing-Your-Script.md) |
@@ -52,7 +52,7 @@ Every function, property id, hook and map event CMF offers to mods (API version 
 | `CMFPropertyTabHide() : int` | 4 | Returns property id `15`. | [Writing your script](Writing-Your-Script.md), [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Adapter: Map Quest Insight](Adapter-Map-Quest-Insight.md) |
 | `CMFDraw(provider : string, anchor : name, id : name, kind : name) : bool` | 5 | Makes a drawing with your own `id`, tied to a part or to any drawing any mod made. | [The map theme](Map-Theme.md), [Map theme parts and keys](Theme-Parts-and-Keys.md), [Drawing on the map itself](Drawing-on-the-Map.md) |
 | `CMFDrawSet(provider : string, id : name, key : name, text : string, number : float) : bool` | 5 | Sets one key of your drawing: its place, paint, glow, layer and conditions. | [The map theme](Map-Theme.md), [Drawing on the map itself](Drawing-on-the-Map.md), [Map theme parts and keys](Theme-Parts-and-Keys.md) |
-| `CMFHasAbility(part : name, key : name) : bool` | 5 | Asks whether this CMF knows a part, layer or kind (`key` `''`) or a key, before you use it. | [Drawing on the map itself](Drawing-on-the-Map.md), [Spreading stacked pins](Spreading-Stacked-Pins.md), [Wide and tall screens](Wide-Screens.md) |
+| `CMFHasAbility(part : name, key : name) : bool` | 5 | Asks whether this CMF knows a part, layer or kind (`key` `''`) or a key, before you use it. | [Drawing on the map itself](Drawing-on-the-Map.md), [Writing your script](Writing-Your-Script.md), [Spreading stacked pins](Spreading-Stacked-Pins.md) |
 | `CMFStylePart(provider : string, part : name, key : name, text : string, number : float) : bool` | 5 | Sets one style key of a part of the map: fonts, colours, glows, the game's own plates to hide, or a map behaviour. | [Smooth map movement](Map-Movement.md), [The map theme](Map-Theme.md), [Spreading stacked pins](Spreading-Stacked-Pins.md) |
 | `CMFPropertyLabelColor() : int` | 5 | Returns property id `17`. | [The map theme](Map-Theme.md), [Adapter: Ink and Iron](Adapter-Ink-and-Iron.md) |
 | `CMFDrawSetList(provider : string, id : name, key : name, values : array<float>) : bool` | 6 | Lists are set with `CMFDrawSetList(provider, id, key, values)` (at most 100000 values; an empty array withdraws the key). | [Drawing on the map itself](Drawing-on-the-Map.md), [Map theme parts and keys](Theme-Parts-and-Keys.md), [Adapter: Witcher's Path](Adapter-Witchers-Path.md) |
@@ -94,10 +94,15 @@ Every function, property id, hook and map event CMF offers to mods (API version 
 | `CMFRegisterForPlace(provider : string, propertyId : int, pinType : name, x : float, y : float, text : string, number : int) : bool` | 11 | API version 11. | [Changing one pin](Changing-One-Pin.md), [Writing your script](Writing-Your-Script.md) |
 | `CMFSetLogPins(on : bool)` | 11 | API version 11. | [Writing your script](Writing-Your-Script.md), [Changing one pin](Changing-One-Pin.md) |
 | `CMFPropertyPresent() : int` | 11 | Returns property id `38`. | [Writing your script](Writing-Your-Script.md) |
+| `CMFAddPin(provider : string, tag : name, pinType : name, area : name, x : float, y : float, label : string, description : string) : bool` | 13 | API version 13. | [Writing your script](Writing-Your-Script.md), [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
+| `CMFClickInputHold() : int` | 13 |  | [Pin clicks](Pin-Clicks.md) |
+| `CMFDeclareTag(provider : string, tag : name) : bool` | 13 | API version 13. | [Map theme parts and keys](Theme-Parts-and-Keys.md), [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md), [Writing your script](Writing-Your-Script.md) |
+| `CMFRemovePin(provider : string, tag : name) : bool` | 13 | API version 13. | [Writing your script](Writing-Your-Script.md) |
+| `CMFStyle(provider : string, part : name, target : name, key : name, text : string, number : float) : bool` | 13 | API version 13. | [Map theme parts and keys](Theme-Parts-and-Keys.md), [Writing your script](Writing-Your-Script.md), [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
 
 ## Property ids
 
-The generic calls `CMFRegister`, `CMFRegisterForTag` and `CMFStylePin` take one of these ids. Write an id newer than the CMF you require as its number, behind `CMFHasProperty`. Ids 18 and 19 are kept for later tooltip properties.
+The generic calls `CMFRegister`, `CMFRegisterForTag` and `CMFStylePin` take one of these ids. Write an id newer than the CMF you require as its number, behind `CMFHasProperty`. Ids 18 and 19 replace or add info-box text; id 39 sets the info-box content width (200..1920 logical pixels, 0 withdraws).
 
 | Id | Function | Since | Explained on |
 | --- | --- | --- | --- |
@@ -133,6 +138,18 @@ The generic calls `CMFRegister`, `CMFRegisterForTag` and `CMFStylePin` take one 
 | `30` | `CMFPropertyIconCompleted()` | 6 | [Writing your script](Writing-Your-Script.md) |
 | `37` | `CMFPropertyTabHidden()` | 6 | [Writing your script](Writing-Your-Script.md) |
 | `38` | `CMFPropertyPresent()` | 11 | [Writing your script](Writing-Your-Script.md) |
+| `31` | IconSelected (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
+| `32` | SelectedScale (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
+| `33` | PinAlpha (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
+| `34` | PinOrder (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
+| `35` | PinOffset (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
+| `36` | PinZoom (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
+| `39` | InfoBoxWidth (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
+| `40` | Withdraw (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
+| `41` | LegendRowTint (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
+| `42` | IconUnder (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
+| `43` | IconUnderTint (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
+| `44` | PictureScale (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
 
 ## Hooks
 
@@ -140,22 +157,29 @@ Wrap these methods of `CMFCore` with `@wrapMethod(CMFCore)` and always call `wra
 
 | Hook | Since | Explained on |
 | --- | --- | --- |
-| `OnPinReady(dataObject : CScriptedFlashObject, mapContext : name)` | 4 | [The pin hook: `OnPinReady`](Pin-Hook-OnPinReady.md), [Writing your script](Writing-Your-Script.md), [Choosing pin types](Choosing-Pin-Types.md) |
+| `OnPinReady(dataObject : CScriptedFlashObject, mapContext : name)` | 4 | [The pin hook: `OnPinReady`](Pin-Hook-OnPinReady.md), [Porting a map mod](Porting-a-Map-Mod.md), [Writing your script](Writing-Your-Script.md) |
 | `OnMapReady(menuFlash : CScriptedFlashSprite)` | 4 | [Drawing on the map itself](Drawing-on-the-Map.md), [The pin hook: `OnPinReady`](Pin-Hook-OnPinReady.md) |
 | `OnPinClicked(menu : CR4MapMenu, provider : string, pinTag : name, pinId : int, pinType : string, input : string, value : int) : bool` | 6 | [Pin clicks](Pin-Clicks.md), [Drawing on the map itself](Drawing-on-the-Map.md), [Adapter: All Quest Objectives](Adapter-All-Quest-Objectives.md) |
-| `OnDrawingClicked(menu : CR4MapMenu, provider : string, id : name, input : string, value : int) : bool` | 6 | [Drawing on the map itself](Drawing-on-the-Map.md), [Map theme parts and keys](Theme-Parts-and-Keys.md), [Adapter: Witcher's Path](Adapter-Witchers-Path.md) |
+| `OnDrawingClicked(menu : CR4MapMenu, provider : string, id : name, input : string, value : int) : bool` | 6 | [Map theme parts and keys](Theme-Parts-and-Keys.md), [Drawing on the map itself](Drawing-on-the-Map.md), [Adapter: Witcher's Path](Adapter-Witchers-Path.md) |
 | `OnMapListening(menu : CR4MapMenu, keys : string)` | 6 | [Drawing on the map itself](Drawing-on-the-Map.md), [Adapter: Witcher's Path](Adapter-Witchers-Path.md) |
 | `OnMapView(menu : CR4MapMenu, area : name, x : float, y : float, worldX : float, worldY : float, zoom : float, reason : name)` | 9 | [The map's view](Map-View.md), [Adapter: Annoying Map](Adapter-Annoying-Map.md) |
 | `OnMapOpening(menu : CR4MapMenu, area : name, mapContext : name)` | 9 | [The map's view](Map-View.md), [Writing your script](Writing-Your-Script.md), [Adapter: Annoying Map](Adapter-Annoying-Map.md) |
+| `OnMapTab(menu : CR4MapMenu, category : string)` | 13 | [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
+| `OnMapHints(menu : CR4MapMenu, owner : string)` | 13 | [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md), [Map theme parts and keys](Theme-Parts-and-Keys.md) |
+| `OnInfoFold(menu : CR4MapMenu, provider : string, open : bool)` | 13 | [Shipping your mod](Shipping-Your-Mod.md), [Map theme parts and keys](Theme-Parts-and-Keys.md) |
+| `OnMovieEvent(menu : CR4MapMenu, provider : string, id : string, eventName : string, value : string) : bool` | 13 | [Shipping your mod](Shipping-Your-Mod.md), [Your own movie on the screen](Your-Own-Movie-on-the-Screen.md) |
+| `OnMapAreaReady(menu : CR4MapMenu, area : name)` | 13 | [Your own movie on the screen](Your-Own-Movie-on-the-Screen.md), [Shipping your mod](Shipping-Your-Mod.md) |
 
 ## Map events
 
-CMF's map calls these events on `CR4MapMenu` under CMF's own names. Add one with `@addMethod(CR4MapMenu) event ...` to react.
+CMF's map calls these events on `CR4MapMenu`. New events are core-owned; wrap their hooks. Legacy events remain adapter-owned and must not be declared twice.
 
 | Event | Since | When | Explained on |
 | --- | --- | --- | --- |
-| `OnCMFMapFilter(category : string)` | 4 | each time the legend shows a filter tab, with its name | [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md), [Shipping your mod](Shipping-Your-Mod.md), [Adapter: Gwent Players Map](Adapter-Gwent-Players-Map.md) |
-| `OnCMFMapHintsReady()` | 4 | once per opening, when the map listens for your key hints | [Shipping your mod](Shipping-Your-Mod.md), [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md), [Adapter: Ink and Iron](Adapter-Ink-and-Iron.md) |
+| `OnCMFMapTab(category : string)` | 13 | core-owned; forwards to OnMapTab | [Shipping your mod](Shipping-Your-Mod.md), [Map theme parts and keys](Theme-Parts-and-Keys.md), [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
+| `OnCMFMapHints()` | 13 | core-owned; forwards to the selected OnMapHints owner | [Shipping your mod](Shipping-Your-Mod.md), [Map theme parts and keys](Theme-Parts-and-Keys.md), [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
+| `OnCMFMapFilter(category : string)` | 4 | legacy, adapter-owned; do not declare twice | [Shipping your mod](Shipping-Your-Mod.md), [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md), [Adapter: Gwent Players Map](Adapter-Gwent-Players-Map.md) |
+| `OnCMFMapHintsReady()` | 4 | legacy, adapter-owned; do not declare twice | [Shipping your mod](Shipping-Your-Mod.md), [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md), [Adapter: Ink and Iron](Adapter-Ink-and-Iron.md) |
 
 ## What each API version added
 
@@ -170,6 +194,8 @@ CMF's map calls these events on `CR4MapMenu` under CMF's own names. Add one with
 - **9**: `CMFPropertyButtonPicture`, `CMFPropertyWorldCrest`, `CMFPropertyWorldMarker`, `CMFPropertyWorldPainting`, `CMFRegisterButtonPicture`, `CMFRegisterChoiceOnly`, `CMFRegisterWorldCrest`, `CMFRegisterWorldMarker`, `CMFRegisterWorldPainting`, `CMFRegisterWorldPaintingTiles`, `CMFSetOpeningView`, `CMFSetOpeningWorld`, hook `OnMapView`, hook `OnMapOpening`
 - **10**: `CMFScreenHeight`, `CMFScreenWidth`
 - **11**: `CMFDeclareProvider`, `CMFInfoAdd`, `CMFInfoReplace`, `CMFLevelPlace`, `CMFPlaceRadius`, `CMFPropertyPresent`, `CMFProviderPresent`, `CMFRegisterForPlace`, `CMFSetLogPins`
+- **12**: no new calls (new theme keys only)
+- **13**: `CMFAddPin`, `CMFClickInputHold`, `CMFDeclareTag`, `CMFRemovePin`, `CMFStyle`, hook `OnMapTab`, hook `OnMapHints`, hook `OnInfoFold`, hook `OnMovieEvent`, hook `OnMapAreaReady`
 
 ---
 

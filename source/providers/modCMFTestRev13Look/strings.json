@@ -1,0 +1,41 @@
+{
+  "mod": "modCMFTestRev13Look",
+  "idBase": 2000220000,
+  "strings": [
+    {
+      "id": 2000220001,
+      "key": "cmf_rev13_look_title",
+      "text": {
+        "en": "Folded review box"
+      }
+    },
+    {
+      "id": 2000220002,
+      "key": "cmf_rev13_look_body",
+      "text": {
+        "en": "Visible opening.<br><font rev13fold='1'></font>Folded detail one.<br>Folded detail two.<font rev13fold='0'></font><br>Visible ending."
+      }
+    },
+    {
+      "id": 2000220003,
+      "key": "cmf_rev13_look_more",
+      "text": {
+        "en": "More"
+      }
+    },
+    {
+      "id": 2000220004,
+      "key": "cmf_rev13_look_less",
+      "text": {
+        "en": "Less"
+      }
+    },
+    {
+      "id": 2000220005,
+      "key": "cmf_rev13_hooks_hint",
+      "text": {
+        "en": "Restore legacy hints"
+      }
+    }
+  ]
+}

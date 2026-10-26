@@ -38,8 +38,14 @@ def validate_entries(entries):
         raise ValueError('adapter string reservation 2000200900-2000200999 overflow')
     aliases, adapter_aliases, nexus_ids = {}, {}, set()
     for index, row in enumerate(entries):
-        if not isinstance(row, dict) or not REQUIRED <= row.keys() or row.keys() - REQUIRED - {'minAdapter'}:
+        if not isinstance(row, dict) or not REQUIRED <= row.keys() or row.keys() - REQUIRED - {'minAdapter', 'aliases'}:
             raise ValueError('missing or unknown catalogue fields at row %d' % index)
+        # Paste page only: other names the mod goes by (its Nexus title, its archive name).
+        if 'aliases' in row:
+            values = row['aliases']
+            if (not isinstance(values, list) or not values or any(not _text(v) for v in values) or
+                    len({v.casefold() for v in values} | {row['name'].casefold()}) != len(values) + 1):
+                raise ValueError('aliases must be distinct nonempty strings other than the name')
         if not _text(row['name']) or not _text(row['note']):
             raise ValueError('name and note must be nonempty one-line strings')
         if row['status'] not in ('adapter', 'works', 'author', 'incompatible'):
@@ -313,7 +319,7 @@ function matchMods(text, rows) {
     const source = masked.join("");
     const candidates = [];
     rows.forEach((entry, index) => {
-        for (const alias of [entry.name, ...entry.folders]) {
+        for (const alias of [entry.name, ...(entry.aliases || []), ...entry.folders]) {
             for (const span of spans(source, alias)) candidates.push({...span, index});
         }
     });

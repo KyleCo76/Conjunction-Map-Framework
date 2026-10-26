@@ -1,5 +1,5 @@
 All Quest Objectives adapter for Conjunction Map Framework
-Version 1.1.0
+Version 1.2.0
 
 Brings back three of All Quest Objectives' map features on Conjunction Map Framework's
 world map: the difficulty icons on untracked quest objectives, their own legend row,
@@ -40,6 +40,11 @@ WHAT YOU SEE
   same cached pin to remove it." appears; do it again and "Merchant pin removed." shows
   and the pin goes. Reopening the map starts over, as before.
 - Signposts, quests and every other pin keep the game's own use.
+- With The Stable installed too, all of the above still shows. The Stable replaces the
+  part of the game's map code where All Quest Objectives adds its icons, levels and
+  cached merchants, so on its own All Quest Objectives shows none of them alongside
+  The Stable; this adapter asks All Quest Objectives to add them a moment later, only
+  when it did not run.
 - With CMF's in-game menu add-on, All Quest Objectives is listed by its name, "All Quest
   Objectives", once a save is loaded. At the title screen, before any save is loaded,
   the menu still shows its folder name tidied ("AQOOMRemastered"). The name changes
@@ -57,6 +62,8 @@ KNOWN DIFFERENCES AND LIMITS
   installed too, this one's icons win on the pins both change.
 
 CHANGES
+- 1.2.0: All Quest Objectives' icons, levels and cached merchant pins show with The
+  Stable installed too. Needs CMF 1.2.0 or later, as before.
 - 1.1.0: names All Quest Objectives in CMF's in-game menu ("All Quest Objectives"
   instead of "AQOOMRemastered"). Needs CMF 1.2.0 or later. Nothing else changed.
 - 1.0.0: first release.
@@ -68,4 +75,5 @@ manager. It lands in Mods\modCMFAdapterAllQuestObjectives. No Script Merger is n
 CREDITS
 All Quest Objectives On Map - Remastered is by its own author; this adapter copies none
 of its code or art. It only reads the icon names the mod writes on its pins and calls
-the functions it already offers (AqoomGetMap, IsCachedPinUse, OnCachedPinUsed).
+the functions it already offers (AqoomGetMap, UpdateEntityPins, IsCachedPinUse,
+OnCachedPinUsed).

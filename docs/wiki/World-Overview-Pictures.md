@@ -47,4 +47,4 @@ A region another mod adds goes by its area name; CMF keeps such a claim, because
 
 ---
 
-[Previous: Drawing on the map itself](Drawing-on-the-Map.md) · [Contents](Home.md) · [Next: Controller button pictures](Controller-Button-Pictures.md)
+[Previous: Your own movie on the screen](Your-Own-Movie-on-the-Screen.md) · [Contents](Home.md) · [Next: Controller button pictures](Controller-Button-Pictures.md)

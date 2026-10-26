@@ -39,7 +39,7 @@ class ApiTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_and_property_ids(self):
-        self.assertIn('function CMFGetVersion() : int { return 11; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 13; }', self.core)
         self.assertRegex(self.core.split('function CMFGetVersion')[0], r'version 9: world overview pictures')
         ids = {'CMFPropertyWorldPainting': 24, 'CMFPropertyWorldCrest': 25, 'CMFPropertyButtonPicture': 26,
                'CMFPropertyWorldMarker': 27}
@@ -382,7 +382,7 @@ class GameCompileRuleTests(unittest.TestCase):
 
     def code(self, path):
         text = (ROOT/path).read_text(encoding='utf-8')
-        text = re.sub(r'//[^\n]*', '', text)
+        text = cmf_pack.strip_comments(text)
         return re.sub(r'"(\\.|[^"\\])*"', '""', text)
 
     def test_name_literals_hold_only_letters_digits_and_underscore(self):
