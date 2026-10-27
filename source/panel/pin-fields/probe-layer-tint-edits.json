@@ -1,0 +1,18 @@
+{
+ "schema": "cmf-panel-edits-overlay-1",
+ "description": "PROBE ONLY, never in a release build. Applied on top of edits.json only by tools/cmf_pin_panel.py --probe-layer-tint. Tints each map zoom level a fixed colour on every movement tick (background red, level 1 yellow, 2 green, 3 blue, 4 purple, higher cyan), so a screenshot of the map blur shows which level draws it.",
+ "classes": {
+  "red/game/witcher3/menus/worldmap/HubMap.as": [
+   {
+    "find": "      private function cmfTileHeal(now:int) : void\n",
+    "replace": "      // PROBE ONLY (--probe-layer-tint): tints each zoom level a fixed colour so a screenshot shows which level\n      // draws the blur. Background red, level 1 yellow, 2 green, 3 blue, 4 purple, higher cyan.\n      private function cmfProbeTint() : void\n      {\n         var lods:* = this.mcHubMapZoomContainer.mcHubMapContainer.mcLodContainer;\n         var tints:Array = [[1,0.3,0.3],[1,1,0.3],[0.3,1,0.3],[0.3,0.3,1],[1,0.3,1],[0.3,1,1]];\n         var layer:* = null;\n         var tint:Array = null;\n         var colour:* = null;\n         var lod:int = 0;\n         var i:int = 0;\n         while(i < lods.numChildren)\n         {\n            layer = lods.getChildAt(i);\n            tint = tints[0];\n            lod = lods.GetMinLod();\n            while(lod <= lods.GetMaxLod())\n            {\n               if(lods.GetContainer(lod) == layer) { tint = tints[Math.min(lod,5)]; }\n               lod++;\n            }\n            colour = layer.transform.colorTransform;\n            if(colour.redMultiplier != tint[0] || colour.greenMultiplier != tint[1] || colour.blueMultiplier != tint[2])\n            {\n               colour.redMultiplier = tint[0];\n               colour.greenMultiplier = tint[1];\n               colour.blueMultiplier = tint[2];\n               layer.transform.colorTransform = colour;\n            }\n            i++;\n         }\n      }\n\n      private function cmfTileHeal(now:int) : void\n",
+    "count": 1
+   },
+   {
+    "find": "this.cmfTileHeal(now);",
+    "replace": "this.cmfTileHeal(now); this.cmfProbeTint();",
+    "count": 1
+   }
+  ]
+ }
+}

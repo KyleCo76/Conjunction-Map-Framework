@@ -8,6 +8,8 @@ the movie into the CR2W resource, package it, then gate the result:
   * the bundle must extract back to the exact resource.
 --probe-controller also applies source/panel/pin-fields/probe-controller-edits.json on top (a probe-only
 build that treats input as an Xbox pad for button pictures; never used for a release).
+--probe-layer-tint also applies source/panel/pin-fields/probe-layer-tint-edits.json (a probe-only build that
+tints each map zoom level a fixed colour, for the map blur investigation; never used for a release).
 Never deploys or launches anything.
 """
 import argparse
@@ -36,6 +38,7 @@ MOVIE_INITIALIZATION = "Extensions.enabled = true;\nExtensions.noInvisibleAdvanc
 MOVIE_WRAPPER_TEXT = ('include "red/game/witcher3/menus/worldmap/MapMenu.as";\n'
                       'include "red/game/witcher3/menus/worldmap/CMFMovieMap.as";\n\n' + MOVIE_INITIALIZATION + '\n')
 PROBE_CONTROLLER = ROOT/'source/panel/pin-fields/probe-controller-edits.json'
+PROBE_LAYER_TINT = ROOT/'source/panel/pin-fields/probe-layer-tint-edits.json'
 
 
 def sha(data):
@@ -110,11 +113,23 @@ def verify_added_classes(before, after, added):
     need(current == original | expected, 'unexpected ABC class QName changes')
 
 
-def build(vanilla, java, jar, out, probe_controller=False):
+def probe_overlay(probe_controller, probe_layer_tint):
+    """The probe-only changes asked for, merged class by class (controller first), or None."""
+    files = [f for f, on in ((PROBE_CONTROLLER, probe_controller), (PROBE_LAYER_TINT, probe_layer_tint)) if on]
+    if not files:
+        return None
+    classes = {}
+    for f in files:
+        for name, changes in json.loads(f.read_text(encoding='utf-8'))['classes'].items():
+            classes.setdefault(name, []).extend(changes)
+    return {'classes': classes}
+
+
+def build(vanilla, java, jar, out, probe_controller=False, probe_layer_tint=False):
     out = Path(out)
     need(not out.exists(), 'output directory already exists')
     edits = json.loads(EDITS.read_text(encoding='utf-8'))
-    overlay = json.loads(PROBE_CONTROLLER.read_text(encoding='utf-8')) if probe_controller else None
+    overlay = probe_overlay(probe_controller, probe_layer_tint)
     added = edits.get('addedClasses', [])
     scripts = edits.get('addedScripts', {})
     need(not added or added == [MOVIE_HELPER], 'unapproved added-class metadata')
@@ -152,8 +167,10 @@ def build(vanilla, java, jar, out, probe_controller=False):
     report = {'schema': 'cmf-pin-panel-build-1', 'edits': sha(EDITS.read_bytes()), 'vanillaRedswf': sha(original),
               'movie': sha(candidate), 'resource': sha(resource), 'bundle': sha(bundle), 'metadata': sha(metadata),
               'changedClasses': changed, 'layout': layout['layout']}
-    if overlay:
+    if probe_controller:
         report['probeController'] = sha(PROBE_CONTROLLER.read_bytes())
+    if probe_layer_tint:
+        report['probeLayerTint'] = sha(PROBE_LAYER_TINT.read_bytes())
     (out/'build.json').write_text(json.dumps(report, indent=1) + '\n', encoding='utf-8')
     return report
 
@@ -166,8 +183,10 @@ def main():
     parser.add_argument('--out', required=True, help='new output directory')
     parser.add_argument('--probe-controller', action='store_true',
                         help='probe build only: also apply probe-controller-edits.json (never for a release)')
+    parser.add_argument('--probe-layer-tint', action='store_true',
+                        help='probe build only: also apply probe-layer-tint-edits.json (never for a release)')
     args = parser.parse_args()
-    print(json.dumps(build(args.vanilla, args.java, args.ffdec, args.out, args.probe_controller), indent=1))
+    print(json.dumps(build(args.vanilla, args.java, args.ffdec, args.out, args.probe_controller, args.probe_layer_tint), indent=1))
 
 
 if __name__ == '__main__':

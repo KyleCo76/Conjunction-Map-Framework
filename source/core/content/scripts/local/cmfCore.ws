@@ -8480,6 +8480,7 @@ function OnMenuShown()
 	if (mapMenu)
 	{
 		mapMenu.CMFMapCheckShown();
+		theGame.CMFSetOpenMap(mapMenu);
 	}
 	return result;
 }
@@ -8537,6 +8538,69 @@ function OnClosingMenu()
 	CMFReportView('close');
 	result = wrappedMethod();
 	CMFMapCheckClose();
+	theGame.CMFMapClosed(this);
+	return result;
+}
+
+// Map blur fix (1.6.1). The map panel keeps a movement key held until it gets that key's release. A screenshot tool or
+// Alt+Tab takes the release away from the game, and the game reports the switch only as an input device change, so CMF
+// then tells the open map to clear its held movement keys (see cmfNavClear in edits.json).
+@addField(CR4Game)
+var cmfOpenMap : CR4MapMenu;
+
+@addMethod(CR4Game)
+public function CMFSetOpenMap(menu : CR4MapMenu)
+{
+	cmfOpenMap = menu;
+}
+
+@addMethod(CR4Game)
+public function CMFMapClosed(menu : CR4MapMenu)
+{
+	if (cmfOpenMap == menu)
+	{
+		cmfOpenMap = NULL;
+	}
+}
+
+@addMethod(CR4Game)
+public function CMFOpenMap() : CR4MapMenu
+{
+	return cmfOpenMap;
+}
+
+@addMethod(CR4MapMenu)
+function CMFNavClear(reason : string)
+{
+	var menuFlash : CScriptedFlashSprite;
+	var clear : CScriptedFlashFunction;
+	menuFlash = GetMenuFlash();
+	if (!menuFlash)
+	{
+		return;
+	}
+	clear = menuFlash.GetMemberFlashFunction("cmfNavClear");
+	if (clear)
+	{
+		clear.InvokeSelfOneArg(FlashArgString(reason));
+	}
+}
+
+// The game declares OnInputDeviceChanged an event (inputManager.ws), so its result is passed on.
+@wrapMethod(CInputManager)
+function OnInputDeviceChanged()
+{
+	var result : bool;
+	var mapMenu : CR4MapMenu;
+	result = wrappedMethod();
+	if (theGame)
+	{
+		mapMenu = theGame.CMFOpenMap();
+		if (mapMenu)
+		{
+			mapMenu.CMFNavClear("device");
+		}
+	}
 	return result;
 }
 

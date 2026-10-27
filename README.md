@@ -82,7 +82,7 @@ CMF comes as separate archives. You always need CMF itself; take the rest only f
 
 | Archive | What it is | When to install it |
 | --- | --- | --- |
-| `mod0000_ConjunctionMapFramework` | CMF itself (1.6.0) | **Always** |
+| `mod0000_ConjunctionMapFramework` | CMF itself (1.6.1) | **Always** |
 | `modCMFInGameMenu` | In-game menu add-on (1.6.0): choose in Options which map mod wins each feature | Optional. See [Good to know](#good-to-know) |
 | `modCMFMinimapPanel` | Minimap add-on (2.1.0): your icon packs' icons and colours on the HUD minimap too, on top of whichever minimap you have | Optional. See [Good to know](#good-to-know) for the minimap and HUD mods it was tested with |
 | `modCMFAdapterCheck` | Adapter check add-on (1.0.1): after a save loads, one box names each known map mod you have installed without its CMF adapter | Optional |
@@ -375,7 +375,7 @@ Each version has a [GitHub Release](https://github.com/KyleCo76/Conjunction-Map-
 To check a download in PowerShell, in the folder with the archive:
 
 ```powershell
-Get-FileHash .\mod0000_ConjunctionMapFramework-1.6.0.zip -Algorithm SHA256
+Get-FileHash .\mod0000_ConjunctionMapFramework-1.6.1.zip -Algorithm SHA256
 ```
 
 The result must equal that file's line in `SHA256SUMS`.
