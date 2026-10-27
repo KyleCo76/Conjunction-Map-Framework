@@ -115,7 +115,7 @@ One exception: the **Coloured Map Markers** adapter also shows its icons without
 | Gwent Players Map | 1.0.9 | **1.0.1** | Its card markers, in its author's own card art, and its "Gwent" tab |
 | Ink and Iron - All in One | 0.8.10 (0.9.0 has the same scripts, not yet launched) | **1.2.2** | Ink and Iron's map look, quest level tags, key-hint row, map movement, its tall info box and its gold controller buttons (not yet tried with a real controller). With 1.2.0, also the engraved world overview and seven crests of its optional World Map file, in its author's own art, when you pick them in the menu |
 | Map Pin Teleport | 1.2.2 | 1.0.0 | Teleporting from your own map pins |
-| Map Quest Insight | 2.0.1 (2.0.0 not launched); 1.6.2 | **2.0.0** for 2.0, needs CMF 1.6.0; 1.1.1 for 1.6 | Quest icons by type (main quest, contract and Gwent quest icons in its author's own art), coloured level labels, its info box, spreading stacked markers, its Ultrawide map and Side panels position settings. With 2.0 and adapter 2.0.0 also its round quest badges or symbols, Sticker icons, the quest box beside its marker, Show more, the full-screen map and its panel settings, following its own menu. Its Quest List comes in a later adapter update |
+| Map Quest Insight | 2.0.1 (2.0.0 not launched); 1.6.2 | **2.1.0** for 2.0.1, needs CMF 1.6.0; 2.0.0 for 2.0.0; 1.1.1 for 1.6 | Quest icons by type (main quest, contract and Gwent quest icons in its author's own art), coloured level labels, its info box, spreading stacked markers, its Ultrawide map and Side panels position settings. With 2.0 and adapter 2.0.0 also its round quest badges or symbols, Sticker icons, the quest box beside its marker, Show more, the full-screen map and its panel settings, following its own menu. With 2.0.1 and adapter 2.1.0 also its Quest List on the map and its Change tracked objective key |
 | The Stable - Roach-Horse Customization | 2.2.1 | 1.0.0 | Its Stables row on the map |
 | Witcher Upgrade Gear Map | 1.0.1 | **1.0.1** | Its diagram markers, in its author's own art and school colours, its "Witcher Gear" tab and legend row |
 | Witcher's Path | 1.0.3 | 1.0.0 | Its travel route drawn on the map, and its buttons |
@@ -158,7 +158,7 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 - **Malaombra's Map:** with its "names only on hover" option on, it also hides the quest level labels that CMF adapters draw (from its files, not seen in game).
 - **Ultrawide Menus:** run its patcher, as its page says. Without it, its own map file loads ahead of CMF's.
 - **Choosing a pin type:** when you hold the button to choose a pin type, the chooser still shows the game's icons, even with an icon pack that restyles your pins. A later CMF update draws it from the pack too.
-- **Map Quest Insight 2.0's Quest List** (its list of quests beside the map) is not on CMF's map yet; it comes in a later adapter update. With adapter 1.1.1 instead of 2.0.0, Map Quest Insight 2.0's other new map features do not show either.
+- **Map Quest Insight 2.0's Quest List** comes with adapter 2.1.0 (Map Quest Insight 2.0.1). It sits between the map's region name and the legend, which CMF's map cannot hide yet; Map Quest Insight's own list covers the whole left side. With adapter 1.1.1 instead of 2.0.0 or 2.1.0, Map Quest Insight 2.0's new map features do not show.
 - **Left-aligned text under a centred title in a marker's info box** comes from Map Quest Insight's "Format all marker descriptions" with its Journal text alignment set to Left (its default). Set the alignment to Centred, or switch that option off.
 - **Map Remastered's** own region emblems on the world overview do not show; its redrawn terrain does.
 - **Witcher's Path:** its speed setting does nothing under CMF.
@@ -396,7 +396,7 @@ World overview painting, region crests and gold controller button pictures in th
 
 CMF's smooth map movement and quicker map opening are built on the work of **Narcolepsy**, the author of [Smooth Map](https://www.nexusmods.com/witcher3/mods/13530): much of that code in CMF's map file follows Smooth Map's.
 
-Main quest, contract and Gwent quest icons, Sticker icons, round badges and quest type symbols in the Map Quest Insight adapter by **Wolfer**, the author of Map Quest Insight, used with permission; adapter 2.0.0 carries Map Quest Insight 2.0's map features with Wolfer's permission.
+Main quest, contract and Gwent quest icons, Sticker icons, round badges and quest type symbols in the Map Quest Insight adapter by **Wolfer**, the author of Map Quest Insight, used with permission; adapters 2.0.0 and 2.1.0 carry Map Quest Insight 2.0's map features with Wolfer's permission.
 
 Icons in the Coloured Map Markers adapter by **DJ_Kovrik**, from [Coloured Map Markers](https://www.nexusmods.com/witcher3/mods/938) (maintained by LewisElementary), used with permission under the mod's compatibility notice. The adapter is not made by DJ_Kovrik or LewisElementary; questions about it go to CMF's page.
 

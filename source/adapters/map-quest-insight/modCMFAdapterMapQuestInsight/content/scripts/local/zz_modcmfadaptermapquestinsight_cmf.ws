@@ -1,9 +1,10 @@
-// Map Quest Insight adapter 2.0.0 for Conjunction Map Framework. Requires CMF 1.6.0 (API version 13) and Map Quest
-// Insight 2.0.0 or later (Nexus 14219), which stays unchanged. Install and remove the two together: this file calls
-// Map Quest Insight's own functions (QMI_OptTypeIcons, QMI_IconKind, QMI_LevelBandTint and QMI_ColorTrackedIcon exist
+// Map Quest Insight adapter 2.1.0 for Conjunction Map Framework. Requires CMF 1.6.0 (API version 13) and Map Quest
+// Insight 2.0.1 or later (Nexus 14219; the Quest List file uses names that exist from 2.0.1), which stays
+// unchanged. Install and remove the two together: this file calls Map Quest Insight's own functions (QMI_OptTypeIcons, QMI_IconKind, QMI_LevelBandTint and QMI_ColorTrackedIcon exist
 // from 2.0.0, which Wolfer named stable), so the game stops at the script compile screen when Map Quest Insight is
 // missing or older, and it uses CMF 13's per-type theme call (CMFStyle) and info box fold hook (OnInfoFold), which
-// earlier CMF versions do not have. Players on an older CMF or Map Quest Insight keep adapter 1.2.0.
+// earlier CMF versions do not have. Players on Map Quest Insight 2.0.0 keep adapter 2.0.0, on an older CMF or Map
+// Quest Insight adapter 1.2.0.
 //
 // Map Quest Insight talks to its own map file: it asks the map for its handshake number (MapMenu.qmiApi),
 // then writes icon sizes, quest icons by type, level and signpost labels, the crosshair-label switch,

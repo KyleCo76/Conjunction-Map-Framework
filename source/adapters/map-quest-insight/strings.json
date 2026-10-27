@@ -1,0 +1,181 @@
+{
+  "mod": "modCMFAdapterMapQuestInsight",
+  "idBase": 2000240000,
+  "strings": [
+    {
+      "id": 2000240001,
+      "key": "mqiadapter_ql_hint_quests",
+      "text": {
+        "en": "Quests"
+      }
+    },
+    {
+      "id": 2000240002,
+      "key": "mqiadapter_ql_hint_objective",
+      "text": {
+        "en": "Change tracked objective"
+      }
+    },
+    {
+      "id": 2000240003,
+      "key": "mqiadapter_ql_title",
+      "text": {
+        "en": "Quests"
+      }
+    },
+    {
+      "id": 2000240004,
+      "key": "mqiadapter_ql_sort_nearest",
+      "text": {
+        "en": "Nearest first"
+      }
+    },
+    {
+      "id": 2000240005,
+      "key": "mqiadapter_ql_sort_level",
+      "text": {
+        "en": "Lowest level first"
+      }
+    },
+    {
+      "id": 2000240006,
+      "key": "mqiadapter_ql_sort_level_high",
+      "text": {
+        "en": "Highest level first"
+      }
+    },
+    {
+      "id": 2000240007,
+      "key": "mqiadapter_ql_sort_name",
+      "text": {
+        "en": "By name"
+      }
+    },
+    {
+      "id": 2000240008,
+      "key": "mqiadapter_ql_sort_log",
+      "text": {
+        "en": "Quest log order"
+      }
+    },
+    {
+      "id": 2000240009,
+      "key": "mqiadapter_ql_other_region",
+      "text": {
+        "en": "Other region"
+      }
+    },
+    {
+      "id": 2000240010,
+      "key": "mqiadapter_ql_this_region",
+      "text": {
+        "en": "Only this region"
+      }
+    },
+    {
+      "id": 2000240011,
+      "key": "mqiadapter_ql_filters",
+      "text": {
+        "en": "Show on the map"
+      }
+    },
+    {
+      "id": 2000240012,
+      "key": "mqiadapter_ql_filter_contracts",
+      "text": {
+        "en": "Contracts"
+      }
+    },
+    {
+      "id": 2000240013,
+      "key": "mqiadapter_ql_filter_treasure",
+      "text": {
+        "en": "Treasure hunts"
+      }
+    },
+    {
+      "id": 2000240014,
+      "key": "mqiadapter_ql_filter_gwent",
+      "text": {
+        "en": "Gwent"
+      }
+    },
+    {
+      "id": 2000240015,
+      "key": "mqiadapter_ql_filter_horse_races",
+      "text": {
+        "en": "Horse races"
+      }
+    },
+    {
+      "id": 2000240016,
+      "key": "mqiadapter_ql_filter_boat_races",
+      "text": {
+        "en": "Boat races"
+      }
+    },
+    {
+      "id": 2000240017,
+      "key": "mqiadapter_ql_filter_fist_fights",
+      "text": {
+        "en": "Fist fights"
+      }
+    },
+    {
+      "id": 2000240018,
+      "key": "mqiadapter_ql_filter_heroes",
+      "text": {
+        "en": "The Heroes' Pursuits"
+      }
+    },
+    {
+      "id": 2000240019,
+      "key": "mqiadapter_ql_filter_vintner",
+      "text": {
+        "en": "Vintner's contracts"
+      }
+    },
+    {
+      "id": 2000240020,
+      "key": "mqiadapter_ql_filter_secondary",
+      "text": {
+        "en": "Secondary quests"
+      }
+    },
+    {
+      "id": 2000240021,
+      "key": "mqiadapter_ql_filter_deadly",
+      "text": {
+        "en": "Deadly quests"
+      }
+    },
+    {
+      "id": 2000240022,
+      "key": "mqiadapter_ql_filter_main",
+      "text": {
+        "en": "Main quests"
+      }
+    },
+    {
+      "id": 2000240023,
+      "key": "mqiadapter_ql_help",
+      "text": {
+        "en": "Up/Down choose  -  Right/Left objectives  -  E track  -  H journal  -  T sort  -  C fold  -  F or Esc close"
+      }
+    },
+    {
+      "id": 2000240024,
+      "key": "mqiadapter_ql_empty",
+      "text": {
+        "en": "No active quests"
+      }
+    },
+    {
+      "id": 2000240025,
+      "key": "mqiadapter_ql_level",
+      "text": {
+        "en": "Lv"
+      }
+    }
+  ]
+}

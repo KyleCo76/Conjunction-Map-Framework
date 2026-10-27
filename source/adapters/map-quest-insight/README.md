@@ -1,6 +1,6 @@
 # Map Quest Insight adapter
 
-**Adapter version 2.0.0, for Map Quest Insight 2.0.0 or later and CMF API 13 (CMF 1.6.0).** Carries Map Quest Insight 2.0's map through CMF's general abilities: quest icons by type (round badges or symbols, level colours, tracked gold), the Sticker icons for the game's markers, the quest box beside its marker, the category panel and overview visibility, Show more in quest boxes, the full-screen map and its edge fades, and the clean corner HUD (see "2.0 features" below). Map Quest Insight's 2.0 map features carried with permission from Wolfer. Its Quest List is left to the next adapter update (Kyle 2026-10-26). Players on an older CMF or Map Quest Insight 1.6 keep adapter 1.2.0: this version cannot compile there (`CMFStyle` and the `OnInfoFold` hook are API 13, and the 2.0 functions are Map Quest Insight 2.0's).
+**Adapter version 2.1.0, for Map Quest Insight 2.0.1 or later and CMF API 13 (CMF 1.6.0).** Version 2.1.0 adds Map Quest Insight 2.0's Quest List and its two hint row entries (see "Quest List (2.1.0)" below); players on Map Quest Insight 2.0.0 keep adapter 2.0.0. Version 2.0.0 carries Map Quest Insight 2.0's map through CMF's general abilities: quest icons by type (round badges or symbols, level colours, tracked gold), the Sticker icons for the game's markers, the quest box beside its marker, the category panel and overview visibility, Show more in quest boxes, the full-screen map and its edge fades, and the clean corner HUD (see "2.0 features" below). Map Quest Insight's 2.0 map features carried with permission from Wolfer. Players on an older CMF or Map Quest Insight 1.6 keep adapter 1.2.0: this version cannot compile there (`CMFStyle` and the `OnInfoFold` hook are API 13, and the 2.0 functions are Map Quest Insight 2.0's).
 
 Adapter 1.2.0 sends where Map Quest Insight's own map file puts a tall info box as `tooltip` `tall*` keys (CMF API 12), apart from the box height; see Known differences. Adapter 1.1.1 declares `modMapQuestInsight` at game startup with generic property 38 when `CMFHasProperty(38)` succeeds (API 11). Presence is independent of feature settings. The source-mod compile dependency and minimum CMF version remain unchanged.
 
@@ -82,9 +82,54 @@ One log line per opening (`CMF mqi adapter opening icons= size= sticker= beside=
 
 **Art.** `art-src/mqi_icons.py` cuts Wolfer's `MQI 2.0.1 icons for CMF.zip` (SHA-256 `2204facd…95d3`, never committed) into `art/`: `sticker_<name>.png` (a square of the game icon's longer side around the Sticker's middle, so CMF draws it at its own size), `badge_<kind>.png` (the badge's middle 31 of 32 map units), `badgesym_<kind>.png` (the symbol scaled by its "symbol on badge" factor on the badge's canvas, Wolfer's two-layer recipe) and `symbol_<kind>.png` (the middle 18 of 20 map units), all 64 × 64, and writes the Sticker table. Only cuts and resizes; no other change to the art. `--check` compares instead of writing.
 
+## Quest List (2.1.0)
+
+`zz_modcmfadaptermapquestinsight_questlist.ws` and the movie `movie-src/MqiAdapterQuestList.as` (the adapter's own code, written from Map Quest Insight 2.0's player-facing description and Wolfer's rundown; no Map Quest Insight code, and his map file was never decompiled). Wolfer allowed the adapter to carry the 2.0 map features if they follow Map Quest Insight's own settings (2026-10-25), and named three more names stable for it in 2.0.1.
+
+| Map Quest Insight 2.0.1 name | Used for |
+|---|---|
+| `QMI_QjHomeArea() : name` | the player's journal area: where "this region" and the distances are, and where the map goes back to on close |
+| `QMI_QuestHiddenByCategory(journalQuest : CJournalQuest, questLevel : int) : bool` | whether its hide switches hide a quest, until a filter row is changed in this opening |
+| `QMI_OptQjClose() : int` | "Map when the list closes" (0 back to you, 1 stay) |
+| `QMI_GetQuestLevel`, `QMI_IconKind`, `QMI_LevelBandTint` (2.0.0) | a quest's level, its kind (icon and filter row) and its level colour |
+
+The quests, their order and their objectives come from the game's own map menu and journal (`CR4MapMenu.GetQuests()`, the list the game's map sends its quest tracker; phases, objectives and their map pin ids, `NameToFlashUInt(GetMapPinID())`, as the game's own `OnShowObjectiveOnMap`); names and regions are the game's journal words. Tracking, the objective pick and the journal are the game's own map events (`OnTrackQuest`, `OnHighlightObjectiveWithQuestChange`, `OnShowQuestInJournal`, `OnCycleObjectivesDefault`).
+
+| Map Quest Insight setting (`[qmiQuest]` unless named) | In the list |
+|---|---|
+| `qmiQjPanel` "Quest list on the map" | the list and its [F] hint; off withdraws both |
+| `qmiQjSort` | the first sort (nearest, lowest level, highest level, name, quest log); T or R2 changes it for the opening; the tracked quest always first |
+| `qmiQjThisRegion` "Only this region" (declared in the hidden `qmiHide` group and read and written by that name, stored in `[qmiQuest]`) | the list's first row below the quests; toggling it writes the setting and saves, as its own list does |
+| `[qmiHide] qmiHide*` | the filter rows, in its menu's order; toggling one writes that switch and saves (map markers follow at the next opening, see gaps) |
+| `qmiQjTextSize` | text size, 70 to 130 % |
+| `qmiQjCentre` | centring on the picked quest's marker |
+| `qmiQjOtherRegions` | a quest of another region: 0 stays, 1 switches the map when picked, 2 also while browsing (about 0.6 s on a row) |
+| `qmiQjClose` (via `QMI_OptQjClose`) | on close, 0 goes back to the player's region and position after the list switched |
+| `qmiQjPan` | panning while the list is open (mouse only, see gaps) |
+| `qmiQjDistance`, `qmiQjRegion`, `qmiQjNameCol`, `qmiQjDlcName` | distance, region, name in the journal's difficulty colour, expansion name |
+| `[qmiGeneral] qmiFullScreen` | how see-through the list is (MQI's full-screen list is see-through) |
+| `[qmiGeneral] qmiSideHud` Clean | the [G] Change tracked objective hint |
+
+CMF 13 abilities used: a `screen` `movie` drawing with `focus` 1 and `listen` `mqiadapter.questlist` (`OnMapListening` sends the first value), the movie's `map` object (`pins`, `area`, `player`, `center`, `selectPin`, `highlightPin`, `noSpread`, `showArea`, `lockPan`, `focus`), `OnMovieEvent`, the managed hint list (`hints` `list`, `OnMapHints`, `OnDrawingClicked` with `'hints'`), and `OnMapAreaReady` for a log line.
+
+Keys while the list is open (it takes the keyboard and pad; the mouse keeps working on the map): Up/Down choose, Right/Left show or hide a quest's objectives, E or Enter track (on an objective: track that objective), H journal, T sort, C fold a category, F or Esc close. Mouse: click picks, double click tracks, wheel scrolls. Pad: LT opens and closes, A tracks, X journal, R2 sort, Y fold, B closes.
+
+Log lines: `CMF mqi adapter questlist on= home= close= other=` per opening, `questlist hints entries=`, `questlist sent seq= open= quests= objectives=`, `questlist open count=`, and one per action (`track quest=`, `objective`, `journal quest=`, `thisRegion=`, `filter <switch>=`, `open=`, `region=`, `area=`).
+
+Words: `strings.json` (block 2000240000, 25 strings, English in all 18 tables; the block was scanned free on Kyle's PC, 2026-10-27). Build on Kyle's PC: `python -B tools/cmf_mqi_questlist.py --java <java> --ffdec <ffdec.jar> --out build/mqi21/<name>` runs the pack build above, compiles the movie into `content/blob0.bundle` and `metadata.store` at `gameplay\gui_new\swf\modcmfadaptermqi\questlist.redswf`, writes the 18 tables with the creation skill's `w3strings.py`, and writes `build.json` and `SHA256SUMS`.
+
+### CMF ability gaps (for Kyle; CMF core and panel unchanged)
+
+1. **One hint row owner.** The managed hint list replaces the whole row while it is offered, so another mod's legacy hint entries (Ink and Iron's row, for example) do not show while the Quest List is on. A general "add entries to the row" ability would let both show.
+2. **Short click to track.** Map Quest Insight 2.0.1 tracks a quest with a short click on its marker. CMF's per-pin input claim (property 16 "hold") covers keyboard and mouse as well as the pad, so carrying it would change hold-to-track for keyboard players. Not carried; a per-input choice on that claim would carry it.
+3. **Keys go to the list only.** A focused movie takes every key, so "Move the map with the list open" works with the mouse only. A way for a movie to hand chosen keys back to the map would carry it.
+4. **Filters on the map.** Map Quest Insight reads its hide switches when the map opens, so a filter row changes the markers at the next opening; the list itself updates at once. A general "redraw pins now" call would show it at once.
+5. **Parts over the list.** CMF draws the region title and the legend above screen drawings and can hide neither (their `hide` key removes only plates). MQI's own list covers the left column, and its legend rows auto-hide. So the list sits between the title and the legend (screen y 180 to 630, launch start A, 2026-10-27). A general ability would carry MQI's look: a focused screen drawing asks CMF to hide named parts (legend, title) while it shows.
+6. **The quest you switch to by browsing** (other regions 2) has no signpost glow on the region map as Map Quest Insight's own list gives it.
+
 ## Known differences
 
-- **Quest List not carried yet.** Map Quest Insight 2.0's Quest List and its two hint row entries ("Quests", "Change tracked objective") are left to the next adapter update (Kyle 2026-10-26). CMF's managed hint row replaces the whole row, so the entries come with the list.
+- **Quest List under CMF.** See "CMF ability gaps" above. Whether the game's own action on F (keyboard) or LT (pad) also reacts on CMF's map is checked in the 2.1.0 launch.
 
 - **ALSO HERE stays with spreading on.** Map Quest Insight drops its "ALSO HERE" list only when its own map file answers `qmiSpreadMap`. CMF's map does not declare that name (no mod-specific names in core), and its map class is sealed, so the adapter cannot set it either: the game drops a write to a member the class does not declare. So under CMF the row spreads and the info box still lists the other quests on the spot, as Map Quest Insight does with spreading off. A port that asks `CMFHasAbility('spread', '')` can drop it.
 
@@ -94,7 +139,7 @@ One log line per opening (`CMF mqi adapter opening icons= size= sticker= beside=
 
 ## Dependencies
 
-- **Map Quest Insight 2.0.0 or later, a compile dependency.** The adapter uses its functions and fields, so the scripts fail to compile without it; the 2.0 names above exist from 2.0.0, and it uses none that only 2.0.1 has (`QMI_OptQjClose`, `QMI_OptQjPan`). Install and remove the two together; remove the adapter first.
+- **Map Quest Insight 2.0.1 or later, a compile dependency.** The adapter uses its functions and fields, so the scripts fail to compile without it; from 2.1.0 the Quest List uses names that exist only from 2.0.1 (`QMI_QjHomeArea`, `QMI_QuestHiddenByCategory`, `QMI_OptQjClose`). Install and remove the two together; remove the adapter first.
 - **CMF API 13 (CMF 1.6.0).** `CMFStyle` and the `OnInfoFold` hook arrive in API 13, so the adapter compiles only with that CMF. Earlier: `CMFPropertySpreadRank` (API 6), `CMFStylePart` and `CMFHasAbility` (5), `OnPinReady` and the per-pin calls (4).
 
 ## Files
@@ -102,6 +147,9 @@ One log line per opening (`CMF mqi adapter opening icons= size= sticker= beside=
 | Path | What |
 |---|---|
 | `modCMFAdapterMapQuestInsight/content/scripts/local/zz_modcmfadaptermapquestinsight_cmf.ws` | the startup declaration, the map/pin wrappers, the 2.0 features and the opening log line |
+| `modCMFAdapterMapQuestInsight/content/scripts/local/zz_modcmfadaptermapquestinsight_questlist.ws` | the Quest List: its drawing, data, hints and actions (2.1.0) |
+| `movie-src/MqiAdapterQuestList.as` | the Quest List movie's source, compiled by `tools/cmf_mqi_questlist.py` |
+| `strings.json` | the Quest List's words (2.1.0) |
 | `modCMFAdapterMapQuestInsight/content/scripts/local/zz_modcmfadaptermapquestinsight_sticker.ws` | the Sticker claims (table written by `art-src/mqi_icons.py`) |
 | `modCMFAdapterMapQuestInsight/art/{sticker,badge,badgesym,symbol}_*.png` | Wolfer's 2.0.1 pictures, cut by `art-src/mqi_icons.py`; shipped with their permission (2026-10-25), credited |
 | `art-src/mqi_icons.py` | cuts the 2.0.1 icon set into `art/` and writes the Sticker table |
@@ -113,7 +161,7 @@ Build: `python tools/cmf_pack.py build source/adapters/map-quest-insight/modCMFA
 
 ## Status
 
-2.0.0: static checks only (`tests/test_cmf_mqi_adapter.py`, `tools/ws_lint.py`); its launch with Map Quest Insight 2.0.1 is next. Before that: static checks only. Not yet compiled or run in game with CMF 4: the N4 launch proves the handshake, the conversion and the stand-in icons together. The Faster map and zoom-out keys, the spread keys and the spread rank have not yet run in game.
+2.1.0: launched 2026-10-27 on Windows with keyboard and mouse, 16:9 and 21:9, with CMF 1.6.1 and Map Quest Insight 2.0.1: opening and closing the list, tracking, the journal, a quest in another region, "Only this region", a "Show on the map" row; the movie and the words are built on Kyle's PC. Not run: a controller, G with a quest of two or more objectives. 2.0.0: static checks only (`tests/test_cmf_mqi_adapter.py`, `tools/ws_lint.py`); its launch with Map Quest Insight 2.0.1 is next. Before that: static checks only. Not yet compiled or run in game with CMF 4: the N4 launch proves the handshake, the conversion and the stand-in icons together. The Faster map and zoom-out keys, the spread keys and the spread rank have not yet run in game.
 
 ## Limits
 
