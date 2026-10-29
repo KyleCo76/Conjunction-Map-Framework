@@ -382,6 +382,19 @@ class SourceTests(unittest.TestCase):
         self.assertEqual(code.count('this.cmfCreateHintCopy();'), 1)
         self.assertTrue('this.cmfHintCopy.clickable = this._cmfHintOwner != "";' in code)
         self.assertTrue('this.cmfHintCopy.mouseChildren = this._cmfHintOwner != "";' in code)
+        # CMF 1.6.3 (player's overlap report, 2026-10-28): the managed list joins the game's own row through
+        # InputFeedbackManager; CMF's copy always shows the legacy list, so the two never sit on top of each other.
+        owned = body(code, 'public function cmfSetOwnedHints(')
+        self.assertIn('this.cmfRowOwnedHints();', owned)
+        self.assertIn('if(this._cmfLegacyHints) { this.cmfRenderHintCopy(this._cmfLegacyHints); }', owned)
+        self.assertNotIn('this._cmfOwnedHints : this._cmfLegacyHints', owned)
+        row = body(code, 'protected function cmfRowOwnedHints(')
+        self.assertIn('InputFeedbackManager.removeButton(this,id);', row)
+        self.assertIn('"cmf:" + String(item.label)', row)
+        self.assertIn('InputFeedbackManager.updateButtons(this);', row)
+        legacy = body(code, 'public function cmfSetHintCopy(')
+        self.assertNotIn('_cmfHintOwner', legacy)
+        self.assertIn('action = this.cmfRowHintAction(action);', body(code, 'protected function cmfHintAction('))
 
     def test_theme_panel_listens_on_cmfs_name_and_matches_the_core_lists(self):
         from test_cmf_rev13_map_consumers import applied

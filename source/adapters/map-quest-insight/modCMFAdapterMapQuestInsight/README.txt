@@ -1,5 +1,5 @@
 Map Quest Insight adapter for Conjunction Map Framework
-Version 2.1.0 (for Map Quest Insight 2.0.1; icons by Wolfer, Map Quest Insight's author)
+Version 2.2.0 (for Map Quest Insight 2.1.0; icons by Wolfer, Map Quest Insight's author)
 
 Brings Map Quest Insight's world map features back on Conjunction Map Framework's
 world map. Map Quest Insight stays exactly as its author ships it. Map Quest Insight
@@ -11,8 +11,10 @@ badges or symbols, Sticker icons for the game's markers, the quest info box besi
 its marker, Show more in quest boxes, the full-screen map with its faded edges, the
 clean corner HUD, and the category panel and map overview that show only when
 needed. Version 2.1.0 adds Map Quest Insight's Quest List on the map, with its
-"Quests" and "Change tracked objective" key hints. Each follows Map Quest Insight's
-own menu setting.
+"Quests" and "Change tracked objective" key hints. Version 2.2.0 follows Map Quest
+Insight 2.1.0's Quest List: a Gwent section, Quests Available, Start quest sections
+folded, Show objectives on highlight, Swap Obj, Current Level and the region count.
+Each follows Map Quest Insight's own menu setting.
 
 It also sends where Map Quest Insight's own map puts a tall info box (beside the
 legend or on the right) as its own setting, which CMF 1.6.0 keeps apart from the box
@@ -21,14 +23,14 @@ as the game starts, so CMF's optional adapter check can see it.
 
 REQUIREMENTS
 - Conjunction Map Framework 1.6.0 (version 13) or later.
-- Map Quest Insight 2.0.1 or later (Nexus mod 14219). This adapter calls Map Quest
-  Insight's own functions. Without Map Quest Insight, or with a version before 2.0.1,
+- Map Quest Insight 2.1.0 or later (Nexus mod 14219). This adapter calls Map Quest
+  Insight's own functions. Without Map Quest Insight, or with a version before 2.1.0,
   the game stops at the script compile screen.
-- On Map Quest Insight 2.0.0 keep adapter 2.0.0; on an older CMF or Map Quest Insight
-  1.6, keep adapter 1.1.1.
+- On Map Quest Insight 2.0.1 keep adapter 2.1.0, on 2.0.0 adapter 2.0.0; on an older
+  CMF or Map Quest Insight 1.6, keep adapter 1.1.1.
 
 INSTALL AND REMOVE THEM TOGETHER
-- Install this adapter only while Map Quest Insight 2.0.1 and CMF 1.6.0 are installed.
+- Install this adapter only while Map Quest Insight 2.1.0 and CMF 1.6.0 are installed.
 - Remove this adapter BEFORE removing Map Quest Insight or Conjunction Map Framework.
   If either is removed first, the game stops at the script compile screen until this
   adapter is removed too.
@@ -85,7 +87,15 @@ All of it follows Map Quest Insight's own menu settings:
   first, with type icon, level, name in its difficulty colour, region and distance.
   Up/Down choose, Right/Left show a quest's objectives, E or Enter track, H opens the
   journal, T sorts, C folds a category, F or Esc closes. Click to pick, double click
-  to track. Picking a quest rings its markers and centres on them; a quest in another
+  to track. From 2.2.0, as in Map Quest Insight 2.1.0: Gwent quests have their own
+  section after Treasure hunts; objective lines are not selected and an open list
+  closes when you move to another quest; on the tracked quest, E again, a second
+  click or a double click swaps to its next objective not done yet (Swap Obj); the
+  top right shows "Region: n/t active quests". It follows "Start quest sections
+  folded" and "Show objectives on highlight". With "Quests not started yet" on, a
+  Quests Available section (folded at first) lists the quests you have not started:
+  highlighting a row moves the map to its "!" marker, E or a click on it puts a custom
+  map marker there, and the header shows your level. Picking a quest rings its markers and centres on them; a quest in another
   region switches the map, as "Quests in other regions" says. "Only this region" and
   the "Show on the map" rows sit at the bottom of the list. It follows "Sort quests
   by", "Quest list text size", "Centre the map on the picked quest", "Map when the
@@ -98,8 +108,9 @@ KNOWN DIFFERENCES
 - With "Spread stacked quest markers" on, the info box still lists the other quests on
   the same spot under ALSO HERE. Map Quest Insight drops that list only with its own map
   file.
-- While the Quest List is on, its hints replace the whole key hint row, so another
-  mod's own hint entries do not show there.
+- With CMF 1.6.1 or 1.6.2 the two key hints are drawn over the game's own key hint
+  row unless another mod (Ink and Iron) hides that row. CMF 1.6.3 adds them to the
+  game's row instead.
 - While the Quest List is open it takes the keyboard: with "Move the map with the
   list open" on, the map moves with the mouse only.
 - A "Show on the map" row changes the list at once and the map markers the next time

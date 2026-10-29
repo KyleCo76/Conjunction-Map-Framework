@@ -1,4 +1,4 @@
-"""Build Map Quest Insight adapter 2.1.0 with its Quest List movie and words (developer only, Kyle's PC).
+"""Build Map Quest Insight adapter 2.2.0 with its Quest List movie and words (developer only, Kyle's PC).
 
 The adapter's Quest List is its own small AS3 movie (source/adapters/map-quest-insight/movie-src/
 MqiAdapterQuestList.as), shown by CMF API 13 as a screen movie drawing, plus the adapter's own string table

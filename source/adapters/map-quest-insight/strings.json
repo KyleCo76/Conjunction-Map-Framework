@@ -139,7 +139,7 @@
       "id": 2000240020,
       "key": "mqiadapter_ql_filter_secondary",
       "text": {
-        "en": "Secondary quests"
+        "en": "Other secondary quests"
       }
     },
     {
@@ -160,7 +160,7 @@
       "id": 2000240023,
       "key": "mqiadapter_ql_help",
       "text": {
-        "en": "Up/Down choose  -  Right/Left objectives  -  E track  -  H journal  -  T sort  -  C fold  -  F or Esc close"
+        "en": "Up/Down choose  -  Right/Left objectives  -  E track (again: swap objective)  -  H journal  -  T sort  -  C fold  -  F or Esc close"
       }
     },
     {
@@ -175,6 +175,34 @@
       "key": "mqiadapter_ql_level",
       "text": {
         "en": "Lv"
+      }
+    },
+    {
+      "id": 2000240026,
+      "key": "mqiadapter_ql_current_level",
+      "text": {
+        "en": "Current Level"
+      }
+    },
+    {
+      "id": 2000240027,
+      "key": "mqiadapter_ql_region_count",
+      "text": {
+        "en": "%r: %n/%t active quests"
+      }
+    },
+    {
+      "id": 2000240028,
+      "key": "mqiadapter_ql_region_none",
+      "text": {
+        "en": "%r: no active quests"
+      }
+    },
+    {
+      "id": 2000240029,
+      "key": "mqiadapter_ql_region_count_one",
+      "text": {
+        "en": "%r: %n/%t active quest"
       }
     }
   ]

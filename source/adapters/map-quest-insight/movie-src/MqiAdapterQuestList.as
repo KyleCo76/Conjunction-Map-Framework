@@ -42,7 +42,8 @@ package
       private var selected:int = 0;
       private var top:int = 0;
       private var sortMode:int = 0;
-      private var folded:Object = {};
+      // Quests Available starts folded, as in Map Quest Insight's own list.
+      private var folded:Object = {"avail":true};
       private var expanded:Object = {};
       private var filters:Array = [];
       private var thisRegion:Boolean = false;
@@ -55,6 +56,9 @@ package
       private var dist:Object = {};
       private var lit:Array = [];
       private var pendingPick:int = -1;
+      private var pendingObj:int = -1;
+      private var pendingQa:Boolean = false;
+      private var swapAt:int = 0;
       private var pendingHome:Boolean = false;
       private var switched:Boolean = false;
       private var restRow:int = -1;
@@ -64,6 +68,8 @@ package
       private var bg:Sprite;
       private var bar:Sprite;
       private var title:TextField;
+      private var counter:TextField;
+      private var levelLine:TextField;
       private var help:TextField;
       private var slots:Array = [];
       private var rowH:Number = 26;
@@ -78,6 +84,8 @@ package
          bar.mouseEnabled = false;
          addChild(bar);
          title = field(false);
+         counter = field(true);
+         levelLine = field(false);
          help = field(false);
          help.wordWrap = true;
          doubleClickEnabled = true;
@@ -168,6 +176,7 @@ package
       {
          var first:Boolean = data == null;
          var keepId:Number = selectedQuestId();
+         var keepKey:String = selected >= 0 && selected < rows.length ? rowKey(rows[selected]) : "";
          var i:int = 0;
          data = listened;
          quests = data.quests is Array ? data.quests as Array : [];
@@ -184,6 +193,7 @@ package
             dist = {};
             pinsRef = null;
          }
+         availDistances();
          fontSize = 20 * confNum("textSize",90) / 100;
          rowH = Math.round(fontSize * 1.45);
          if(Number(data.open) > lastOpen)
@@ -192,8 +202,24 @@ package
             open(int(Number(data.at)));
             return;
          }
-         build(keepId);
+         build(keepId,keepKey);
          render();
+      }
+
+      // Map Quest Insight measures the Quests Available rows itself (QMI_qaD, -1 off the player's map); kept once
+      // per opening, like the quests' own distances, so a region switch does not lose them.
+      private function availDistances() : void
+      {
+         var a:Object = null;
+         for each(a in available())
+         {
+            if(Number(a.d) >= 0 && dist[String(a.i)] == null) { dist[String(a.i)] = Number(a.d); }
+         }
+      }
+
+      private function available() : Array
+      {
+         return data && data.available is Array ? data.available as Array : [];
       }
 
       private function selectedQuestId() : Number
@@ -210,16 +236,29 @@ package
          switched = false;
          pendingHome = false;
          pendingPick = -1;
+         pendingObj = -1;
+         pendingQa = false;
          expanded = {};
          visible = true;
+         // Start quest sections folded (qmiQjFoldAll): every section, Quests Available too, at each opening.
+         if(conf("foldAll")) { foldAll(); }
          snapshot();
          build(at >= 0 ? at : trackedId());
+         followObjectives();
          // The keys come to the list a moment after it opens: taken at once, the list would also take the release
          // of the F that opened it, and CMF's key hints would then miss the next F (launch start B).
          focusAt = getTimer() + 350;
          if(at >= 0) { pick(selected,false); }
          render();
          note("open","1");
+      }
+
+      private function foldAll() : void
+      {
+         var q:Object = null;
+         folded = {};
+         for each(q in quests) { folded[String(q.cat)] = true; }
+         folded["avail"] = true;
       }
 
       private function close() : void
@@ -328,23 +367,29 @@ package
 
       // Picking a quest rings its markers and centres on them; a quest of another map switches the map
       // (Quests in other regions, qmiQjOtherRegions 1 or 2) and is picked again once its markers are ready.
-      private function pick(row:int, switchOk:Boolean) : void
+      private function pick(row:int, switchOk:Boolean, objective:int = -2) : void
       {
          var r:Object = row >= 0 && row < rows.length ? rows[row] : null;
          var found:Array = null;
          var pin:Object = null;
          if(!r || !r.q || !map) { return; }
          snapshot();
-         found = questPins(r.q,r.type == ROW_OBJECTIVE ? int(r.o.o) : -1);
-         if(!found.length && r.type == ROW_OBJECTIVE) { found = questPins(r.q,-1); }
+         if(objective == -2) { objective = r.type == ROW_OBJECTIVE ? int(r.o.o) : -1; }
+         found = r.q.avail ? availPins(r.q) : questPins(r.q,objective);
+         if(!found.length && objective >= 0) { found = questPins(r.q,-1); }
          if(!found.length)
          {
             if(switchOk && confNum("other",1) > 0 && String(r.q.map) != "" && String(r.q.map) != curMap())
             {
                pendingPick = int(r.q.i);
+               pendingObj = objective;
                switched = true;
                note("region",String(r.q.area));
                map.showArea(String(r.q.area));
+            }
+            else if(r.q.avail && String(r.q.map) == curMap() && conf("centre"))
+            {
+               map.center(Number(r.q.x),Number(r.q.y),Number(map.zoom),0.3);
             }
             return;
          }
@@ -358,6 +403,23 @@ package
          pin = found[0];
          if(conf("centre")) { map.center(Number(pin.x),Number(pin.y),Number(map.zoom),0.3); }
          map.selectPin(Number(pin.id));
+      }
+
+      // A Quests Available row's "!" marker: the map's pin at the row's place (QMI_qaX, QMI_qaY) on its own map.
+      private function availPins(q:Object) : Array
+      {
+         var pin:Object = null;
+         var best:Object = null;
+         var d:Number = NaN;
+         var bestD:Number = 3;
+         if(String(q.map) != curMap()) { return []; }
+         for each(pin in pinById)
+         {
+            if(pin.shown === false) { continue; }
+            d = Math.sqrt(Math.pow(Number(pin.x) - Number(q.x),2) + Math.pow(Number(pin.y) - Number(q.y),2));
+            if(d < bestD) { bestD = d; best = pin; }
+         }
+         return best ? [best] : [];
       }
 
       private function onFrame(event:Event) : void
@@ -377,7 +439,11 @@ package
             {
                build(pendingPick);
                pendingPick = -1;
-               pick(selected,false);
+               pick(selected,false,pendingObj);
+               pendingObj = -1;
+               // A Quests Available row picked on another map: its marker is set once its map shows.
+               if(pendingQa && rows[selected] && rows[selected].q && rows[selected].q.avail) { note("qaPick",String(rows[selected].q.gv)); }
+               pendingQa = false;
                render();
             }
             else { render(); }
@@ -408,6 +474,8 @@ package
 
       private function shownQuest(q:Object) : Boolean
       {
+         // Quests Available follows only "Only this region"; Map Quest Insight's hide switches leave it as it is.
+         if(q.avail) { return !(thisRegion && String(q.map) != String(data.homeMap)); }
          if(q.tracked) { return true; }
          if(thisRegion && String(q.map) != String(data.homeMap)) { return false; }
          // Until a filter row is changed in this opening, Map Quest Insight's own answer decides.
@@ -443,7 +511,15 @@ package
          return int(a.i) < int(b.i) ? -1 : (int(a.i) > int(b.i) ? 1 : 0);
       }
 
-      private function build(keepId:Number) : void
+      // A row's name across rebuilds, so the selection stays on it when objective lists open or close above it.
+      private function rowKey(r:Object) : String
+      {
+         if(!r) { return ""; }
+         if(r.q) { return r.type + ":" + String(r.q.i) + (r.o ? ":" + String(r.o.o) : ""); }
+         return r.type + ":" + String(r.cat) + ":" + String(r.k);
+      }
+
+      private function build(keepId:Number, keepKey:String = "") : void
       {
          var cats:Array = [];
          var byCat:Object = {};
@@ -481,6 +557,15 @@ package
             }
          }
          if(!quests.length) { rows.push({"type":ROW_CAT,"label":word("empty"),"cat":"","count":-1}); }
+         // Quests Available (with Quests not started yet on): a section of its own after the quests, in the list's sort.
+         list = [];
+         for each(q in available()) { if(shownQuest(q)) { list.push(q); } }
+         if(list.length)
+         {
+            list.sort(compare);
+            rows.push({"type":ROW_CAT,"label":word("available"),"cat":"avail","count":list.length});
+            if(!folded["avail"]) { for each(q in list) { rows.push({"type":ROW_QUEST,"q":q}); } }
+         }
          rows.push({"type":ROW_REGION});
          rows.push({"type":ROW_FILTERS});
          for(i = 0; i < 11; i++) { rows.push({"type":ROW_FILTER,"k":i,"label":i < names.length ? names[i] : ""}); }
@@ -489,6 +574,7 @@ package
          {
             if(rows[i].type == ROW_QUEST && Number(rows[i].q.i) == keepId) { selected = i; break; }
          }
+         if(keepKey != "") { for(i = 0; i < rows.length; i++) { if(rowKey(rows[i]) == keepKey) { selected = i; break; } } }
          if(selected == 0 && rows.length > 1 && rows[0].type == ROW_CAT) { selected = 1; }
          if(rows[selected] && rows[selected].type == ROW_FILTERS) { selected = 0; }
       }
@@ -574,8 +660,27 @@ package
          title.y = 8;
          title.width = boxW - 24;
          title.height = rowH + 6;
+         // The region count at the top right; with Quests not started yet on, "Current Level: N" on a line of its own,
+         // centred under the title (Map Quest Insight's own list centres it between the sort and its region prompt).
+         counter.defaultTextFormat = small;
+         counter.htmlText = html(countText(),"#BBBBBB");
+         counter.y = title.y + Math.round(rowH * 0.12);
+         counter.x = boxW - 14 - counter.width;
+         counter.visible = counter.text != "";
+         title.width = (counter.visible ? counter.x - 8 : boxW - 12) - title.x;
          title.htmlText = html(word("title"),"#FFFFFF") + "   " + html(sortMode < sorts.length ? sorts[sortMode] : "","#BBBBBB");
          listTop = title.y + rowH + 10;
+         levelLine.visible = conf("givers") && Number(data.playerLevel) > 0;
+         if(levelLine.visible)
+         {
+            levelLine.defaultTextFormat = new TextFormat("$NormalFont",Math.round(fontSize * 0.9),0xBBBBBB,null,null,null,null,null,"center");
+            levelLine.x = 12;
+            levelLine.width = boxW - 24;
+            levelLine.height = rowH;
+            levelLine.y = listTop - 6;
+            levelLine.htmlText = "<p align='center'>" + html(word("currentLevel") + ": " + int(data.playerLevel),"#BBBBBB") + "</p>";
+         }
+         listTop = listStart();
          help.defaultTextFormat = small;
          help.x = 12;
          help.width = boxW - 24;
@@ -641,14 +746,16 @@ package
             s.left.y = y + 1;
             s.left.htmlText = left;
             s.left.visible = true;
-            s.right.x = boxW - 14;
             s.right.y = y + Math.round(rowH * 0.12);
             s.right.htmlText = right;
+            // The field sizes itself to its text, so its right edge is placed after the text is set: a reused
+            // row keeps its previous width and would otherwise start at the edge and run off the list.
+            s.right.x = boxW - 14 - s.right.width;
             s.right.visible = right != "";
             if(right != "")
             {
                // The name gives way to the region and distance on the right.
-               s.left.width = Math.max(40,s.right.x - s.right.width - s.left.x - 8);
+               s.left.width = Math.max(40,s.right.x - s.left.x - 8);
             }
             if(r.type == ROW_QUEST) { fitName(s.left,r.q); }
             if(iconUrl != "")
@@ -666,6 +773,38 @@ package
             }
          }
          setChildIndex(bar,1);
+      }
+
+      // "%r: %n/%t active quests": the shown map's region, your active quests there and in all regions, without the
+      // types the filter rows leave out (Only this region does not change the total). Quests not started yet never count.
+      private function countText() : String
+      {
+         var q:Object = null;
+         var region:String = "";
+         var here:int = 0;
+         var all:int = 0;
+         var text:String = "";
+         for each(q in quests)
+         {
+            if(String(q.map) == curMap() && region == "") { region = String(q.region); }
+            if(!counted(q)) { continue; }
+            all++;
+            if(String(q.map) == curMap()) { here++; }
+         }
+         for each(q in available()) { if(region == "" && String(q.map) == curMap()) { region = String(q.region); } }
+         if(region == "") { return ""; }
+         text = all == 0 ? word("regionNone") : (all == 1 ? word("regionCountOne") : word("regionCount"));
+         return text.split("%r").join(region).split("%n").join(String(here)).split("%t").join(String(all));
+      }
+
+      private function counted(q:Object) : Boolean
+      {
+         var keep:Boolean = thisRegion;
+         var shown:Boolean = false;
+         thisRegion = false;
+         shown = shownQuest(q);
+         thisRegion = keep;
+         return shown;
       }
 
       private function questText(q:Object, name:String) : String
@@ -693,21 +832,61 @@ package
 
       // ---- actions ----
 
+      // Objective lines cannot be selected (Map Quest Insight 2.1.0): the highlight steps over them and the filters
+      // heading. An open objective list closes when the highlight leaves its quest, and with "Show objectives on
+      // highlight" (qmiQjObjHover) the highlighted quest's list opens by itself.
       private function move(to:int) : void
       {
+         var step:int = to > selected ? 1 : -1;
          if(!rows.length) { return; }
          to = Math.max(0,Math.min(rows.length - 1,to));
-         if(rows[to].type == ROW_FILTERS) { to += to > selected ? 1 : -1; }
+         while(to > 0 && to < rows.length - 1 && skipped(rows[to])) { to += step; }
+         if(skipped(rows[to])) { to = selected; }
          selected = Math.max(0,Math.min(rows.length - 1,to));
+         followObjectives();
          restRow = selected;
          restAt = getTimer();
          restDone = !(rows[selected].q);
          render();
       }
 
+      private function skipped(r:Object) : Boolean
+      {
+         return r.type == ROW_FILTERS || r.type == ROW_OBJECTIVE;
+      }
+
+      private function followObjectives() : void
+      {
+         var r:Object = selected >= 0 && selected < rows.length ? rows[selected] : null;
+         var want:Object = {};
+         var id:String = r && r.q && !r.q.avail ? String(r.q.i) : "";
+         var key:String = "";
+         var changed:Boolean = false;
+         if(id != "" && (expanded[id] || conf("objHover"))) { want[id] = true; }
+         for(key in expanded) { if(expanded[key] && !want[key]) { changed = true; } }
+         for(key in want) { if(!expanded[key]) { changed = true; } }
+         if(!changed) { return; }
+         expanded = want;
+         build(-1,rowKey(r));
+      }
+
+      // Swap Obj: the tracked quest's next objective you have not done, in the journal's order, round again at the end.
+      private function nextObjective(q:Object) : Object
+      {
+         var open:Array = [];
+         var o:Object = null;
+         var i:int = 0;
+         if(!q || !q.tracked || !(q.objs is Array)) { return null; }
+         for each(o in q.objs) { if(int(o.state) == 0) { open.push(o); } }
+         if(open.length < 2) { return null; }
+         for(i = 0; i < open.length; i++) { if(open[i].tracked) { return open[(i + 1) % open.length]; } }
+         return open[0];
+      }
+
       private function activate(row:int) : void
       {
          var r:Object = row >= 0 && row < rows.length ? rows[row] : null;
+         var swap:Object = null;
          if(!r) { return; }
          switch(r.type)
          {
@@ -715,6 +894,22 @@ package
                fold(row);
                break;
             case ROW_QUEST:
+               if(r.q.avail)
+               {
+                  // A Quests Available row: Map Quest Insight sets its custom marker at the "!" (on the shown map).
+                  pendingQa = String(r.q.map) != curMap();
+                  pick(row,true);
+                  if(!pendingQa) { note("qaPick",String(r.q.gv)); }
+                  else if(pendingPick < 0) { pendingQa = false; }
+                  break;
+               }
+               swap = nextObjective(r.q);
+               if(swap)
+               {
+                  pick(row,true,int(swap.o));
+                  note("objective",String(r.q.i) + ":" + String(swap.o));
+                  break;
+               }
                pick(row,true);
                note("track",String(r.q.i));
                break;
@@ -759,7 +954,7 @@ package
       private function objectives(row:int, on:Boolean) : void
       {
          var r:Object = row >= 0 && row < rows.length ? rows[row] : null;
-         if(!r || !r.q) { return; }
+         if(!r || !r.q || r.q.avail) { return; }
          if(Boolean(expanded[String(r.q.i)]) == on) { return; }
          expanded[String(r.q.i)] = on;
          build(Number(r.q.i));
@@ -769,7 +964,7 @@ package
       private function journal(row:int) : void
       {
          var r:Object = row >= 0 && row < rows.length ? rows[row] : null;
-         if(r && r.q) { note("journal",String(r.q.i)); }
+         if(r && r.q && !r.q.avail) { note("journal",String(r.q.i)); }
       }
 
       private function cycleSort() : void
@@ -779,9 +974,15 @@ package
          render();
       }
 
+      // The first row's top: under the title, and under the Current Level line while it shows.
+      private function listStart() : Number
+      {
+         return title.y + rowH + 10 + (levelLine.visible ? rowH - 2 : 0);
+      }
+
       private function rowAt(localY:Number) : int
       {
-         var listTop:Number = title.y + rowH + 10;
+         var listTop:Number = listStart();
          var row:int = top + int((localY - listTop) / rowH);
          if(localY < listTop || localY > help.y || row < 0 || row >= rows.length) { return -1; }
          return row;
@@ -793,17 +994,29 @@ package
          event.stopPropagation();
          if(!opened) { return; }
          if(!focused) { focusAt = 0; takeFocus(); }
-         if(row < 0) { render(); return; }
+         if(row < 0 || rows[row].type == ROW_OBJECTIVE) { render(); return; }
+         // A second click on the tracked quest swaps its objective (Swap Obj); the double click that may follow is
+         // the same swap.
+         if(row == selected && rows[row].type == ROW_QUEST && nextObjective(rows[row].q))
+         {
+            swapAt = getTimer();
+            restDone = true;
+            activate(row);
+            render();
+            return;
+         }
          selected = row;
          restDone = true;
-         if(rows[row].type == ROW_QUEST) { pick(row,true); render(); }
-         else { activate(row); }
+         followObjectives();
+         if(rows[selected].type == ROW_QUEST) { pick(selected,true); render(); }
+         else { activate(selected); }
       }
 
       private function onDoubleClick(event:MouseEvent) : void
       {
          var row:int = rowAt(mouseY);
          event.stopPropagation();
+         if(getTimer() - swapAt < 500) { return; }
          if(opened && row >= 0 && rows[row].type == ROW_QUEST) { activate(row); }
       }
 

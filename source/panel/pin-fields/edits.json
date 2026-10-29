@@ -3206,6 +3206,26 @@
     "find": "         else { map.Zoom(inward); }\n      }\n",
     "replace": "         else { map.Zoom(inward); }\n         if(map == this.mcHubMap) { this.mcHubMap.cmfZoomSource(\"\"); }\n      }\n",
     "count": 1
+   },
+   {
+    "find": "         this._cmfLegacyHints = param1;\n         if(this._cmfHintOwner == \"\")\n         {\n            this.cmfRenderHintCopy(param1);\n         }\n",
+    "replace": "         this._cmfLegacyHints = param1;\n         this.cmfRenderHintCopy(param1);\n",
+    "count": 1
+   },
+   {
+    "find": "         this.cmfRenderHintCopy(owner != \"\" ? this._cmfOwnedHints : this._cmfLegacyHints);\n      }\n",
+    "replace": "         this.cmfRowOwnedHints();\n         if(this._cmfLegacyHints) { this.cmfRenderHintCopy(this._cmfLegacyHints); }\n      }\n\n      // CMF 1.6.3: a managed list joins the game's own key hint row, as the click and scroll hints do, instead of\n      // replacing CMF's copy of the row. Without a mod that hides the game's row the two used to sit on top of each\n      // other. A mod that hides the row and sends its copy to \"cmf.map.hints\" (Ink and Iron) gathers these buttons\n      // with the rest of the row, so CMF's copy shows only that list and both mods' hints show together.\n      private var _cmfRowHints:Array = null;\n\n      private var _cmfRowItems:Array = null;\n\n      protected function cmfRowOwnedHints() : void\n      {\n         var item:Object = null;\n         var id:int = -1;\n         try\n         {\n            if(this._cmfRowHints)\n            {\n               for each(id in this._cmfRowHints) { InputFeedbackManager.removeButton(this,id); }\n            }\n            this._cmfRowHints = [];\n            this._cmfRowItems = [];\n            if(this._cmfHintOwner != \"\" && this._cmfOwnedHints)\n            {\n               for each(item in this._cmfOwnedHints)\n               {\n                  if(item && item.label)\n                  {\n                     this._cmfRowHints.push(InputFeedbackManager.appendButton(this,item.gamepad_navEquivalent ? String(item.gamepad_navEquivalent) : \"\",Number(item.keyboard_keyCode) > 0 ? int(item.keyboard_keyCode) : -1,\"cmf:\" + String(item.label)));\n                     this._cmfRowItems.push(item);\n                  }\n               }\n            }\n            InputFeedbackManager.updateButtons(this);\n            dispatchEvent(new GameEvent(GameEvent.CALL,\"OnCMFPanelNote\",[\"hints row owner=\" + this._cmfHintOwner + \" buttons=\" + this._cmfRowHints.length]));\n         }\n         catch(err:Error)\n         {\n         }\n      }\n\n      // The id the game's row gave a managed entry (a click on Ink and Iron's copy of the row) to the entry's own id.\n      protected function cmfRowHintAction(action:int) : int\n      {\n         var i:int = this._cmfRowHints ? this._cmfRowHints.indexOf(action) : -1;\n         return i >= 0 && this._cmfRowItems[i] ? int(this._cmfRowItems[i].actionId) : action;\n      }\n",
+    "count": 1
+   },
+   {
+    "find": "               for each(item in this._cmfOwnedHints) { if(item && Number(item.click) > 0) { actions.push(int(item.actionId)); } }\n",
+    "replace": "               for each(item in this._cmfRowItems) { if(item && Number(item.click) > 0) { actions.push(int(this._cmfRowHints[this._cmfRowItems.indexOf(item)])); } }\n",
+    "count": 1
+   },
+   {
+    "find": "         if(this._cmfHintOwner == \"\" || !this._cmfOwnedHints) { return false; }\n         for each(item in this._cmfOwnedHints)\n",
+    "replace": "         if(this._cmfHintOwner == \"\" || !this._cmfOwnedHints) { return false; }\n         action = this.cmfRowHintAction(action);\n         key = \"$\" + action;\n         for each(item in this._cmfOwnedHints)\n",
+    "count": 1
    }
   ],
   "red/game/witcher3/menus/worldmap/HubMapContainer.as": [

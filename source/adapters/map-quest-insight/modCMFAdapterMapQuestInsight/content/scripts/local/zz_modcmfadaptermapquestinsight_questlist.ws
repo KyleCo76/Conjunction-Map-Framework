@@ -1,4 +1,4 @@
-// Map Quest Insight's Quest List on CMF's map (adapter 2.1.0). Map Quest Insight 2.0 draws a list of the active
+// Map Quest Insight's Quest List on CMF's map (adapter 2.1.0; 2.2.0 follows Map Quest Insight 2.1.0's list). Map Quest Insight 2.0 draws a list of the active
 // quests beside the map in its own map file, opened from its [F] Quests key hint, and offers [G] Change tracked
 // objective while its Corner HUD is Clean. CMF's map loads instead of that file, so neither shows. Wolfer, Map Quest
 // Insight's author, allowed the adapter to carry Map Quest Insight 2.0's map features, credited, if they follow
@@ -7,6 +7,9 @@
 // fed through a listen key, and a managed key hint list. It copies no Map Quest Insight code; it reads Map Quest
 // Insight's settings and calls only the names Wolfer listed as stable from 2.0.1 (QMI_QjHomeArea,
 // QMI_QuestHiddenByCategory, QMI_OptQjClose) and from 2.0.0 (QMI_GetQuestLevel, QMI_IconKind, QMI_LevelBandTint).
+// From 2.2.0 it also reads the Quests Available names Wolfer listed as stable for 2.1.0 (2026-10-28): the QMI_qa*
+// arrays its map fills while "Quests not started yet" is on, QMI_OptQuestGivers, QMI_QaTitleWord and the
+// OnQmiQaPick event, which sets or removes the custom map marker at a row's "!" marker.
 //
 // The list writes only the two kinds of settings its own rows change in Map Quest Insight: "Only this region"
 // and the hide switches, then saves them, as Map Quest Insight's own list does. Both are declared in its menu's
@@ -172,7 +175,7 @@ function MqiAdapterQlOpenList()
 	LogChannel('CMF', "CMF mqi adapter questlist open count=" + mqiAdapterQlOpen + " quests=" + mqiAdapterQlQuests.Size());
 }
 
-// What the list sends back: track, objective, journal, thisRegion, filter, and its own open and region notes.
+// What the list sends back: track, objective, journal, thisRegion, filter, qaPick, and its own open and region notes.
 @wrapMethod(CMFCore)
 function OnMovieEvent(menu : CR4MapMenu, provider : string, id : string, eventName : string, value : string) : bool
 {
@@ -256,6 +259,18 @@ function MqiAdapterQlEvent(eventName : string, value : string)
 		}
 		return;
 	}
+	// A Quests Available row picked on its own map: Map Quest Insight sets or removes the custom map marker at the
+	// row's "!" marker (its value is the row's QMI_qaGv number; Map Quest Insight acts only on the shown map).
+	if (eventName == "qaPick")
+	{
+		index = StringToInt(value, -1);
+		if (index >= 0)
+		{
+			OnQmiQaPick(index);
+		}
+		LogChannel('CMF', "CMF mqi adapter questlist qaPick=" + value);
+		return;
+	}
 	LogChannel('CMF', "CMF mqi adapter questlist " + eventName + "=" + value);
 }
 
@@ -327,9 +342,14 @@ function MqiAdapterQlFilter(kind : int, type : int) : int
 	return 8;
 }
 
-// The journal's own category of a quest type, in its order, and its heading.
-function MqiAdapterQlCategory(type : int) : int
+// The journal's own category of a quest type, in its order, and its heading. Map Quest Insight 2.1.0 gives Gwent
+// quests (QMI_IconKind 5) their own section between Treasure hunts and Hearts of Stone.
+function MqiAdapterQlCategory(kind : int, type : int) : int
 {
+	if (kind == 5)
+	{
+		return 4;
+	}
 	switch (type)
 	{
 		case 0:
@@ -340,9 +360,9 @@ function MqiAdapterQlCategory(type : int) : int
 		case 4:
 			return 3;
 		case 6:
-			return 4;
-		case 7:
 			return 5;
+		case 7:
+			return 6;
 	}
 	return 1;
 }
@@ -358,8 +378,10 @@ function MqiAdapterQlCategoryWord(category : int) : string
 		case 3:
 			return GetLocStringByKeyExt("panel_journal_legend_treasurehunt");
 		case 4:
-			return GetLocStringByKeyExt("panel_journal_legend_ep1");
+			return GetLocStringByKeyExt("mqiadapter_ql_filter_gwent");
 		case 5:
+			return GetLocStringByKeyExt("panel_journal_legend_ep1");
+		case 6:
 			return GetLocStringByKeyExt("panel_journal_legend_ep2");
 	}
 	return GetLocStringByKeyExt("panel_journal_queststatus_side");
@@ -384,13 +406,14 @@ function MqiAdapterQlDiffColour(lvlDiff : int) : string
 }
 
 // One value with everything the list shows: its settings (Map Quest Insight's), its words (the adapter's string
-// table and the game's journal words) and the active quests in the game's quest log order.
+// table and the game's journal words), the active quests in the game's quest log order and, while "Quests not
+// started yet" is on, Map Quest Insight's Quests Available rows.
 @addMethod(CR4MapMenu)
 function MqiAdapterQlSend()
 {
 	var storage : CScriptedFlashValueStorage;
 	var root, conf, words, questObject, objectiveEntry : CScriptedFlashObject;
-	var questList, questPins, objectivePins, objectiveList, filterList : CScriptedFlashArray;
+	var questList, questPins, objectivePins, objectiveList, filterList, availList : CScriptedFlashArray;
 	var journal : CWitcherJournalManager;
 	var quests : array<CJournalQuest>;
 	var journalQuest : CJournalQuest;
@@ -423,6 +446,7 @@ function MqiAdapterQlSend()
 	root.SetMemberFlashInt("at", -1);
 	root.SetMemberFlashString("home", NameToString(home));
 	root.SetMemberFlashString("homeMap", MqiAdapterQlMap(home));
+	root.SetMemberFlashInt("playerLevel", playerLevel);
 
 	conf = storage.CreateTempFlashObject();
 	conf.SetMemberFlashInt("sort", StringToInt(MqiAdapterVar('qmiQuest', 'qmiQjSort', "0"), 0));
@@ -437,6 +461,9 @@ function MqiAdapterQlSend()
 	conf.SetMemberFlashBool("nameCol", MqiAdapterOn('qmiQuest', 'qmiQjNameCol', true));
 	conf.SetMemberFlashBool("dlc", MqiAdapterOn('qmiQuest', 'qmiQjDlcName', true));
 	conf.SetMemberFlashBool("fullScreen", MqiAdapterVar('qmiGeneral', 'qmiFullScreen', "3") != "0");
+	conf.SetMemberFlashBool("foldAll", MqiAdapterOn('qmiQuest', 'qmiQjFoldAll', false));
+	conf.SetMemberFlashBool("objHover", MqiAdapterOn('qmiQuest', 'qmiQjObjHover', false));
+	conf.SetMemberFlashBool("givers", QMI_OptQuestGivers());
 	root.SetMemberFlashObject("conf", conf);
 
 	words = storage.CreateTempFlashObject();
@@ -456,6 +483,11 @@ function MqiAdapterQlSend()
 	words.SetMemberFlashString("help", GetLocStringByKeyExt("mqiadapter_ql_help"));
 	words.SetMemberFlashString("empty", GetLocStringByKeyExt("mqiadapter_ql_empty"));
 	words.SetMemberFlashString("level", GetLocStringByKeyExt("mqiadapter_ql_level"));
+	words.SetMemberFlashString("currentLevel", GetLocStringByKeyExt("mqiadapter_ql_current_level"));
+	words.SetMemberFlashString("regionCount", GetLocStringByKeyExt("mqiadapter_ql_region_count"));
+	words.SetMemberFlashString("regionCountOne", GetLocStringByKeyExt("mqiadapter_ql_region_count_one"));
+	words.SetMemberFlashString("regionNone", GetLocStringByKeyExt("mqiadapter_ql_region_none"));
+	words.SetMemberFlashString("available", QMI_QaTitleWord());
 	root.SetMemberFlashObject("words", words);
 
 	filterList = storage.CreateTempFlashArray();
@@ -483,12 +515,12 @@ function MqiAdapterQlSend()
 		}
 		kind = QMI_IconKind(journalQuest);
 		type = (int)journalQuest.GetType();
-		category = MqiAdapterQlCategory(type);
+		category = MqiAdapterQlCategory(kind, type);
 		file = MqiAdapterKindFile(kind);
 		if (file == "" || kind == 2)
 		{
 			file = "secondary";
-			if (category == 0 || category == 4 || category == 5)
+			if (category == 0 || category == 5 || category == 6)
 			{
 				file = "main";
 			}
@@ -583,9 +615,100 @@ function MqiAdapterQlSend()
 		questList.PushBackFlashObject(questObject);
 	}
 	root.SetMemberFlashArray("quests", questList);
+	availList = MqiAdapterQlAvailable(storage, base, playerLevel);
+	root.SetMemberFlashArray("available", availList);
 	storage.SetFlashObject("mqiadapter.questlist", root);
 	LogChannel('CMF', "CMF mqi adapter questlist sent seq=" + mqiAdapterQlSeq + " open=" + mqiAdapterQlOpen + " quests=" +
-		mqiAdapterQlQuests.Size() + " objectives=" + mqiAdapterQlObjs.Size());
+		mqiAdapterQlQuests.Size() + " objectives=" + mqiAdapterQlObjs.Size() + " available=" + availList.GetLength());
+}
+
+// Map Quest Insight's Quests Available rows (QMI_qa*, filled by its map with the pins, for this map's "!" markers and
+// the other regions' quests, already passed through its hide switches as its markers are): name, level, place
+// (AN_ area names, Velen's under AN_NMLandNovigrad) and distance (QMI_qaD, -1 off the player's map), in the row's
+// QMI_qaGv number. Its map refills them on a region switch, so they are sent again when the new area is ready.
+@addMethod(CR4MapMenu)
+function MqiAdapterQlAvailable(storage : CScriptedFlashValueStorage, base : string, playerLevel : int) : CScriptedFlashArray
+{
+	var list : CScriptedFlashArray;
+	var row : CScriptedFlashObject;
+	var journalQuest : CJournalQuest;
+	var i, count, level, lvlDiff, kind, contentType : int;
+	var file : string;
+	list = storage.CreateTempFlashArray();
+	count = QMI_qaGv.Size();
+	if (QMI_qaQuest.Size() < count || QMI_qaTitle.Size() < count || QMI_qaLvl.Size() < count || QMI_qaX.Size() < count ||
+		QMI_qaY.Size() < count || QMI_qaD.Size() < count || QMI_qaAr.Size() < count)
+	{
+		LogChannel('CMF', "CMF mqi adapter questlist available sizes differ gv=" + count);
+		return list;
+	}
+	for (i = 0; i < count; i += 1)
+	{
+		journalQuest = QMI_qaQuest[i];
+		level = QMI_qaLvl[i];
+		lvlDiff = 0;
+		if (level > 0)
+		{
+			lvlDiff = level - playerLevel;
+		}
+		file = "";
+		contentType = 0;
+		if (journalQuest)
+		{
+			kind = QMI_IconKind(journalQuest);
+			file = MqiAdapterKindFile(kind);
+			if (file == "" || kind == 2)
+			{
+				file = "secondary";
+			}
+			contentType = (int)journalQuest.GetContentType();
+		}
+		row = storage.CreateTempFlashObject();
+		row.SetMemberFlashInt("i", 100000 + QMI_qaGv[i]);
+		row.SetMemberFlashInt("gv", QMI_qaGv[i]);
+		row.SetMemberFlashBool("avail", true);
+		row.SetMemberFlashString("name", GetLocStringById(QMI_qaTitle[i]));
+		if (file != "")
+		{
+			row.SetMemberFlashString("icon", base + "symbol_" + file + ".png");
+		}
+		else
+		{
+			row.SetMemberFlashString("icon", "");
+		}
+		row.SetMemberFlashInt("band", QMI_LevelBandTint(level));
+		row.SetMemberFlashInt("lvl", level);
+		row.SetMemberFlashString("diff", MqiAdapterQlDiffColour(lvlDiff));
+		row.SetMemberFlashBool("deadly", level > 0 && lvlDiff >= theGame.params.LEVEL_DIFF_DEADLY);
+		if (contentType == 1)
+		{
+			row.SetMemberFlashString("dlc", GetLocStringByKeyExt("panel_journal_legend_ep1"));
+		}
+		else if (contentType == 2)
+		{
+			row.SetMemberFlashString("dlc", GetLocStringByKeyExt("panel_journal_legend_ep2"));
+		}
+		else
+		{
+			row.SetMemberFlashString("dlc", "");
+		}
+		row.SetMemberFlashString("map", MqiAdapterQlMap(QMI_qaAr[i]));
+		row.SetMemberFlashString("area", NameToString(QMI_qaAr[i]));
+		if (journalQuest)
+		{
+			row.SetMemberFlashString("region", GetLocStringByKeyExt(NameToString(GetAreaName(journalQuest))));
+		}
+		else
+		{
+			row.SetMemberFlashString("region", "");
+		}
+		row.SetMemberFlashNumber("x", QMI_qaX[i]);
+		row.SetMemberFlashNumber("y", QMI_qaY[i]);
+		row.SetMemberFlashNumber("d", QMI_qaD[i]);
+		row.SetMemberFlashBool("tracked", false);
+		list.PushBackFlashObject(row);
+	}
+	return list;
 }
 
 @wrapMethod(CMFCore)
@@ -595,5 +718,9 @@ function OnMapAreaReady(menu : CR4MapMenu, area : name)
 	if (menu && menu.mqiAdapterQlOn)
 	{
 		LogChannel('CMF', "CMF mqi adapter questlist area=" + area);
+		if (QMI_OptQuestGivers())
+		{
+			menu.MqiAdapterQlSend();
+		}
 	}
 }
