@@ -304,12 +304,17 @@
     "folders": [
       "mod000MapIconsRemastered"
     ],
-    "providers": [],
+    "providers": [
+      "mod000MapIconsRemastered"
+    ],
     "groups": [],
     "textKeys": [],
-    "adapter": null,
-    "status": "author",
-    "note": "Needs its author's CMF-ready update to restore its map icons."
+    "adapter": {
+      "folder": "modCMFAdapterMapIconsRemastered",
+      "file": "CMF Adapter - Map Icons Remastered"
+    },
+    "status": "adapter",
+    "note": "Needs its CMF adapter; this mod has no reliable in-game detector, so use this paste page."
   },
   {
     "name": "Map Remastered",

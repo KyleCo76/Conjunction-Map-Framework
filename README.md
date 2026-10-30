@@ -87,7 +87,7 @@ CMF comes as separate archives. You always need CMF itself; take the rest only f
 | `modCMFMinimapPanel` | Minimap add-on (2.1.0): your icon packs' icons and colours on the HUD minimap too, on top of whichever minimap you have | Optional. See [Good to know](#good-to-know) for the minimap and HUD mods it was tested with |
 | `modCMFAdapterCheck` | Adapter check add-on (1.0.1): after a save loads, one box names each known map mod you have installed without its CMF adapter | Optional |
 | `modCMFExampleIconPack` | Sample icon pack: a small example for pack authors | Optional |
-| `modCMFAdapter…` (12 archives) | Adapters for 12 map mods that don't support CMF yet | Only for those mods you use, and only until the mod's author updates it for CMF. See [Supported map mods](#supported-map-mods) |
+| `modCMFAdapter…` (13 archives) | Adapters for 13 map mods that don't support CMF yet, including the Map Icons - Remastered pack (new) | Only for those mods you use, and only until the mod's author updates it for CMF. See [Supported map mods](#supported-map-mods) |
 
 ### Installing
 
@@ -103,7 +103,7 @@ Every archive has a `README.txt` with its full install, update and removal steps
 
 Many map mods work with CMF as they are, with no adapter. An **adapter** is a small stand-in for a mod that doesn't support CMF yet: it brings that mod's map features back on CMF's map while the mod itself stays exactly as its author ships it. Once the author updates the mod for CMF, you remove the adapter. Adapters **contain none of the mod they adapt** (only art its author gave for CMF, credited), add no features of their own, and **only work with that mod installed**: without it, the game stops at the script compile screen.
 
-One exception: the **Coloured Map Markers** adapter also shows its icons without that mod installed. Coloured Map Markers is a map-file-only mod with no scripts an adapter could check, and its author's permission covers using its icons on their own. Keep Coloured Map Markers installed anyway if you like its minimap colours: it keeps colouring the minimap as before, and with the minimap add-on the adapter's icons show on top of that minimap too.
+Two exceptions: the **Coloured Map Markers** adapter and the **Map Icons - Remastered** pack also show their icons without that mod installed. Both mods are map-file-only, with no scripts an adapter could check, and their authors' permission covers using their icons on their own. Keep Coloured Map Markers installed anyway if you like its minimap colours: it keeps colouring the minimap as before, and with the minimap add-on the adapter's icons show on top of that minimap too. Map Icons - Remastered likewise keeps its own minimap when installed.
 
 | Mod | Tested version | Adapter | What the adapter brings back |
 | --- | --- | --- | --- |
@@ -114,6 +114,7 @@ One exception: the **Coloured Map Markers** adapter also shows its icons without
 | Fog of War | 1.2.1 | **1.0.2** | Hides every map icon under the fog, including other mods' icons |
 | Gwent Players Map | 1.0.9 | **1.0.1** | Its card markers, in its author's own card art, and its "Gwent" tab |
 | Ink and Iron - All in One | 0.8.10 (0.9.0 has the same scripts, not yet launched) | **1.2.2** | Ink and Iron's map look, quest level tags, key-hint row, map movement, its tall info box and its gold controller buttons (not yet tried with a real controller). With 1.2.0, also the engraved world overview and seven crests of its optional World Map file, in its author's own art, when you pick them in the menu |
+| Map Icons - Remastered | 1.0 (optional, see above; tested without it) | **1.0.0** (new) | Its painted world map icons: kandy422's 138 pictures for shops, services, places, quest kinds, completed places, level badges and your own pins, in the legend too, and its seven flat region emblems on the world overview, used with permission. Needs CMF 1.5.0 or later for all of it |
 | Map Pin Teleport | 1.2.2 | 1.0.0 | Teleporting from your own map pins |
 | Map Quest Insight | 2.1.0; 2.0.1 (2.0.0 not launched); 1.6.2 | **2.2.0** for 2.1.0, needs CMF 1.6.0 (1.6.3 for its key hints); 2.1.0 for 2.0.1; 2.0.0 for 2.0.0; 1.1.1 for 1.6 | Quest icons by type (main quest, contract and Gwent quest icons in its author's own art), coloured level labels, its info box, spreading stacked markers, its Ultrawide map and Side panels position settings. With 2.0 and adapter 2.0.0 also its round quest badges or symbols, Sticker icons, the quest box beside its marker, Show more, the full-screen map and its panel settings, following its own menu. With 2.0.1 and adapter 2.1.0 also its Quest List on the map and its Change tracked objective key. With 2.1.0 and adapter 2.2.0 also "Lv x-y" on its "Quests not started yet" markers, and the Quest List's Gwent section, Quests Available, Swap Obj and its other 2.1.0 settings |
 | The Stable - Roach-Horse Customization | 2.2.1 | 1.0.0 | Its Stables row on the map |
@@ -150,7 +151,7 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 
 <br/>
 
-- **Placeholder art** in the All Quest Objectives and Botanist adapters, until those authors supply theirs. The Gwent Players Map and Witcher Gear Map adapters (1.0.1), the Map Quest Insight adapter (from 1.0.1) and the Ink and Iron adapter (from 1.2.0) use their authors' own art. CMF ships another mod's art only when its author permits it, and credits them.
+- **Placeholder art** in the All Quest Objectives and Botanist adapters, until those authors supply theirs. The Gwent Players Map and Witcher Gear Map adapters (1.0.1), the Map Quest Insight adapter (from 1.0.1), the Ink and Iron adapter (from 1.2.0) and the Map Icons - Remastered pack use their authors' own art. CMF ships another mod's art only when its author permits it, and credits them.
 - **Ink and Iron's World Map file art** (the engraved world overview and crests) shows only when you pick Ink and Iron on the menu's World overview and Region crests and markers rows, or in the settings file: the game cannot tell whether that optional file is installed. Without it, change nothing.
 - **Fog of War's clouds** do not draw on CMF's map until Fog of War supports CMF; the hiding works.
 - **Show Chests on Map's** optional white chest icon is written into the game's own files, so on CMF's map chests show the game's own chest icon (from its files, not seen in game).
@@ -160,7 +161,8 @@ The full, current list is on the [Nexus Mods page](https://www.nexusmods.com/wit
 - **Choosing a pin type:** when you hold the button to choose a pin type, the chooser still shows the game's icons, even with an icon pack that restyles your pins. A later CMF update draws it from the pack too.
 - **Map Quest Insight's Quest List** comes with adapter 2.1.0 (Map Quest Insight 2.0.1) and 2.2.0 (Map Quest Insight 2.1.0). It sits between the map's region name and the legend, which CMF's map cannot hide yet; Map Quest Insight's own list covers the whole left side. With adapter 1.1.1 instead of 2.0.0 or later, Map Quest Insight 2.0's new map features do not show. Some "!" markers show no level: those are the game's own, which Map Quest Insight never labels, on its own map too.
 - **Left-aligned text under a centred title in a marker's info box** comes from Map Quest Insight's "Format all marker descriptions" with its Journal text alignment set to Left (its default). Set the alignment to Centred, or switch that option off.
-- **Map Remastered's** own region emblems on the world overview do not show; its redrawn terrain does.
+- **Map Remastered's** own region emblems on the world overview do not show; its redrawn terrain does. The Map Icons - Remastered pack brings kandy422's flat emblems.
+- **Map Icons - Remastered's completed places** (cleared monster nests, bandit camps and the like) are drawn very dark in its own art, and the pack keeps them that way.
 - **Witcher's Path:** its speed setting does nothing under CMF.
 - **World Map Merger** is not compatible with CMF, by design: it merges map mods into a map file of its own, which loads in place of CMF's map. Use one or the other.
 - **Map Pin Teleport:** the "Go Now" texts are English, as in the mod itself.
@@ -311,7 +313,7 @@ The adapters are teaching examples, written as the code that mod's own author wo
 | Witcher Upgrade Gear Map | [page](docs/authors/witcher-gear-map-adapter.md) | [source](source/adapters/witcher-gear-map/) |
 | Witcher's Path | [page](docs/authors/witchers-path-adapter.md) | [source](source/adapters/witchers-path/) |
 
-The Coloured Map Markers adapter has no porting page: that mod has no scripts, so the adapter is only its icons registered with CMF ([source](source/adapters/coloured-map-markers/)).
+The Coloured Map Markers adapter and the Map Icons - Remastered pack have no porting page: those mods have no scripts, so each is only their icons registered with CMF ([Coloured Map Markers source](source/adapters/coloured-map-markers/), [Map Icons - Remastered source](source/adapters/map-icons-remastered/)).
 
 **Smooth Map** now supports CMF itself: see [Smooth Map Remastered](https://www.nexusmods.com/witcher3/mods/13530) by Narcolepsy. Community Patch - World Map has a porting section in the [author guide, section 12](docs/authors/icon-pack-guide.md#12-teaching-examples-moving-a-map-mod-onto-cmf); no adapter ships for it.
 
@@ -399,6 +401,8 @@ CMF's smooth map movement and quicker map opening are built on the work of **Nar
 Main quest, contract and Gwent quest icons, Sticker icons, round badges and quest type symbols in the Map Quest Insight adapter by **Wolfer**, the author of Map Quest Insight, used with permission; adapters 2.0.0 to 2.2.0 carry Map Quest Insight 2.0's and 2.1.0's map features with Wolfer's permission.
 
 Icons in the Coloured Map Markers adapter by **DJ_Kovrik**, from [Coloured Map Markers](https://www.nexusmods.com/witcher3/mods/938) (maintained by LewisElementary), used with permission under the mod's compatibility notice. The adapter is not made by DJ_Kovrik or LewisElementary; questions about it go to CMF's page.
+
+Icons and region emblems in the Map Icons - Remastered pack by **kandy422**, from [Map Icons - Remastered](https://www.nexusmods.com/witcher3/mods/14490), used with permission. The pack is not made by kandy422; questions about it go to CMF's page.
 
 Thanks to the authors of the map mods CMF adapts. Their mods stay theirs; CMF's adapters contain none of their files, and their art only where the author gave it for CMF, credited.
 

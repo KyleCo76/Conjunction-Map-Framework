@@ -47,7 +47,7 @@ Populated detector categories combine with AND; alternatives within a category c
 
 Fog of War minimum 1.0.1 and Map Quest Insight minimum 1.1.1 are the user-approved recommended downloads after their startup-presence fix. A missing provider does not measure an installed adapter version. Both consumers say install or update the named file (version X or newer). No other adapter version is changed.
 
-Smooth Map and Community Patch - World Map are author-update page entries with adapter=null, empty groups/textKeys, and no in-game table row. Smooth Map uses the handoff's exact note. Map Icons Remastered is author-update only, with its actual mod000MapIconsRemastered archive folder. Coloured Map Markers retains its separate art adapter and no in-game detector. World Map Merger is an incompatible external tool: exact-name match only, no evidenced Nexus URL/folder and no invented link.
+Smooth Map and Community Patch - World Map are author-update page entries with adapter=null, empty groups/textKeys, and no in-game table row. Smooth Map uses the handoff's exact note. Coloured Map Markers and Map Icons Remastered (from 2026-10-30, with its actual mod000MapIconsRemastered archive folder) are art adapter entries with no in-game detector: kandy422 gave permission for the Map Icons pack on 2026-10-30, and it was launched on 2026-10-30. World Map Merger is an incompatible external tool: exact-name match only, no evidenced Nexus URL/folder and no invented link.
 
 ## Read-only archive identities
 
