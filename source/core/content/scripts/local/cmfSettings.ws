@@ -91,3 +91,55 @@ function CMFSettingsMapCheck() : bool
 	value = StrLower(theGame.GetInGameConfigWrapper().GetVarValue('CMFSettings', 'CMFMapCheck'));
 	return value != "false" && value != "0";
 }
+
+// API 14: the animation frame rate, read once per opening; 0 is Off. A stored optional menu answer (option
+// position 0-3: Off, 10, 15, 30) overrides the hidden file switch (false or 0 = Off, 10/15/30, else 15).
+function CMFSettingsAnimatedPins(menuPresent : bool) : int
+{
+	var value : string;
+	if (menuPresent)
+	{
+		value = theGame.GetInGameConfigWrapper().GetVarValue('CMFMenuGeneral', 'CMFAnimatedPins');
+		// The menu stores the option position: 0 = Off, 1 = 10, 2 = 15, 3 = 30. Each rate divides 30.
+		if (value == "0") { return 0; }
+		if (value == "1") { return 10; }
+		if (value == "2") { return 15; }
+		if (value == "3") { return 30; }
+	}
+	value = StrLower(theGame.GetInGameConfigWrapper().GetVarValue('CMFSettings', 'CMFAnimatedPins'));
+	if (value == "false" || value == "0") { return 0; }
+	if (value == "10" || value == "15" || value == "30") { return StringToInt(value); }
+	return 15;
+}
+
+// API 14: hold moving pin pictures while the map moves, read once per opening. Menu answer 0/1 first, then the
+// hidden file switch (false or 0 = Off, anything else On).
+function CMFSettingsAnimationDragPause(menuPresent : bool) : bool
+{
+	var value : string;
+	if (menuPresent)
+	{
+		value = theGame.GetInGameConfigWrapper().GetVarValue('CMFMenuGeneral', 'CMFAnimationDragPause');
+		if (value == "0" || value == "1") { return value == "1"; }
+	}
+	value = StrLower(theGame.GetInGameConfigWrapper().GetVarValue('CMFSettings', 'CMFAnimationDragPause'));
+	return value != "false" && value != "0";
+}
+
+// The animation picture cache's ceiling in MiB: the menu row stores its option position (0 = Normal 32, 1 = Large 64,
+// 2 = Huge 128); the file key holds 32, 64 or 128. Anything else is 64.
+function CMFSettingsAnimationMemory(menuPresent : bool) : int
+{
+	var value : string;
+	if (menuPresent)
+	{
+		value = theGame.GetInGameConfigWrapper().GetVarValue('CMFMenuGeneral', 'CMFAnimationMemory');
+		if (value == "0") { return 32; }
+		if (value == "1") { return 64; }
+		if (value == "2") { return 128; }
+	}
+	value = theGame.GetInGameConfigWrapper().GetVarValue('CMFSettings', 'CMFAnimationMemory');
+	if (value == "32") { return 32; }
+	if (value == "128") { return 128; }
+	return 64;
+}

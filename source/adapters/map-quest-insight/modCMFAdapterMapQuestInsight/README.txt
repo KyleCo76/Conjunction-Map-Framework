@@ -1,5 +1,5 @@
 Map Quest Insight adapter for Conjunction Map Framework
-Version 2.2.0 (for Map Quest Insight 2.1.0; icons by Wolfer, Map Quest Insight's author)
+Version 2.3.0 (for Map Quest Insight 2.1.0; icons by Wolfer, Map Quest Insight's author)
 
 Brings Map Quest Insight's world map features back on Conjunction Map Framework's
 world map. Map Quest Insight stays exactly as its author ships it. Map Quest Insight
@@ -75,7 +75,9 @@ All of it follows Map Quest Insight's own menu settings:
   (keyboard) and Camera lock (controller). With "Remember Show more" on, boxes open
   the way you last left one.
 - "Full-screen map": the map runs to the top and bottom of the screen, with soft or
-  dark faded edges, or none (Clear).
+  dark faded edges, or none (Clear). From 2.3.0, with CMF API 14 or later, no dark
+  bars stay under the tabs and the button hints, and the fades look as on Map Quest
+  Insight's own map.
 - "Corner HUD" Clean: the tracked quest's dark boxes go, its text keeps an outline.
 - Signposts hidden in the wider set of filter tabs Map Quest Insight 2.0 names.
 - No spreading of stacked markers on the fast travel map, as Map Quest Insight 2.0.1.

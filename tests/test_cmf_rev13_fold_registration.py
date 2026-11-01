@@ -64,7 +64,7 @@ class Storage:
 
 def style_env():
     env=contracts.PreparationLifecycleTests().make_env()
-    def entry():return Obj(provider="",kind=0,target="",anchor="",key="",text="",number=0.,order=0,item="",itemKind="",values=Array())
+    def entry():return Obj(provider="",kind=0,target="",anchor="",key="",text="",number=0.,order=0,item="",itemKind="",values=Array(),ints=Array())
     env.update(SCMFThemeEntry=entry,itemStyleOwners=Array(),itemStylesSent=False,
                menuOrder="",providerOrder="",themeNotes=Array(),StrCmp=lambda a,b:(a>b)-(a<b),
                StrReplaceAll=str.replace,CMFSettingsProviderRank=lambda order,p:-1,

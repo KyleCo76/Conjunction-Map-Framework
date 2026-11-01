@@ -34,6 +34,7 @@ import zlib
 TOOLS = Path(__file__).resolve().parent
 sys.path.insert(0, str(TOOLS))
 import cmf_cooked_codec
+from cmf_animation import parse_animation, animation_paths
 import cmf_pin_types
 import cmf_texture_cache as cache
 
@@ -108,6 +109,8 @@ VERSION11 = {'CMFPropertyInfoTitle', 'CMFPropertyInfoText', 'CMFPropertyIconUndi
              'CMFPropertyTabHidden', 'CMFInfoReplace', 'CMFInfoAdd', 'CMFLevelPlace', 'CMFPlaceRadius',
              'CMFRegisterForPlace', 'CMFSetLogPins', 'CMFPropertyPresent', 'CMFDeclareProvider', 'CMFProviderPresent'}
 VERSION13 = {'CMFStyle', 'CMFAddPin', 'CMFRemovePin', 'CMFDeclareTag', 'CMFClickInputHold'}
+VERSION14 = {'CMFPropertyIconFrames', 'CMFPropertyIconUnderFrames', 'CMFPropertyFrameOffset', 'CMFPropertyPictureFit', 'CMFDrawSetBits', 'CMFGridKeepPin'}
+API |= VERSION14
 # The world overview's crest names (UniverseMapContainer.configUI); a region another mod adds goes by its area name.
 WORLD_REGIONS = ('kaer_morhen', 'skellige', 'novigrad', 'no_mans_land', 'prolog_village', 'wyzima_castle', 'bob')
 WORLD_MARKERS = ('player', 'quest')
@@ -128,7 +131,7 @@ THEME_SHADOW = ('shadowDistance', 'shadowAngle', 'shadowColor', 'shadowAlpha', '
 THEME_TEXT = ('font', 'size', 'color', 'spacing', 'align') + THEME_GLOW
 THEME_PART_KEYS = {
     'screen': (),
-    'map': ('top', 'bottom', 'panLimit', 'centerInLimit', 'backdrop'),
+    'map': ('top', 'bottom', 'panLimit', 'centerInLimit', 'backdrop', 'frame', 'frameTop', 'frameBottom'),
     'mapEdge': ('hide',),
     'title': THEME_TEXT + ('x', 'y', 'screenX', 'screenY', 'wrap', 'hide', 'text'),
     'tracker': THEME_GLOW + ('nameFont', 'nameSize', 'nameColor', 'hide', 'x', 'y', 'scale'),
@@ -222,12 +225,15 @@ THEME_KIND_KEYS = {'rect': THEME_BOX, 'ring': THEME_BOX + ('inset',), 'ellipse':
                    'text': THEME_BOX + ('text', 'font', 'size', 'color', 'align', 'wrap', 'padding', 'x', 'y',
                                         'sizeZoom', 'area', 'fadeMs', 'listen', 'listenFields'),
                    'movie': THEME_BOX + ('area', 'preview', 'fadeMs', 'listen', 'listenFields', 'src', 'focus'),
-                   'image': THEME_BOX + ('src', 'fit', 'smooth', 'x', 'y', 'sizeZoom', 'area', 'fadeMs')}
+                   'image': THEME_BOX + ('src', 'fit', 'smooth', 'x', 'y', 'sizeZoom', 'area', 'fadeMs'),
+                   # Version 14: a mask over a square of the map in cells (mapSpace only; bits by CMFDrawSetBits).
+                   'grid': ('layer', 'order', 'alpha', 'view', 'area', 'fadeMs', 'withLook', 'n', 'left', 'top', 'span',
+                            'fill', 'soft', 'steps', 'hidePins')}
 THEME_SHAPE_KEYS = set(k for keys in THEME_KIND_KEYS.values() for k in keys)
 # CMFDrawSetList keys per kind (a movie takes any list key its author documents).
-THEME_LIST_KEYS = {'line': ('xs', 'ys', 'starts', 'modes', 'colors')}
+THEME_LIST_KEYS = {'line': ('xs', 'ys', 'starts', 'modes', 'colors'), 'grid': ('bits',)}
 # Kinds the mapSpace anchor takes; line takes no other anchor.
-THEME_SPACE_KINDS = ('line', 'text', 'movie', 'image')
+THEME_SPACE_KINDS = ('line', 'text', 'movie', 'image', 'grid')
 # CMFStylePart("provider", 'part', 'key', ...), CMFDraw("provider", 'anchor', 'id', 'kind'),
 # CMFDrawSet("provider", 'id', 'key', ...): literal names only; values are often computed.
 THEME_PART = re.compile(r'\s*"([^"]*)"\s*,\s*\'([^\']*)\'\s*,\s*\'([^\']*)\'')
@@ -490,17 +496,19 @@ PROPERTY_IDS = {'CMFPropertyIcon': 1, 'CMFPropertyLegendIcon': 2, 'CMFPropertyTi
                 'CMFPropertySpreadRank': 22, 'CMFPropertyCategoryNoDefault': 23, 'CMFPropertyWorldPainting': 24,
                 'CMFPropertyWorldCrest': 25, 'CMFPropertyButtonPicture': 26, 'CMFPropertyWorldMarker': 27,
                 'CMFPropertyHoverName': 28, 'CMFPropertyInfoTitle': 18, 'CMFPropertyInfoText': 19,
-                'CMFPropertyIconUndiscovered': 29, 'CMFPropertyIconCompleted': 30, 'CMFPropertyTabHidden': 37, 'CMFPropertyPresent': 38}
+                'CMFPropertyIconUndiscovered': 29, 'CMFPropertyIconCompleted': 30, 'CMFPropertyTabHidden': 37, 'CMFPropertyPresent': 38,
+                'CMFPropertyIconFrames': 45, 'CMFPropertyIconUnderFrames': 46, 'CMFPropertyFrameOffset': 47,
+                'CMFPropertyPictureFit': 48}
 # Property ids this CMF accepts.
 NUMERIC_PROPERTIES = {31: "IconSelected", 32: "SelectedScale", 33: "PinAlpha", 34: "PinOrder",
                       35: "PinOffset", 36: "PinZoom", 40: "Withdraw", 41: "LegendRowTint",
-                      39: "InfoBoxWidth", 42: "IconUnder", 43: "IconUnderTint", 44: "PictureScale"}
-KNOWN_PROPERTIES = set(range(1, 45))
+                      39: "InfoBoxWidth", 42: "IconUnder", 43: "IconUnderTint", 44: "PictureScale", 48: "PictureFit"}
+KNOWN_PROPERTIES = set(range(1, 49))
 # Version 11: the ids a tag (CMFRegisterForTag) or place (CMFRegisterForPlace) claim takes (cmfCore.ws CMFOnePinProperty).
 # API version 11: the player's arrow and markers, reached by type claims with ids 1, 3 and 10 only.
 MARKER_TYPES = {'Player'} | {'User%d' % n for n in range(1, 8)}
-ONE_PIN_PROPERTIES = {1, 3, 5, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 28, 29, 30, 31, 32, 33, 34, 35, 36, 39, 42, 43, 44}
-EVERY_PIN_PROPERTIES = {1, 3, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 22, 28, 29, 30, 31, 32, 33, 34, 35, 36, 39, 42, 43, 44}
+ONE_PIN_PROPERTIES = {1, 3, 5, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 28, 29, 30, 31, 32, 33, 34, 35, 36, 39, 42, 43, 44, 45, 46, 47, 48}
+EVERY_PIN_PROPERTIES = {1, 3, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 22, 28, 29, 30, 31, 32, 33, 34, 35, 36, 39, 42, 43, 44, 45, 46, 47, 48}
 # CMFRegisterForPlace("provider", id, 'type', x, y, "text", number)
 PLACE_CLAIM = re.compile(r'\s*"([^"]*)"\s*,\s*(\d+|CMFProperty\w+\(\s*\))\s*,\s*\'([^\']*)\'\s*,\s*(-?[\d.]+)\s*,'
                          r'\s*(-?[\d.]+)\s*,\s*"([^"]*)"\s*,\s*(0[xX][0-9A-Fa-f]+|-?\d+)\s*\)')
@@ -530,6 +538,96 @@ PICTURE_KINDS = ('painting', 'tiles', 'crest', 'marker', 'button')
 HIDDEN_CLAIM = re.compile(r'\s*"([^"]*)"\s*,\s*\'([^\']*)\'\s*,\s*\'([^\']*)\'\s*,\s*"([^"]*)"\s*,\s*(true|false)\s*\)')
 
 
+def fold_literal_strings(code):
+    """Fold only consecutive constant string additions, retaining line numbers."""
+    return re.sub(r'"([^"\n]*)"(?:\s*\+\s*"[^"\n]*")+',
+                  lambda m: '"' + ''.join(re.findall(r'"([^"\n]*)"', m.group())) + '"'
+                  + '\n' * m.group().count('\n'), code)
+
+
+def _call_arguments(code, start):
+    """Argument spans through a call's closing parenthesis, respecting literals."""
+    args, begin, depth, quote = [], start, 0, ''
+    for i in range(start, len(code)):
+        ch = code[i]
+        if quote:
+            if ch == quote:
+                quote = ''
+        elif ch in ('"', "'"):
+            quote = ch
+        elif ch == '(':
+            depth += 1
+        elif ch == ')':
+            if depth == 0:
+                return args + [(begin, i)]
+            depth -= 1
+        elif ch == ',' and depth == 0:
+            args.append((begin, i))
+            begin = i + 1
+    return []
+
+
+def _claim_integer(number):
+    """Normalize an already recognized decimal or hexadecimal claim literal."""
+    return int(number, 16) if number.lower().startswith('0x') else int(number)
+
+
+def literal_images(code, pack):
+    """Discover static URLs whole; animation arguments have their own grammar.
+
+    For computed animation text, discover only complete local PNG paths in its
+    literal fragments. This cannot validate the eventual program or asset set.
+    """
+    spans = []
+    for call in CALL.finditer(code):
+        if call.group(1) not in ('CMFRegister', 'CMFRegisterForTag', 'CMFRegisterForPlace', 'CMFStylePin'):
+            continue
+        args = _call_arguments(code, call.end())
+        direct = call.group(1) == 'CMFStylePin'
+        if len(args) < (5 if direct else 6):
+            continue
+        prop = code[slice(*args[2 if direct else 1])].strip()
+        prop_id = int(prop) if prop.isdigit() else PROPERTY_IDS.get(prop.split('(')[0].strip())
+        if prop_id in (45, 46):
+            begin, end = args[3 if direct else 5 if call.group(1) == 'CMFRegisterForPlace' else 4]
+            # Fully literal text is handled atomically by animation_claim/check_claims.
+            # Withdrawn or invalid descriptors must not turn into filenames here.
+            expression = fold_literal_strings(code[begin:end]).strip()
+            dynamic = re.fullmatch(r'"[^"\n]*"', expression) is None
+            number = code[slice(*args[-1])].strip()
+            withdrawal = re.fullmatch(r'0[xX][0-9A-Fa-f]+|-?\d+', number) and _claim_integer(number) == 0
+            spans.append((begin, end, dynamic and not withdrawal))
+    prefix = 'img://icons/%s/' % pack.lower()
+    found = set()
+    for literal in re.finditer(r'"([^"\n]*)"', code):
+        text = literal.group(1)
+        animation = next((dynamic for begin, end, dynamic in spans if begin <= literal.start() < end), None)
+        if animation is not None:
+            if animation:
+                found.update(re.findall(re.escape(prefix) + r'([a-z0-9_/]+\.png)(?=$|[,;|])', text))
+        elif text.startswith(prefix) and len(text) > len(prefix) and '{' not in text:
+            found.add(text[len(prefix):])
+    return found
+
+
+def animation_claim(prop_id, text_value, number, where, report):
+    """Validate literal values once and return the asset-bearing definition."""
+    if prop_id not in (45, 46, 47):
+        return None
+    number = _claim_integer(number)
+    if prop_id == 47:
+        if not 0 <= number <= 15:
+            report.error(where, 'animation refused: offset range (use an integer from 0 to 15)')
+        return None
+    if number == 0:
+        return None  # Exact-slot withdrawal needs no descriptor.
+    try:
+        return parse_animation(text_value, number)
+    except ValueError as problem:
+        report.error(where, 'animation refused: %s' % problem)
+        return None
+
+
 def exemption_issues(text_value):
     """Errors CMF's core would reject for a hide claim's exemption text."""
     words = [w for w in re.split(r'[\s,]+', text_value.lower()) if w]
@@ -537,13 +635,15 @@ def exemption_issues(text_value):
             for w in words if w not in EXEMPTIONS]
 
 
-def guarded_revision(code, offset, provider, minimum, ability):
+def guarded_revision(code, offset, provider, minimum, ability, property_id=None):
     """Conservative evidence: a positive enclosing if with the relevant literal guard.
     Unresolved conditions are advisory, never a certificate of runtime safety.
     """
     guard = (r'CMFRequireVersion\(\s*"' + re.escape(provider) + r'"\s*,\s*(\d+)\s*\)'
              r'|CMFGetVersion\(\s*\)\s*>=\s*(\d+)'
              r"|CMFHasAbility\(\s*'claims'\s*,\s*'" + re.escape(ability) + r"'\s*\)")
+    if property_id is not None:
+        guard += r'|CMFHasProperty\(\s*' + str(property_id) + r'\s*\)'
     shape = re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', lambda m: " " * len(m.group()), code)
     for match in re.finditer(r'\bif\s*\(', shape[:offset]):
         depth, end = 1, match.end()
@@ -571,11 +671,27 @@ def guarded_revision(code, offset, provider, minimum, ability):
     return False
 
 
+def record_animation_claim(code, match, provider, prop_id, target, text_value, number, where, report, claims):
+    """Shared animation validation, API advice and claim metadata for stored claims."""
+    program = animation_claim(prop_id, text_value, number, where, report)
+    if prop_id in (45, 46, 47) and not guarded_revision(code, match.start(), provider, 14, '', prop_id):
+        report.note(where, 'property %s needs API 14; guard the generic call with CMFHasProperty(%s) for older cores'
+                    % (prop_id, prop_id))
+    if program:
+        name = match.group(1)
+        claims.append({'call': name, 'kind': 'animation', 'provider': provider, 'target': target,
+                       'value': '"%s"' % text_value, 'where': where, 'animation': program,
+                       'every_pin': name == 'CMFRegister' and not target,
+                       'tag': name == 'CMFRegisterForTag', 'place': name == 'CMFRegisterForPlace'})
+
+
 def widening_requirements(call, prop_id, target):
     if call == "CMFRegisterForPlace":
         return [(11, "placeClaims")]
     if call == "CMFRegisterForTag" and prop_id == 3:
         return [(11, "tagTint")]
+    if prop_id == 48:
+        return [(14, "pictureFit")]
     if call == "CMFRegister":
         if not target and prop_id in (1,3,10,11,12,13,17,22,42,43,44):
             return [(13, "everyPin")]
@@ -653,7 +769,7 @@ def rev13_property_issues(prop_id, text_value, number):
         return [] if re.fullmatch(r"(?:img://|frame:).+", text_value) else ["art must use img:// or frame: with a nonempty path"]
     if prop_id == 39:
         return [] if number == 0 or 200 <= number <= 1920 else ["InfoBoxWidth must be 200 through 1920, or 0 to withdraw"]
-    bounds = {32: (25, 400), 44: (25, 400), 33: (0, 100), 34: (-1000, 1000), 41: (0, 0xffffff), 43: (0, 0xffffff)}
+    bounds = {48: (0, 1), 32: (25, 400), 44: (25, 400), 33: (0, 100), 34: (-1000, 1000), 41: (0, 0xffffff), 43: (0, 0xffffff)}
     if prop_id in bounds:
         lo, hi = bounds[prop_id]
         return [] if lo <= number <= hi else ["property %s number must be %s through %s" % (prop_id, lo, hi)]
@@ -809,6 +925,41 @@ def check_ask_script(path_label, text, report):
                          'UpdateUserMapPins or AddPinTypeData')
 
 
+# Launches cache10/cache11 (2026-11-01): the game's script compiler damaged characters inside long string literals when
+# one function held about 130,000 characters of them (160 animation texts of 815 characters), and stopped with "memory
+# exhausted" at about 188,000. The same texts split over many small functions loaded intact.
+LITERAL_WARN = 16000
+LITERAL_ERROR = 64000
+
+
+def function_literal_sizes(code):
+    """(name, offset, characters of string literals) for each function body in comment-free code."""
+    out = []
+    for match in re.finditer(r'\bfunction\s+(\w+)\s*\(', code):
+        start = code.find('{', match.end())
+        if start < 0:
+            continue
+        depth, i, n, size = 0, start, len(code), 0
+        while i < n:
+            ch = code[i]
+            if ch == '"':
+                j = i + 1
+                while j < n and code[j] not in '"\n':
+                    j += 2 if code[j] == '\\' else 1
+                size += j - i - 1
+                i = j + 1
+                continue
+            if ch == '{':
+                depth += 1
+            elif ch == '}':
+                depth -= 1
+                if depth == 0:
+                    break
+            i += 1
+        out.append((match.group(1), match.start(), size))
+    return out
+
+
 def check_script(path_label, text, pack, report, claims, calls, provider=None):
     # provider: the name every claim must use; the pack folder name, or for an adapter the adapted mod's
     # folder name, so folder order between mods is the same with CMF as without it.
@@ -818,10 +969,20 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
         report.error(path_label, 'use LF line endings, not CRLF')
     if any(ord(c) > 127 for c in text):
         report.error(path_label, 'scripts must be plain ASCII')
-    code = strip_comments(text)
+    code = fold_literal_strings(strip_comments(text))
     if re.search(r'SetMemberFlashString\(\s*"cmfAsk(?:By|Icon_|Tint_|Scale_|Label_|Ids_|Text|Number)', code):
         report.note(path_label, 'pin asks use an append-only cmfAskBy list and provider-suffixed payloads; CMF resolves them as CMFStylePin calls')
     line_of = lambda offset: code.count('\n', 0, offset) + 1
+    for name, offset, size in function_literal_sizes(strip_comments(text)):
+        where = '%s:%d' % (path_label, line_of(offset))
+        if size > LITERAL_ERROR:
+            report.error(where, 'function %s holds %d characters of text in quotes; the game\'s script compiler damages '
+                         'or refuses that much in one function. Split it into smaller functions (a few claims each)'
+                         % (name, size))
+        elif size > LITERAL_WARN:
+            report.warn(where, 'function %s holds %d characters of text in quotes; above about %d the game\'s script '
+                        'compiler can damage long texts in one function. Split it into smaller functions'
+                        % (name, size, LITERAL_WARN))
     for match in re.finditer(r'\bfunction\s+(CMF\w*)', code):
         report.error('%s:%d' % (path_label, line_of(match.start())), 'do not define functions starting with CMF '
                      '(%s); that prefix belongs to Conjunction Map Framework' % match.group(1))
@@ -891,6 +1052,7 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
                 continue
             for issue in rev13_property_issues(prop_id, text_value, number):
                 report.error(where, issue)
+            record_animation_claim(code, match, provider, prop_id, target, text_value, number, where, report, claims)
             for issue in legend_issues(prop_id, target, text_value) if 6 <= prop_id <= 8 or prop_id == 23 else []:
                 report.error(where, issue)
             for issue in exemption_issues(text_value) if prop_id == 9 else []:
@@ -942,6 +1104,7 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
                 continue
             for issue in rev13_property_issues(prop_id, text_value, number):
                 report.error(where, issue)
+            record_animation_claim(code, match, provider, prop_id, target, text_value, number, where, report, claims)
             if prop_id not in ONE_PIN_PROPERTIES:
                 report.error(where, 'CMFRegisterForPlace accepts only CMFPropertyIcon and ids %s'
                              % ', '.join(str(i) for i in sorted(ONE_PIN_PROPERTIES - {1})))
@@ -1090,9 +1253,30 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
             elif anchor == 'mapSpace' and kind and kind not in THEME_SPACE_KINDS:
                 report.error(where, "mapSpace takes only %s drawings; CMF rejects the call"
                              % ', '.join(THEME_SPACE_KINDS))
-            elif anchor != 'mapSpace' and kind == 'line':
+            elif anchor != 'mapSpace' and kind in ('line', 'grid'):
                 report.error(where, "a %s drawing takes only the mapSpace anchor; CMF rejects the call" % kind)
-        elif name in ('CMFStylePin', 'CMFStylePinIcon', 'CMFStylePinTint', 'CMFStylePinScale', 'CMFStylePinLabel',
+        elif name == 'CMFStylePin':
+            args = _call_arguments(code, match.end())
+            literal = LITERAL_PROVIDER.match(rest)
+            if literal and literal.group(1) != provider_name:
+                report.error(where, '%s names provider "%s"; it must be %s "%s"'
+                             % (name, literal.group(1), owner, provider_name))
+            if len(args) != 5:
+                continue
+            prop = code[slice(*args[2])].strip()
+            prop_id = int(prop) if prop.isdigit() else PROPERTY_IDS.get(prop.split('(')[0].strip())
+            if prop_id not in (45, 46, 47):
+                continue  # Preserve existing checks for older direct styles.
+            text_arg = re.fullmatch(r'\s*"([^"\n]*)"\s*', code[slice(*args[3])])
+            number = code[slice(*args[4])].strip()
+            if not literal or not text_arg or not re.fullmatch(r'0[xX][0-9A-Fa-f]+|-?\d+', number):
+                report.warn(where, '%s animation uses non-literal arguments, so the pack tool cannot check it' % name)
+                continue
+            program = animation_claim(prop_id, text_arg.group(1), number, where, report)
+            if program:
+                claims.append({'call': name, 'kind': 'animation', 'provider': literal.group(1), 'target': '',
+                               'value': '"%s"' % text_arg.group(1), 'where': where, 'animation': program})
+        elif name in ('CMFStylePinIcon', 'CMFStylePinTint', 'CMFStylePinScale', 'CMFStylePinLabel',
                       'CMFHidePin', 'CMFReleaseProvider', 'CMFRequireVersion', 'CMFDeclareProvider'):
             literal = LITERAL_PROVIDER.match(rest)
             if literal and literal.group(1) != provider_name:
@@ -1156,6 +1340,10 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
     if needs13:
         report.note(path_label, 'calls %s, so the pack compiles only with CMF API 13 or later, even inside a runtime guard; say so in its README'
                     % ', '.join(needs13))
+    needs14 = sorted(set(m.group(1) for m in CALL.finditer(code)) & VERSION14)
+    if needs14:
+        report.note(path_label, 'calls %s, so the pack compiles only with CMF API 14 or later, even inside a runtime guard; say so in its README'
+                    % ', '.join(needs14))
     needs11 = sorted(set(m.group(1) for m in CALL.finditer(code)) & VERSION11)
     if needs11:
         report.note(path_label, 'calls %s, so the pack compiles only with CMF 11 or later; say so in its README '
@@ -1177,6 +1365,22 @@ def check_claims(pack, claims, images, report, types, provider=None, literal=())
         where, kind, target, value = claim['where'], claim['kind'], claim['target'], claim['value']
         if claim['provider'] != provider:
             report.error(where, 'provider "%s" must be %s "%s", exactly' % (claim['provider'], owner, provider))
+        if kind == 'animation':
+            local = []
+            for url in animation_paths(claim['animation']):
+                if url.startswith(prefix):
+                    image = url[len(prefix):]
+                    used.add(image)
+                    if image not in images:
+                        report.error(where, '%s has no image in art/ (animation falls back when a frame cannot load)' % url)
+                    else:
+                        local.append(image)
+                elif url.startswith('img://'):
+                    report.warn(where, '%s is not in this pack\'s cache; it shows only if another installed cache holds that image' % url)
+                # Native frame labels are checked in their game symbol, never cooked as PNG.
+            if len({images[name][:2] for name in local}) > 1:
+                report.warn(where, 'animation frames use differing source canvas sizes; keep equal canvases for stable placement')
+            continue
         if kind in PICTURE_KINDS:
             url = claim['url'] = value[1:-1]
             if not url:
@@ -1332,8 +1536,7 @@ def check_pack(source, adapts=None):
         check_script(label, text, pack, report, claims, calls, adapts)
         # An image named in any string literal counts as used, so art a script picks per pin (for example
         # through CMFStylePinIcon) is not reported as unused.
-        literal |= set(name for name in re.findall(r'"img://icons/%s/([^"]+)"' % re.escape(pack.lower()),
-                                                   strip_comments(text)) if '{' not in name)
+        literal |= literal_images(strip_comments(text), pack)
         files['content/' + path.relative_to(source/'content').as_posix()] = data
     if not scripts:
         report.error('content/scripts/local', 'no .ws script; the pack registers nothing without one')
@@ -1352,6 +1555,15 @@ def check_pack(source, adapts=None):
     else:
         report.warn('README.txt', 'missing; start from docs/authors/pack-readme-template.txt')
     check_claims(pack, claims, images, report, cmf_pin_types.known_types(), adapts, literal)
+    animation_only = set()
+    static_urls = {c.get('url') for c in claims if c['kind'] != 'animation'}
+    prefix = 'img://icons/%s/' % pack.lower()
+    for claim in claims:
+        if claim['kind'] == 'animation':
+            animation_only.update(url[len(prefix):] for url in animation_paths(claim['animation'])
+                                  if url.startswith(prefix) and url not in static_urls and url[len(prefix):] not in literal)
+    transparent_ok = {'art/' + name + ': image is fully transparent' for name in animation_only}
+    report.warnings[:] = [warning for warning in report.warnings if warning not in transparent_ok]
     if scripts and 'CMFRequireVersion' not in calls:
         report.note('script', 'consider guarding the calls with CMFRequireVersion("%s", 1)' % (adapts or pack))
     if images:

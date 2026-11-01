@@ -96,6 +96,7 @@ PAGES = [
     ('Pin-Clicks', None, 'Pins and the legend', [guide('Pin clicks (API version 6)')]),
     ('Names-Only-on-Hover', None, 'Pins and the legend', [guide('Names only on hover (API version 10)')]),
     ('Changing-One-Pin', None, 'Pins and the legend', [guide('Changing one pin (API version 11)')]),
+    ('Animated-Pictures', None, 'Pins and the legend', [guide('Animated pictures (API version 14)')]),
     ('Spreading-Stacked-Pins', None, 'Pins and the legend', [guide('Spreading stacked pins (API version 6)')]),
     ('Map-Theme', None, "The map's look and behaviour", [guide('The map theme (API version 5)')]),
     ('Theme-Parts-and-Keys', None, "The map's look and behaviour", [page_file(THEME)]),
@@ -187,7 +188,7 @@ def strip_title(text):
 def property_since(number):
     """The API version that added a property id."""
     for since, ids in ((1, range(1, 6)), (2, range(6, 9)), (3, (9,)), (4, range(10, 16)), (5, (17,)),
-                       (9, range(24, 28)), (11, (38,))):
+                       (9, range(24, 28)), (11, (38,)), (14, (45, 46, 47, 48))):
         if number in ids:
             return since
     return 6

@@ -166,7 +166,7 @@ class MapBlurFix(unittest.TestCase):
         self.assertIn('theGame.CMFMapClosed(this);', self.core)
 
     def test_no_api_change(self):
-        self.assertIn('function CMFGetVersion() : int { return 13; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 14; }', self.core)
 
 
 if __name__ == '__main__':

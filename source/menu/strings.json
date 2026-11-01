@@ -28,6 +28,21 @@
     {"id": 2000200124, "key": "cmf_menu_rule_dash", "text": {"en": "————————————"}},
     {"id": 2000200125, "key": "panel_cmf_adv_behaviour", "text": {"en": "Map behaviour"}},
     {"id": 2000200126, "key": "panel_cmf_win_behaviour", "text": {"en": "Who wins: map behaviour"}},
-    {"id": 2000200127, "key": "cmf_menu_support_present", "text": {"en": "CMF support present"}}
+    {"id": 2000200127, "key": "cmf_menu_support_present", "text": {"en": "CMF support present"}},
+    {"id": 2000200128, "key": "cmf_menu_animated_pins", "text": {"en": "Animated pins"}},
+    {"id": 2000200129, "key": "cmf_menu_animated_off", "text": {"en": "Off"}},
+    {"id": 2000200130, "key": "cmf_menu_animated_on", "text": {"en": "On"}},
+    {"id": 2000200131, "key": "cmf_menu_animated_help", "text": {"en": "How many times a second moving pin pictures are redrawn (default 15). Lower is lighter on slower PCs; the animations keep their speed and skip frames. Off shows one still picture. Changes apply the next time you open the map."}},
+    {"id": 2000200132, "key": "cmf_menu_animated_10", "text": {"en": "10"}},
+    {"id": 2000200133, "key": "cmf_menu_animated_15", "text": {"en": "15"}},
+    {"id": 2000200134, "key": "cmf_menu_animated_20", "text": {"en": "20"}},
+    {"id": 2000200135, "key": "cmf_menu_animated_30", "text": {"en": "30"}},
+    {"id": 2000200136, "key": "cmf_menu_drag_pause", "text": {"en": "Stop animation during drag"}},
+    {"id": 2000200137, "key": "cmf_menu_drag_pause_help", "text": {"en": "Hold moving pin pictures still while you drag or zoom the map, so moving the map stays smooth. They carry on when the map stops."}},
+    {"id": 2000200138, "key": "cmf_menu_memory", "text": {"en": "Animation memory"}},
+    {"id": 2000200139, "key": "cmf_menu_memory_normal", "text": {"en": "Normal (32 MB)"}},
+    {"id": 2000200140, "key": "cmf_menu_memory_large", "text": {"en": "Large (64 MB)"}},
+    {"id": 2000200141, "key": "cmf_menu_memory_huge", "text": {"en": "Huge (128 MB)"}},
+    {"id": 2000200142, "key": "cmf_menu_memory_help", "text": {"en": "How much memory moving pin pictures may use while the map is open. Large suits most packs; Huge is for big icon packs with many frames. Pictures past the limit show still. Changes apply the next time you open the map."}}
   ]
 }

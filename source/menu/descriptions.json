@@ -507,6 +507,21 @@
      "var": "CMFReport",
      "row": "Write the who-wins report to the log",
      "text": "For bug reports: writes which mod decides each part of the map into the game's script log."
+    },
+    {
+     "var": "CMFAnimatedPins",
+     "row": "Animated pins",
+     "text": "How many times a second moving pin pictures are redrawn (default 15). Lower is lighter on slower PCs; the animations keep their speed and skip frames. Off shows one still picture. Changes apply the next time you open the map."
+    },
+    {
+     "var": "CMFAnimationDragPause",
+     "row": "Stop animation during drag",
+     "text": "Hold moving pin pictures still while you drag or zoom the map, so moving the map stays smooth. They carry on when the map stops."
+    },
+    {
+     "var": "CMFAnimationMemory",
+     "row": "Animation memory",
+     "text": "How much memory moving pin pictures may use while the map is open. Large suits most packs; Huge is for big icon packs with many frames. Pictures past the limit show still. Changes apply the next time you open the map."
     }
    ]
   },

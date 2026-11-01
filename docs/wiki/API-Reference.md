@@ -2,15 +2,15 @@
 
 # API reference
 
-Every function, property id, hook and map event CMF offers to mods (API version 13). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
+Every function, property id, hook and map event CMF offers to mods (API version 14). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
 
 ## Functions
 
 | Function | Since | What it does | Explained on |
 | --- | --- | --- | --- |
 | `CMFGetVersion() : int` | 1 | `CMFRegisterIcon`, `CMFRegisterIconForTag` \| image path \| unused (`0`) \| 40 with this id at the same slot | [Writing your script](Writing-Your-Script.md), [Getting started](Getting-Started.md) |
-| `CMFHasProperty(propertyId : int) : bool` | 1 | `true` when the installed CMF understands that property id. | [Writing your script](Writing-Your-Script.md), [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md), [Hiding pins](Hiding-Pins.md) |
-| `CMFRegister(provider : string, propertyId : int, target : name, mapContext : name, text : string, number : int) : bool` | 1 | One claim for a pin type (a map area for property 4). | [Writing your script](Writing-Your-Script.md), [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Pin clicks](Pin-Clicks.md) |
+| `CMFHasProperty(propertyId : int) : bool` | 1 | `true` when the installed CMF understands that property id. | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md), [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md) |
+| `CMFRegister(provider : string, propertyId : int, target : name, mapContext : name, text : string, number : int) : bool` | 1 | One claim for a pin type (a map area for property 4). | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md), [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md) |
 | `CMFRegisterBackground(provider : string, area : name, imageRoot : string)` | 1 | Replaces the map image of one area, such as `'AN_NMLandNovigrad'` (Velen and Novigrad). | [Writing your script](Writing-Your-Script.md) |
 | `CMFRegisterDisabled(provider : string, pinType : name, mapContext : name, disable : bool)` | 1 | Draws every pin of that type greyed (grey art at reduced opacity, tint skipped). | [Writing your script](Writing-Your-Script.md), [Greying pins](Greying-Pins.md) |
 | `CMFRegisterDisabledForTag(provider : string, pinTag : name, mapContext : name, disable : bool)` | 1 | The same for one pin by its tag; it beats type-level claims on that pin. | [Writing your script](Writing-Your-Script.md), [Greying pins](Greying-Pins.md) |
@@ -50,7 +50,7 @@ Every function, property id, hook and map event CMF offers to mods (API version 
 | `CMFPropertyLabelText() : int` | 4 | Returns property id `12`. | [Writing your script](Writing-Your-Script.md), [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md) |
 | `CMFPropertyPinScale() : int` | 4 | Returns property id `10`. | [Writing your script](Writing-Your-Script.md), [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Adapter: Botanist](Adapter-Botanist.md) |
 | `CMFPropertyTabHide() : int` | 4 | Returns property id `15`. | [Writing your script](Writing-Your-Script.md), [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Adapter: Map Quest Insight](Adapter-Map-Quest-Insight.md) |
-| `CMFDraw(provider : string, anchor : name, id : name, kind : name) : bool` | 5 | Makes a drawing with your own `id`, tied to a part or to any drawing any mod made. | [The map theme](Map-Theme.md), [Map theme parts and keys](Theme-Parts-and-Keys.md), [Drawing on the map itself](Drawing-on-the-Map.md) |
+| `CMFDraw(provider : string, anchor : name, id : name, kind : name) : bool` | 5 | Makes a drawing with your own `id`, tied to a part or to any drawing any mod made. | [Drawing on the map itself](Drawing-on-the-Map.md), [The map theme](Map-Theme.md), [Map theme parts and keys](Theme-Parts-and-Keys.md) |
 | `CMFDrawSet(provider : string, id : name, key : name, text : string, number : float) : bool` | 5 | Sets one key of your drawing: its place, paint, glow, layer and conditions. | [The map theme](Map-Theme.md), [Drawing on the map itself](Drawing-on-the-Map.md), [Map theme parts and keys](Theme-Parts-and-Keys.md) |
 | `CMFHasAbility(part : name, key : name) : bool` | 5 | Asks whether this CMF knows a part, layer or kind (`key` `''`) or a key, before you use it. | [Drawing on the map itself](Drawing-on-the-Map.md), [Writing your script](Writing-Your-Script.md), [Spreading stacked pins](Spreading-Stacked-Pins.md) |
 | `CMFStylePart(provider : string, part : name, key : name, text : string, number : float) : bool` | 5 | Sets one style key of a part of the map: fonts, colours, glows, the game's own plates to hide, or a map behaviour. | [Smooth map movement](Map-Movement.md), [The map theme](Map-Theme.md), [Spreading stacked pins](Spreading-Stacked-Pins.md) |
@@ -91,7 +91,7 @@ Every function, property id, hook and map event CMF offers to mods (API version 
 | `CMFLevelPlace() : int` | 11 |  | [Changing one pin](Changing-One-Pin.md) |
 | `CMFPlaceRadius() : float` | 11 |  | [Writing your script](Writing-Your-Script.md) |
 | `CMFProviderPresent(provider : string) : bool` | 11 | `CMFProviderPresent(provider : string) : bool` asks whether a nonempty provider has submitted anything this session, ignoring case; asking never declares it. | [Writing your script](Writing-Your-Script.md) |
-| `CMFRegisterForPlace(provider : string, propertyId : int, pinType : name, x : float, y : float, text : string, number : int) : bool` | 11 | API version 11. | [Changing one pin](Changing-One-Pin.md), [Writing your script](Writing-Your-Script.md) |
+| `CMFRegisterForPlace(provider : string, propertyId : int, pinType : name, x : float, y : float, text : string, number : int) : bool` | 11 | API version 11. | [Changing one pin](Changing-One-Pin.md), [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md) |
 | `CMFSetLogPins(on : bool)` | 11 | API version 11. | [Writing your script](Writing-Your-Script.md), [Changing one pin](Changing-One-Pin.md) |
 | `CMFPropertyPresent() : int` | 11 | Returns property id `38`. | [Writing your script](Writing-Your-Script.md) |
 | `CMFAddPin(provider : string, tag : name, pinType : name, area : name, x : float, y : float, label : string, description : string) : bool` | 13 | API version 13. | [Writing your script](Writing-Your-Script.md), [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
@@ -99,6 +99,12 @@ Every function, property id, hook and map event CMF offers to mods (API version 
 | `CMFDeclareTag(provider : string, tag : name) : bool` | 13 | API version 13. | [Map theme parts and keys](Theme-Parts-and-Keys.md), [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md), [Writing your script](Writing-Your-Script.md) |
 | `CMFRemovePin(provider : string, tag : name) : bool` | 13 | API version 13. | [Writing your script](Writing-Your-Script.md) |
 | `CMFStyle(provider : string, part : name, target : name, key : name, text : string, number : float) : bool` | 13 | API version 13. | [Map theme parts and keys](Theme-Parts-and-Keys.md), [Writing your script](Writing-Your-Script.md), [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
+| `CMFDrawSetBits(provider : string, id : name, idx : array<int>, words : array<int>) : bool` | 14 | Then send the cells to leave clear with `CMFDrawSetBits(provider, id, idx, words)`: bit `b` (0 to 29) of word `k` is cell `k * 30 + b`, counted row by row from the north-west corner. | [Drawing on the map itself](Drawing-on-the-Map.md), [Map theme parts and keys](Theme-Parts-and-Keys.md) |
+| `CMFGridKeepPin(provider : string, dataObject : CScriptedFlashObject) : bool` | 14 | `grid` (API version 14, `mapSpace` only) darkens a square of the map cell by cell, such as a fog over unexplored land: `n` cells per side (1 to 2048), the square's north-west corner `left`, `top` and side `span` in world metres, `fill` and `alpha` for the mask, `soft` (0 to 32 cells) for a soft edge, `steps` (1 to 16) for that edge's detail (CMF draws 8 layers per step, so the edge reads as a smooth gradient), and `hidePins` (0 or 1): 1 hides every pin standing on a covered cell, except the player marker, user pins and the pins you keep with `CMFGridKeepPin(provider, pin)` from a pin wrapper before CMF's late pass (for example the ones your own filter decided to show). | [Map theme parts and keys](Theme-Parts-and-Keys.md), [Drawing on the map itself](Drawing-on-the-Map.md), [Adapter: Fog of War](Adapter-Fog-of-War.md) |
+| `CMFPropertyFrameOffset() : int` | 14 | Returns property id `47`. | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md) |
+| `CMFPropertyIconFrames() : int` | 14 | Returns property id `45`. | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md) |
+| `CMFPropertyIconUnderFrames() : int` | 14 | Returns property id `46`. | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md) |
+| `CMFPropertyPictureFit() : int` | 14 | Returns property id `48`. | [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Writing your script](Writing-Your-Script.md) |
 
 ## Property ids
 
@@ -138,6 +144,10 @@ The generic calls `CMFRegister`, `CMFRegisterForTag` and `CMFStylePin` take one 
 | `30` | `CMFPropertyIconCompleted()` | 6 | [Writing your script](Writing-Your-Script.md) |
 | `37` | `CMFPropertyTabHidden()` | 6 | [Writing your script](Writing-Your-Script.md) |
 | `38` | `CMFPropertyPresent()` | 11 | [Writing your script](Writing-Your-Script.md) |
+| `45` | `CMFPropertyIconFrames()` | 14 | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md) |
+| `46` | `CMFPropertyIconUnderFrames()` | 14 | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md) |
+| `47` | `CMFPropertyFrameOffset()` | 14 | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md) |
+| `48` | `CMFPropertyPictureFit()` | 14 | [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Writing your script](Writing-Your-Script.md) |
 | `31` | IconSelected (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
 | `32` | SelectedScale (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
 | `33` | PinAlpha (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
@@ -150,6 +160,7 @@ The generic calls `CMFRegister`, `CMFRegisterForTag` and `CMFStylePin` take one 
 | `42` | IconUnder (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
 | `43` | IconUnderTint (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
 | `44` | PictureScale (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
+| `48` | PictureFit (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
 
 ## Hooks
 
@@ -196,6 +207,7 @@ CMF's map calls these events on `CR4MapMenu`. New events are core-owned; wrap th
 - **11**: `CMFDeclareProvider`, `CMFInfoAdd`, `CMFInfoReplace`, `CMFLevelPlace`, `CMFPlaceRadius`, `CMFPropertyPresent`, `CMFProviderPresent`, `CMFRegisterForPlace`, `CMFSetLogPins`
 - **12**: no new calls (new theme keys only)
 - **13**: `CMFAddPin`, `CMFClickInputHold`, `CMFDeclareTag`, `CMFRemovePin`, `CMFStyle`, hook `OnMapTab`, hook `OnMapHints`, hook `OnInfoFold`, hook `OnMovieEvent`, hook `OnMapAreaReady`
+- **14**: `CMFDrawSetBits`, `CMFGridKeepPin`, `CMFPropertyFrameOffset`, `CMFPropertyIconFrames`, `CMFPropertyIconUnderFrames`, `CMFPropertyPictureFit`
 
 ---
 

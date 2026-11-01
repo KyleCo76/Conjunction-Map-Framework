@@ -57,6 +57,7 @@ CMF, its adapters and its example icon pack are published under the Creative Com
 - [Pin clicks](Pin-Clicks.md)
 - [Names only on hover](Names-Only-on-Hover.md)
 - [Changing one pin](Changing-One-Pin.md)
+- [Animated pictures](Animated-Pictures.md)
 - [Spreading stacked pins](Spreading-Stacked-Pins.md)
 
 **The map's look and behaviour**

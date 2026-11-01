@@ -263,7 +263,7 @@ class ScriptTests(unittest.TestCase):
         for body, expected in cases.items():
             report = self.run_pack(body)
             self.assertTrue(any(expected in e for e in report.errors), (body, report.errors))
-        report = self.run_pack('\tCMFRegister("modAcmeIcons", 45, \'AcmePin\', \'\', "", 1);\n')
+        report = self.run_pack('\tCMFRegister("modAcmeIcons", 49, \'AcmePin\', \'\', "", 1);\n')
         self.assertTrue(any('unknown to CMF 6' in w for w in report.warnings), report.warnings)
 
     def test_version3_calls(self):
@@ -371,6 +371,17 @@ class ScriptTests(unittest.TestCase):
         report, claims, calls = cmf_pack.Report(), [], set()
         cmf_pack.check_script('x.ws', other, 'modAcmeIcons', report, claims, calls)
         self.assertTrue(any('wrap only the CMFCore hooks' in e for e in report.errors), report.errors)
+
+    def test_long_text_in_one_function_is_flagged(self):
+        # Launch cache11: about 130,000 characters of quoted text in one function were damaged by the game's compiler.
+        def script(size):
+            return ('function Big()\n{\n\tLogChannel(\'x\', "%s");\n}\nfunction Small()\n{\n\tLogChannel(\'x\', "ab");\n}\n'
+                    % ('a' * size))
+        for size, errors, warnings in ((15000, 0, 0), (20000, 0, 1), (70000, 1, 0)):
+            report, claims, calls = cmf_pack.Report(), [], set()
+            cmf_pack.check_script('x.ws', script(size), 'modAcmeIcons', report, claims, calls)
+            self.assertEqual(len([e for e in report.errors if 'text in quotes' in e]), errors, report.errors)
+            self.assertEqual(len([w for w in report.warnings if 'text in quotes' in w]), warnings, report.warnings)
 
     def test_adapter_mode_takes_the_adapted_mods_folder_as_provider(self):
         body = '\tCMFStylePinScale("modOtherMod", dataObject, 120);\n\tCMFRegisterIcon("modOtherMod", \'Innkeeper\', "img://icons/x/y.png");\n'

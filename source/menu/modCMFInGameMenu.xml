@@ -2675,6 +2675,27 @@
 					<Option id="1" displayName="On"><Entry varId="CMFReport" value="1"/></Option>
 				</OptionsArray>
 			</Var>
+			<Var id="CMFAnimatedPins" value="2" displayName="cmf_menu_animated_pins" displayType="OPTIONS" tags="">
+				<OptionsArray>
+					<Option id="0" displayName="cmf_menu_animated_off"><Entry varId="CMFAnimatedPins" value="0"/></Option>
+					<Option id="1" displayName="cmf_menu_animated_10"><Entry varId="CMFAnimatedPins" value="1"/></Option>
+					<Option id="2" displayName="cmf_menu_animated_15"><Entry varId="CMFAnimatedPins" value="2"/></Option>
+					<Option id="3" displayName="cmf_menu_animated_30"><Entry varId="CMFAnimatedPins" value="3"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFAnimationDragPause" value="1" displayName="cmf_menu_drag_pause" displayType="OPTIONS" tags="">
+				<OptionsArray>
+					<Option id="0" displayName="cmf_menu_animated_off"><Entry varId="CMFAnimationDragPause" value="0"/></Option>
+					<Option id="1" displayName="cmf_menu_animated_on"><Entry varId="CMFAnimationDragPause" value="1"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFAnimationMemory" value="1" displayName="cmf_menu_memory" displayType="OPTIONS" tags="">
+				<OptionsArray>
+					<Option id="0" displayName="cmf_menu_memory_normal"><Entry varId="CMFAnimationMemory" value="0"/></Option>
+					<Option id="1" displayName="cmf_menu_memory_large"><Entry varId="CMFAnimationMemory" value="1"/></Option>
+					<Option id="2" displayName="cmf_menu_memory_huge"><Entry varId="CMFAnimationMemory" value="2"/></Option>
+				</OptionsArray>
+			</Var>
 		</VisibleVars>
 	</Group>
 	<Group id="CMFMenuStatusMods" displayName="Mods.cmf_menu.cmf_status.cmf_status_mods">

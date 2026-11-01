@@ -86,7 +86,14 @@ class TableTests(unittest.TestCase):
         ids = {s['key']: s['id'] for s in addon.catalog()['strings']}
         self.assertEqual({key: ids[key] for key in shipped},
                          {key: addon.ID_BASE + 1 + i for i, key in enumerate(shipped)})
-        self.assertEqual(set(ids) - set(shipped), {'cmf_menu_support_present'})
+        self.assertEqual(set(ids) - set(shipped), {'cmf_menu_support_present', 'cmf_menu_animated_pins', 'cmf_menu_animated_off',
+                                                   'cmf_menu_animated_on', 'cmf_menu_animated_help',
+                                                   'cmf_menu_animated_10', 'cmf_menu_animated_15', 'cmf_menu_animated_20',
+                                                   'cmf_menu_animated_30', 'cmf_menu_drag_pause', 'cmf_menu_drag_pause_help',
+                                                   'cmf_menu_memory', 'cmf_menu_memory_normal', 'cmf_menu_memory_large',
+                                                   'cmf_menu_memory_huge', 'cmf_menu_memory_help'})
+        self.assertEqual([ids['cmf_menu_memory' + s] for s in ('', '_normal', '_large', '_huge', '_help')],
+                         list(range(2000200138, 2000200143)))
         self.assertEqual(ids['cmf_menu_support_present'], 2000200127)
         texts = {s['key']: s['text']['en'] for s in addon.catalog()['strings']}
         self.assertEqual(texts['panel_cmf_adv_behaviour'], 'Map behaviour')

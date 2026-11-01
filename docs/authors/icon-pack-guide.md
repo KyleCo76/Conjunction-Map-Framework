@@ -4,12 +4,12 @@ Conjunction Map Framework (CMF) is a single world map that map mods can share. C
 
 An **icon pack** is the simplest kind of CMF mod. It changes how existing map pins look on the full-screen world map: their icon, their legend icon and their colour. It does not add or move pins; from API version 3 any CMF mod can also hide pins, and from API version 4 resize pins and change their labels (section 5). You do not edit any map file and you do not need Script Merger, FFDec, REDkit or WolvenKit.
 
-This guide is for someone who has made a Witcher 3 mod before but has never seen CMF. It documents API version 13 (`CMFGetVersion()` returns `13`), independently of release numbering. The map applies the registered styles and dispatches the hooks described here. Source and offline package checks are separate from engine compilation, actual loading and gameplay acceptance; features without game-launch evidence say so. Section 12 shows how existing map mods move onto CMF. A finished example is in [`examples/modCMFExampleIconPack`](../../examples/modCMFExampleIconPack/).
+This guide is for someone who has made a Witcher 3 mod before but has never seen CMF. It documents API version 14 (`CMFGetVersion()` returns `14`), independently of release numbering. The map applies the registered styles and dispatches the hooks described here. Source and offline package checks are separate from engine compilation, actual loading and gameplay acceptance; features without game-launch evidence say so. Section 12 shows how existing map mods move onto CMF. A finished example is in [`examples/modCMFExampleIconPack`](../../examples/modCMFExampleIconPack/).
 
 ## 1. What you need
 
 - Conjunction Map Framework version 1 or later, installed in the game.
-- Python 3 to run the CMF pack tool, `tools/cmf_pack.py` from the CMF repository (with its neighbours `cmf_cooked_codec.py`, `cmf_cooked_cache.py`, `cmf_texture_cache.py`, `cmf_pin_types.py` and `cmf_pin_types.json`). It needs nothing beyond the standard library.
+- Python 3 to run the CMF pack tool, `tools/cmf_pack.py` from the CMF repository (with its neighbours `cmf_animation.py`, `cmf_cooked_codec.py`, `cmf_cooked_cache.py`, `cmf_texture_cache.py`, `cmf_pin_types.py` and `cmf_pin_types.json`). It needs nothing beyond the standard library.
 - Your icons as PNG files (section 4).
 
 ## 2. Quick start
@@ -155,16 +155,20 @@ API version 2 adds legend rows, filter tabs and per-pin styling to the API versi
 | `42` IconUnder (API version 13) | none | img:// path or frame:label | unused | 40 with this id at the same slot |
 | `43` IconUnderTint (API version 13) | none | unused | RGB 0..16777215, multiplied into the picture as id 3 is into the icon (white keeps it, black blacks it out) | 40 with this id at the same slot |
 | `44` PictureScale (API version 13) | none | unused | 25..400 percent of the pin's size: grows the icon and the picture under it (42) only, not the pin's highlight ring and glow | 40 with this id at the same slot |
+| `45` IconFrames (API version 14) | `CMFPropertyIconFrames()` | comma-separated frames or program:v1 | integer FPS 1..30; 0 withdraws | 40 with this id at the same slot; or number 0 |
+| `46` IconUnderFrames (API version 14) | `CMFPropertyIconUnderFrames()` | comma-separated frames or program:v1 | integer FPS 1..30; 0 withdraws | 40 with this id at the same slot; or number 0 |
+| `47` FrameOffset (API version 14) | `CMFPropertyFrameOffset()` | unused | integer starting offset 0..15; zero is valid | ONLY 40 with this id at the same slot |
+| `48` PictureFit (API version 14) | `CMFPropertyPictureFit()` | unused | 1 fits every picture of the claim in one fixed box; 0 keeps the game glyph's box | 40 with this id at the same slot |
 
 The map root supports arbitrary public script-set values when `CMFHasAbility('map', 'rootValues')` is true. Native `SetMemberFlash*` / `GetMemberFlash*` calls may store a mod's own number or string before `OnConfigUI` and read it back there. Existing declared fields and methods retain their meaning; use your own names.
 
 **Revision 13 changes.** Label hides (13) now merge the union of every eligible provider's pin/crosshair hides, including direct per-pin contributions. A zero contribution never unhides another provider's labels. Row tint 41 overrides the row's tint 3 without changing its pin tint. Ids 6 and 8 still couple row/tab placement and priority; 28 still couples its two hover-name bits.
 
-The every-pin target `''` now accepts 1,3,10,11,12,13,17,22,42,43,44, as well as ids 31 to 36 and the earlier every-pin properties. A type, tag, place or direct pin claim beats a global claim even when the player selected the global provider, including strict fallthrough. Vanilla and choice-only exclusions still apply. Every-pin styling does not remove the existing player/user/unknown/completed-pin protections.
+The every-pin target `''` now accepts 1,3,10,11,12,13,17,22,42,43,44,48, as well as ids 31 to 36 and the earlier every-pin properties. A type, tag, place or direct pin claim beats a global claim even when the player selected the global provider, including strict fallthrough. Vanilla and choice-only exclusions still apply. Every-pin styling does not remove the existing player/user/unknown/completed-pin protections.
 
-Ids 31 to 36, 39 and 42 to 44 support type, tag, place and direct per-pin styling. Id 39 answers true from `CMFHasProperty`. Its every-pin value is the menu default; a selected pin's type, tag, place or direct width overrides it. Width measures the description field in 1920 x 1080 units, preserving native padding and staying the same width on wide screens. There are no new `CMFProperty...` helpers for numeric ids 31 to 36 and 39 to 44. `CMFRegister(p, 40, target, context, "", id)` withdraws your exact slot; tag/place calls accept 40 too, using the effective id's level/context rules. Valid absent withdrawal returns true without dirtying or logging; actual removal logs once. Presence 38 and recursive 40 cannot be withdrawn. A direct width zero releases only the calling provider's direct width.
+Ids 31 to 36, 39 and 42 to 44 and 48 support type, tag, place and direct per-pin styling. Id 39 answers true from `CMFHasProperty`. Its every-pin value is the menu default; a selected pin's type, tag, place or direct width overrides it. Width measures the description field in 1920 x 1080 units, preserving native padding and staying the same width on wide screens. There are no new `CMFProperty...` helpers for numeric ids 31 to 36 and 39 to 44. `CMFRegister(p, 40, target, context, "", id)` withdraws your exact slot; tag/place calls accept 40 too, using the effective id's level/context rules. Valid absent withdrawal returns true without dirtying or logging; actual removal logs once. Presence 38 and recursive 40 cannot be withdrawn. A direct width zero releases only the calling provider's direct width.
 
-`CMFHasAbility('claims', word)` discovers `tagTint`, `placeClaims`, `playerArt`, `levelVariants`, `vanillaRows`, `everyPinIcon`, `withdraw`, `labelHideMerge` and `everyPin`. The first six describe the API version 11 widened-claim family; the last three are revision 13 behavior. Older cores may not recognize this capability namespace, so `CMFGetVersion() >= 11` is also a guard for the API version 11 cases. The newly listed every-pin forms need API version 13. The pack checker recognizes positive enclosing version/ability guards with matching provider identity; other expressions remain an unresolved advisory, not proof.
+`CMFHasAbility('claims', word)` discovers `tagTint`, `placeClaims`, `playerArt`, `levelVariants`, `vanillaRows`, `everyPinIcon`, `withdraw`, `labelHideMerge`, `everyPin` and (API version 14) `iconFrames`, `iconPrograms` and `pictureFit`. The first six describe the API version 11 widened-claim family; the last three are revision 13 behavior. Older cores may not recognize this capability namespace, so `CMFGetVersion() >= 11` is also a guard for the API version 11 cases. The newly listed every-pin forms need API version 13. The pack checker recognizes positive enclosing version/ability guards with matching provider identity; other expressions remain an unresolved advisory, not proof.
 
 Section "Pin size, labels and the info box" below explains 10 to 15, "Pin clicks" explains 16, 20 and 21, "Spreading stacked pins" explains 22, "Legend rows and filter tabs" explains 23, "World overview pictures" and "Controller button pictures" explain 24 to 27, and "Names only on hover" explains 28, and "Changing one pin" explains 14 for one pin, 18, 19, 29, 30 and 37.
 
@@ -287,6 +291,7 @@ Written with the generic call and guarded by `CMFHasProperty(8)`, this still com
 - **Rows** can join a vanilla category (`General`, `Quests`, `Exploration`, `NPCs`, `Buffs`), a declared CMF category, or `""` for All only. A row naming a category nobody declared stays under All, and CMF logs `reason=undeclared`. Up to API version 10, rows the vanilla legend already defines keep their vanilla tab and order. From API version 11, a row claim with a priority above `0` moves one of the game's own rows too (the shared quest row keeps its own rule), and property `37` hides a whole tab (section 5, "Changing one pin").
 - **Labels** apply to any row except the shared quest row and the player-pin row, vanilla rows included. A `[[key]]` label resolves through the game's text from whichever mod ships that key.
 - **Quest rows (API version 6).** Quest pins share one quest row. A row claim on a quest pin's `filteredType` takes those quest pins out of that row and into a row of their own, keyed by the `filteredType`. That row is listed, counted and shown or hidden by that key, in every tab where quest pins show and under All. Its order is your claim's `number`, even for a `filteredType` the vanilla legend defines; its tab is still the vanilla one where it defines one. Its name is your label claim, or the game's quest row name when you have none. Quest pins of other `filteredType`s, and the tracked quest's gold, tooltip and tracking, stay as they are. For example, `CMFRegisterLegendRow(p, 'QuestObjectiveOther', 'Quests', 200)` plus `CMFRegisterLegendLabel(p, 'QuestObjectiveOther', "All Quest Objectives")` gives untracked side objectives their own row, as All Quest Objectives does.
+- **Rows with no pins.** The legend's Custom marker row lists no pin, and the shared Quest row may not either, so a pack themes them by row name. Custom marker: an icon claim (id 1) on `User1`, or a legend claim (id 2) on `User1`, with tint (id 3 or 41) and fit (id 48) the same way. Shared Quest row: a legend claim (id 2) on `StoryQuest`. A row that already gets art from one of its pins keeps that art. CMF logs `legend row art row= art= tint=` once per row.
 - **CMF tabs** come after the vanilla tabs, in order of their `number` and then their id. Like General, they show fast-travel and player pins but not quest pins, and their rows also appear in Default. From API version 6, `CMFRegisterCategoryNoDefault(p, 'modAcmeIcons_finds', true)` (property 23) keeps a tab's rows out of Default, so its pins show only under All and in the tab itself, as Exploration's do; a vanilla tab id is refused with `reason=vanilla`. A declared tab with no rows does not appear. The map does not reopen on a CMF tab; it reopens on the last vanilla tab used.
 - **Hiding a row under All** hides every pin type that shares its `filteredType`, for pins a mod pushes itself.
 - **Conflicts:** row, label and tab are separate claims; for each, the earlier folder name wins, as for icons. CMF logs every winning tab and row (`legend category ...`, `legend row ...`).
@@ -356,6 +361,7 @@ API version 4 adds six properties. Pin size, label text and the scrolling info b
 | `15` `CMFPropertyTabHide()` | a pin type, a tag, one pin, or `''` for every pin | filter tab names: `"Quests"`, `"Exploration"`, `"NPCs"`, `"Buffs"` or a tab id, separated by commas or spaces | nonzero hides, `0` withdraws |
 
 - **Size** scales the pin's icon, its highlight ring and its glow together. The player marker and the player's own pins are never resized. To draw a larger picture without a larger ring and glow (a badge, say), keep the size and grow the picture with id 44 (API version 13): it multiplies the size for the icon and the picture under it (42) only.
+- **Picture fit** (id 48, `CMFPropertyPictureFit()`, API version 14) is for packs whose art is drawn to one common size. By default CMF scales a custom picture to the larger side of the game's own glyph for that pin type, so a type with a small glyph (an entrance, a herb) shows your art smaller than a type with a large one. With a claim of id 48 and number 1 (`CMFRegister("modAcme", CMFPropertyPictureFit(), '', '', "", 1)` for every pin, or a type, tag, place or direct pin target as for id 44) every picture of that claim fills one fixed box of 24 map-icon units, centred on the glyph's place, whatever the glyph: the still, the animated picture, the picture under it (42 or 46), the selected pin's picture and the legend row's picture (in the row, the box is scaled by the row glyph's scale against the pin glyph's). The 24 comes from the 144 frames of the game's pin glyph: the median of their larger side is 21.8 units and the 75th percentile 25.3; an entrance measures 16.1 and a herb 13.0 (the smallest), a torch 30.1 and a quest return 36.7 (among the largest). The size (10) and the picture scale (44) still multiply on top. Number 0, or no claim, keeps the glyph box, so a pack that never asks looks as before; a type claim of 0 turns it off for that type under an every-pin claim of 1. Check `CMFHasProperty(48)` or `CMFHasAbility('claims', 'pictureFit')` on older cores. The minimap add-on does not use it yet.
 - **Labels** sit below signposts and above other pins, as the game places them. A label place moves it further from the pin.
 - **Which label to hide.** `"pin"` hides the label drawn on the map next to the pin; `"crosshair"` hides the name the crosshair shows when it rests on the pin. In script the two flags are `CMFLabelHidePin()` (1) and `CMFLabelHideCrosshair()` (2), so you can add them up while you decide and then pass the matching text.
 - **The info box** scrolls when its text is taller than the height you give, with a scroll bar and the inputs Map Quest Insight's map uses. Only one height applies: the earliest folder among the claims wins. `0` keeps the game's box.
@@ -707,6 +713,8 @@ if (CMFHasAbility('mapSpace', '') && CMFHasAbility('line', 'colors'))
 }
 ```
 
+**A grid of cells (API version 14).** A `grid` drawing on `mapSpace` masks a square of the map cell by cell, such as a fog over unexplored land. Set `n` (cells per side, 1 to 2048), `left`, `top` and `span` (the square's north-west corner and side in world metres), `fill`, `alpha`, `soft` (edge width in cells, 0 to 32), `steps` (1 to 16, the edge's detail) and `hidePins` (0 or 1). Then send the cells to leave clear with `CMFDrawSetBits(provider, id, idx, words)`: bit `b` (0 to 29) of word `k` is cell `k * 30 + b`, counted row by row from the north-west corner. Send only words with a set bit, at most 100000 words. These are exact ints, which `CMFDrawSetList`'s floats cannot carry. Empty arrays withdraw them, and `CMFDraw` must come first. CMF draws the grid once per map opening as vector shapes: a solid cover, and in the soft band 8 stacked layers per step whose outlines follow the Euclidean distance from the clear cells as curves, so the edge reads as a smooth gradient. It logs `panel grid id= n= cells= box= layers= runs= ms=`. With `hidePins` 1, CMF also hides every pin standing on a covered cell in its late pass, except the player marker, user pins and the pins you keep: call `CMFGridKeepPin(provider, pin)` from a pin wrapper, before CMF's late pass, on each pin your own rule decided to show. CMF logs `grid hid provider= id= pins= area=`. `CMFDrawSetBits` is new in API version 14, so a pack that calls it compiles only with CMF API 14 or later. The Fog of War adapter is the worked example.
+
 **Data your script already sends (`listen`).** If your script already writes your numbers to a key of the map menu's flash storage (`GetMenuFlashValueStorage().SetFlashObject("acme.route", object)`), keep doing so and tell CMF which drawing reads it: `listen` = that key, and the drawing takes `xs`, `ys`, `starts`, `modes`, `colors` (arrays) and `text` (strings) from the object's fields of the same names. `listenFields` maps other names, `"xs=pointsX,ys=pointsY"`, and joins several text fields with line breaks, `"text=regionText|totalText"`. Every new value redraws the drawing at once; a movie gets the whole object as `data.listen`. Keys starting with `cmf.`, `map.`, `worldmap.global.` or `worldmap.title.` are CMF's and the game's own and are refused, and the map listens to at most 16 keys per opening (the rest log `panel listen refused key= reason=slots`). A value written before the map panel listens never arrives (launch D1, 2026-10-20), and the map starts listening once per opening, after the game's own `OnConfigUI` and after the first map build. So write your value again from an `OnMapListening` wrapper (API version 6): CMF calls it as soon as the map starts listening, with the keys it now listens to joined by `|`:
 
 ```
@@ -996,6 +1004,122 @@ if (CMFRequireVersion("modAcmeIcons", 11))
 	CMFRegister("modAcmeIcons", 1, 'Player', '', "img://icons/modacmeicons/arrow.png", 0);
 }
 ```
+
+### Animated pictures (API version 14)
+
+CMF animates only pictures supplied by an accepted provider claim. Keep a still icon (property 1) or still under-picture (42) as a fallback for older CMF versions and failed animation art. Animation support has source and offline checks; engine compilation, loading and visual acceptance still need game testing.
+
+Use property 45 for the main picture and 46 for the picture underneath it. Each animation wins ahead of its corresponding still claim (45 ahead of 1, 46 ahead of 42), including when another provider owns the still claim. Main animation follows the existing icon choice; under-animation follows the existing under-picture choice (`Look_Badges`). Existing provider order, Vanilla, fallthrough, hiding and look rules still apply. Properties 29/30 for undiscovered/completed art and 31 for explicit selected art retain priority over main animation. Without selected replacement art, selection and hover copies share the current animation phase; under-animation continues independently.
+
+Use `CMFRegister` for a type or the every-pin target `''`, `CMFRegisterForTag` for a tag, `CMFRegisterForPlace` for a place, or `CMFStylePin` for a delivered pin. Existing target protections still apply. Numeric ids behind `CMFHasProperty` compile with older cores; the named helpers `CMFPropertyIconFrames()`, `CMFPropertyIconUnderFrames()` and `CMFPropertyFrameOffset()` require API 14 at compile time, even inside a runtime guard. There are no new registration helpers.
+
+**A plain under-picture loop.** Put this inside your existing startup wrapper, after its local declarations and `wrappedMethod` call. The two PNGs belong in `art/` alongside any still fallback art.
+
+```witcherscript
+if (CMFHasProperty(46))
+{
+	CMFRegister("modAcmeIcons", 46, 'MonsterNest', '',
+		"img://icons/modacmeicons/halo_a.png,img://icons/modacmeicons/halo_b.png", 8);
+}
+```
+
+Plain text is 2 to 16 comma-separated `img://` paths or `frame:<label>` native pin glyphs. It loops automatically on the shared map clock. Repeated paths remain separate timed positions. FPS is the claim's integer number, from 1 to 30. Use ordinary PNG frames; the pack tool does not introduce GIF, APNG or video playback.
+
+**An intro followed by a loop.** A program begins with `program:v1|`. Each `stage=` record contains semicolon-separated options; commas separate its frames. Consecutive constant string additions let you write it on several script lines:
+
+```witcherscript
+if (CMFHasProperty(45))
+{
+	CMFRegister("modAcmeIcons", 45, 'MonsterNest', '',
+		"program:v1|poster=img://icons/modacmeicons/poster.png|" +
+		"stage=intro;frames=img://icons/modacmeicons/intro_a.png,img://icons/modacmeicons/intro_b.png|" +
+		"stage=loop;frames=img://icons/modacmeicons/loop_a.png,img://icons/modacmeicons/loop_b.png;plays=forever", 8);
+}
+```
+
+The intro plays once, then the final stage loops. Do not specify `repeat`, even `repeat=1`, with a final `plays=forever` stage: those author options clash.
+
+**Startup once, then shake/rest.** This example uses stock glyphs to show the grammar without requiring PNGs. `repeatFrom=shake` keeps startup outside the repeating section:
+
+```witcherscript
+if (CMFHasProperty(45))
+{
+	CMFRegister("modAcmeIcons", 45, 'NoticeBoard', '',
+		"program:v1|repeat=forever|repeatFrom=shake|" +
+		"stage=startup;frames=frame:NoticeBoard,frame:NoticeBoardFull|" +
+		"stage=shake;frames=frame:NoticeBoardFull,frame:NoticeBoard;direction=pingpong|" +
+		"stage=rest;frames=frame:NoticeBoard,frame:NoticeBoard;holdFirst=2", 8);
+}
+```
+
+`repeat=1` means one total pass through all stages. `repeat=2` plays the initial prefix once and the section from `repeatFrom` through the final stage twice in total. `repeat=forever` keeps repeating that section. `repeatFrom` must name an existing stage even for one pass; without another pass it changes nothing.
+
+**Program options and defaults.** There must be 1 to 8 uniquely named stages. Names contain ASCII letters, digits, `_` or `-` and cannot be empty. Options are case-sensitive; surrounding whitespace is trimmed. No option may repeat at its own level.
+
+| Program option | Values and default |
+| --- | --- |
+| `delay` | Seconds before stage 1, once per opening activation; default 0 |
+| `finish` | `restore` (default) returns to this opening's still winner; `hold` keeps the terminal image after finite completion |
+| `poster` | `first` (default) chooses the first authored frame, or give one valid picture path |
+| `join` | Only `shared`; automatic opening playback is implicit |
+| `repeat` | Integer 1..1,000,000 or `forever`; default 1; clashes with a final infinite stage when explicitly supplied |
+| `repeatFrom` | Existing stage name; default first stage |
+
+| Stage option | Values and default |
+| --- | --- |
+| `stage` | Required unique name |
+| `frames` | Required 2..16 nonempty `img://` or `frame:` paths |
+| `fps` | Integer 1..30; default claim FPS |
+| `plays` | Integer 1..1,000,000 (default 1), or `forever` on the final stage only |
+| `direction` | `forward` (default), `reverse` or `pingpong` |
+| `holdFirst`, `holdLast` | Extra seconds at the authored first/last endpoint, once per cycle; default 0 |
+| `offset` | Integer 0..15 or `inherit`; default 0 for finite stages and `inherit` for infinite stages |
+| `delay` | Seconds before each entry to this stage, including repeated entries; default 0 |
+
+Seconds are finite decimals from 0 to 3,600. Counts and FPS use integer spelling. Leading plus signs and redundant zeros normalize away; exponent notation, nonfinite values and negative nonzero values are refused. Author text is limited to 8,192 characters. Keep the text in quotes in any one script function small: the game's script compiler damages characters inside long texts when one function holds a great deal of them (about 130,000 characters in tests; refused programs and stills followed), and stops at the compile screen with `memory exhausted` beyond that. Register long programs from several small functions, a few claims each; the pack tool warns above 16,000 characters in one function and refuses above 64,000. Paths preserve case and cannot contain raw commas, semicolons, pipes, equals signs or control characters; v1 has no escaping. `cmfanim:v1` is an internal wire form, never author input. Unknown options, including `auto=on`, `auto=off` and `join=restart`, are refused. Commands, opacity controls and live switching belong to later revisions and are unavailable in API 14.
+
+Each displayed position lasts 1/effectiveFPS seconds. Forward visits 0,1,...,N-1; reverse visits 0,N-1,...,1. Pingpong visits 0,1,...,N-1,...,1 and reaches 0 next cycle; finite completion holds 0. Finite intros default to frame 0 even in reverse. Offset moves the starting phase modulo the authored frame count, preserving the full cycle length. Extra endpoint holds and delays stay in seconds when the cap changes.
+
+**Offset belongs to the winning provider.** Property 47 accepts integer 0..15; zero is a valid offset. It has no choice row, offer key or separate player-selected provider. Each layer uses only its winning animation provider's matching 47 claim, defaulting to zero. A provider winning main art cannot set another provider's under offset. An explicit stage offset wins; `inherit` uses that layer's 47. To withdraw 47, use only property 40 at your matching slot:
+
+```witcherscript
+if (CMFHasProperty(47))
+{
+	CMFRegister("modAcmeIcons", 47, 'MonsterNest', '', "", 0);
+	CMFRegister("modAcmeIcons", 40, 'MonsterNest', '', "", 47);
+}
+```
+
+For 45/46, number 0 withdraws only your exact slot and needs no valid animation text. Property 40 can withdraw them too. An invalid registration leaves the previous claim intact. For an already delivered world-map pin/layer, animation, absence and option changes take effect at the next map opening.
+
+**Pacing.** CMF counts a second as 30 frames. `fps=30` shows one picture per frame, `15` one every 2nd frame, `10` one every 3rd and `3` one every 10th. Pick a pace that divides 30 (1, 2, 3, 5, 6, 10, 15 or 30) so your pictures land on whole frames at every player setting (10, 15 or 30 redraws a second). To keep the last picture on screen, use `holdLast` or `finish=hold`. Spinners: the player may redraw only 10 times a second, so a ring should turn less than half a turn per 1/10 s, which means 12 or more pictures per turn at `fps=30`, or a slower ring. Otherwise it can look slow or backwards.
+
+**Shared playback and still posters.** A winning binding starts when its first visible eligible pin is ready for stage 1. Later pins join the current stage; they do not replay its intro. Hidden and offscreen programs keep logical time without drawing. Rebuilding a pin list does not restart them. The production **Animated pins** switch defaults to On; without the menu add-on, the file switch still applies, defaulting to On. Off displays the poster with existing looks, loads only poster art and runs no effect clock. Each stage plays at its own `fps` (1 to 30) whatever the player picks. The player's Animated pins setting (10, 15 or 30 redraws a second, default 15) only sets how often CMF redraws: at a lower setting the animation keeps its speed and skips frames. It is separate from the map's own frame rate.
+
+The legend stays still and uses type/global main 45 and under 46 posters. Explicit legend icon property 2 takes precedence over the main poster independently of under 46. Under posters fit the whole source canvas into the native icon box, behind native or custom main art; property 43 multiplies the under image's colours. A `frame:` main poster keeps the legend's existing native/static picture, and a `frame:` under poster adds no under image; neither is sent to a bitmap loader. Property 42 keeps its existing world-map-only behavior. Tag, place and direct claims, playback offsets, world scale and pin opacity do not become legend art. Pending or failed replacements keep a valid under poster on the same row; a different row identity or empty under path clears it. Legend-only loading starts no effect clock and shares the world map's image budget and cache. The updated minimap add-on also uses only type-level main posters: explicit poster or first authored frame. A `frame:` minimap poster retains the still property-1 image when available, otherwise native HUD art. Older minimap add-ons keep their property-1 fallback; tag/place/under claims do not become minimap art.
+
+**Artwork and failure handling.** Keep equal source canvases and original transparent margins across frames; otherwise the checker warns about canvas size, edges and compression as it does for still art. Fully transparent animation frames are valid. The pack tool validates every referenced local image in every stage and the poster, counts repeated paths once for cooking, and retains its existing behavior of cooking all supplied valid art. Native `frame:` labels need no PNG; the game validates them in their native symbol context. Constant literal additions are checked as one descriptor. Variable expressions remain explicitly unverified: complete local PNG paths in literal fragments inside a dynamic animation argument are discovered conservatively. The checker does not follow variable assignments or infer their final values, so it cannot prove the final program or all assets.
+
+A failed frame position displays the next good position cyclically while keeping its own duration. One surviving image preserves finite timing. All failed art restores still fallback. Loading later-stage art pauses that program at its last good picture until the stage can start; an all-failed stage is skipped. An entirely failed repeating section terminates to still fallback with one failure note. Images are requested at most once per opening; an active animation clock checks for loads older than 5 seconds. Off and legend-only loads use completion/failure callbacks without starting a timeout clock. The opening cache permits 32 MiB decoded pixels and 2,048 distinct bitmap paths; new paths beyond the budget fail with normal fallback. Loaded entries stay until close.
+
+**Refused text.** The pack checker and core use the same refusal tokens; existing general `rejected ... reason=...` diagnostics retain their meaning. Read new animation tokens as follows:
+
+| Token | Plain meaning |
+| --- | --- |
+| `frame paths` | Frame count or picture path is invalid; use 2..16 valid positions |
+| `poster path` | Poster picture path is invalid |
+| `fps range` | Frame rate must be an integer 1..30 |
+| `program options`, `stage options` | Unknown, repeated, missing or malformed option at that level |
+| `duplicate stage`, `unreachable stage`, `stages required` | Stage names/order are invalid, or no stage was supplied |
+| `repeat stage` | Unknown repeat stage |
+| `clashing options` | Explicit repeat clashes with a forever final stage |
+| `time range` | Delay or hold must be decimal seconds 0..3,600 |
+| `plays range` | Play count must be integer 1..1,000,000 or legal `forever` |
+| `repeat range` | Repeat count must be integer 1..1,000,000 or `forever` |
+| `offset range` | Offset must be an integer 0..15, or `inherit` in a stage |
+| `author length` | Text length exceeds 8,192 characters |
+
+Keep animation text in provider scripts. The game's settings values truncate at commas: only provider names and scalar switches belong there. Existing `CMFFile_` keys and their provider/Vanilla/Automatic answers stay unchanged; a program, image path or filename is never a choice key or answer. Existing claim logs contain ownership and target metadata, not raw animation text. Animation summaries use provider, layer, counts, FPS and refusal reason; delimiters are never interpreted as log fields or passed whole to a minimap image loader. Legacy still-image URLs retain their existing comma/semicolon handling outside animation properties.
 
 ### Choice-only claims (API version 9)
 

@@ -460,6 +460,44 @@ class SourceTests(unittest.TestCase):
         self.assertEqual(env['CMFThemePartKeys']('pinName').split(','),
                          ['font', 'size', 'color'] + env['CMFThemeShadowKeys']().split(','))
 
+    def test_map_frame_follows_the_map_area_or_hides(self):
+        # 2026-10-31 (Map Quest Insight's full-screen dark bars): the movie's unnamed edge frame (2930.5 x 1053.5, above
+        # the maps) kept its window at y 96-976 while the map area ran to the screen edges. The map part's frame keys
+        # place it the way Map Quest Insight 2.1.0's own map does (qmiFdEdge / qmiFdEgFit).
+        classes = json.loads((ROOT/'source/panel/pin-fields/edits.json').read_text(encoding='utf-8'))['classes']
+        menu = ''.join(e['replace'] for e in classes['red/game/witcher3/menus/worldmap/MapMenu.as'])
+        self.assertIn('o is DisplayObjectContainer && Math.abs(o.width - 2930.5) < 4 && Math.abs(o.height - 1053.5) < 4', menu)
+        self.assertIn('var rowTop:Number = MapMenu.cmfNum("map","frameTop",23 / 256);', menu)
+        self.assertIn('var rowBottom:Number = MapMenu.cmfNum("map","frameBottom",238 / 256);', menu)
+        self.assertIn('h = (bottom - top) / (rowBottom - rowTop);\n               frame.height = h;\n               frame.y = top - rowTop * h;', menu)
+        self.assertIn('"map frame area " + Math.round(top) + "-" + Math.round(bottom) + " rows=" + rowTop + "-" + rowBottom', menu)
+        self.assertIn('"map frame rows refused "', menu)
+        # It runs after the mask, when no top/bottom key is sent, and again after every wide layout.
+        self.assertIn('this.cmfMapMask(top,bottom);\n         this.cmfMapFrame();', menu)
+        self.assertIn('{\n            this.cmfMapFrame();\n            return;\n         }', menu)
+        self.assertIn('this.cmfDrawBackdrop();\n         this.cmfMapFrame();\n      }', menu)
+        # The default rows are the game's window: at the game's place (y 1, height 1053.5) they land on the mask.
+        top, bottom = 1 + 23 / 256 * 1053.5, 1 + 238 / 256 * 1053.5
+        self.assertLess(abs(top - 96), 1.5); self.assertLess(abs(bottom - 976), 5)
+        # Full screen with the default rows: height and place put rows 23 and 238 on y 0 and 1080.
+        h = 1080 / (238 / 256 - 23 / 256); self.assertAlmostEqual(-23 / 256 * h + 238 / 256 * h, 1080)
+        core = SCRIPTS[0].read_text(encoding='ascii')
+        from rev13_legacy_source import theme_environment
+        env = theme_environment(core)
+        self.assertEqual(env['CMFThemePartKeys']('map').split(','),
+                         ['top', 'bottom', 'panLimit', 'centerInLimit', 'backdrop', 'frame', 'frameTop', 'frameBottom'])
+        self.assertTrue(env['CMFThemeTextKey']('frame'))
+        from ws_contract_runner import bind
+        ok = bind(core, 'CMFThemeValueOk', env, ('part', 'key', 'text', 'number'))
+        # Same owner as the map area: the Map area row (Movement_Area), no row of its own.
+        for key in ('frame', 'frameTop', 'frameBottom'):
+            self.assertEqual(env['PartKeyChoice']('map', key), env['PartKeyChoice']('map', 'top'))
+        self.assertTrue(ok('map', 'frame', 'area', 0)); self.assertTrue(ok('map', 'frame', 'hide', 0))
+        self.assertFalse(ok('map', 'frame', 'stretch', 0)); self.assertFalse(ok('map', 'frame', '', 0))
+        for key in ('frameTop', 'frameBottom'):
+            self.assertTrue(ok('map', key, '', 0)); self.assertTrue(ok('map', key, '', 1)); self.assertTrue(ok('map', key, '', 0.5))
+            self.assertFalse(ok('map', key, '', -0.01)); self.assertFalse(ok('map', key, '', 1.01))
+
     def test_legend_collapses_and_reports_its_box(self):
         # Launch set C (2026-10-20): the legend's long list stayed up over its frame; with a theme the list returns
         # to the short list wherever the game clears _expandedList, and the panel logs the measured legend box.

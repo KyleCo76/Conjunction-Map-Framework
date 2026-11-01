@@ -1,4 +1,4 @@
-// Map Quest Insight adapter 2.2.0 for Conjunction Map Framework. Requires CMF 1.6.0 (API version 13) and Map Quest
+// Map Quest Insight adapter 2.3.0 for Conjunction Map Framework. Requires CMF 1.6.0 (API version 13) and Map Quest
 // Insight 2.1.0 or later (Nexus 14219; the Quest List file uses names that exist from 2.1.0), which stays
 // unchanged. Install and remove the two together: this file calls Map Quest Insight's own functions (QMI_OptTypeIcons, QMI_IconKind, QMI_LevelBandTint and QMI_ColorTrackedIcon exist
 // from 2.0.0, which Wolfer named stable), so the game stops at the script compile screen when Map Quest Insight is
@@ -902,10 +902,16 @@ function OnInfoFold(menu : CR4MapMenu, provider : string, open : bool)
 // draws none). The panels already sit inside the game's map area, below the tabs, so none moves. Off withdraws
 // all of it: the game's area and no bands. Map Quest Insight itself hides the hub's backdrop and close button only
 // while this setting is on (2.0.1).
+// 2.3.0 (CMF API 14, map frame keys): the movie's edge frame, which otherwise stays painted over the map as dark
+// bars above y 96 and below y 976, follows the map area as on Map Quest Insight 2.1.0's own map (qmiFdEdge): Soft
+// and Dark fade put the frame picture's rows 23/256 and 238/256 on the screen edges, so its soft inner edge shows;
+// Clear puts rows 47/256 and 212/256 there, so none of it shows. The bands match its own (qmiFdDraw2): black at the
+// edge at 44 % (Soft, 220 px) or 77.5 % (Dark, 280 px), fading with the square of the distance (curve 2).
 function MqiAdapterSendFullScreen()
 {
 	var mode : string;
 	var alpha : float;
+	var size : float;
 	if (!CMFHasAbility('map', 'top') || !CMFHasAbility('band', 'side'))
 	{
 		return;
@@ -915,33 +921,51 @@ function MqiAdapterSendFullScreen()
 	{
 		MqiAdapterMotion('map', 'top', "unset", 0);
 		MqiAdapterMotion('map', 'bottom', "unset", 0);
-		MqiAdapterFade('modMapQuestInsight.fadeTop', "", 0);
-		MqiAdapterFade('modMapQuestInsight.fadeBottom', "", 0);
+		MqiAdapterMotion('map', 'frame', "unset", 0);
+		MqiAdapterMotion('map', 'frameTop', "unset", 0);
+		MqiAdapterMotion('map', 'frameBottom', "unset", 0);
+		MqiAdapterFade('modMapQuestInsight.fadeTop', "", 0, 0);
+		MqiAdapterFade('modMapQuestInsight.fadeBottom', "", 0, 0);
 		return;
 	}
 	MqiAdapterMotion('map', 'top', "", 0);
 	MqiAdapterMotion('map', 'bottom', "", 1080);
+	MqiAdapterMotion('map', 'frame', "area", 0);
+	if (mode == "1")
+	{
+		MqiAdapterMotion('map', 'frameTop', "", 0.18359375);
+		MqiAdapterMotion('map', 'frameBottom', "", 0.828125);
+	}
+	else
+	{
+		MqiAdapterMotion('map', 'frameTop', "", 0.08984375);
+		MqiAdapterMotion('map', 'frameBottom', "", 0.9296875);
+	}
 	alpha = 0;
+	size = 0;
 	if (mode == "2")
 	{
-		alpha = 0.55;
+		alpha = 0.44;
+		size = 220;
 	}
 	else if (mode == "3")
 	{
-		alpha = 0.85;
+		alpha = 0.775;
+		size = 280;
 	}
 	if (alpha <= 0)
 	{
-		MqiAdapterFade('modMapQuestInsight.fadeTop', "", 0);
-		MqiAdapterFade('modMapQuestInsight.fadeBottom', "", 0);
+		MqiAdapterFade('modMapQuestInsight.fadeTop', "", 0, 0);
+		MqiAdapterFade('modMapQuestInsight.fadeBottom', "", 0, 0);
 		return;
 	}
-	MqiAdapterFade('modMapQuestInsight.fadeTop', "top", alpha);
-	MqiAdapterFade('modMapQuestInsight.fadeBottom', "bottom", alpha);
+	MqiAdapterFade('modMapQuestInsight.fadeTop', "top", alpha, size);
+	MqiAdapterFade('modMapQuestInsight.fadeBottom', "bottom", alpha, size);
 }
 
-// One fade band along a screen edge, black at the edge and clear 180 px in; side "" withdraws it.
-function MqiAdapterFade(id : name, side : string, alpha : float)
+// One fade band along a screen edge, black at the edge and clear size px in, darkening with the square of the
+// distance from its clear end; side "" withdraws it.
+function MqiAdapterFade(id : name, side : string, alpha : float, size : float)
 {
 	if (side == "")
 	{
@@ -950,12 +974,13 @@ function MqiAdapterFade(id : name, side : string, alpha : float)
 	}
 	CMFDraw("modMapQuestInsight", 'screen', id, 'band');
 	CMFDrawSet("modMapQuestInsight", id, 'side', side, 0);
-	CMFDrawSet("modMapQuestInsight", id, 'size', "", 180);
+	CMFDrawSet("modMapQuestInsight", id, 'size', "", size);
 	CMFDrawSet("modMapQuestInsight", id, 'fill', "", 0);
 	CMFDrawSet("modMapQuestInsight", id, 'alpha', "", 0);
 	CMFDrawSet("modMapQuestInsight", id, 'fill2', "", 0);
 	CMFDrawSet("modMapQuestInsight", id, 'alpha2', "", alpha);
 	CMFDrawSet("modMapQuestInsight", id, 'gradient', "linear", 0);
+	CMFDrawSet("modMapQuestInsight", id, 'curve', "", 2);
 	CMFDrawSet("modMapQuestInsight", id, 'layer', "under", 0);
 }
 

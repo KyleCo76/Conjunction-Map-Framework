@@ -1,6 +1,6 @@
 # Fog of War adapter (proof of concept)
 
-**Adapter version 1.0.2.** Writes one log line per map build and none per pin. Adapter 1.0.1 tells CMF the adapter is installed when the game starts (property 38, behind `CMFHasProperty(38)`, API 11), so CMF's adapter check can see it. Nothing else changes.
+**Adapter version 1.1.0, for Fog of War 1.2.1 and CMF API 14 (CMF 1.7.0).** Draws Fog of War's fog itself in its "cloud textures off" look, as one CMF `grid` drawing under the pins, fed each full map build from Fog of War's own grid, colour, opacity and edge detail, and withdrawn when Fog of War is switched off. It calls `CMFDrawSetBits`, so it compiles only with CMF API 14 or later; players on an older CMF keep adapter 1.0.3. Version 1.0.3: Hides pins under the fog also when another mod ships `CR4MapMenu.UpdateEntityPins` precompiled (The Stable 2.2.1 in Ard Dhu Stable), which skips every loose wrapper on that method, Fog of War's own filter included: when the entity wrapper did not run in a build, an `UpdateUserMapPins` wrapper asks Fog of War about every pin already in the list, before CMF's late pass, once per build. Adapter 1.0.2 writes one log line per map build and no line per pin. Adapter 1.0.1 declares `modFogOfWar` at game startup with generic property 38 when `CMFHasProperty(38)` succeeds (API 11). Presence is independent of feature settings. The source-mod compile dependency and minimum CMF version remain unchanged.
 
 `modCMFAdapterFogOfWar` is a separate mod that sits between Conjunction Map Framework (CMF) and Fog of War 1.2.1 (Nexus 13627). Fog of War hides map pins under its fog, but its script cannot reach pins other mods push from a later wrapper, so Witcher Gear Map's markers show through the fog. The adapter asks Fog of War's own filter about every pin in the finished entity list and passes each pin the filter drops to CMF as a hide, through property 9 `Hidden` of CMF API version 3 (Stage 1 spec, sections 7.1 and 10.2; the spec is PR #17). Fog of War is unchanged. The adapter adds no rule of its own and ships no art. The author-facing version is [`docs/authors/fog-of-war-adapter.md`](../../../docs/authors/fog-of-war-adapter.md).
 
@@ -51,7 +51,7 @@ Pins Fog of War already removed are gone before the adapter runs. Pins inside Fo
 
 **CMF API versions.** `CMFStylePin` exists since API version 2, so the file compiles against API versions 2 and 3. Everything is behind `CMFHasProperty(9)`: under API version 2 the adapter does nothing.
 
-**Log.** Per build, one line: `CMF adapter provider=modFogOfWar area=<area> asked=<pins> hidden=<dropped by Fog of War> marked=<accepted by CMF>`. Up to adapter 1.0.1 it also wrote one line for each of the first eight dropped pins of a build; 1.0.2 drops those (a log line per pin breaks the log rule).
+**Log.** Per build, one line: `CMF adapter provider=modFogOfWar area=<area> asked=<pins> hidden=<dropped by Fog of War> marked=<accepted by CMF>`, with ` step=fallback` at the end when the fallback asked (1.0.3). Up to adapter 1.0.1 it also wrote one line for each of the first eight dropped pins of a build; 1.0.2 drops those (a log line per pin breaks the log rule).
 
 ## Dependencies
 

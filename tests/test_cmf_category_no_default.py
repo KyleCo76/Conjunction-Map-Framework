@@ -52,10 +52,10 @@ class CategoryNoDefaultTests(unittest.TestCase):
         import cmf_pack
         self.assertEqual(cmf_pack.PROPERTY_IDS['CMFPropertyCategoryNoDefault'], 23)
         self.assertIn(23, cmf_pack.KNOWN_PROPERTIES)
-        self.assertEqual(cmf_pack.KNOWN_PROPERTIES, set(range(1, 45)))
+        self.assertEqual(cmf_pack.KNOWN_PROPERTIES, set(range(1, 49)))
         self.assertEqual(cmf_pack.n4_issues(23, 'modAcmeIcons_finds', '1'), [])
         self.assertNotIn(0, cmf_pack.KNOWN_PROPERTIES)
-        self.assertNotIn(45, cmf_pack.KNOWN_PROPERTIES)
+        self.assertNotIn(49, cmf_pack.KNOWN_PROPERTIES)
         guide = GUIDE.read_text(encoding='utf-8')
         self.assertIn('| `23` `CMFPropertyCategoryNoDefault()`', guide)
         self.assertIn("CMFRegisterCategoryNoDefault(p, 'modAcmeIcons_finds', true)", guide)

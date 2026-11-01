@@ -21,7 +21,14 @@
 // place apart from its height (the tooltip keys tallMinHeight and the tall* places).
 // Never remove a call once published.
 
-function CMFGetVersion() : int { return 13; }
+function CMFGetVersion() : int { return 14; }
+
+// API 14: frame programs and their winning provider's per-layer phase.
+function CMFPropertyIconFrames() : int { return 45; }
+function CMFPropertyIconUnderFrames() : int { return 46; }
+function CMFPropertyFrameOffset() : int { return 47; }
+// API 14: 1 makes a provider's pictures fill one fixed box instead of the game's glyph bounds; 0 or no claim keeps the glyph box.
+function CMFPropertyPictureFit() : int { return 48; }
 
 function CMFPropertyIcon() : int { return 1; }
 function CMFPropertyLegendIcon() : int { return 2; }
@@ -348,7 +355,7 @@ function CMFPropertyTextFree(propertyId : int) : bool
 		propertyId == CMFPropertyCategoryNoDefault() || propertyId == CMFPropertySpreadRank() ||
 		propertyId == CMFPropertyHoverName() || propertyId == CMFPropertyTabHidden() ||
 		propertyId == 32 || propertyId == 33 || propertyId == 34 || propertyId == 39 || propertyId == 41 || propertyId == 43 ||
-		propertyId == 44;
+		propertyId == 44 || propertyId == 47 || propertyId == 48;
 }
 
 // Version 6: the click properties (16, 20, 21), which reach user pins and follow the click's winner.
@@ -452,6 +459,14 @@ function CMFOwnerField(propertyId : int) : string
 			return "cmfIconUnderTintBy";
 		case 44:
 			return "cmfPictureScaleBy";
+		case 45:
+			return "cmfIconFramesBy";
+		case 46:
+			return "cmfIconUnderFramesBy";
+		case 47:
+			return "cmfIconFrameOffsetBy";
+		case 48:
+			return "cmfPictureFitBy";
 
 	}
 	return "";
@@ -734,6 +749,31 @@ struct SCMFLabelHideState
 	var next : int;
 }
 
+struct SCMFAnimationStage
+{
+	var stageName, frames, fps, plays, direction, holdFirst, holdLast, offset, delay : string;
+}
+
+struct SCMFAnimationCache
+{
+	var text, canonical, poster, reason : string;
+	var fps, stageCount, frameCount : int;
+	var valid : bool;
+}
+
+struct SCMFAnimationBinding
+{
+	var pinKey, text : string;
+	var propertyId, fps : int;
+}
+
+struct SCMFAnimationDirect
+{
+	var pin : CScriptedFlashObject;
+	var pinKey, provider : string;
+	var offset : int;
+}
+
 class CMFCore extends CObject
 {
 	// Session presence is independent of claims, offers and provider priority.
@@ -741,6 +781,20 @@ class CMFCore extends CObject
 	private var presentProviders : array<string>;
 	private var lastPresentProvider : string;
 	private var claims : array<SCMFClaim>;
+	private var animationClaimIndices : array<int>;
+	private var animationCache : array<SCMFAnimationCache>;
+	private var animationTextClean : bool;
+	private var animationBlanks : string;
+	private var animationDirect : array<SCMFAnimationDirect>;
+	private var animationBindings : array<SCMFAnimationBinding>;
+	private var animationPins : array<CScriptedFlashObject>;
+	private var animationMenu : CR4MapMenu;
+	private var animationEnabled, animationOptionsRead : bool;
+	private var animationCap : int;
+	private var animationDragPause : bool;
+	private var animationMemory : int;
+	private var animationNotes : array<string>;
+	private var animationCounts : array<int>;
 	private var winners : array<SCMFClaim>;
 	private var nextOrder : int;
 	private var dirty : bool;
@@ -770,6 +824,13 @@ class CMFCore extends CObject
 	private var providerOrder : string;
 	private var clickNotes : array<string>;
 	private var spaceMenu : CR4MapMenu;
+	private var spaceEarlyMenu : CR4MapMenu;
+	private var spaceEarlyOk : bool;
+	// The first grid sent by the last full build: its fill colour and alpha, for the cover shown before the map's first frame.
+	private var coverKnown : bool;
+	private var coverFill : int;
+	private var coverAlpha : float;
+	private var coverArea : name;
 	private var spaceArea : name;
 	private var catchArray : CScriptedFlashArray;
 	private var catching : bool;
@@ -956,6 +1017,769 @@ class CMFCore extends CObject
 		}
 	}
 
+	// API 14: authored descriptors are parsed once per exact text and FPS. The panel sees only this wire form.
+	public function AnimationFpsCap() : int { return 30; }
+
+	private function AnimationSpace(ch : string) : bool
+	{
+		if (animationBlanks == "")
+		{
+			animationBlanks = " " + StrChar(9) + StrChar(10) + StrChar(11) + StrChar(12) + StrChar(13);
+		}
+		return ch != "" && StrFindFirst(animationBlanks, ch) >= 0;
+	}
+
+	// Linear in the length: find both ends by position, then copy the middle once (no copy per stripped character).
+	private function AnimationTrim(text : string) : string
+	{
+		var start, finish : int;
+		finish = StrLen(text);
+		while (start < finish && AnimationSpace(StrMid(text, start, 1))) { start += 1; }
+		while (finish > start && AnimationSpace(StrMid(text, finish - 1, 1))) { finish -= 1; }
+		if (start == 0 && finish == StrLen(text)) { return text; }
+		return StrMid(text, start, finish - start);
+	}
+
+	// The piece of text that starts at pos and ends before the next separator (one character), and the position after
+	// it; StrLen(text) + 1 when there is no separator left. A text with k separators gives k + 1 pieces, the last
+	// possibly empty. It reads the text in windows that double, so each character is copied about twice in all instead
+	// of the whole remainder once per piece.
+	private function AnimationNextPiece(text : string, pos : int, separator : string, out piece : string) : int
+	{
+		var window, length, at : int;
+		var chunk : string;
+		piece = "";
+		length = StrLen(text);
+		window = 64;
+		while (pos < length)
+		{
+			if (window > length - pos) { window = length - pos; }
+			chunk = StrMid(text, pos, window);
+			at = StrFindFirst(chunk, separator);
+			if (at >= 0)
+			{
+				piece += StrLeft(chunk, at);
+				return pos + at + 1;
+			}
+			piece += chunk;
+			pos += window;
+			if (window < 2048) { window = window * 2; }
+		}
+		return length + 1;
+	}
+
+	// True when the text holds no control character (0-31, 127-159).
+	private function AnimationScan(text : string) : bool
+	{
+		var i : int;
+		for (i = 0; i < 32; i += 1)
+		{
+			if (StrFindFirst(text, StrChar(i)) >= 0) { return false; }
+		}
+		for (i = 127; i < 160; i += 1)
+		{
+			if (StrFindFirst(text, StrChar(i)) >= 0) { return false; }
+		}
+		return true;
+	}
+
+	private function AnimationToken(text : string) : bool
+	{
+		var i : int;
+		// Every token is a piece of the text AnimationDecode already scanned once; when that was clean, so is the piece.
+		if (animationTextClean) { return true; }
+		for (i = 0; i < 32; i += 1)
+		{
+			if (StrFindFirst(text, StrChar(i)) >= 0) { return false; }
+		}
+		for (i = 127; i < 160; i += 1)
+		{
+			if (StrFindFirst(text, StrChar(i)) >= 0) { return false; }
+		}
+		return true;
+	}
+
+	private function AnimationPath(text : string) : bool
+	{
+		return AnimationToken(text) && StrLen(text) > 6 &&
+			(StrBeginsWith(text, "img://") || StrBeginsWith(text, "frame:")) &&
+			StrFindFirst(text, ",") < 0 && StrFindFirst(text, ";") < 0 &&
+			StrFindFirst(text, "|") < 0 && StrFindFirst(text, "=") < 0;
+	}
+
+	private function AnimationName(text : string) : bool
+	{
+		var i : int;
+		if (text == "") { return false; }
+		for (i = 0; i < StrLen(text); i += 1)
+		{
+			if (StrFindFirst("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-", StrMid(text, i, 1)) < 0)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// Validate decimal spelling before conversion; normalization never rounds authored seconds through a float.
+	private function AnimationNumber(text : string, maximum : int, integer : bool, out normalized : string) : bool
+	{
+		var i, dots, digits : int;
+		var ch, whole, fraction : string;
+		var value : float;
+		var negative : bool;
+		normalized = "";
+		negative = StrBeginsWith(text, "-");
+		if (negative || StrBeginsWith(text, "+")) { text = StrRight(text, StrLen(text) - 1); }
+		if (text == "") { return false; }
+		for (i = 0; i < StrLen(text); i += 1)
+		{
+			ch = StrMid(text, i, 1);
+			if (ch == "." && !integer) { dots += 1; }
+			else if (StrFindFirst("0123456789", ch) >= 0) { digits += 1; }
+			else { return false; }
+		}
+		if (dots > 1 || digits == 0) { return false; }
+		whole = text;
+		if (dots == 1)
+		{
+			whole = StrBeforeFirst(text, ".");
+			fraction = StrAfterFirst(text, ".");
+		}
+		while (StrBeginsWith(whole, "0")) { whole = StrRight(whole, StrLen(whole) - 1); }
+		while (StrEndsWith(fraction, "0")) { fraction = StrLeft(fraction, StrLen(fraction) - 1); }
+		if (whole == "") { whole = "0"; }
+		// Short bounded integer parts make conversion safe even for a very long author token.
+		if (negative && (whole != "0" || fraction != "")) { return false; }
+		if (StrLen(whole) > 7) { return false; }
+		value = StringToFloat(whole);
+		if (value > maximum || (value == maximum && fraction != "")) { return false; }
+		normalized = whole;
+		if (fraction != "") { normalized += "." + fraction; }
+		return true;
+	}
+
+	private function AnimationFrames(text : string, out frames : string, out first : string) : bool
+	{
+		var path, piece : string;
+		var count, pos, length : int;
+		frames = "";
+		first = "";
+		length = StrLen(text);
+		while (pos <= length)
+		{
+			pos = AnimationNextPiece(text, pos, ",", piece);
+			path = AnimationTrim(piece);
+			if (!AnimationPath(path)) { return false; }
+			count += 1;
+			if (count > 16) { return false; }
+			if (count == 1) { first = path; }
+			else { frames += ","; }
+			frames += path;
+		}
+		return count >= 2;
+	}
+
+	private function AnimationStage(text : string, fps : int, out result : SCMFAnimationStage, out poster : string,
+		out reason : string) : bool
+	{
+		var keys : array<string>;
+		var token, key, value, normalized : string;
+		var hasOffset : bool;
+		var pos, length : int;
+		result.stageName = "";
+		result.frames = "";
+		result.fps = IntToString(fps);
+		result.plays = "1";
+		result.direction = "forward";
+		result.holdFirst = "0";
+		result.holdLast = "0";
+		result.offset = "0";
+		result.delay = "0";
+		length = StrLen(text);
+		reason = "stage options";
+		while (pos <= length)
+		{
+			pos = AnimationNextPiece(text, pos, ";", token);
+			token = AnimationTrim(token);
+			if (StrFindFirst(token, "=") < 0) { return false; }
+			key = AnimationTrim(StrBeforeFirst(token, "="));
+			value = AnimationTrim(StrAfterFirst(token, "="));
+			if (keys.Contains(key) || (key != "frames" && !AnimationToken(value))) { return false; }
+			keys.PushBack(key);
+			switch (key)
+			{
+				case "stage":
+					if (!AnimationName(value)) { return false; }
+					result.stageName = value;
+					break;
+				case "frames":
+					if (!AnimationFrames(value, result.frames, poster)) { reason = "frame paths"; return false; }
+					break;
+				case "fps":
+					if (!AnimationNumber(value, 30, true, normalized) || normalized == "0") { reason = "fps range"; return false; }
+					result.fps = normalized;
+					break;
+				case "plays":
+					if (value != "forever")
+					{
+						if (!AnimationNumber(value, 1000000, true, normalized) || normalized == "0") { reason = "plays range"; return false; }
+						value = normalized;
+					}
+					result.plays = value;
+					break;
+				case "direction":
+					if (value != "forward" && value != "reverse" && value != "pingpong") { return false; }
+					result.direction = value;
+					break;
+				case "holdFirst":
+				case "holdLast":
+				case "delay":
+					if (!AnimationNumber(value, 3600, false, normalized)) { reason = "time range"; return false; }
+					if (key == "holdFirst") { result.holdFirst = normalized; }
+					else if (key == "holdLast") { result.holdLast = normalized; }
+					else { result.delay = normalized; }
+					break;
+				case "offset":
+					hasOffset = true;
+					if (value != "inherit")
+					{
+						if (!AnimationNumber(value, 15, true, normalized)) { reason = "offset range"; return false; }
+						value = normalized;
+					}
+					result.offset = value;
+					break;
+				default:
+					return false;
+			}
+		}
+		if (result.plays == "forever" && !hasOffset) { result.offset = "inherit"; }
+		return result.stageName != "" && result.frames != "";
+	}
+
+	// Scans the whole text for control characters once (64 searches) instead of once per token (64 per token); a text
+	// with one still checks each token, so the refusals are the same.
+	private function AnimationDecode(text : string, fps : int, out canonical : string, out poster : string,
+		out reason : string) : bool
+	{
+		var ok : bool;
+		animationTextClean = StrLen(text) <= 8192 && AnimationScan(AnimationTrim(text));
+		ok = AnimationDecodeText(text, fps, canonical, poster, reason);
+		animationTextClean = false;
+		return ok;
+	}
+
+	private function AnimationDecodeText(text : string, fps : int, out canonical : string, out poster : string,
+		out reason : string) : bool
+	{
+		var stages : array<SCMFAnimationStage>;
+		var names, keys : array<string>;
+		var stageData : SCMFAnimationStage;
+		var token, key, value, first, stagePoster, delay, finish, repeat, repeatFrom, normalized : string;
+		var i, pos, length : int;
+		var explicitRepeat : bool;
+		canonical = "";
+		poster = "";
+		reason = "author length";
+		if (StrLen(text) > 8192) { return false; }
+		reason = "fps range";
+		if (fps < 1 || fps > 30) { return false; }
+		text = AnimationTrim(text);
+		delay = "0";
+		finish = "restore";
+		repeat = "1";
+		if (!StrBeginsWith(text, "program:v1|"))
+		{
+			reason = "frame paths";
+			if (!AnimationFrames(text, stageData.frames, poster)) { return false; }
+			stageData.stageName = "loop";
+			stageData.fps = IntToString(fps);
+			stageData.plays = "forever";
+			stageData.direction = "forward";
+			stageData.holdFirst = "0";
+			stageData.holdLast = "0";
+			stageData.offset = "inherit";
+			stageData.delay = "0";
+			stages.PushBack(stageData);
+			names.PushBack("loop");
+		}
+		else
+		{
+			pos = StrFindFirst(text, "|") + 1;
+			length = StrLen(text);
+			while (pos <= length)
+			{
+				pos = AnimationNextPiece(text, pos, "|", token);
+				token = AnimationTrim(token);
+				reason = "program options";
+				if (StrFindFirst(token, "=") < 0) { return false; }
+				key = AnimationTrim(StrBeforeFirst(token, "="));
+				value = AnimationTrim(StrAfterFirst(token, "="));
+				if (key == "stage")
+				{
+					if (stages.Size() >= 8 || !AnimationStage(token, fps, stageData, stagePoster, reason)) { return false; }
+					if (names.Contains(stageData.stageName)) { reason = "duplicate stage"; return false; }
+					if (stages.Size() > 0 && stages[stages.Size() - 1].plays == "forever") { reason = "unreachable stage"; return false; }
+					if (stages.Size() == 0) { first = stagePoster; }
+					stages.PushBack(stageData);
+					names.PushBack(stageData.stageName);
+					continue;
+				}
+				if (keys.Contains(key) || !AnimationToken(value)) { return false; }
+				keys.PushBack(key);
+				switch (key)
+				{
+					case "delay":
+						if (!AnimationNumber(value, 3600, false, delay)) { reason = "time range"; return false; }
+						break;
+					case "finish":
+						if (value != "restore" && value != "hold") { return false; }
+						finish = value;
+						break;
+					case "poster":
+						if (value != "first" && !AnimationPath(value)) { reason = "poster path"; return false; }
+						poster = value;
+						break;
+					case "join":
+						if (value != "shared") { return false; }
+						break;
+					case "repeat":
+						explicitRepeat = true;
+						if (value != "forever")
+						{
+							if (!AnimationNumber(value, 1000000, true, normalized) || normalized == "0") { reason = "repeat range"; return false; }
+							value = normalized;
+						}
+						repeat = value;
+						break;
+					case "repeatFrom":
+						if (!AnimationName(value)) { return false; }
+						repeatFrom = value;
+						break;
+					default:
+						return false;
+				}
+			}
+			if (poster == "" || poster == "first") { poster = first; }
+		}
+		reason = "stages required";
+		if (stages.Size() == 0) { return false; }
+		reason = "clashing options";
+		if (explicitRepeat && stages[stages.Size() - 1].plays == "forever") { return false; }
+		if (repeatFrom == "") { repeatFrom = names[0]; }
+		reason = "repeat stage";
+		if (!names.Contains(repeatFrom)) { return false; }
+		canonical = "cmfanim:v1|delay=" + delay + "|finish=" + finish + "|poster=" + poster +
+			"|join=shared|repeat=" + repeat + "|repeatFrom=" + repeatFrom;
+		for (i = 0; i < stages.Size(); i += 1)
+		{
+			stageData = stages[i];
+			canonical += "|stage=" + stageData.stageName + ";frames=" + stageData.frames + ";fps=" + stageData.fps +
+				";plays=" + stageData.plays + ";direction=" + stageData.direction + ";holdFirst=" + stageData.holdFirst +
+				";holdLast=" + stageData.holdLast + ";offset=" + stageData.offset + ";delay=" + stageData.delay;
+		}
+		reason = "";
+		return true;
+	}
+
+	public function ParseAnimation(text : string, fps : int, out canonical : string, out poster : string,
+		out reason : string) : bool
+	{
+		var i, refused : int;
+		var cached : SCMFAnimationCache;
+		if (StrLen(text) > 8192) { canonical = ""; poster = ""; reason = "author length"; return false; }
+		for (i = 0; i < animationCache.Size(); i += 1)
+		{
+			if (animationCache[i].text == text && animationCache[i].fps == fps)
+			{
+				canonical = animationCache[i].canonical;
+				poster = animationCache[i].poster;
+				reason = animationCache[i].reason;
+				return animationCache[i].valid;
+			}
+		}
+		cached.text = text;
+		cached.fps = fps;
+		cached.valid = AnimationDecode(text, fps, cached.canonical, cached.poster, cached.reason);
+		if (!cached.valid) { cached.canonical = ""; cached.poster = ""; }
+		else
+		{
+			cached.stageCount = AnimationStageCount(cached.canonical);
+			cached.frameCount = AnimationCount(cached.canonical, ",") + cached.stageCount;
+		}
+		if (!cached.valid)
+		{
+			for (i = 0; i < animationCache.Size(); i += 1)
+			{
+				if (!animationCache[i].valid) { refused += 1; }
+			}
+			if (refused >= 64)
+			{
+				for (i = 0; i < animationCache.Size(); i += 1)
+				{
+					if (!animationCache[i].valid) { animationCache.Erase(i); break; }
+				}
+			}
+		}
+		animationCache.PushBack(cached);
+		canonical = cached.canonical;
+		poster = cached.poster;
+		reason = cached.reason;
+		return cached.valid;
+	}
+
+	public function AnimationPoster(text : string, fps : int) : string
+	{
+		var canonical, poster, reason : string;
+		if (ParseAnimation(text, fps, canonical, poster, reason)) { return poster; }
+		return "";
+	}
+
+	private function AnimationLegend(dataObject : CScriptedFlashObject, pinKey : string, legendKey : string)
+	{
+		var claim : SCMFClaim;
+		var poster : string;
+		if (!PropertyWon(45) && !PropertyWon(46)) { return; }
+		if (PropertyWon(45) && !(Find(2, legendKey, '', 1, claim) || Find(2, pinKey, '', 1, claim)))
+		{
+			if (Find(45, legendKey, '', 1, claim) || Find(45, pinKey, '', 1, claim))
+			{
+				poster = AnimationPoster(claim.text, claim.number);
+				if (StrBeginsWith(poster, "img://")) { dataObject.SetMemberFlashString("cmfLegendIconPath", poster); }
+			}
+		}
+		if (PropertyWon(46) && (Find(46, legendKey, '', 1, claim) || Find(46, pinKey, '', 1, claim)))
+		{
+			poster = AnimationPoster(claim.text, claim.number);
+			if (StrBeginsWith(poster, "img://"))
+			{
+				dataObject.SetMemberFlashString("cmfLegendUnderPath", poster);
+				if (Find(43, legendKey, '', 1, claim) || Find(43, pinKey, '', 1, claim))
+				{
+					dataObject.SetMemberFlashUInt("cmfLegendUnderTint", claim.number);
+					dataObject.SetMemberFlashBool("cmfLegendUnderTintEnabled", true);
+				}
+			}
+		}
+	}
+
+	private function AnimationSlotKey(claim : SCMFClaim) : string
+	{
+		return claim.provider + "/" + claim.propertyId + "/" + claim.level + "/" + NameToString(claim.pinType) +
+			"/" + NameToString(claim.pinTag) + "/" + NameToString(claim.mapContext) + "/" +
+			FloatToString(claim.placeX) + "/" + FloatToString(claim.placeY);
+	}
+
+	// Stable ids identify direct bindings across list rebuilds. Anonymous pins use an opening-local ordinal.
+	private function AnimationPinKey(dataObject : CScriptedFlashObject) : string
+	{
+		var tag : name;
+		var id, i : int;
+		tag = LateTag(dataObject);
+		if (IsNameValid(tag)) { return "tag/" + NameToString(tag); }
+		id = dataObject.GetMemberFlashUInt("id");
+		if (id != 0) { return "id/" + id + "/" + dataObject.GetMemberFlashString("type"); }
+		for (i = 0; i < animationPins.Size(); i += 1)
+		{
+			if (animationPins[i] == dataObject) { return "object/" + i; }
+		}
+		animationPins.PushBack(dataObject);
+		return "object/" + (animationPins.Size() - 1);
+	}
+
+	private function AnimationDirectOffset(provider : string, dataObject : CScriptedFlashObject, number : int,
+		withdraw : bool) : bool
+	{
+		var offer : SCMFAnimationDirect;
+		var pinKey : string;
+		var i : int;
+		if (number < 0 || number > 15 || dataObject.GetMemberFlashBool("isPlayer") || dataObject.GetMemberFlashBool("isUserPin")) { return false; }
+		pinKey = AnimationPinKey(dataObject);
+		for (i = 0; i < animationDirect.Size(); i += 1)
+		{
+			if (animationDirect[i].pinKey == pinKey && animationDirect[i].provider == provider)
+			{
+				if (withdraw) { animationDirect.Erase(i); }
+				else { animationDirect[i].offset = number; }
+				AnimationOffsets(dataObject, dataObject.GetMemberFlashString("type"), dataObject.GetMemberFlashString("filteredType"), LateTag(dataObject), CMFLevelPlace());
+				return true;
+			}
+		}
+		if (!withdraw)
+		{
+			offer.pin = dataObject;
+			offer.pinKey = pinKey;
+			offer.provider = provider;
+			offer.offset = number;
+			animationDirect.PushBack(offer);
+			AnimationOffsets(dataObject, dataObject.GetMemberFlashString("type"), dataObject.GetMemberFlashString("filteredType"), LateTag(dataObject), CMFLevelPlace());
+		}
+		return true;
+	}
+
+	private function AnimationOffset(provider : string, dataObject : CScriptedFlashObject, pinKey : string,
+		legendKey : string, pinTag : name, maxLevel : int, out owner : string) : int
+	{
+		var i, next, best, rank, bestRank : int;
+		var ownKey : string;
+		var matches, secondary : bool;
+		owner = "";
+		if (provider == "") { return 0; }
+		ownKey = AnimationPinKey(dataObject);
+		for (i = 0; i < animationDirect.Size(); i += 1)
+		{
+			if (animationDirect[i].provider == provider && animationDirect[i].pinKey == ownKey)
+			{
+				owner = provider;
+				return animationDirect[i].offset;
+			}
+		}
+		best = -1;
+		bestRank = -1;
+		if (!PropertyWon(47)) { return 0; }
+		next = propertyFirst[47];
+		while (next >= 0)
+		{
+			i = next;
+			next = propertyNext[i];
+			if (winners[i].provider != provider) { continue; }
+			matches = Covers(winners[i], pinKey, pinTag, maxLevel);
+			secondary = !matches && Covers(winners[i], legendKey, '', 1);
+			if ((!matches && !secondary) || ((winners[i].level == 2 || winners[i].level == CMFLevelPlace()) && CMFKindHidden(pinKey))) { continue; }
+			rank = Specific(winners[i]) * 2;
+			if (matches) { rank += 1; }
+			if (best < 0 || rank > bestRank) { best = i; bestRank = rank; }
+		}
+		if (best < 0) { return 0; }
+		owner = provider;
+		return winners[best].number;
+	}
+
+	private function AnimationOffsets(dataObject : CScriptedFlashObject, pinKey : string, legendKey : string,
+		pinTag : name, maxLevel : int)
+	{
+		var owner, provider : string;
+		var offset : int;
+		var oldPinKey, oldVariant : string;
+		var oldPlaceOk : bool;
+		var oldX, oldY : float;
+		oldPinKey = pinKeyNow;
+		oldVariant = variantNow;
+		oldPlaceOk = placeOk;
+		oldX = placeX;
+		oldY = placeY;
+		SetPinContext(dataObject, pinKey);
+		provider = CMFPinOwner(dataObject, "cmfIconFramesSourceBy");
+		if (provider != "")
+		{
+			offset = AnimationOffset(provider, dataObject, pinKey, legendKey, pinTag, maxLevel, owner);
+			dataObject.SetMemberFlashInt("cmfIconFrameOffset", offset);
+			dataObject.SetMemberFlashString("cmfIconFrameOffsetBy", owner);
+		}
+		provider = CMFPinOwner(dataObject, "cmfIconUnderFramesSourceBy");
+		if (provider != "")
+		{
+			offset = AnimationOffset(provider, dataObject, pinKey, legendKey, pinTag, maxLevel, owner);
+			dataObject.SetMemberFlashInt("cmfIconUnderFrameOffset", offset);
+			dataObject.SetMemberFlashString("cmfIconUnderFrameOffsetBy", owner);
+		}
+		pinKeyNow = oldPinKey;
+		variantNow = oldVariant;
+		placeOk = oldPlaceOk;
+		placeX = oldX;
+		placeY = oldY;
+	}
+
+	// Release the current direct layer; delivered panel snapshots own their art independently.
+	private function AnimationWithdraw(provider : string, dataObject : CScriptedFlashObject, propertyId : int) : bool
+	{
+		var prefix, offset, owner, pinKey : string;
+		var i : int;
+		if (provider == "" || !dataObject || (propertyId != 45 && propertyId != 46)) { return false; }
+		prefix = "cmfIconFrames";
+		offset = "cmfIconFrameOffset";
+		if (propertyId == 46) { prefix = "cmfIconUnderFrames"; offset = "cmfIconUnderFrameOffset"; }
+		owner = CMFPinOwner(dataObject, prefix + "By");
+		if (owner == "") { return true; }
+		if (owner != provider) { return false; }
+		dataObject.SetMemberFlashString(prefix, "");
+		dataObject.SetMemberFlashInt(prefix + "Fps", 0);
+		dataObject.SetMemberFlashString(prefix + "Key", "");
+		dataObject.SetMemberFlashString(prefix + "SourceBy", "");
+		dataObject.SetMemberFlashString(prefix + "By", "");
+		dataObject.SetMemberFlashInt(offset, 0);
+		dataObject.SetMemberFlashString(offset + "By", "");
+		pinKey = AnimationPinKey(dataObject);
+		for (i = animationBindings.Size() - 1; i >= 0; i -= 1)
+		{
+			if (animationBindings[i].pinKey == pinKey && animationBindings[i].propertyId == propertyId)
+			{
+				animationBindings.Erase(i);
+			}
+		}
+		AnimationPrune();
+		return true;
+	}
+
+	private function AnimationReference(dataObject : CScriptedFlashObject, propertyId : int, text : string, fps : int)
+	{
+		var binding : SCMFAnimationBinding;
+		var pinKey : string;
+		var i : int;
+		pinKey = AnimationPinKey(dataObject);
+		for (i = 0; i < animationBindings.Size(); i += 1)
+		{
+			if (animationBindings[i].pinKey == pinKey && animationBindings[i].propertyId == propertyId)
+			{
+				if (animationBindings[i].text == text && animationBindings[i].fps == fps) { return; }
+				animationBindings[i].text = text;
+				animationBindings[i].fps = fps;
+				AnimationPrune();
+				return;
+			}
+		}
+		binding.pinKey = pinKey;
+		binding.propertyId = propertyId;
+		binding.text = text;
+		binding.fps = fps;
+		animationBindings.PushBack(binding);
+	}
+
+	private function AnimationPrune()
+	{
+		var i, j : int;
+		var referenced : bool;
+		for (i = animationCache.Size() - 1; i >= 0; i -= 1)
+		{
+			referenced = false;
+			for (j = 0; j < animationBindings.Size() && !referenced; j += 1)
+			{
+				referenced = animationBindings[j].text == animationCache[i].text && animationBindings[j].fps == animationCache[i].fps;
+			}
+			for (j = 0; j < claims.Size() && !referenced; j += 1)
+			{
+				referenced = (claims[j].propertyId == 45 || claims[j].propertyId == 46) &&
+					claims[j].text == animationCache[i].text && claims[j].number == animationCache[i].fps;
+			}
+			if (animationCache[i].valid && !referenced) { animationCache.Erase(i); }
+		}
+	}
+
+	// How many times a one-character delimiter occurs, by pieces (linear; no copy of the remainder per hit).
+	private function AnimationCount(text : string, delimiter : string) : int
+	{
+		var pos, length, count : int;
+		var piece : string;
+		length = StrLen(text);
+		while (pos <= length)
+		{
+			pos = AnimationNextPiece(text, pos, delimiter, piece);
+			count += 1;
+		}
+		return count - 1;
+	}
+
+	// The stages of a canonical program: its pieces between "|" that start with "stage=".
+	private function AnimationStageCount(canonical : string) : int
+	{
+		var pos, length, count : int;
+		var piece : string;
+		length = StrLen(canonical);
+		while (pos <= length)
+		{
+			pos = AnimationNextPiece(canonical, pos, "|", piece);
+			if (StrBeginsWith(piece, "stage=")) { count += 1; }
+		}
+		return count;
+	}
+
+	private function AnimationAccepted(provider : string, propertyId : int, text : string, fps : int)
+	{
+		var i : int;
+		for (i = 0; i < animationCache.Size(); i += 1)
+		{
+			if (animationCache[i].text == text && animationCache[i].fps == fps && animationCache[i].valid)
+			{
+				AnimationNote(provider, propertyId, "accepted stages=" + animationCache[i].stageCount +
+					" frames=" + animationCache[i].frameCount + " fps=" + fps);
+				return;
+			}
+		}
+	}
+
+	private function AnimationNote(provider : string, propertyId : int, reason : string)
+	{
+		var key : string;
+		var i : int;
+		key = "provider=" + provider + " layer=" + propertyId + " reason=" + reason;
+		i = animationNotes.FindFirst(key);
+		if (i < 0) { animationNotes.PushBack(key); animationCounts.PushBack(1); }
+		else { animationCounts[i] += 1; }
+	}
+
+	public function SendAnimationOptions(menu : CR4MapMenu)
+	{
+		var storage : CScriptedFlashValueStorage;
+		var item : CScriptedFlashObject;
+		var i, claimIndex : int;
+		if (!menu) { return; }
+		// A distinct menu owns a fresh opening even if the old shown/close callbacks lag.
+		if (animationOptionsRead && animationMenu != menu) { CloseAnimations(); }
+		if (!animationOptionsRead)
+		{
+			if (dirty) { Prepare(); }
+			for (i = 0; i < animationClaimIndices.Size(); i += 1)
+			{
+				claimIndex = animationClaimIndices[i];
+				AnimationAccepted(claims[claimIndex].provider, claims[claimIndex].propertyId, claims[claimIndex].text, claims[claimIndex].number);
+			}
+			// The player's rate (0 = Off) never exceeds the core's ceiling; Off still sends the ceiling.
+			animationCap = CMFSettingsAnimatedPins(menuPresent);
+			animationEnabled = animationCap > 0;
+			if (animationCap <= 0 || animationCap > AnimationFpsCap()) { animationCap = AnimationFpsCap(); }
+			animationDragPause = CMFSettingsAnimationDragPause(menuPresent);
+			animationMemory = CMFSettingsAnimationMemory(menuPresent);
+			animationOptionsRead = true;
+			animationMenu = menu;
+			CMFLog("animations options enabled=" + CMFYesNo(animationEnabled) + " fpsCap=" + animationCap + " dragPause=" + CMFYesNo(animationDragPause) + " cacheMb=" + animationMemory);
+		}
+		storage = menu.GetMenuFlashValueStorage();
+		if (!storage) { return; }
+		item = storage.CreateTempFlashObject();
+		item.SetMemberFlashBool("enabled", animationEnabled);
+		item.SetMemberFlashInt("fpsCap", animationCap);
+		item.SetMemberFlashBool("dragPause", animationDragPause);
+		item.SetMemberFlashInt("cacheMb", animationMemory);
+		storage.SetFlashObject("cmf.map.animations", item);
+	}
+
+	// Animation readiness can precede OnMenuShown; navigation is not its lifetime owner.
+	public function CloseAnimationMenu(menu : CR4MapMenu)
+	{
+		if (menu && animationMenu == menu) { CloseAnimations(); }
+	}
+
+	public function CloseAnimations()
+	{
+		var i : int;
+		for (i = 0; i < animationNotes.Size(); i += 1)
+		{
+			CMFLog("animations claims " + animationNotes[i] + " count=" + animationCounts[i]);
+		}
+		animationNotes.Clear();
+		animationCounts.Clear();
+		animationOptionsRead = false;
+		animationMenu = NULL;
+		animationDirect.Clear();
+		animationPins.Clear();
+		animationBindings.Clear();
+		for (i = animationCache.Size() - 1; i >= 0; i -= 1)
+		{
+			if (!animationCache[i].valid) { animationCache.Erase(i); }
+		}
+		AnimationPrune();
+	}
+
 	public function RequestRefresh()
 	{
 		dirty = true;
@@ -969,7 +1793,7 @@ class CMFCore extends CObject
 		return propertyId == 1 || propertyId == 3 || propertyId == 9 ||
 			(propertyId >= 10 && propertyId <= 15) || propertyId == 17 || propertyId == 18 ||
 			propertyId == 19 || propertyId == 22 || (propertyId >= 28 && propertyId <= 36) ||
-			propertyId == 39 || propertyId == 42 || propertyId == 43 || propertyId == 44;
+			propertyId == 39 || (propertyId >= 42 && propertyId <= 48);
 	}
 
 	private function ClaimTargetOk(claim : SCMFClaim) : bool
@@ -1059,6 +1883,7 @@ class CMFCore extends CObject
 				Report("withdrawn", incoming);
 			}
 		}
+		if (incoming.propertyId == 45 || incoming.propertyId == 46) { AnimationPrune(); }
 		return true;
 	}
 
@@ -1096,6 +1921,8 @@ class CMFCore extends CObject
 			return (StrBeginsWith(text, "img://") && StrLen(text) > 6) ||
 				(StrBeginsWith(text, "frame:") && StrLen(text) > 6);
 		}
+		if (propertyId == 47) { return number >= 0 && number <= 15; }
+		if (propertyId == 48) { return number == 0 || number == 1; }
 		if (propertyId == 39) { return number == 0 || (number >= 200 && number <= 1920); }
 		if (propertyId == 32 || propertyId == 44) { return number >= 25 && number <= 400; }
 		if (propertyId == 33) { return number >= 0 && number <= 100; }
@@ -1116,13 +1943,29 @@ class CMFCore extends CObject
 		var incoming : SCMFClaim;
 		var i : int;
 		var flags : int;
-		var tabs, reason : string;
+		var tabs, reason, canonical, poster : string;
 		incoming = claim;
 		if (incoming.propertyId == 40)
 		{
 			return WithdrawClaim(incoming);
 		}
 		reason = ClaimRejectReason(incoming);
+		if (reason == "" && (incoming.propertyId == 45 || incoming.propertyId == 46))
+		{
+			if (incoming.number == 0)
+			{
+				incoming.number = incoming.propertyId;
+				incoming.propertyId = 40;
+				incoming.text = "";
+				return WithdrawClaim(incoming);
+			}
+			if (!ParseAnimation(incoming.text, incoming.number, canonical, poster, reason))
+			{
+				AnimationNote(incoming.provider, incoming.propertyId, reason);
+				AnimationPrune();
+				return false;
+			}
+		}
 		if (reason == "" && !NewPinValueOk(incoming.propertyId, incoming.text, incoming.number, incoming.valueX, incoming.valueY))
 		{
 			reason = "range";
@@ -1266,6 +2109,7 @@ class CMFCore extends CObject
 				incoming.order = claims[i].order;
 				claims[i] = incoming;
 				dirty = true;
+				if (incoming.propertyId == 45 || incoming.propertyId == 46) { AnimationPrune(); }
 				if ((incoming.propertyId == CMFPropertyHidden() || incoming.propertyId == CMFPropertyTabHide()) &&
 					incoming.number == 0)
 				{
@@ -1278,18 +2122,21 @@ class CMFCore extends CObject
 		incoming.order = nextOrder;
 		claims.PushBack(incoming);
 		dirty = true;
+		if (incoming.propertyId == 45 || incoming.propertyId == 46) { AnimationPrune(); }
 		return true;
 	}
 
 	public function ReleaseProvider(provider : string)
 	{
 		var i, released : int;
+		var animationReleased : bool;
 		NoteProviderPresent(provider);
 		released = 0;
 		for (i = claims.Size() - 1; i >= 0; i -= 1)
 		{
 			if (claims[i].provider == provider)
 			{
+				if (claims[i].propertyId == 45 || claims[i].propertyId == 46) { animationReleased = true; }
 				claims.Erase(i);
 				released += 1;
 				dirty = true;
@@ -1344,6 +2191,7 @@ class CMFCore extends CObject
 		{
 			if (labelHideOffers[i] == provider) { labelHideOffers.Erase(i); }
 		}
+		if (animationReleased) { AnimationPrune(); }
 		CMFLog("released provider=" + provider + " claims=" + released);
 	}
 
@@ -1682,10 +2530,14 @@ class CMFCore extends CObject
 	{
 		var i : int;
 		if (a.kind != b.kind || a.anchor != b.anchor || a.key != b.key || a.text != b.text ||
-			a.number != b.number || a.values.Size() != b.values.Size()) { return false; }
+			a.number != b.number || a.values.Size() != b.values.Size() || a.ints.Size() != b.ints.Size()) { return false; }
 		for (i = 0; i < a.values.Size(); i += 1)
 		{
 			if (a.values[i] != b.values[i]) { return false; }
+		}
+		for (i = 0; i < a.ints.Size(); i += 1)
+		{
+			if (a.ints[i] != b.ints[i]) { return false; }
 		}
 		return true;
 	}
@@ -1711,8 +2563,8 @@ class CMFCore extends CObject
 			if (themeEntries[i].provider == themeEntry.provider && themeEntries[i].kind == themeEntry.kind &&
 				themeEntries[i].target == themeEntry.target && (themeEntry.kind == 2 || themeEntries[i].key == themeEntry.key))
 			{
-				// Map-space drawing: an empty list (CMFDrawSetList) withdraws the provider's list key.
-				if (themeEntry.kind == 4 && themeEntry.values.Size() == 0)
+				// Map-space drawing: an empty list (CMFDrawSetList) or empty bits (CMFDrawSetBits) withdraws the key.
+				if ((themeEntry.kind == 4 && themeEntry.values.Size() == 0) || (themeEntry.kind == 6 && themeEntry.ints.Size() == 0))
 				{
 					themeEntries.Erase(i);
 					dirty = true;
@@ -1725,7 +2577,7 @@ class CMFCore extends CObject
 				return true;
 			}
 		}
-		if (themeEntry.kind == 4 && themeEntry.values.Size() == 0)
+		if ((themeEntry.kind == 4 && themeEntry.values.Size() == 0) || (themeEntry.kind == 6 && themeEntry.ints.Size() == 0))
 		{
 			return true;
 		}
@@ -1779,6 +2631,19 @@ class CMFCore extends CObject
 		var owner, answer : string;
 		var perKey : bool;
 		var ownershipKey : name;
+		// Version 14: the edge frame goes with the map's top edge. While any provider sends map top, the frame keys
+		// belong to top's owner (worked out among top's senders only, as before); only when nobody sends top do the
+		// frame senders decide among themselves.
+		if (part == 'map' && (key == 'frame' || key == 'frameTop' || key == 'frameBottom'))
+		{
+			for (i = 0; i < themeEntries.Size(); i += 1)
+			{
+				if (themeEntries[i].kind == 1 && themeEntries[i].target == 'map' && themeEntries[i].key == 'top')
+				{
+					return ThemeStyleOwner('map', 'top');
+				}
+			}
+		}
 		ownershipKey = ThemeOwnershipKey(part, key);
 		perKey = part == 'map' || part == 'navigation' || part == 'opening' || part == 'spread' || part == 'wide' ||
 			(part == 'hints' && key == 'list');
@@ -2153,6 +3018,70 @@ class CMFCore extends CObject
 		NoteTheme("theme sent entries=" + sent + " of=" + themeEntries.Size() + " cmfMotion=" + ownMotion);
 		SendWorld(storage);
 		SendItemStyles(storage);
+		SendLegendRowArt(storage);
+	}
+
+	// Legend rows with no pins: the legend's "Custom marker" row (User1) and the shared Quest row (StoryQuest) can list no pin
+	// to carry a pack's art, so the art goes to the panel by row name, once per map opening under "cmf.map.rowart": one object
+	// per row with n (row name), p (picture), t and te (tint and whether set), f and fe (picture fit and whether set). The same
+	// claims as a marker's row (legend claim 2, else icon claim 1, skipping "frame:"; tint 41 else 3; fit 48) are read on the
+	// row's name. A row with art from a pin keeps it unless the row has a legend claim of its own. Logs "legend row art row= art= tint=" once per row.
+	private function SendLegendRowArt(storage : CScriptedFlashValueStorage)
+	{
+		var list : CScriptedFlashArray;
+		var item : CScriptedFlashObject;
+		var claim : SCMFClaim;
+		var rows : array<string>;
+		var row, note : string;
+		var art, tint : bool;
+		var i : int;
+		if (!storage) { return; }
+		list = storage.CreateTempFlashArray();
+		rows.PushBack("User1");
+		rows.PushBack("StoryQuest");
+		for (i = 0; i < rows.Size(); i += 1)
+		{
+			row = rows[i];
+			art = false;
+			tint = false;
+			item = storage.CreateTempFlashObject();
+			item.SetMemberFlashString("n", row);
+			// A legend claim names the row itself, so it also replaces art a pin carried in; an icon claim only fills a row
+			// with none.
+			if (Find(CMFPropertyLegendIcon(), row, '', 1, claim) && !StrBeginsWith(claim.text, "frame:"))
+			{
+				item.SetMemberFlashString("p", claim.text);
+				item.SetMemberFlashBool("l", true);
+				art = true;
+			}
+			else if (Find(CMFPropertyIcon(), row, '', 1, claim) && !StrBeginsWith(claim.text, "frame:"))
+			{
+				item.SetMemberFlashString("p", claim.text);
+				art = true;
+			}
+			if (Find(41, row, '', 1, claim) || Find(CMFPropertyTint(), row, '', 1, claim))
+			{
+				item.SetMemberFlashUInt("t", claim.number);
+				item.SetMemberFlashBool("te", true);
+				tint = true;
+			}
+			if (PropertyWon(48) && Find(48, row, '', 1, claim))
+			{
+				item.SetMemberFlashInt("f", claim.number);
+				item.SetMemberFlashBool("fe", true);
+			}
+			if (art || tint)
+			{
+				list.PushBackFlashObject(item);
+			}
+			note = "legend row art:" + row + ":" + CMFYesNo(art) + CMFYesNo(tint);
+			if (seenPins.Size() < 64 && !seenPins.Contains(note))
+			{
+				seenPins.PushBack(note);
+				CMFLog("legend row art row=" + row + " art=" + CMFYesNo(art) + " tint=" + CMFYesNo(tint));
+			}
+		}
+		storage.SetFlashArray("cmf.map.rowart", list);
 	}
 
 	// Version 9: sends the winning picture claims (24 to 27, through the choices as Find) under "cmf.map.world",
@@ -2342,12 +3271,102 @@ class CMFCore extends CObject
 	// list key, its count in c and its values in v0, v1, ... The map redraws every map-space drawing from this.
 	public function SendSpace(storage : CScriptedFlashValueStorage, area : name, menu : CR4MapMenu)
 	{
+		SendSpaceMode(storage, area, menu, false, false);
+	}
+
+	// Early send (the start of a map build): the grid drawings the core kept from the previous opening of this area (the
+	// theme is not cleared between openings), so the map draws its fog in the first frame instead of after the pin build.
+	// The late send after OnMapReady follows as always; the panel keeps an identical grid and redraws only a changed one.
+	// Once per map menu; logs "space early id=<id> kept" for each grid sent.
+	public function SendSpaceEarly(storage : CScriptedFlashValueStorage, area : name, menu : CR4MapMenu)
+	{
+		if (!menu || spaceEarlyMenu == menu)
+		{
+			return;
+		}
+		spaceEarlyMenu = menu;
+		// Only drawings the last full build sent and nothing has changed since: a game setting changed, the provider
+		// withdrew or replaced a drawing (the theme is dirty), or CMFMapRefresh ran. Then the old fog is never drawn.
+		if (!spaceEarlyOk || dirty)
+		{
+			CMFLog("space early skipped dirty=" + dirty + " kept=" + spaceEarlyOk);
+			return;
+		}
+		SendSpaceMode(storage, area, menu, false, true);
+	}
+
+	// After a full send: the first grid drawing of this area gives the cover its fill (default 0) and alpha (default 1).
+	private function RememberCover(area : name)
+	{
+		var i, k : int;
+		var target : name;
+		coverKnown = false;
+		for (i = 0; i < themeEntries.Size(); i += 1)
+		{
+			if (themeEntries[i].kind == 2 && DrawingKind(themeEntries[i].provider, themeEntries[i].target) == 'grid' &&
+				IsSpaceDrawing(themeEntries[i].target) && SpaceAreaMatches(themeEntries[i].target, themeEntries[i].provider, area))
+			{
+				target = themeEntries[i].target;
+				coverFill = 0;
+				coverAlpha = 1;
+				for (k = 0; k < themeEntries.Size(); k += 1)
+				{
+					if (themeEntries[k].kind == 3 && themeEntries[k].target == target && themeEntries[k].provider == themeEntries[i].provider)
+					{
+						if (themeEntries[k].key == 'fill') { coverFill = (int)themeEntries[k].number; }
+						if (themeEntries[k].key == 'alpha') { coverAlpha = themeEntries[k].number; }
+					}
+				}
+				coverArea = area;
+				coverKnown = true;
+				return;
+			}
+		}
+	}
+
+	// The earliest point the core knows the shown area (the game asks for the map's picture name): when the last full
+	// build left a grid for this area and nothing has changed since, the menu gets cmfCoverFill and cmfCoverAlpha, and the
+	// panel covers the tiles from its first frame until the first grid is drawn. Logs "cover set" or "cover skipped reason=".
+	public function SendCover(menuFlash : CScriptedFlashSprite, area : name, place : string)
+	{
+		if (!menuFlash) { CMFLog("cover skipped reason=no menu flash at=" + place); return; }
+		// No cover: say so, so the panel returns the painting it has been holding since its first frame.
+		if (!coverKnown || coverArea != area)
+		{
+			menuFlash.SetMemberFlashNumber("cmfCoverFill", -1);
+			CMFLog("cover skipped reason=no kept grid for area=" + NameToString(area) + " at=" + place);
+			return;
+		}
+		if (!spaceEarlyOk || dirty)
+		{
+			menuFlash.SetMemberFlashNumber("cmfCoverFill", -1);
+			CMFLog("cover skipped reason=changed dirty=" + dirty + " kept=" + spaceEarlyOk + " at=" + place);
+			return;
+		}
+		menuFlash.SetMemberFlashNumber("cmfCoverAlpha", coverAlpha);
+		menuFlash.SetMemberFlashNumber("cmfCoverFill", coverFill);
+		CMFLog("cover set area=" + NameToString(area) + " fill=" + coverFill + " alpha=" + coverAlpha + " at=" + place);
+	}
+
+	// A game setting changed (any in-game option, including a mod's own): the kept drawings may no longer be right.
+	public function DropEarlySpace()
+	{
+		spaceEarlyOk = false;
+	}
+
+	// refresh: a CMFMapRefresh send, where a drawing may fade in (fadeMs); a full build shows its drawings at once.
+	// gridsOnly: only grid drawings (the early send).
+	public function SendSpaceMode(storage : CScriptedFlashValueStorage, area : name, menu : CR4MapMenu, refresh : bool,
+		gridsOnly : bool)
+	{
 		var flashArray : CScriptedFlashArray;
+		var bits : CScriptedFlashArray;
 		var item : CScriptedFlashObject;
 		var owner : string;
 		var i, k, sent, values : int;
 		spaceMenu = menu;
 		spaceArea = area;
+		SendAnimationOptions(menu);
 		if (!storage)
 		{
 			return;
@@ -2356,12 +3375,17 @@ class CMFCore extends CObject
 		item = storage.CreateTempFlashObject();
 		item.SetMemberFlashInt("k", 0);
 		item.SetMemberFlashString("s", NameToString(area));
+		item.SetMemberFlashBool("r", refresh);
 		flashArray.PushBackFlashObject(item);
 		sent = 0;
 		values = 0;
 		for (i = 0; i < themeEntries.Size(); i += 1)
 		{
 			if (themeEntries[i].kind == 1 || !IsSpaceDrawing(themeEntries[i].target))
+			{
+				continue;
+			}
+			if (gridsOnly && DrawingKind(ThemeDrawingOwner(themeEntries[i].target), themeEntries[i].target) != 'grid')
 			{
 				continue;
 			}
@@ -2402,11 +3426,37 @@ class CMFCore extends CObject
 				}
 				values += themeEntries[i].values.Size();
 			}
+			if (themeEntries[i].kind == 6)
+			{
+				// A grid's bits (CMFDrawSetBits): index, word, index, word ... as exact ints.
+				bits = storage.CreateTempFlashArray();
+				for (k = 0; k < themeEntries[i].ints.Size(); k += 1)
+				{
+					bits.PushBackFlashInt(themeEntries[i].ints[k]);
+				}
+				item.SetMemberFlashInt("c", themeEntries[i].ints.Size() / 2);
+				item.SetMemberFlashArray("w", bits);
+				values += themeEntries[i].ints.Size() / 2;
+			}
 			flashArray.PushBackFlashObject(item);
 			sent += 1;
+			if (gridsOnly && themeEntries[i].kind == 2)
+			{
+				CMFLog("space early id=" + NameToString(themeEntries[i].target) + " kept");
+			}
+		}
+		if (!gridsOnly && !refresh)
+		{
+			spaceEarlyOk = true;
+			RememberCover(area);
+		}
+		if (gridsOnly && sent == 0)
+		{
+			return;
 		}
 		storage.SetFlashArray("cmf.map.space", flashArray);
-		CMFLog("space sent area=" + NameToString(area) + " entries=" + sent + " values=" + values);
+		if (gridsOnly) { CMFLog("space early area=" + NameToString(area) + " entries=" + sent + " values=" + values); }
+		else { CMFLog("space sent area=" + NameToString(area) + " entries=" + sent + " values=" + values); }
 	}
 
 	// Map-space drawing (CMFMapRefresh): runs OnMapReady again and re-sends the theme and the map-space drawings
@@ -2417,6 +3467,7 @@ class CMFCore extends CObject
 		{
 			return false;
 		}
+		spaceEarlyOk = false;
 		spaceMenu.CMFMapSpaceSend(true);
 		return true;
 	}
@@ -2426,6 +3477,7 @@ class CMFCore extends CObject
 	{
 		if (menu && spaceMenu == menu)
 		{
+			SendAnimationOptions(menu);
 			menu.CMFMapSpaceSend(false);
 		}
 	}
@@ -2853,6 +3905,7 @@ class CMFCore extends CObject
 			case 1:
 			case 2:
 			case 31:
+			case 45:
 				if (pinType == "")
 				{
 					return 0; // Icons
@@ -2874,6 +3927,7 @@ class CMFCore extends CObject
 				return 79; // Behaviour_PinZoom
 			case 42:
 			case 43:
+			case 46:
 				return 76; // Look_Badges
 			case 4:
 				choice = CMFPaintingChoice(pinType);
@@ -3179,7 +4233,10 @@ class CMFCore extends CObject
 		offerFlags.Clear();
 		for (i = 0; i < claims.Size(); i += 1)
 		{
-			NoteOfferFor(PropertyChoice(claims[i].propertyId, NameToString(claims[i].pinType)), claims[i].provider);
+			if (claims[i].propertyId != 47)
+			{
+				NoteOfferFor(PropertyChoice(claims[i].propertyId, NameToString(claims[i].pinType)), claims[i].provider);
+			}
 		}
 		for (i = 0; i < themeEntries.Size(); i += 1)
 		{
@@ -3567,6 +4624,7 @@ class CMFCore extends CObject
 		var found : bool;
 		providerOrder = CMFSettingsProviderOrder();
 		ReadChoices();
+		animationClaimIndices.Clear();
 		winners.Clear();
 		hideClaims.Clear();
 		tabHideClaims.Clear();
@@ -3577,12 +4635,14 @@ class CMFCore extends CObject
 		rowsKept.Clear();
 		for (i = 0; i < claims.Size(); i += 1)
 		{
+			if (claims[i].propertyId == 45 || claims[i].propertyId == 46) { animationClaimIndices.PushBack(i); }
 			// Version 9: a claim whose choice its provider made choice-only waits until that provider is picked.
 			if (ChoiceOnlySkips(PropertyChoice(claims[i].propertyId, NameToString(claims[i].pinType)), claims[i].provider))
 			{
 				choiceOnlySkipped.PushBack(claims[i].provider);
 				continue;
 			}
+			if (claims[i].propertyId == 47) { winners.PushBack(claims[i]); continue; }
 			// Hide claims are never arbitrated: every eligible one applies (version 8: unless the Hidden pins
 			// choice leaves its provider out; greyed pins follow the same choice).
 			if (claims[i].propertyId == CMFPropertyHidden())
@@ -3775,7 +4835,7 @@ class CMFCore extends CObject
 		for (i = 0; i < 64; i += 1)
 		{
 			if (propertyWon[i] && (i == 10 || i == 11 || i == 12 || i == 17 || i == 22 || i == 28 ||
-				(i >= 31 && i <= 36) || i == 42 || i == 43 || i == 44)) { activeWriteSlots.PushBack(i); }
+				(i >= 31 && i <= 36) || i == 42 || i == 43 || i == 44 || i == 45 || i == 46 || i == 48)) { activeWriteSlots.PushBack(i); }
 		}
 		for (i = 0; i < hideClaims.Size(); i += 1)
 		{
@@ -4245,6 +5305,7 @@ class CMFCore extends CObject
 		{
 			dataObject.SetMemberFlashString("cmfIconPath", claim.text);
 			dataObject.SetMemberFlashString("cmfIconSourceBy", claim.provider);
+			dataObject.SetMemberFlashBool("cmfIconFramesMasked", true);
 		}
 	}
 
@@ -4347,6 +5408,59 @@ class CMFCore extends CObject
 		if (Find(CMFPropertyPinScale(), pinType, '', 1, claim) && claim.level == 1)
 		{
 			SetSlot(dataObject, CMFPropertyPinScale(), claim.text, claim.number);
+		}
+		if (pinType != "Player")
+		{
+			WriteMarkerLegend(dataObject, pinType);
+		}
+	}
+
+	// The legend's "Custom marker" row takes its picture from the first of the player's marker pins the panel lists, so the
+	// markers carry the row's art like any other pin: a legend claim (id 2) or an icon claim (id 1) on the row's filteredType,
+	// else the icon claim on this marker's own type; tint (ids 41, 3) and picture fit (48) the same way. A pack that already
+	// themes User1 to User7 with type claims therefore themes the row with no new call. Logs "marker legend type= ..." once per type.
+	private function WriteMarkerLegend(dataObject : CScriptedFlashObject, pinType : string)
+	{
+		var claim : SCMFClaim;
+		var legendKey, note : string;
+		var art, fromPin, tint : bool;
+		legendKey = dataObject.GetMemberFlashString("filteredType");
+		if (legendKey == "")
+		{
+			legendKey = pinType;
+		}
+		if ((Find(CMFPropertyLegendIcon(), legendKey, '', 1, claim) || Find(CMFPropertyIcon(), legendKey, '', 1, claim)) &&
+			!StrBeginsWith(claim.text, "frame:"))
+		{
+			dataObject.SetMemberFlashString("cmfLegendIconPath", claim.text);
+			art = true;
+		}
+		else if (Find(CMFPropertyIcon(), pinType, '', 1, claim) && claim.level == 1 && !StrBeginsWith(claim.text, "frame:"))
+		{
+			dataObject.SetMemberFlashString("cmfLegendIconPath", claim.text);
+			art = true;
+			fromPin = true;
+		}
+		// An animated marker shows its first picture in the row, as other animated rows do.
+		if (PropertyWon(45) || PropertyWon(46)) { AnimationLegend(dataObject, pinType, legendKey); }
+		if (Find(41, legendKey, '', 1, claim) || Find(CMFPropertyTint(), legendKey, '', 1, claim) ||
+			(fromPin && Find(CMFPropertyTint(), pinType, '', 1, claim) && claim.level == 1))
+		{
+			dataObject.SetMemberFlashUInt("cmfLegendTint", claim.number);
+			dataObject.SetMemberFlashBool("cmfLegendTintEnabled", true);
+			tint = true;
+		}
+		if (PropertyWon(48) && (Find(48, legendKey, '', 1, claim) || Find(48, pinType, '', 1, claim)))
+		{
+			dataObject.SetMemberFlashInt("cmfLegendFit", claim.number);
+			dataObject.SetMemberFlashBool("cmfLegendFitEnabled", true);
+		}
+		note = "marker legend:" + pinType;
+		if (seenPins.Size() < 64 && !seenPins.Contains(note))
+		{
+			seenPins.PushBack(note);
+			CMFLog("marker legend type=" + pinType + " filteredType=" + legendKey + " art=" + CMFYesNo(art) + " tint=" +
+				CMFYesNo(tint));
 		}
 	}
 
@@ -5034,6 +6148,7 @@ class CMFCore extends CObject
 		var counts : array<int>;
 		var owner, playerOwner : string;
 		var i, p, removed : int;
+		HideGridPins(flashArray, area);
 		for (i = 0; i < hideClaims.Size(); i += 1)
 		{
 			if (!providers.Contains(hideClaims[i].provider))
@@ -5094,6 +6209,107 @@ class CMFCore extends CObject
 		}
 	}
 
+	// Version 14 (grid): one number key of a grid drawing, or fallback when its owner did not set it.
+	private function GridNumber(owner : string, id : name, key : name, fallback : float) : float
+	{
+		var i : int;
+		for (i = 0; i < themeEntries.Size(); i += 1)
+		{
+			if (themeEntries[i].kind == 3 && themeEntries[i].provider == owner && themeEntries[i].target == id &&
+				themeEntries[i].key == key)
+			{
+				return themeEntries[i].number;
+			}
+		}
+		return fallback;
+	}
+
+	// Version 14 (grid): a grid drawing whose owner set hidePins to 1 hides, in this late pass, every pin standing on one
+	// of its covered cells in the shown area (launch fog5: another mod's pins, pushed after the owner's own filter ran,
+	// showed over the fog). The player marker, user pins, pins already hidden and pins the owner kept (CMFGridKeepPin)
+	// stay. Positions are the pins' posX and posY in world metres; a pin outside the grid's square is left alone.
+	private function HideGridPins(flashArray : CScriptedFlashArray, area : name)
+	{
+		var dataObject : CScriptedFlashObject;
+		var words, pow2 : array<int>;
+		var owner : string;
+		var id : name;
+		var i, k, p, n, col, row, cell, count : int;
+		var left, top, size, x, y : float;
+		for (i = 0; i < themeEntries.Size(); i += 1)
+		{
+			if (themeEntries[i].kind != 3 || themeEntries[i].key != 'hidePins' || themeEntries[i].number != 1)
+			{
+				continue;
+			}
+			id = themeEntries[i].target;
+			owner = themeEntries[i].provider;
+			if (ThemeDrawingOwner(id) != owner || DrawingKind(owner, id) != 'grid' || !IsSpaceDrawing(id) ||
+				!SpaceAreaMatches(id, owner, area))
+			{
+				continue;
+			}
+			n = (int)GridNumber(owner, id, 'n', 0);
+			size = GridNumber(owner, id, 'span', 0);
+			if (n <= 0 || size <= 0)
+			{
+				continue;
+			}
+			left = GridNumber(owner, id, 'left', -size / 2);
+			top = GridNumber(owner, id, 'top', size / 2);
+			size = size / n;
+			if (pow2.Size() == 0)
+			{
+				pow2.PushBack(1);
+				for (k = 1; k < 30; k += 1)
+				{
+					pow2.PushBack(pow2[k - 1] * 2);
+				}
+			}
+			// Bit b of word k is cell k * 30 + b (CMFDrawSetBits); a set bit is a clear cell.
+			words.Clear();
+			words.Resize((n * n + 29) / 30);
+			for (k = 0; k < themeEntries.Size(); k += 1)
+			{
+				if (themeEntries[k].kind == 6 && themeEntries[k].provider == owner && themeEntries[k].target == id)
+				{
+					for (p = 0; p + 1 < themeEntries[k].ints.Size(); p += 2)
+					{
+						if (themeEntries[k].ints[p] >= 0 && themeEntries[k].ints[p] < words.Size())
+						{
+							words[themeEntries[k].ints[p]] = themeEntries[k].ints[p + 1];
+						}
+					}
+				}
+			}
+			count = 0;
+			for (p = 0; p < flashArray.GetLength(); p += 1)
+			{
+				dataObject = flashArray.GetElementFlashObject(p);
+				if (!dataObject || dataObject.GetMemberFlashBool("isPlayer") || dataObject.GetMemberFlashBool("isUserPin") ||
+					dataObject.GetMemberFlashBool("cmfGridKeep") || CMFPinOwner(dataObject, "cmfHiddenBy") != "")
+				{
+					continue;
+				}
+				x = dataObject.GetMemberFlashNumber("posX");
+				y = dataObject.GetMemberFlashNumber("posY");
+				col = FloorF((x - left) / size);
+				row = FloorF((top - y) / size);
+				if ((x == 0 && y == 0) || col < 0 || row < 0 || col >= n || row >= n)
+				{
+					continue;
+				}
+				cell = row * n + col;
+				if ((words[cell / 30] / pow2[cell - (cell / 30) * 30]) % 2 == 0)
+				{
+					MarkHidden(dataObject, owner);
+					count += 1;
+				}
+			}
+			CMFLog("grid hid provider=" + owner + " id=" + NameToString(id) + " pins=" + count + " area=" + NameToString(area));
+		}
+	}
+
 	// The one field writer every pin path uses. pinKey picks the pin's art, tint and appearance;
 	// legendKey picks its legend row's art and tint; each falls back to the other key. Legend row,
 	// label and category key on legendKey only. A property a provider styled on this pin with
@@ -5135,6 +6351,13 @@ class CMFCore extends CObject
 				dataObject.SetMemberFlashString("cmfLegendIconPath", claim.text);
 				legendFromPin = true;
 			}
+		}
+		if (PropertyWon(45) || PropertyWon(46)) { AnimationLegend(dataObject, pinKey, legendKey); }
+		// API 14 picture fit: the legend row's picture follows the same claim (the panel scales its box to the row's glyph).
+		if (PropertyWon(48) && (Find(48, legendKey, '', 1, claim) || Find(48, pinKey, '', 1, claim)))
+		{
+			dataObject.SetMemberFlashInt("cmfLegendFit", claim.number);
+			dataObject.SetMemberFlashBool("cmfLegendFitEnabled", true);
 		}
 		if (PropertyWon(CMFPropertyTint()) && !keepGold && CMFPinOwner(dataObject, "cmfTintBy") == "" && (FindPinClaim(CMFPropertyTint(), pinKey, legendKey, pinTag, maxLevel, claim)))
 		{
@@ -5226,6 +6449,7 @@ class CMFCore extends CObject
 		{
 			SetSlot(dataObject, 39, claim.text, claim.number);
 		}
+		if (PropertyWon(45) || PropertyWon(46)) { AnimationOffsets(dataObject, pinKey, legendKey, pinTag, maxLevel); }
 		WriteClickFields(dataObject, pinKey, legendKey, pinTag, maxLevel);
 	}
 
@@ -5262,12 +6486,26 @@ class CMFCore extends CObject
 		{
 			SetSlot(dataObject, propertyId, claim.text, claim.number);
 			SetNewPinFields(dataObject, propertyId, claim.text, claim.number, claim.valueX, claim.valueY, claim.provider);
+			if (propertyId == 45) { dataObject.SetMemberFlashString("cmfIconFramesKey", AnimationSlotKey(claim)); }
+			if (propertyId == 46) { dataObject.SetMemberFlashString("cmfIconUnderFramesKey", AnimationSlotKey(claim)); }
 		}
 	}
 
 	private function SetNewPinFields(dataObject : CScriptedFlashObject, propertyId : int, text : string,
 		number : int, x : float, y : float, provider : string)
 	{
+		var canonical, poster, reason, prefix : string;
+		if (propertyId == 45 || propertyId == 46)
+		{
+			if (!ParseAnimation(text, number, canonical, poster, reason)) { return; }
+			prefix = "cmfIconFrames";
+			if (propertyId == 46) { prefix = "cmfIconUnderFrames"; }
+			dataObject.SetMemberFlashString(prefix, canonical);
+			dataObject.SetMemberFlashInt(prefix + "Fps", number);
+			dataObject.SetMemberFlashString(prefix + "SourceBy", provider);
+			AnimationReference(dataObject, propertyId, text, number);
+			return;
+		}
 		switch (propertyId)
 		{
 			case 31:
@@ -5297,6 +6535,10 @@ class CMFCore extends CObject
 			case 44:
 				dataObject.SetMemberFlashNumber("cmfPictureScale", (float)number / 100);
 				dataObject.SetMemberFlashBool("cmfPictureScaleEnabled", true);
+				break;
+			case 48:
+				dataObject.SetMemberFlashInt("cmfPictureFit", number);
+				dataObject.SetMemberFlashBool("cmfPictureFitEnabled", true);
 				break;
 			case 35:
 				dataObject.SetMemberFlashNumber("cmfPinOffsetX", x);
@@ -5749,7 +6991,7 @@ class CMFCore extends CObject
 		var ownerField : string;
 		var owner : string;
 		var flags : int;
-		var tabs : string;
+		var tabs, canonical, poster, reason, prefix : string;
 		var choice : int;
 		var valueX, valueY : float;
 		NoteProviderPresent(provider);
@@ -5757,6 +6999,11 @@ class CMFCore extends CObject
 		if (CMFIsClickProperty(propertyId))
 		{
 			return StyleClick(provider, dataObject, propertyId, text, number);
+		}
+		if (propertyId == 40 && text == "" && provider != "" && dataObject)
+		{
+			if (number == 45 || number == 46) { return AnimationWithdraw(provider, dataObject, number); }
+			if (number == 47) { return AnimationDirectOffset(provider, dataObject, 0, true); }
 		}
 		ownerField = CMFOwnerField(propertyId);
 		if (ownerField == "")
@@ -5772,6 +7019,10 @@ class CMFCore extends CObject
 		{
 			NoteStyleRejected(provider, propertyId, "empty");
 			return false;
+		}
+		if ((propertyId == 45 || propertyId == 46) && number == 0)
+		{
+			return AnimationWithdraw(provider, dataObject, propertyId);
 		}
 		// Width zero releases only this provider's direct width; another owner is untouched.
 		if (propertyId == 39 && number == 0)
@@ -5806,6 +7057,16 @@ class CMFCore extends CObject
 		{
 			NoteStyleRejected(provider, propertyId, "range");
 			return false;
+		}
+		if (propertyId == 47) { return AnimationDirectOffset(provider, dataObject, number, false); }
+		if (propertyId == 45 || propertyId == 46)
+		{
+			if (!ParseAnimation(text, number, canonical, poster, reason))
+			{
+				AnimationNote(provider, propertyId, reason);
+				AnimationPrune();
+				return false;
+			}
 		}
 		// Version 11: undiscovered and completed art only on a pin in that state.
 		if ((propertyId == CMFPropertyIconUndiscovered() &&
@@ -5889,6 +7150,7 @@ class CMFCore extends CObject
 		if (!StyleAllowed(choice, provider, dataObject, propertyId, ownerField))
 		{
 			NoteStyleRejected(provider, propertyId, "choice");
+			if (propertyId == 45 || propertyId == 46) { AnimationNote(provider, propertyId, "choice"); AnimationPrune(); }
 			return false;
 		}
 		owner = CMFPinOwner(dataObject, ownerField);
@@ -5897,6 +7159,7 @@ class CMFCore extends CObject
 			if (PieceBeats(choice, owner, provider))
 			{
 				NoteStyleShadow(provider, owner, dataObject, propertyId);
+				if (propertyId == 45 || propertyId == 46) { AnimationNote(provider, propertyId, "shadowed"); AnimationPrune(); }
 				return false;
 			}
 			NoteStyleShadow(owner, provider, dataObject, propertyId);
@@ -5906,6 +7169,7 @@ class CMFCore extends CObject
 		{
 			dataObject.SetMemberFlashString("cmfIconPath", text);
 			dataObject.SetMemberFlashString("cmfIconSourceBy", provider);
+			dataObject.SetMemberFlashBool("cmfIconFramesMasked", propertyId == 29 || propertyId == 30);
 		}
 		else if (propertyId == CMFPropertyInfoTitle())
 		{
@@ -5939,6 +7203,14 @@ class CMFCore extends CObject
 		}
 		SetNewPinFields(dataObject, propertyId, text, number, valueX, valueY, provider);
 		dataObject.SetMemberFlashString(ownerField, provider);
+		if (propertyId == 45 || propertyId == 46)
+		{
+			AnimationAccepted(provider, propertyId, text, number);
+			prefix = "cmfIconFrames";
+			if (propertyId == 46) { prefix = "cmfIconUnderFrames"; }
+			dataObject.SetMemberFlashString(prefix + "Key", provider + "/" + propertyId + "/direct/" + AnimationPinKey(dataObject));
+			AnimationOffsets(dataObject, dataObject.GetMemberFlashString("type"), dataObject.GetMemberFlashString("filteredType"), LateTag(dataObject), CMFLevelPlace());
+		}
 		return true;
 	}
 
@@ -6729,7 +8001,7 @@ function CMFHasProperty(propertyId : int) : bool
 		propertyId == CMFPropertyInfoTitle() || propertyId == CMFPropertyInfoText() ||
 		propertyId == CMFPropertyIconUndiscovered() || propertyId == CMFPropertyIconCompleted() ||
 		propertyId == CMFPropertyTabHidden() || propertyId == CMFPropertyPresent() ||
-		(propertyId >= 31 && propertyId <= 36) || (propertyId >= 39 && propertyId <= 44);
+		(propertyId >= 31 && propertyId <= 36) || (propertyId >= 39 && propertyId <= 48);
 }
 
 // One pin type (a map area for CMFPropertyBackground, a filteredType for the legend row and label, a
@@ -6872,7 +8144,7 @@ function CMFOnePinProperty(propertyId : int) : bool
 		propertyId == CMFPropertyHoverName() || propertyId == CMFPropertyInfoTitle() || propertyId == CMFPropertyInfoText() ||
 		propertyId == CMFPropertyIconUndiscovered() || propertyId == CMFPropertyIconCompleted() ||
 		(propertyId >= 31 && propertyId <= 36) || propertyId == 39 || propertyId == 42 || propertyId == 43 ||
-		propertyId == 44;
+		propertyId == 44 || propertyId == 45 || propertyId == 46 || propertyId == 47 || propertyId == 48;
 }
 
 // Version 11: one pin by place, for a pin with no tag (pins a mod pushes with plain numbers) or with a tag nobody knows:
@@ -7426,6 +8698,8 @@ struct SCMFThemeEntry
 	var itemKind : string;
 	// Map-space drawing: a list key's values (kind 4, CMFDrawSetList).
 	var values : array<float>;
+	// Version 14 (grid): a grid drawing's bits as index, word pairs (kind 6, CMFDrawSetBits).
+	var ints : array<int>;
 }
 
 // The map's parts (Stage 6b design 3.2, plus markerPanel and worldHint). pinLabel is a label above a pin
@@ -7446,7 +8720,7 @@ function CMFThemeLayers() : string
 
 function CMFThemeKinds() : string
 {
-	return "rect,ring,ellipse,polygon,band,line,text,movie,image";
+	return "rect,ring,ellipse,polygon,band,line,text,movie,image,grid";
 }
 
 // Map-space drawing: the hover look of a drawing that takes clicks (click 1 or more), while the pointer is over
@@ -7463,6 +8737,10 @@ function CMFThemeListKeys(kind : name) : string
 	if (kind == 'line')
 	{
 		return "xs,ys,starts,modes,colors";
+	}
+	if (kind == 'grid')
+	{
+		return "bits";
 	}
 	return "";
 }
@@ -7609,7 +8887,8 @@ function CMFThemePartKeys(part : name) : string
 		case 'pin':
 			return "highlightColor,highlightAlpha,glowColor,glowAlpha,disabledAlpha,disabledGrey,pulse,hide";
 		case 'map':
-			return "top,bottom,panLimit,centerInLimit,backdrop";
+			// Version 14: frame, frameTop and frameBottom place the movie's edge frame (Full-screen maps).
+			return "top,bottom,panLimit,centerInLimit,backdrop,frame,frameTop,frameBottom";
 		case 'mapEdge':
 			return "hide";
 		case 'title':
@@ -7738,6 +9017,9 @@ function CMFThemeShapeKeys(kind : name) : string
 			return space + ",stroke,strokeAlpha,strokeWidth,strokeZoom";
 		case 'movie':
 			return keys + ",area,preview,fadeMs,listen,listenFields,src,focus";
+		case 'grid':
+			// Version 14: a mask over a square of the map in cells, mapSpace only, its bits by CMFDrawSetBits.
+			return "layer,order,alpha,view,area,fadeMs,withLook,n,left,top,span,fill,soft,steps,hidePins";
 	}
 	return "";
 }
@@ -7746,13 +9028,14 @@ function CMFThemeShapeKeys(kind : name) : string
 function CMFThemeAllShapeKeys() : string
 {
 	return CMFThemeShapeKeys('polygon') + ",inset,side,size,sizeZoom,minSize,maxShare," + CMFThemeShapeKeys('text') + "," +
-		CMFThemeShapeKeys('line') + "," + CMFThemeShapeKeys('movie') + "," + CMFThemeShapeKeys('image');
+		CMFThemeShapeKeys('line') + "," + CMFThemeShapeKeys('movie') + "," + CMFThemeShapeKeys('image') + "," +
+		CMFThemeShapeKeys('grid');
 }
 
 // Keys whose value is the text argument; every other key takes the number argument.
 function CMFThemeTextKey(key : name) : bool
 {
-	return CMFListHas("font,nameFont,titleFont,bodyFont,align,wrap,panLimit,hide,layer,when,gradient,side,measure,view," +
+	return CMFListHas("font,nameFont,titleFont,bodyFont,align,wrap,panLimit,frame,hide,layer,when,gradient,side,measure,view," +
 		"points,alphaList,area,src,tab,tabLabel,text,allText,listen,listenFields,clearView,clearSide,wideAnchor,fit,pinType,pinTag,titleCase,show," +
 		"foldTag,foldMoreText,foldLessText,foldKeyPad,foldKeyKb,clearAnchor", NameToString(key));
 }
@@ -7809,6 +9092,8 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 		// Prompts may be literal HTML or [[key]]; empty removes a prompt or native input binding.
 		return true;
 	}
+	if (part == 'map' && key == 'frame') { return text == "area" || text == "hide"; }
+	if (part == 'map' && (key == 'frameTop' || key == 'frameBottom')) { return number >= 0 && number <= 1; }
 	if (part == 'legend' && key == 'show') { return text == "always" || text == "auto"; }
 	if (part == 'preview' && key == 'show') { return text == "always" || text == "moving" || text == "never"; }
 	if (key == 'autoHideMs' || key == 'movingMs') { return number >= 0 && number <= 600000; }
@@ -7974,7 +9259,7 @@ function CMFHasAbility(part : name, key : name) : bool
 	if (part == 'map' && key == 'rootValues') { return true; }
 	if (part == 'claims')
 	{
-		return CMFListHas("tagTint,placeClaims,playerArt,levelVariants,vanillaRows,everyPinIcon,withdraw,labelHideMerge,everyPin",
+		return CMFListHas("tagTint,placeClaims,playerArt,levelVariants,vanillaRows,everyPinIcon,withdraw,labelHideMerge,everyPin,iconFrames,iconPrograms,pictureFit",
 			NameToString(key));
 	}
 	if (!IsNameValid(key))
@@ -8107,8 +9392,9 @@ function CMFDraw(provider : string, anchor : name, id : name, kind : name) : boo
 		CMFListHas(CMFThemeParts() + "," + CMFThemeLayers() + "," + CMFThemeKinds(), NameToString(id)) ||
 		(IsNameValid(kind) && !CMFListHas(CMFThemeKinds(), NameToString(kind))) ||
 		CMFListHas(CMFThemeLayers() + "," + CMFThemeKinds() + ",navigation,opening,spread,wide,sounds,world", NameToString(anchor)) ||
-		(anchor == 'mapSpace' && IsNameValid(kind) && kind != 'line' && kind != 'text' && kind != 'movie' && kind != 'image') ||
-		(anchor != 'mapSpace' && kind == 'line'))
+		(anchor == 'mapSpace' && IsNameValid(kind) && kind != 'line' && kind != 'text' && kind != 'movie' && kind != 'image' &&
+		kind != 'grid') ||
+		(anchor != 'mapSpace' && (kind == 'line' || kind == 'grid')))
 	{
 		CMFLog("theme rejected provider=" + provider + " anchor=" + NameToString(anchor) + " id=" + NameToString(id) +
 			" kind=" + NameToString(kind) + " reason=unknown");
@@ -8142,7 +9428,7 @@ function CMFDrawSet(provider : string, id : name, key : name, text : string, num
 			" reason=unknown");
 		return false;
 	}
-	if ((!own && !CMFThemeValueOk('', key, text, number)) ||
+	if ((!own && !CMFThemeValueOk('', key, text, number)) || (kind == 'grid' && !CMFThemeGridValueOk(key, number)) ||
 		(key == 'src' && ((kind == 'image' && !StrBeginsWith(text, "img://")) ||
 		(kind == 'movie' && !StrBeginsWith(text, "swf/")))))
 	{
@@ -8193,11 +9479,85 @@ function CMFDrawSetList(provider : string, id : name, key : name, values : array
 	return theGame.CMFGetCore().UpsertTheme(themeEntry);
 }
 
+// Version 14 (grid). The grid keys' ranges: n (cells per side) 1 to 2048, span (the square's side in world metres)
+// above 0, soft (edge width in cells) 0 to 32, steps (edge bands) 1 to 16.
+function CMFThemeGridValueOk(key : name, number : float) : bool
+{
+	switch (key)
+	{
+		case 'n':
+			return number >= 1 && number <= 2048 && number == (int)number;
+		case 'span':
+			return number > 0 && number <= 100000;
+		case 'soft':
+			return number >= 0 && number <= 32;
+		case 'steps':
+			return number >= 1 && number <= 16 && number == (int)number;
+		case 'hidePins':
+			return number == 0 || number == 1;
+	}
+	return true;
+}
+
+// Version 14 (grid). Keeps one pin out of the hidePins rule of this provider's grid drawings in this map build: the
+// provider's own filter already decided to show it (Fog of War's tracked quest, known signposts and so on). Call it
+// from a pin wrapper before CMF's late pass; false without a pin.
+function CMFGridKeepPin(provider : string, dataObject : CScriptedFlashObject) : bool
+{
+	if (provider == "" || !dataObject)
+	{
+		return false;
+	}
+	dataObject.SetMemberFlashBool("cmfGridKeep", true);
+	return true;
+}
+
+// Version 14 (grid). The cells a grid drawing leaves clear, as index and word pairs: bit b (0 to 29) of word k is
+// cell k * 30 + b, counted row by row from the grid's north-west corner; send only words with a set bit. Exact
+// ints, unlike CMFDrawSetList's floats. Needs CMFDraw(provider, 'mapSpace', id, 'grid') first; empty arrays
+// withdraw the bits. At most 100000 words; each word 0 to 2^30 - 1.
+function CMFDrawSetBits(provider : string, id : name, idx : array<int>, words : array<int>) : bool
+{
+	var themeEntry : SCMFThemeEntry;
+	var i : int;
+	theGame.CMFGetCore().NoteProviderPresent(provider);
+	if (provider == "" || !IsNameValid(id) || idx.Size() != words.Size() || idx.Size() > 100000 ||
+		theGame.CMFGetCore().DrawingKind(provider, id) != 'grid')
+	{
+		CMFLog("theme rejected provider=" + provider + " id=" + NameToString(id) + " key=bits reason=unknown");
+		return false;
+	}
+	for (i = 0; i < idx.Size(); i += 1)
+	{
+		if (idx[i] < 0 || words[i] < 0 || words[i] > 1073741823)
+		{
+			CMFLog("theme rejected provider=" + provider + " id=" + NameToString(id) + " key=bits reason=value");
+			return false;
+		}
+		themeEntry.ints.PushBack(idx[i]);
+		themeEntry.ints.PushBack(words[i]);
+	}
+	themeEntry.provider = provider;
+	themeEntry.kind = 6;
+	themeEntry.target = id;
+	themeEntry.key = 'bits';
+	return theGame.CMFGetCore().UpsertTheme(themeEntry);
+}
+
 // Version 6 (map-space drawing). For a mod whose drawings change while the map stays open: runs OnMapReady
 // again and re-sends the theme and the map-space drawings to the open map. False when no map is open.
 function CMFMapRefresh() : bool
 {
 	return theGame.CMFGetCore().RefreshMap();
+}
+
+// Any in-game option changing (Fog of War's own switch included) drops the grids kept for the early send, so turning a
+// drawing Off never shows the old one for a frame.
+@wrapMethod(CR4Game)
+function OnConfigValueChanged(varName : name, value : string) : void
+{
+	wrappedMethod(varName, value);
+	theGame.CMFGetCore().DropEarlySpace();
 }
 
 @wrapMethod(CR4Game)
@@ -8214,6 +9574,7 @@ function GetShownMapName() : string
 {
 	var vanillaRoot : string;
 	vanillaRoot = wrappedMethod();
+	theGame.CMFGetCore().SendCover(GetMenuFlash(), m_shownArea, "picture");
 	return theGame.CMFGetCore().MapImageRoot(m_shownArea, vanillaRoot);
 }
 
@@ -8248,6 +9609,8 @@ function UpdateData(optional ignoreSelectionChange : bool)
 	var flashArray : CScriptedFlashArray;
 	cmfMovieBuild += 1;
 	CMFStamp("data");
+	theGame.CMFGetCore().SendCover(GetMenuFlash(), m_shownArea, "data");
+	theGame.CMFGetCore().SendSpaceEarly(GetMenuFlashValueStorage(), m_shownArea, this);
 	theGame.CMFGetCore().BeginBuild(m_shownArea);
 	wrappedMethod(ignoreSelectionChange);
 	theGame.CMFGetCore().EndBuild();
@@ -8283,7 +9646,7 @@ function CMFMapSpaceSend(refresh : bool)
 		theGame.CMFGetCore().MapReady(GetMenuFlash());
 		theGame.CMFGetCore().SendTheme(GetMenuFlashValueStorage());
 	}
-	theGame.CMFGetCore().SendSpace(GetMenuFlashValueStorage(), m_shownArea, this);
+	theGame.CMFGetCore().SendSpaceMode(GetMenuFlashValueStorage(), m_shownArea, this, refresh, false);
 }
 
 // Version 11: a step of the pin build, timed by the map panel (MapMenu.cmfStamp) for the log line "build ...".
@@ -8344,6 +9707,13 @@ event OnCMFMapThemeReady()
 	CMFMapCheckReady();
 	theGame.CMFGetCore().SendScreen(GetMenuFlashValueStorage());
 	theGame.CMFGetCore().SendTheme(GetMenuFlashValueStorage());
+}
+
+// API 14: registered after the animation channel listener, independently of map-space drawing readiness.
+@addMethod(CR4MapMenu)
+event OnCMFAnimationsReady()
+{
+	theGame.CMFGetCore().SendAnimationOptions(this);
 }
 
 // Version 10: the map panel reports the visible screen in map units (1920 x 1080 on a 16:9 screen) once per opening.
@@ -8561,6 +9931,7 @@ public function CMFMapClosed(menu : CR4MapMenu)
 	{
 		cmfOpenMap = NULL;
 	}
+	CMFGetCore().CloseAnimationMenu(menu);
 }
 
 @addMethod(CR4Game)

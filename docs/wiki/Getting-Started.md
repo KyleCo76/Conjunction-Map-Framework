@@ -6,12 +6,12 @@ Conjunction Map Framework (CMF) is a single world map that map mods can share. C
 
 An **icon pack** is the simplest kind of CMF mod. It changes how existing map pins look on the full-screen world map: their icon, their legend icon and their colour. It does not add or move pins; from API version 3 any CMF mod can also hide pins, and from API version 4 resize pins and change their labels ([section 5](Writing-Your-Script.md#5-write-your-script)). You do not edit any map file and you do not need Script Merger, FFDec, REDkit or WolvenKit.
 
-This guide is for someone who has made a Witcher 3 mod before but has never seen CMF. It documents API version 13 (`CMFGetVersion()` returns `13`), independently of release numbering. The map applies the registered styles and dispatches the hooks described here. Source and offline package checks are separate from engine compilation, actual loading and gameplay acceptance; features without game-launch evidence say so. [Section 12](Porting-a-Map-Mod.md#12-teaching-examples-moving-a-map-mod-onto-cmf) shows how existing map mods move onto CMF. A finished example is in [`examples/modCMFExampleIconPack`](../../examples/modCMFExampleIconPack/).
+This guide is for someone who has made a Witcher 3 mod before but has never seen CMF. It documents API version 14 (`CMFGetVersion()` returns `14`), independently of release numbering. The map applies the registered styles and dispatches the hooks described here. Source and offline package checks are separate from engine compilation, actual loading and gameplay acceptance; features without game-launch evidence say so. [Section 12](Porting-a-Map-Mod.md#12-teaching-examples-moving-a-map-mod-onto-cmf) shows how existing map mods move onto CMF. A finished example is in [`examples/modCMFExampleIconPack`](../../examples/modCMFExampleIconPack/).
 
 ## 1. What you need
 
 - Conjunction Map Framework version 1 or later, installed in the game.
-- Python 3 to run the CMF pack tool, `tools/cmf_pack.py` from the CMF repository (with its neighbours `cmf_cooked_codec.py`, `cmf_cooked_cache.py`, `cmf_texture_cache.py`, `cmf_pin_types.py` and `cmf_pin_types.json`). It needs nothing beyond the standard library.
+- Python 3 to run the CMF pack tool, `tools/cmf_pack.py` from the CMF repository (with its neighbours `cmf_animation.py`, `cmf_cooked_codec.py`, `cmf_cooked_cache.py`, `cmf_texture_cache.py`, `cmf_pin_types.py` and `cmf_pin_types.json`). It needs nothing beyond the standard library.
 - Your icons as PNG files ([section 4](Getting-Started.md#4-make-your-art)).
 
 ## 2. Quick start

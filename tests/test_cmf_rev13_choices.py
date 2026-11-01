@@ -66,7 +66,7 @@ class Rev13ChoiceTests(unittest.TestCase):
             self.assertEqual(wins.count(key), 1, key)
             self.assertTrue(descriptions.get("CMFPick_" + key), key)
         actual = menu.catalog()
-        self.assertEqual([x["id"] for x in actual["strings"]], list(range(2000200101, 2000200128)))
+        self.assertEqual([x["id"] for x in actual["strings"]], list(range(2000200101, 2000200132)))
         self.assertEqual(menu.VERSION, "1.5.0")
         self.assertTrue(menu.up_to_date())
 

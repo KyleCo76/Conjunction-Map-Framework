@@ -583,6 +583,27 @@ function CMFMenuFillPage(storage : CScriptedFlashValueStorage, groupName : name,
 				rows.RemoveElement(i);
 			}
 		}
+		else if (varText == "CMFAnimatedPins")
+		{
+			if (!CMFMenuFillAnimatedPins(storage, row))
+			{
+				rows.RemoveElement(i);
+			}
+		}
+		else if (varText == "CMFAnimationDragPause")
+		{
+			if (!CMFMenuFillAnimationDragPause(storage, row))
+			{
+				rows.RemoveElement(i);
+			}
+		}
+		else if (varText == "CMFAnimationMemory")
+		{
+			if (!CMFMenuFillAnimationMemory(storage, row))
+			{
+				rows.RemoveElement(i);
+			}
+		}
 		else if (varText == "CMFReset")
 		{
 			CMFMenuFillReset(row);
@@ -602,6 +623,112 @@ function CMFMenuFillPage(storage : CScriptedFlashValueStorage, groupName : name,
 			}
 		}
 	}
+}
+
+// API 14 row; uses only old-core symbols so the optional menu still compiles on API 13.
+// An unset menu answer displays the file switch without creating a persistent menu override.
+function CMFMenuFillAnimatedPins(storage : CScriptedFlashValueStorage, row : CScriptedFlashObject) : bool
+{
+	var labels : array<string>;
+	var value : string;
+	var current : int;
+	if (CMFGetVersion() < 14)
+	{
+		return false;
+	}
+	// The menu answer is the option position: Off, 10, 15, 30.
+	value = theGame.GetInGameConfigWrapper().GetVarValue('CMFMenuGeneral', 'CMFAnimatedPins');
+	if (value == "0" || value == "1" || value == "2" || value == "3")
+	{
+		current = StringToInt(value);
+	}
+	else
+	{
+		value = StrLower(theGame.GetInGameConfigWrapper().GetVarValue('CMFSettings', 'CMFAnimatedPins'));
+		if (value == "false")
+		{
+			value = "0";
+		}
+		if (value != "0" && value != "10" && value != "30")
+		{
+			value = "15";
+		}
+		current = 2;
+		if (value == "0") { current = 0; }
+		if (value == "10") { current = 1; }
+		if (value == "30") { current = 3; }
+	}
+	labels.PushBack(GetLocStringByKeyExt("cmf_menu_animated_off"));
+	labels.PushBack(GetLocStringByKeyExt("cmf_menu_animated_10"));
+	labels.PushBack(GetLocStringByKeyExt("cmf_menu_animated_15"));
+	labels.PushBack(GetLocStringByKeyExt("cmf_menu_animated_30"));
+	row.SetMemberFlashString("label", GetLocStringByKeyExt("cmf_menu_animated_pins"));
+	CMFMenuSetChoices(storage, row, labels, current, false);
+	return true;
+}
+
+// The drag pause row: an unset answer shows the file switch (On unless false or 0) without storing an override.
+function CMFMenuFillAnimationDragPause(storage : CScriptedFlashValueStorage, row : CScriptedFlashObject) : bool
+{
+	var labels : array<string>;
+	var value : string;
+	if (CMFGetVersion() < 14)
+	{
+		return false;
+	}
+	value = theGame.GetInGameConfigWrapper().GetVarValue('CMFMenuGeneral', 'CMFAnimationDragPause');
+	if (value != "0" && value != "1")
+	{
+		value = StrLower(theGame.GetInGameConfigWrapper().GetVarValue('CMFSettings', 'CMFAnimationDragPause'));
+		if (value == "false" || value == "0")
+		{
+			value = "0";
+		}
+		else
+		{
+			value = "1";
+		}
+	}
+	labels.PushBack(GetLocStringByKeyExt("cmf_menu_animated_off"));
+	labels.PushBack(GetLocStringByKeyExt("cmf_menu_animated_on"));
+	row.SetMemberFlashString("label", GetLocStringByKeyExt("cmf_menu_drag_pause"));
+	CMFMenuSetChoices(storage, row, labels, StringToInt(value), false);
+	return true;
+}
+
+// The animation memory row: an unset answer shows the file key (32, 64 or 128; anything else Large) without storing an
+// override. Positions: 0 = Normal (32 MB), 1 = Large (64 MB, default), 2 = Huge (128 MB).
+function CMFMenuFillAnimationMemory(storage : CScriptedFlashValueStorage, row : CScriptedFlashObject) : bool
+{
+	var labels : array<string>;
+	var value : string;
+	if (CMFGetVersion() < 14)
+	{
+		return false;
+	}
+	value = theGame.GetInGameConfigWrapper().GetVarValue('CMFMenuGeneral', 'CMFAnimationMemory');
+	if (value != "0" && value != "1" && value != "2")
+	{
+		value = theGame.GetInGameConfigWrapper().GetVarValue('CMFSettings', 'CMFAnimationMemory');
+		if (value == "32")
+		{
+			value = "0";
+		}
+		else if (value == "128")
+		{
+			value = "2";
+		}
+		else
+		{
+			value = "1";
+		}
+	}
+	labels.PushBack(GetLocStringByKeyExt("cmf_menu_memory_normal"));
+	labels.PushBack(GetLocStringByKeyExt("cmf_menu_memory_large"));
+	labels.PushBack(GetLocStringByKeyExt("cmf_menu_memory_huge"));
+	row.SetMemberFlashString("label", GetLocStringByKeyExt("cmf_menu_memory"));
+	CMFMenuSetChoices(storage, row, labels, StringToInt(value), false);
+	return true;
 }
 
 // Sets a row's choices, its current position and whether it is greyed.
@@ -1299,6 +1426,13 @@ function CMFMenuDescription(varName : name) : string
 			return "Puts every choice in this menu back to its default, the mod order included. Reopen Options to see it.";
 		case 'CMFReport':
 			return "For bug reports: writes which mod decides each part of the map into the game's script log.";
+		case 'CMFAnimatedPins':
+			return GetLocStringByKeyExt("cmf_menu_animated_help");
+			return "How many times a second moving pin pictures are redrawn (default 15). Lower is lighter on slower PCs; the animations keep their speed and skip frames. Off shows one still picture. Changes apply the next time you open the map.";
+		case 'CMFAnimationDragPause':
+			return GetLocStringByKeyExt("cmf_menu_drag_pause_help");
+		case 'CMFAnimationMemory':
+			return GetLocStringByKeyExt("cmf_menu_memory_help");
 		case 'CMFStatusScreen':
 			return "Your screen size as the map last saw it, and whether the map fills it. Open the map once to see it.";
 	}
@@ -1473,10 +1607,15 @@ function CMFMenuValueChanged(varName : name, value : string)
 	// and the "has nothing" row changed earlier on that screen came back. Until the pages are built again, a change
 	// to a choice, order or "has nothing" row is put straight back to its reset value.
 	if (theGame.CMFMenuGetState().ResetPending() && (varText == "CMFFallthrough" || StrBeginsWith(varText, "CMFPick_")
-		|| (StrBeginsWith(varText, "CMFOrder") && StrLen(varText) == 9)))
+		|| varText == "CMFAnimatedPins" || varText == "CMFAnimationDragPause" || varText == "CMFAnimationMemory" || (StrBeginsWith(varText, "CMFOrder") && StrLen(varText) == 9)))
 	{
 		CMFLog("menu change var=" + varText + " value=" + value + " undone (reset pending)");
 		CMFMenuUndoChange(varName, varText);
+		CMFChoicesChanged();
+		return;
+	}
+	if (varText == "CMFAnimatedPins" || varText == "CMFAnimationDragPause" || varText == "CMFAnimationMemory")
+	{
 		CMFChoicesChanged();
 		return;
 	}
@@ -1556,6 +1695,12 @@ function CMFMenuReset(why : string)
 		}
 	}
 	config.SetVarValue('CMFMenuGeneral', 'CMFFallthrough', "0");
+	if (CMFGetVersion() >= 14)
+	{
+		config.SetVarValue('CMFMenuGeneral', 'CMFAnimatedPins', "2");
+		config.SetVarValue('CMFMenuGeneral', 'CMFAnimationDragPause', "1");
+		config.SetVarValue('CMFMenuGeneral', 'CMFAnimationMemory', "1");
+	}
 	CMFLog("menu reset (" + why + ") names=" + IntToString(names) + " rows=" + IntToString(rows));
 	CMFChoicesChanged();
 }
@@ -1566,6 +1711,21 @@ function CMFMenuUndoChange(varName : name, varText : string)
 	var config : CInGameConfigWrapper;
 	var groupName, nameVar : name;
 	config = theGame.GetInGameConfigWrapper();
+	if (varText == "CMFAnimatedPins")
+	{
+		config.SetVarValue('CMFMenuGeneral', 'CMFAnimatedPins', "2");
+		return;
+	}
+	if (varText == "CMFAnimationDragPause")
+	{
+		config.SetVarValue('CMFMenuGeneral', 'CMFAnimationDragPause', "1");
+		return;
+	}
+	if (varText == "CMFAnimationMemory")
+	{
+		config.SetVarValue('CMFMenuGeneral', 'CMFAnimationMemory', "1");
+		return;
+	}
 	if (varText == "CMFFallthrough")
 	{
 		config.SetVarValue('CMFMenuGeneral', 'CMFFallthrough', "0");

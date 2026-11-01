@@ -93,7 +93,7 @@ class ApiTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_and_header(self):
-        self.assertIn('function CMFGetVersion() : int { return 13; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 14; }', self.core)
         self.assertRegex(self.core.split('function CMFGetVersion')[0], r'[Vv]ersion 11')
 
     def test_new_properties_are_declared_known_and_in_the_pack_tool(self):
@@ -119,7 +119,7 @@ class ApiTests(unittest.TestCase):
             self.assertIn(call, one)
         self.assertNotIn('CMFPropertyTabHidden()', one)
         self.assertEqual(cmf_pack.ONE_PIN_PROPERTIES, {1, 3, 5, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-                                                       28, 29, 30, 31, 32, 33, 34, 35, 36, 39, 42, 43, 44})
+                                                       28, 29, 30, 31, 32, 33, 34, 35, 36, 39, 42, 43, 44, 45, 46, 47, 48})
         for head in ('function CMFRegisterForTag(', 'function CMFRegisterForPlace('):
             self.assertIn('if (!CMFOnePinProperty(effectiveId))', body(self.core, head))
 

@@ -31,7 +31,7 @@ def validation_env():
          "StrBeforeFirst":lambda s,x:s.split(x,1)[0],"StrAfterFirst":lambda s,x:s.split(x,1)[1],
          "CMFIsVanillaCategory":lambda *a:False,"CMFPropertyTextFree":lambda p:p!=1,
          "CMFInfoReplace":lambda:0,"CMFInfoAdd":lambda:1,"CMFPaintingTilesOk":lambda n:True,
-         "claims":Array(),"dirty":False,"nextOrder":0,"revision":7,"Report":lambda *a:None}
+         "claims":Array(),"animationClaimIndices":Array(),"dirty":False,"nextOrder":0,"revision":7,"Report":lambda *a:None}
     for name,value in constants.items():env["CMFProperty"+name]=lambda value=value:value
     env["EveryPinProperty"]=lambda p:run(CORE,"EveryPinProperty",dict(env,propertyId=p))
     env["ClaimTargetOk"]=lambda c:run(CORE,"ClaimTargetOk",dict(env,claim=c))

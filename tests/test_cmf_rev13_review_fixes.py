@@ -21,7 +21,7 @@ class ReviewFixTests(unittest.TestCase):
 
     def test_equal_drawing_definitions_values_and_lists(self):
         def theme(kind,**extra):
-            return Obj(kind=kind,anchor="mapSpace",key="x",text="",number=2,values=Array([1.,2.]),**extra)
+            return Obj(kind=kind,anchor="mapSpace",key="x",text="",number=2,values=Array([1.,2.]),ints=Array(),**extra)
         for kind in (1,2,3,4):
             a,b=theme(kind),theme(kind)
             self.assertTrue(run(CORE,"ThemeEntryEqual",{"a":a,"b":b}))
@@ -88,7 +88,7 @@ class ReviewFixTests(unittest.TestCase):
     def test_identical_drawings_do_not_dirty_or_advance_revision(self):
         for kind in (2,3,4):
             a=Obj(provider="modP",kind=kind,target="drawing",anchor="mapSpace",key="x",text="",number=2,
-                  values=Array([1.,2.]),order=7)
+                  values=Array([1.,2.]),ints=Array(),order=7)
             b=Obj(**vars(a));b.values=Array(a.values)
             env={"themeEntry":b,"themeEntries":Array([a]),"dirty":False,"nextOrder":7,
                  "IsNameValid":bool,"CMFLog":lambda x:None,"NameToString":str}

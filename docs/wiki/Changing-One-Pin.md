@@ -34,4 +34,4 @@ if (CMFRequireVersion("modAcmeIcons", 11))
 
 ---
 
-[Previous: Names only on hover](Names-Only-on-Hover.md) · [Contents](Home.md) · [Next: Spreading stacked pins](Spreading-Stacked-Pins.md)
+[Previous: Names only on hover](Names-Only-on-Hover.md) · [Contents](Home.md) · [Next: Animated pictures](Animated-Pictures.md)

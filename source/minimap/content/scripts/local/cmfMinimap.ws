@@ -107,10 +107,10 @@ public function CMFPushMinimapStyles()
 	var flashModule : CScriptedFlashSprite;
 	var types : array<name>;
 	var claim : SCMFClaim;
-	var iconPath : string;
+	var iconPath, poster : string;
 	var tint : int;
 	var tinted : bool;
-	var revision, i, sent, hidden : int;
+	var revision, i, sent, hidden, nativePosters, unrepresented : int;
 	core = theGame.CMFGetCore();
 	revision = core.GetRevision();
 	if (cmfStylesSent && revision == cmfSentRevision)
@@ -154,6 +154,32 @@ public function CMFPushMinimapStyles()
 		{
 			iconPath = claim.text;
 		}
+		// Property 1 is one legacy bitmap URL: commas and semicolons can be part of its path.
+		// Only the animation route below applies frame-token delimiter rules.
+		if (!StrBeginsWith(iconPath, "img://"))
+		{
+			iconPath = "";
+		}
+		// GetRevision is a winner-cache revision, never an API capability check.
+		if (CMFGetVersion() >= 14)
+		{
+			if (core.FindTypeWinner(45, types[i], claim))
+			{
+				poster = CMFMinimapPoster(claim.text);
+				if (CMFMinimapBitmap(poster))
+				{
+					iconPath = poster;
+				}
+				else if (StrBeginsWith(poster, "frame:"))
+				{
+					nativePosters += 1;
+				}
+				else
+				{
+					unrepresented += 1;
+				}
+			}
+		}
 		if (core.FindTypeWinner(CMFPropertyTint(), types[i], claim))
 		{
 			tint = claim.number;
@@ -169,7 +195,158 @@ public function CMFPushMinimapStyles()
 	cmfApplyStylesSFF.InvokeSelf();
 	cmfSentRevision = revision;
 	cmfStylesSent = true;
+	if (nativePosters > 0 || unrepresented > 0)
+	{
+		CMFLog("minimap posters revision=" + revision + " native=" + nativePosters + " unrepresented=" + unrepresented +
+			" reason=keep still or native picture");
+	}
 	CMFLog("minimap styles revision=" + revision + " types=" + sent + " hidden=" + hidden);
+}
+
+// Local extraction from the winning core-validated author claim. This optional script must not
+// reference API 14 core helpers, even behind a runtime guard. Only a single safe path leaves here.
+function CMFMinimapTrim(text : string) : string
+{
+	var first, last : int;
+	var letter : string;
+	last = StrLen(text);
+	while (first < last)
+	{
+		letter = StrMid(text, first, 1);
+		if (letter != " " && letter != StrChar(9) && letter != StrChar(10) &&
+			letter != StrChar(11) && letter != StrChar(12) && letter != StrChar(13)) { break; }
+		first += 1;
+	}
+	while (last > first)
+	{
+		letter = StrMid(text, last - 1, 1);
+		if (letter != " " && letter != StrChar(9) && letter != StrChar(10) &&
+			letter != StrChar(11) && letter != StrChar(12) && letter != StrChar(13)) { break; }
+		last -= 1;
+	}
+	return StrMid(text, first, last - first);
+}
+
+function CMFMinimapPath(text : string) : bool
+{
+	var i : int;
+	if ((!StrBeginsWith(text, "img://") || StrLen(text) <= 6) &&
+		(!StrBeginsWith(text, "frame:") || StrLen(text) <= 6)) { return false; }
+	if (StrFindFirst(text, ",") >= 0 || StrFindFirst(text, "|") >= 0 || StrFindFirst(text, ";") >= 0) { return false; }
+	for (i = 0; i < 32; i += 1)
+	{
+		if (StrFindFirst(text, StrChar(i)) >= 0) { return false; }
+	}
+	return StrFindFirst(text, StrChar(127)) < 0;
+}
+
+function CMFMinimapBitmap(text : string) : bool
+{
+	return StrBeginsWith(text, "img://") && CMFMinimapPath(text);
+}
+
+// Validate the list boundary while selecting its first authored position. Repeated paths are valid.
+function CMFMinimapFirstFrame(text : string) : string
+{
+	var rest, path, first : string;
+	var count : int;
+	var more : bool;
+	rest = text;
+	more = true;
+	while (more)
+	{
+		more = StrFindFirst(rest, ",") >= 0;
+		path = rest;
+		if (more)
+		{
+			path = StrBeforeFirst(rest, ",");
+			rest = StrAfterFirst(rest, ",");
+		}
+		path = CMFMinimapTrim(path);
+		if (!CMFMinimapPath(path)) { return ""; }
+		if (count == 0) { first = path; }
+		count += 1;
+		if (count > 16) { return ""; }
+	}
+	if (count < 2) { return ""; }
+	return first;
+}
+
+function CMFMinimapPoster(text : string) : string
+{
+	var rest, record, fields, field, key, value, poster, first, stageFirst : string;
+	var seen, stageSeen : string;
+	var stageCount : int;
+	var more, fieldMore : bool;
+	text = CMFMinimapTrim(text);
+	if (StrLen(text) > 8192) { return ""; }
+	if (StrFindFirst(text, "|") < 0 || CMFMinimapTrim(StrBeforeFirst(text, "|")) != "program:v1")
+	{
+		return CMFMinimapFirstFrame(text);
+	}
+	rest = StrAfterFirst(text, "|");
+	more = true;
+	while (more)
+	{
+		more = StrFindFirst(rest, "|") >= 0;
+		record = rest;
+		if (more)
+		{
+			record = StrBeforeFirst(rest, "|");
+			rest = StrAfterFirst(rest, "|");
+		}
+		record = CMFMinimapTrim(record);
+		if (StrFindFirst(record, "=") < 0) { return ""; }
+		key = CMFMinimapTrim(StrBeforeFirst(record, "="));
+		if (key == "stage")
+		{
+			stageCount += 1;
+			if (stageCount > 8) { return ""; }
+			fields = record;
+			fieldMore = true;
+			stageFirst = "";
+			stageSeen = ",";
+			while (fieldMore)
+			{
+				fieldMore = StrFindFirst(fields, ";") >= 0;
+				field = fields;
+				if (fieldMore)
+				{
+					field = StrBeforeFirst(fields, ";");
+					fields = StrAfterFirst(fields, ";");
+				}
+				if (StrFindFirst(field, "=") < 0) { return ""; }
+				key = CMFMinimapTrim(StrBeforeFirst(field, "="));
+				value = CMFMinimapTrim(StrAfterFirst(field, "="));
+				if (key == "" || value == "" || StrFindFirst(stageSeen, "," + key + ",") >= 0) { return ""; }
+				stageSeen += key + ",";
+				if (key == "frames")
+				{
+					stageFirst = CMFMinimapFirstFrame(value);
+					if (stageFirst == "") { return ""; }
+				}
+				else if (key != "stage" && key != "fps" && key != "plays" && key != "direction" && key != "holdFirst" &&
+					key != "holdLast" && key != "offset" && key != "delay") { return ""; }
+			}
+			if (stageFirst == "") { return ""; }
+			if (stageCount == 1) { first = stageFirst; }
+		}
+		else
+		{
+			value = CMFMinimapTrim(StrAfterFirst(record, "="));
+			if (value == "" || StrFindFirst(seen, "," + key + ",") >= 0) { return ""; }
+			seen += "," + key + ",";
+			if (key == "poster")
+			{
+				if (value != "first" && !CMFMinimapPath(value)) { return ""; }
+				poster = value;
+			}
+			else if (key != "delay" && key != "finish" && key != "join" && key != "repeat" && key != "repeatFrom") { return ""; }
+		}
+	}
+	if (stageCount == 0) { return ""; }
+	if (poster == "" || poster == "first") { return first; }
+	return poster;
 }
 
 // True when a type-level hide claim (CMF 3) covers every minimap pin of this type: it names the type itself,

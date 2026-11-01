@@ -69,9 +69,10 @@ class MenuTests(unittest.TestCase):
         ids = [v.get('id') for v in group.iter('Var')]
         self.assertEqual(ids[:8], ['CMFProviderOrder%d' % i for i in range(1, 9)])
         # Version 11 adds the pin list log switch and default-on map check after CMFDebug.
-        self.assertEqual(ids[-3:], ['CMFDebug', 'CMFLogPins', 'CMFMapCheck'])
+        self.assertEqual(ids[-6:], ['CMFDebug', 'CMFLogPins', 'CMFMapCheck', 'CMFAnimatedPins', 'CMFAnimationDragPause',
+                                    'CMFAnimationMemory'])
         # Version 8: one hidden file choice per choice key, then the fall-through choice.
-        self.assertEqual(ids[8:-3], ['CMFFile_' + k for k in choice_keys() if k != 'Reserved69'] + ['CMFFile_Fallthrough'])
+        self.assertEqual(ids[8:-6], ['CMFFile_' + k for k in choice_keys() if k != 'Reserved69'] + ['CMFFile_Fallthrough'])
 
     def test_every_visible_label_key_ships(self):
         core = {s['key'] for s in catalog(CORE_CATALOG)['strings']}

@@ -70,7 +70,7 @@ class CoreTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_stays_6(self):
-        self.assertIn('function CMFGetVersion() : int { return 13; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 14; }', self.core)
 
     def test_text_drawings_take_wrap_and_fit(self):
         self.assertIn('return text == "keep" || text == "none" || (part == \'\' && (text == "wrap" || text == "fit"));',
@@ -99,7 +99,7 @@ class CoreTests(unittest.TestCase):
 
     def test_space_is_sent_per_build_not_in_the_theme(self):
         core = self.core
-        send = body(core, '\tpublic function SendSpace(')
+        send = body(core, '\tpublic function SendSpaceMode(')
         self.assertIn('storage.SetFlashArray("cmf.map.space", flashArray);', send)
         self.assertIn('SpaceAreaMatches(', send)
         self.assertIn('item.SetMemberFlashNumber("v" + k, themeEntries[i].values[k]);', send)
@@ -153,11 +153,11 @@ class CoreTests(unittest.TestCase):
 
     def test_anchor_and_kind_rules(self):
         draw = body(self.core, 'function CMFDraw(')
-        self.assertIn("(anchor == 'mapSpace' && IsNameValid(kind) && kind != 'line' && kind != 'text' && kind != 'movie' && kind != 'image')",
+        self.assertIn("(anchor == 'mapSpace' && IsNameValid(kind) && kind != 'line' && kind != 'text' && kind != 'movie' && kind != 'image' &&\n\t\tkind != 'grid')",
                       draw)
-        self.assertIn("(anchor != 'mapSpace' && kind == 'line')", draw)
+        self.assertIn("(anchor != 'mapSpace' && (kind == 'line' || kind == 'grid'))", draw)
         self.assertIn('mapSpace', words(self.core, 'CMFThemeParts()'))
-        self.assertEqual(words(self.core, 'CMFThemeKinds()')[-4:], ['line', 'text', 'movie', 'image'])
+        self.assertEqual(words(self.core, 'CMFThemeKinds()')[-5:], ['line', 'text', 'movie', 'image', 'grid'])
 
     def test_kind_keys_match_the_pack_tool(self):
         for kind, keys in cmf_pack.THEME_KIND_KEYS.items():

@@ -4,7 +4,7 @@ Version 1.5.0 requires CMF API 11 for provider presence in Loaded map mods.
 
 The add-on is CMF's Options > Mods > Conjunction Map Framework entry: Mod order, Basic choices,
 Advanced choices (9 pages), General and Status (Loaded map mods with the Screen line, and 9 "Who wins"
-pages). Version 1.4.0 (CMF API 10: plans/2026-10-24-cmf-rev10-build-contract.md section 7) adds a plain description
+pages). Version 1.4.0 (CMF API 10) adds a plain description
 of every row to the Options list's help box. Every
 choice row is an OPTIONS row with spare placeholder choices; the add-on's script replaces them
 with the loaded map mods while the game builds the page, and keeps the chosen folder name in a
@@ -157,7 +157,10 @@ PAGES = [
         ('fixed', 'CMFFallthrough', 'If the chosen mod has nothing for a pin',
          ['Use the next mod in order', 'Use Vanilla']),
         ('fixed', 'CMFReset', 'Reset every CMF choice', ['Keep my choices', 'Reset now (reopen Options to see)']),
-        ('fixed', 'CMFReport', 'Write the who-wins report to the log', ['Off', 'On'])]),
+        ('fixed', 'CMFReport', 'Write the who-wins report to the log', ['Off', 'On']),
+        ('fixed', 'CMFAnimatedPins', 'Animated pins', ['Off', '10', '15', '30']),
+        ('fixed', 'CMFAnimationDragPause', 'Stop animation during drag', ['Off', 'On']),
+        ('fixed', 'CMFAnimationMemory', 'Animation memory', ['Normal (32 MB)', 'Large (64 MB)', 'Huge (128 MB)'])]),
     # 1.3.0: the Screen line goes last. Above the heading it made the game list the page's two parts in the
     # right-hand column (start B, 2026-10-24).
     ('CMFMenuStatusMods', 'cmf_status.cmf_status_mods', 'Loaded map mods',
@@ -232,6 +235,24 @@ KNOWN_GROUP = 'CMFMenuKnown'
 KNOWN_PRESENT_GROUP = 'CMFMenuKnownPresent'
 KNOWN_SLOTS = 24
 # Words the script reads from the tables (the rule glyphs a .ws file cannot hold: scripts stay ASCII).
+ANIMATION_STRINGS = [
+    ('cmf_menu_animated_pins', 'Animated pins'),
+    ('cmf_menu_animated_off', 'Off'),
+    ('cmf_menu_animated_on', 'On'),
+    ('cmf_menu_animated_help', 'How many times a second moving pin pictures are redrawn (default 15). Lower is lighter on slower PCs; the animations keep their speed and skip frames. Off shows one still picture. Changes apply the next time you open the map.'),
+    ('cmf_menu_animated_10', '10'),
+    ('cmf_menu_animated_15', '15'),
+    # Retired with the 20 choice (2026-10-31); kept so no string id moves.
+    ('cmf_menu_animated_20', '20'),
+    ('cmf_menu_animated_30', '30'),
+    ('cmf_menu_drag_pause', 'Stop animation during drag'),
+    ('cmf_menu_drag_pause_help', 'Hold moving pin pictures still while you drag or zoom the map, so moving the map stays smooth. They carry on when the map stops.'),
+    ('cmf_menu_memory', 'Animation memory'),
+    ('cmf_menu_memory_normal', 'Normal (32 MB)'),
+    ('cmf_menu_memory_large', 'Large (64 MB)'),
+    ('cmf_menu_memory_huge', 'Huge (128 MB)'),
+    ('cmf_menu_memory_help', 'How much memory moving pin pictures may use while the map is open. Large suits most packs; Huge is for big icon packs with many frames. Pictures past the limit show still. Changes apply the next time you open the map.'),
+]
 SCRIPT_STRINGS = [
     ('cmf_menu_rule_box', '\u2550' * 12),
     ('cmf_menu_rule_dash', '\u2014' * 12),
@@ -253,9 +274,10 @@ def option_xml(var, labels):
     return lines
 
 
-def options_var(var, label, labels, value='0'):
+def options_var(var, label, labels, value='0', localized=False):
+    tags = '' if localized else 'nonLocalizedName;customNames;nonLocalized'
     return (['\t\t\t<Var id="%s" value="%s" displayName=%s displayType="OPTIONS" '
-             'tags="nonLocalizedName;customNames;nonLocalized">' % (var, value, quoteattr(label))] +
+             'tags="%s">' % (var, value, quoteattr(label), tags)] +
             option_xml(var, labels) + ['\t\t\t</Var>'])
 
 
@@ -279,7 +301,21 @@ def page_vars(rows):
             lines += options_var('CMFOrder%d' % row[1], ORDINALS[row[1] - 1], placeholders)
             hidden += hidden_var('CMFOrderName%d' % row[1])
         elif kind == 'fixed':
-            lines += options_var(row[1], row[2], row[3])
+            if row[1] == 'CMFAnimatedPins':
+                # The game keeps an OPTIONS answer as the option position, so 2 (= 15) is the default.
+                lines += options_var(row[1], 'cmf_menu_animated_pins',
+                                     ['cmf_menu_animated_' + key for key in ('off', '10', '15', '30')],
+                                     value='2', localized=True)
+            elif row[1] == 'CMFAnimationDragPause':
+                lines += options_var(row[1], 'cmf_menu_drag_pause',
+                                     ['cmf_menu_animated_off', 'cmf_menu_animated_on'], value='1', localized=True)
+            elif row[1] == 'CMFAnimationMemory':
+                # Position 1 (Large, 64 MB) is the default.
+                lines += options_var(row[1], 'cmf_menu_memory',
+                                     ['cmf_menu_memory_' + key for key in ('normal', 'large', 'huge')],
+                                     value='1', localized=True)
+            else:
+                lines += options_var(row[1], row[2], row[3])
         elif kind == 'mods':
             for n in range(1, STATUS_MOD_ROWS + 1):
                 lines += options_var('CMFStatusMod%d' % n, 'Map mod %d' % n, ['-', '-'])
@@ -337,6 +373,7 @@ def catalog(probe=False):
     keys += SCRIPT_STRINGS
     keys += [('panel_' + segment, later[segment]) for segment in LATER_TITLES]
     keys.append(('cmf_menu_support_present', 'CMF support present'))
+    keys += ANIMATION_STRINGS
     if probe:
         keys.append(('panel_' + HEAD_TEST_PATH, HEAD_TEST_TITLE))
     return {
@@ -385,7 +422,14 @@ def description_ws():
         for var, other in exact:
             if other == text:
                 lines.append("\t\tcase '%s':" % var)
-        lines.append('\t\t\treturn "%s";' % text)
+        if any(var == 'CMFAnimatedPins' and other == text for var, other in exact):
+            lines.append('\t\t\treturn GetLocStringByKeyExt("cmf_menu_animated_help");')
+        if any(var == 'CMFAnimationDragPause' and other == text for var, other in exact):
+            lines.append('\t\t\treturn GetLocStringByKeyExt("cmf_menu_drag_pause_help");')
+        elif any(var == 'CMFAnimationMemory' and other == text for var, other in exact):
+            lines.append('\t\t\treturn GetLocStringByKeyExt("cmf_menu_memory_help");')
+        else:
+            lines.append('\t\t\treturn "%s";' % text)
     lines += ['\t}', '\treturn "";', '}', DESCRIPTION_END]
     return '\n'.join(lines)
 

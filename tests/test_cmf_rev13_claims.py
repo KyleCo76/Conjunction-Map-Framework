@@ -89,13 +89,13 @@ class Rev13ClaimsTests(unittest.TestCase):
 class Rev13WithdrawalValidationTests(unittest.TestCase):
     def test_effective_id_level_context_matrix(self):
         for level, target in (("type","Herbalist"),("type",""),("tag","modP.pin"),("place","Herbalist")):
-            for prop in (1,3,10,13,31,32,33,34,35,36,39,42,43,44):
+            for prop in (1,3,10,13,31,32,33,34,35,36,39,42,43,44,48):
                 with self.subTest(level=level,prop=prop):
                     self.assertEqual(pack.withdrawal_issues(prop,target,"","",level), [])
         for prop in (5,9):
             for level in ("type","tag","place"):
                 self.assertEqual(pack.withdrawal_issues(prop,"Herbalist","Boat","",level), [])
-        for prop in (0,38,40,45):
+        for prop in (0,38,40,49):
             self.assertTrue(pack.withdrawal_issues(prop,"Herbalist","","","type"))
         for prop in (2,6,7,8,24,37,41):
             for level in ("tag","place"):

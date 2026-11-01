@@ -1,11 +1,24 @@
 Fog of War adapter for Conjunction Map Framework
-Version 1.0.2 (proof of concept; script only, no art)
+Version 1.1.1 (script only, no art; needs CMF 1.7.0 or later)
 
 Makes Fog of War hide every map icon under its fog on Conjunction Map Framework's world
 map, including the icons other mods add, such as Witcher Gear Map's diagram markers.
 Fog of War stays exactly as its author ships it. This adapter asks Fog of War's own fog
 rule which icons belong under the fog, using Fog of War's own settings, and tells CMF to
 hide them.
+
+Version 1.1.1 also hides the icons other mods add after Fog of War has decided, such
+as Gwent Players Map's cards, when they stand under the fog. The icons Fog of War
+chose to show (your tracked quest, known signposts and so on) stay.
+
+Version 1.1.0 draws the fog itself on CMF's map, as Fog of War's "cloud textures off"
+look: unexplored land is dark, with a soft edge around what you have explored. It
+follows Fog of War's colour, opacity and edge settings, and disappears when Fog of
+War is switched off. It needs CMF 1.7.0 or later; with an older CMF keep 1.0.3.
+
+Version 1.0.3 also hides the icons under the fog when The Stable (in Ard Dhu Stable)
+is installed. That mod replaces the step where Fog of War hides icons, so before,
+every icon showed through the fog.
 
 Version 1.0.2 writes less to the game's log: one line per map, none per icon.
 

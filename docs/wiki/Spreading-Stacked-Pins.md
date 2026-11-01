@@ -35,4 +35,4 @@ if (CMFHasAbility('spread', ''))
 
 ---
 
-[Previous: Changing one pin](Changing-One-Pin.md) · [Contents](Home.md) · [Next: The map theme](Map-Theme.md)
+[Previous: Animated pictures](Animated-Pictures.md) · [Contents](Home.md) · [Next: The map theme](Map-Theme.md)
