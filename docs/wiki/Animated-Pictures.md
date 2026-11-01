@@ -4,7 +4,7 @@
 
 *Needs CMF API version 14 or later.*
 
-CMF animates only pictures supplied by an accepted provider claim. Keep a still icon (property 1) or still under-picture (42) as a fallback for older CMF versions and failed animation art. Animation support has source and offline checks; engine compilation, loading and visual acceptance still need game testing.
+CMF animates only pictures supplied by an accepted provider claim. Keep a still icon (property 1) or still under-picture (42) as a fallback for older CMF versions and failed animation art. Animated pictures ran in game with CMF 1.7.0 (2026-10-31 and 2026-11-01, keyboard and mouse): icon packs with moving quest marks, camps and campfires on the game's map and on Ink and Iron's, and a stress pack of 80 animated pins, where the pictures past the memory limit showed still, as designed. Not yet tested: a controller, 32:9 and 4:3 screens, Vortex and Mod Organizer 2, Steam Deck and Linux.
 
 Use property 45 for the main picture and 46 for the picture underneath it. Each animation wins ahead of its corresponding still claim (45 ahead of 1, 46 ahead of 42), including when another provider owns the still claim. Main animation follows the existing icon choice; under-animation follows the existing under-picture choice (`Look_Badges`). Existing provider order, Vanilla, fallthrough, hiding and look rules still apply. Properties 29/30 for undiscovered/completed art and 31 for explicit selected art retain priority over main animation. Without selected replacement art, selection and hover copies share the current animation phase; under-animation continues independently.
 

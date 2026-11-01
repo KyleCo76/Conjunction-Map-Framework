@@ -1,5 +1,5 @@
 Map Quest Insight adapter for Conjunction Map Framework
-Version 2.3.0 (for Map Quest Insight 2.1.0; icons by Wolfer, Map Quest Insight's author)
+Version 2.4.0 (for Map Quest Insight 2.1.0 and 2.2.0; icons by Wolfer, Map Quest Insight's author)
 
 Brings Map Quest Insight's world map features back on Conjunction Map Framework's
 world map. Map Quest Insight stays exactly as its author ships it. Map Quest Insight
@@ -30,7 +30,7 @@ REQUIREMENTS
   CMF or Map Quest Insight 1.6, keep adapter 1.1.1.
 
 INSTALL AND REMOVE THEM TOGETHER
-- Install this adapter only while Map Quest Insight 2.1.0 and CMF 1.6.0 are installed.
+- Install this adapter only while Map Quest Insight (2.1.0 or later) and CMF 1.6.0 or later are installed.
 - Remove this adapter BEFORE removing Map Quest Insight or Conjunction Map Framework.
   If either is removed first, the game stops at the script compile screen until this
   adapter is removed too.
@@ -78,12 +78,15 @@ All of it follows Map Quest Insight's own menu settings:
   dark faded edges, or none (Clear). From 2.3.0, with CMF API 14 or later, no dark
   bars stay under the tabs and the button hints, and the fades look as on Map Quest
   Insight's own map.
-- "Corner HUD" Clean: the tracked quest's dark boxes go, its text keeps an outline.
+- "Corner HUD" Clean: the tracked quest's dark boxes go, its text keeps an outline. From 2.4.0, with a CMF that has Panel visibility for the tracker (API 15), that row goes too; its two keys are in the key hints.
 - Signposts hidden in the wider set of filter tabs Map Quest Insight 2.0 names.
 - No spreading of stacked markers on the fast travel map, as Map Quest Insight 2.0.1.
 - "Ultrawide map" and "Side panels position": on a wide screen the map fills the
   screen and the side panels sit where that setting puts them. With "Ultrawide map"
   off the map stays 16:9 with dark sides, as Map Quest Insight's own map does.
+  From 2.4.0 this also follows Map Quest Insight 2.2.0, where both settings moved to
+  its General page and "Map side panels position" became 16:9, 21:9 or 32:9: the
+  panels sit at the edges of a centred area of that shape, never past the screen.
 - The Quest List (2.1.0), with "Quest list on the map" on: press F (LT on a controller) or click
   "Quests" in the key hints. It lists your active quests by category, the tracked one
   first, with type icon, level, name in its difficulty colour, region and distance.

@@ -472,3 +472,14 @@ class AdapterBuildTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class AdapterCheckOptionLabelTest(unittest.TestCase):
+    def test_row_label_uses_the_games_option_key(self):
+        # The game looks up a localized Var's row label as option_<displayName>; a bare key shows raw (Kyle 2026-11-01).
+        import json, re
+        root = Path(__file__).resolve().parents[1]
+        xml = (root / 'source/adapter-check/modCMFAdapterCheck.xml').read_text(encoding='utf-8')
+        name = re.search(r'id="CMFAdapterCheckEnabled"[^>]*displayName="([^"]+)"', xml).group(1)
+        keys = {row['key'] for row in json.loads((root / 'source/adapter-check/strings.json').read_text(encoding='utf-8'))['strings']}
+        self.assertIn('option_' + name, keys)

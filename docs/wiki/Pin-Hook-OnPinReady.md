@@ -26,6 +26,19 @@ function OnPinReady(dataObject : CScriptedFlashObject, mapContext : name)
 - `CMFCore` and `OnPinReady` exist from API version 4 only: a wrapper on them stops older CMF versions at the compile screen. Say so in your README.
 - Ran in game on 2026-10-20: the Map Quest Insight and Ink and Iron adapters draw their level labels from it.
 
+**Once per map build: `OnMapReady`** (API version 4). After `OnPinReady` has run for every pin, CMF calls `OnMapReady(menuFlash : CScriptedFlashSprite)` once, before it writes the info box height. Wrap it to read the map menu's flash object and register or withdraw claims for this map opening, or to send data to your own drawings ([section 5](Writing-Your-Script.md#5-write-your-script), [Drawing on the map itself](Drawing-on-the-Map.md)):
+
+```
+@wrapMethod(CMFCore)
+function OnMapReady(menuFlash : CScriptedFlashSprite)
+{
+	wrappedMethod(menuFlash);
+	// read menuFlash, register or withdraw claims for this opening
+}
+```
+
+Always call `wrappedMethod` first, so other mods' wrappers run too. The Botanist and Community Patch adapters wrap it.
+
 ---
 
 [Previous: Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md) · [Contents](Home.md) · [Next: Pin clicks](Pin-Clicks.md)

@@ -89,6 +89,7 @@
 			<Var id="CMFFile_Look_PinLook" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFFile_Size_Place" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFFile_Behaviour_PinZoom" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFFile_Map" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFFile_Fallthrough" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFDebug" value="false" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFLogPins" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>

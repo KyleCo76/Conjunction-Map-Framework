@@ -79,6 +79,11 @@
      "text": "Hides or greys out pins to keep the map tidy. Automatic keeps every mod's hiding, Vanilla shows every pin, a mod keeps only its own."
     },
     {
+     "var": "CMFPick_Map",
+     "row": "The map",
+     "text": "The map itself: how much of the screen it fills, where it sits and its backdrop. Pick a different mod for the frames and panels around it."
+    },
+    {
      "var": "CMFPick_Look",
      "row": "Map look",
      "text": "Restyles the screen around the map: frames, region title, the list beside the map, the pin info box, key hints and pin text."
@@ -101,7 +106,7 @@
     {
      "var": "CMFPick_Movement",
      "row": "Map movement",
-     "text": "Changes how the map scrolls, zooms and opens, how much of the screen it fills and where it is centred when it opens."
+     "text": "Changes how the map scrolls, zooms and opens, and where it is centred when it opens. Its size and place are under The map."
     },
     {
      "var": "CMFPick_Behaviour",
@@ -261,12 +266,22 @@
    ]
   },
   {
+   "page": "Advanced > The map",
+   "rows": [
+    {
+     "var": "CMFPick_Movement_Area",
+     "row": "Map size, position and backdrop",
+     "text": "Changes how much of the screen the map fills, where it sits, its backdrop and how far you can scroll it."
+    }
+   ]
+  },
+  {
    "page": "Advanced > Map look",
    "rows": [
     {
      "var": "CMFPick_Look_Frames",
      "row": "Frames and panels",
-     "text": "Restyles the map frame, title, tracker, overview and world view controls, including their size and position, the crosshair and edge arrows."
+     "text": "Restyles the frames and panels around the map: title, tracker, overview and world view controls, crosshair and edge arrows."
     },
     {
      "var": "CMFPick_Look_Legend",
@@ -313,11 +328,6 @@
   {
    "page": "Advanced > Map movement",
    "rows": [
-    {
-     "var": "CMFPick_Movement_Area",
-     "row": "Map area",
-     "text": "Changes how much of the screen the map fills from top to bottom, and how far you can scroll it."
-    },
     {
      "var": "CMFPick_Movement_Pan",
      "row": "Pan and zoom feel",
@@ -396,7 +406,7 @@
     {
      "var": "CMFPick_Behaviour_PanelModes",
      "row": "Panel visibility",
-     "text": "When the legend and corner overview show, hide or wait for input."
+     "text": "When the legend, overview, tracker, title and world buttons show, hide or wait for input."
     },
     {
      "var": "CMFPick_Behaviour_PinZoom",
@@ -511,7 +521,7 @@
     {
      "var": "CMFAnimatedPins",
      "row": "Animated pins",
-     "text": "How many times a second moving pin pictures are redrawn (default 15). Lower is lighter on slower PCs; the animations keep their speed and skip frames. Off shows one still picture. Changes apply the next time you open the map."
+     "text": "Redraws per second for moving pin pictures (default 15). Lower is lighter on slower PCs. Off shows one still picture. Applies the next time you open the map."
     },
     {
      "var": "CMFAnimationDragPause",
@@ -521,7 +531,7 @@
     {
      "var": "CMFAnimationMemory",
      "row": "Animation memory",
-     "text": "How much memory moving pin pictures may use while the map is open. Large suits most packs; Huge is for big icon packs with many frames. Pictures past the limit show still. Changes apply the next time you open the map."
+     "text": "Memory moving pin pictures may use with the map open. Large suits most packs, Huge big packs; past it they show still. Applies when you next open the map."
     }
    ]
   },

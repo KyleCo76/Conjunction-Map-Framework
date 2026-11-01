@@ -34,6 +34,7 @@ class TableTests(unittest.TestCase):
             ('pick', 'Labels', 'Pin labels'),
             ('pick', 'Legend', 'Legend and filter tabs'),
             ('pick', 'Hidden', 'Hidden pins'),
+            ('pick', 'Map', 'The map'),
             ('pick', 'Look', 'Map look'),
             ('pick', 'Painting', 'Map painting'),
             ('pick', 'Drawings', 'Drawings on the map'),
@@ -45,7 +46,8 @@ class TableTests(unittest.TestCase):
         self.assertEqual(rows_of('CMFMenuAdvSize'), [('pick', 'Size_Scale', 'Pin size'),
                                                      ('pick', 'Labels_Text', 'Level tags and label text'),
                                                      ('pick', 'Size_Place', 'Pin place and draw order')])
-        movement = [('Movement_Area', 'Map area'), ('Movement_Pan', 'Pan and zoom feel'),
+        # API 15: the map area moved to The map pages (key and index unchanged).
+        movement = [('Movement_Pan', 'Pan and zoom feel'),
                     ('Movement_ZoomOut', 'Zoom out to the whole region'), ('Movement_Controller', 'Controller crosshair'),
                     ('Movement_Opening', 'Opening and closing'), ('Movement_View', 'Opening view'),
                     ('Movement_Wide', 'Fill wide screens')]
@@ -59,6 +61,8 @@ class TableTests(unittest.TestCase):
                      ('Behaviour_PanelModes', 'Panel visibility'),
                      ('Behaviour_PinZoom', 'Pin zoom range')]
         self.assertEqual(rows_of('CMFMenuAdvMovement'), [('pick',) + row for row in movement])
+        self.assertEqual(rows_of('CMFMenuAdvMap'), [('pick', 'Movement_Area', 'Map size, position and backdrop')])
+        self.assertEqual(rows_of('CMFMenuWinMap'), [('win', 'Movement_Area', 'Map size, position and backdrop')])
         self.assertEqual(rows_of('CMFMenuAdvBehaviour'), [('pick',) + row for row in behaviour])
         self.assertEqual(rows_of('CMFMenuWinMovement'), [('win',) + row for row in movement])
         self.assertEqual(rows_of('CMFMenuWinBehaviour'), [('win',) + row for row in behaviour])
@@ -91,10 +95,13 @@ class TableTests(unittest.TestCase):
                                                    'cmf_menu_animated_10', 'cmf_menu_animated_15', 'cmf_menu_animated_20',
                                                    'cmf_menu_animated_30', 'cmf_menu_drag_pause', 'cmf_menu_drag_pause_help',
                                                    'cmf_menu_memory', 'cmf_menu_memory_normal', 'cmf_menu_memory_large',
-                                                   'cmf_menu_memory_huge', 'cmf_menu_memory_help'})
+                                                   'cmf_menu_memory_huge', 'cmf_menu_memory_help',
+                                                   'panel_cmf_adv_map', 'panel_cmf_win_map'})
         self.assertEqual([ids['cmf_menu_memory' + s] for s in ('', '_normal', '_large', '_huge', '_help')],
                          list(range(2000200138, 2000200143)))
         self.assertEqual(ids['cmf_menu_support_present'], 2000200127)
+        # API 15: the two new page titles come last, so no shipped ID moves.
+        self.assertEqual((ids['panel_cmf_adv_map'], ids['panel_cmf_win_map']), (2000200143, 2000200144))
         texts = {s['key']: s['text']['en'] for s in addon.catalog()['strings']}
         self.assertEqual(texts['panel_cmf_adv_behaviour'], 'Map behaviour')
         self.assertEqual(texts['panel_cmf_win_behaviour'], 'Who wins: map behaviour')

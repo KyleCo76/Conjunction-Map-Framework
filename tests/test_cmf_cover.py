@@ -26,6 +26,15 @@ class CoverCoreTests(unittest.TestCase):
                      "cover set area="):
             self.assertIn(line, send)
 
+    def test_first_opening_takes_a_declared_grid_before_any_build(self):
+        # 1.8.0 release check: the first opening after a load had no kept grid, so no cover, and the bare map showed.
+        send = body(CORE, "SendCover")
+        self.assertIn("if (!spaceBuiltOnce)", send)
+        self.assertLess(send.index("RememberCover(area)"), send.index("!coverKnown || coverArea != area"))
+        self.assertIn('" declared at="', send)
+        space = body(CORE, "SendSpaceMode")
+        self.assertLess(space.index("spaceBuiltOnce = true;"), space.index("RememberCover(area);"))
+
     def test_cover_colour_comes_from_the_grid_keys(self):
         remember = body(CORE, "RememberCover")
         for line in ("== 'grid'", "'fill'", "'alpha'", "coverFill = 0", "coverAlpha = 1", "kind == 3"):
@@ -53,7 +62,7 @@ class CoverPanelTests(unittest.TestCase):
     def test_cover_sits_over_the_tiles_and_is_bounded(self):
         frame = SPACE[SPACE.index("private function cmfCoverStart"):SPACE.index("private function cmfCoverRemove")]
         self.assertIn("this.mcHubMap.addChildAt(this._cmfCover,this.mcHubMap.getChildIndex(zoom) + 1)", frame)
-        self.assertIn(">= 1500", frame)
+        self.assertIn("now >= this.cmfHoldMs()", frame)
         self.assertIn('cmfCoverRemove("timeout")', frame)
         self.assertIn("this._cmfCoverFillValue >= 0", frame)
 
@@ -85,6 +94,13 @@ class CoverPanelTests(unittest.TestCase):
             self.assertIn(field, remove)
 
 
+    def test_hold_waits_longer_once_the_core_asks_for_a_cover(self):
+        # 1.8.0 release check: with Ink and Iron the map took 1.5 to 1.65 s to open, so a 1.5 s bound dropped the cover
+        # just before the fog arrived and the bare painting showed.
+        bound = SPACE[SPACE.index("private function cmfHoldMs"):SPACE.index("private function cmfCoverFrame")]
+        self.assertIn("return this._cmfCoverFillValue >= 0 ? 4000 : 1500;", bound)
+
+
 class FogReleaseAndCloseTests(unittest.TestCase):
     def frame(self):
         return GRID[GRID.index("private function cmfGridFrame"):GRID.index("// Marching squares over the cell centres")]
@@ -96,9 +112,10 @@ class FogReleaseAndCloseTests(unittest.TestCase):
         self.assertLess(frame.index("this._cmfGridLayer.alpha = "), frame.index('this.cmfCoverRemove("grid")'))
         remove = SPACE[SPACE.index("private function cmfCoverRemove"):SPACE.index("protected function cmfSpaceReady")]
         self.assertLess(remove.index("this.cmfGridFrame(null)"), remove.index("lod.visible = true"))
-        self.assertIn(">= 1500", SPACE, "one bound for the whole hold")
-        self.assertEqual(SPACE.count("< 1500"), 2)
-        self.assertNotIn("_cmfRootHoldAt < 1500", SPACE)
+        self.assertIn(">= this.cmfHoldMs()", SPACE, "one bound for the whole hold")
+        self.assertEqual(SPACE.count("< this.cmfHoldMs()"), 2)
+        self.assertNotIn("1500)", SPACE)
+        self.assertNotIn("_cmfRootHoldAt < ", SPACE)
         self.assertNotIn(">= 1000", SPACE)
 
     def test_a_grid_in_the_map_opening_appears_at_full_strength(self):

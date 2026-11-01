@@ -147,7 +147,7 @@ class CoreTests(unittest.TestCase):
             self.assertTrue(value in (0, 1) if expected == 'switch' else expected[0] <= value <= expected[1], key)
 
     def test_version_stays_six(self):
-        self.assertIn('function CMFGetVersion() : int { return 14; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 15; }', self.core)
 
 
 class PanelTests(unittest.TestCase):

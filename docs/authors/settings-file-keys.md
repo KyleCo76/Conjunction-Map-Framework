@@ -68,7 +68,7 @@ CMFFile_Painting_Skellige=Vanilla
 | `CMFFile_Look_InfoBox` | Map look | Advanced choices > Map look | Info box |
 | `CMFFile_Look_Hints` | Map look | Advanced choices > Map look | Key hints |
 | `CMFFile_Look_PinText` | Map look | Advanced choices > Map look | Pin text style |
-| `CMFFile_Movement_Area` | Map movement | Advanced choices > Map movement | Map area |
+| `CMFFile_Movement_Area` | Map movement | Advanced choices > The map | Map size, position and backdrop |
 | `CMFFile_Movement_Pan` | Map movement | Advanced choices > Map movement | Pan and zoom feel |
 | `CMFFile_Movement_Opening` | Map movement | Advanced choices > Map movement | Opening and closing |
 | `CMFFile_Painting_WhiteOrchard` | Map painting | Advanced choices > Map painting | White Orchard |
@@ -103,8 +103,11 @@ CMFFile_Painting_Skellige=Vanilla
 | `CMFFile_Look_PinLook` | Map look | Advanced choices > Map look | Pin highlights and glow |
 | `CMFFile_Size_Place` | Pin size | Advanced choices > Pin size and labels | Pin place and draw order |
 | `CMFFile_Behaviour_PinZoom` | Map behaviour | Advanced choices > Map behaviour | Pin zoom range |
+| `CMFFile_Map` | The map | Basic choices | The map |
 | `CMFFile_Fallthrough` | every feature | General | If the chosen mod has nothing for a pin |
 | `CMFDebug` | the log | General | Write the who-wins report to the log |
+| `CMFLogPins` | the log | settings file only | none |
+| `CMFMapCheck` | the map file warning | settings file only | none |
 | `CMFProviderOrder1` | the Mod order | Mod order | 1st |
 | `CMFProviderOrder2` | the Mod order | Mod order | 2nd |
 | `CMFProviderOrder3` | the Mod order | Mod order | 3rd |
@@ -114,14 +117,20 @@ CMFFile_Painting_Skellige=Vanilla
 | `CMFProviderOrder7` | the Mod order | Mod order | 7th |
 | `CMFProviderOrder8` | the Mod order | Mod order | 8th |
 
-`CMFFile_Fallthrough=Vanilla` makes a chosen mod that has nothing for a pin show the game's own look there, instead of the next mod's. `CMFDebug=true` writes the who-wins report to the script log. `CMFLogPins=true` (version 11) writes one line per pin the map shows to the script log, with its type, tag, id and place, so an author can find the name of the one pin they want to change. `CMFProviderOrder1` to `CMFProviderOrder8` hold one folder name each, earliest first.
+`CMFFile_Fallthrough=Vanilla` makes a chosen mod that has nothing for a pin show the game's own look there, instead of the next mod's. `CMFDebug=true` writes the who-wins report to the script log. `CMFLogPins=true` (version 11) writes one line per pin the map shows to the script log, with its type, tag, id and place, so an author can find the name of the one pin they want to change. `CMFMapCheck` (version 11, on when unset) warns once per session when a fully shown world map closes and CMF's map never reported that it loaded, which means another map file loaded in its place; `false` turns the warning off. It does not name the other mod. `CMFProviderOrder1` to `CMFProviderOrder8` hold one folder name each, earliest first.
 <!-- cmf:settings-keys end -->
 
-## Map file warning and optional adapter check (API 11 review)
+## The Adapter Check add-on
 
-`CMFMapCheck` belongs to the core's `[CMFSettings]` group and defaults to On when unset. After a fully shown world map closes, the core warns once per session if its map panel never reported readiness. An early close and an ordinary world/region round trip must stay quiet. Off disables this warning. This is a map-file ownership warning; it does not identify a conflicting mod.
+CMF's optional Adapter Check add-on (API version 11) keeps its own settings: `CMFAdapterCheckEnabled` (on by default) and a hidden `CMFAdapterCheckKnown`, which remembers the set of missing adapters it last warned about. A clean check while it is on clears that memory; while it is off the memory is left alone. From Adapter Check 1.0.1 (with CMF 1.6.0) it logs `adapter check missing mod=.. adapter=..` for each missing adapter, and `adapter check deferred reason=noplayer wait=mapclose` when it waits for the first map close because no player is loaded yet. Once it has shown its box in a game session, an adapter that registers later in that session does not bring the box back.
 
-The separate CMF Adapter Check add-on requires API 11. Its `CMFAdapterCheckEnabled` option defaults On; its hidden `CMFAdapterCheckKnown` signature records the last missing set. A clean enabled check clears the signature; disabled checks leave it alone. The updated in-game menu also requires API 11; existing released menu packages and adapter API floors are unchanged.
+## Names that kept their old meaning
+
+Choice keys never change once released, so a few names read differently from what they choose today:
+
+- `Size_Lead` and `Size_Spread` (Which pin leads a spread, Stacked pins spread out) and `Labels_Place` (Label place and hiding) belong to Map behaviour, not to Pin size or Pin labels.
+- `Colours` in choice keys is the same as `Color` in theme keys and property names.
+- `Disabled` in CMF's API (property `5`, `CMFRegisterDisabled`) means a pin a mod greys. In the game's pin types (`...Disabled`) and in `Icons_Completed` it means a completed place.
 
 ## Animated pins (API 14)
 

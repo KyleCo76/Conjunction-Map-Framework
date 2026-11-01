@@ -32,7 +32,7 @@
     {"id": 2000200128, "key": "cmf_menu_animated_pins", "text": {"en": "Animated pins"}},
     {"id": 2000200129, "key": "cmf_menu_animated_off", "text": {"en": "Off"}},
     {"id": 2000200130, "key": "cmf_menu_animated_on", "text": {"en": "On"}},
-    {"id": 2000200131, "key": "cmf_menu_animated_help", "text": {"en": "How many times a second moving pin pictures are redrawn (default 15). Lower is lighter on slower PCs; the animations keep their speed and skip frames. Off shows one still picture. Changes apply the next time you open the map."}},
+    {"id": 2000200131, "key": "cmf_menu_animated_help", "text": {"en": "Redraws per second for moving pin pictures (default 15). Lower is lighter on slower PCs. Off shows one still picture. Applies the next time you open the map."}},
     {"id": 2000200132, "key": "cmf_menu_animated_10", "text": {"en": "10"}},
     {"id": 2000200133, "key": "cmf_menu_animated_15", "text": {"en": "15"}},
     {"id": 2000200134, "key": "cmf_menu_animated_20", "text": {"en": "20"}},
@@ -43,6 +43,8 @@
     {"id": 2000200139, "key": "cmf_menu_memory_normal", "text": {"en": "Normal (32 MB)"}},
     {"id": 2000200140, "key": "cmf_menu_memory_large", "text": {"en": "Large (64 MB)"}},
     {"id": 2000200141, "key": "cmf_menu_memory_huge", "text": {"en": "Huge (128 MB)"}},
-    {"id": 2000200142, "key": "cmf_menu_memory_help", "text": {"en": "How much memory moving pin pictures may use while the map is open. Large suits most packs; Huge is for big icon packs with many frames. Pictures past the limit show still. Changes apply the next time you open the map."}}
+    {"id": 2000200142, "key": "cmf_menu_memory_help", "text": {"en": "Memory moving pin pictures may use with the map open. Large suits most packs, Huge big packs; past it they show still. Applies when you next open the map."}},
+    {"id": 2000200143, "key": "panel_cmf_adv_map", "text": {"en": "The map"}},
+    {"id": 2000200144, "key": "panel_cmf_win_map", "text": {"en": "Who wins: the map"}}
   ]
 }

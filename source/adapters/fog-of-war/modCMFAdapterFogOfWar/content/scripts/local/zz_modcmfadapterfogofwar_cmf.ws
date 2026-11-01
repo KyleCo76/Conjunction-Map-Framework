@@ -30,6 +30,11 @@
 // over the fog. The fog drawing now asks CMF to hide every pin on a covered cell (hidePins), and each pin Fog of War's
 // filter saw and kept is marked kept (CMFGridKeepPin), so its exemptions stay: the tracked quest, known signposts,
 // in-world hints and places revealed from afar.
+//
+// 1.1.2 (1.8.0 release check): the first map opening after a load showed the bare map until the fog was built, because
+// CMF only covers the map from the second opening on (it keeps the last opening's fog). The adapter now declares the fog
+// drawing, with Fog of War's colour and opacity, when the game starts, so CMF 1.8.0 or later covers the first opening
+// too. The cells still come only from each map build.
 
 // Presence is independent of map settings; the existing source-mod compile dependency stays required.
 @wrapMethod(CR4Game)
@@ -41,7 +46,21 @@ function OnGameStarted(restored : bool)
 	{
 		CMFRegister("modFogOfWar", 38, '', '', "", 1);
 	}
+	FowAdapterDeclareFog();
 	return result;
+}
+
+// 1.1.2: the fog drawing with its colour and opacity only, before the first map opening, so CMF can cover the first
+// opening while the build reads the cells. Each full build sets the rest (FowAdapterSendFog), or withdraws it.
+function FowAdapterDeclareFog()
+{
+	if (!CMFHasAbility('grid', 'bits') || !FogOfWarEnabled())
+	{
+		return;
+	}
+	CMFDraw("modFogOfWar", 'mapSpace', 'modFogOfWar.fog', 'grid');
+	CMFDrawSet("modFogOfWar", 'modFogOfWar.fog', 'fill', "", FogOfWarColor());
+	CMFDrawSet("modFogOfWar", 'modFogOfWar.fog', 'alpha', "", FogOfWarOpacity());
 }
 
 // Set by the entity wrapper or the fallback in each map build, so Fog of War is asked once.

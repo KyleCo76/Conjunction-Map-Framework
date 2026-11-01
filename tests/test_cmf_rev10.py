@@ -65,8 +65,6 @@ def part_key_choice(parts, part, key):
         return 65
     if part == 'navigation' and key in CONTROLLER:
         return 66
-    if part == 'map' and key == 'backdrop':
-        return 39
     return parts.get(part, -1)
 
 
@@ -86,7 +84,7 @@ class ApiTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_and_header(self):
-        self.assertIn('function CMFGetVersion() : int { return 14; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 15; }', self.core)
         self.assertRegex(self.core.split('function CMFGetVersion')[0], r'version 10: behaviour picked apart from art')
 
     def test_choice_keys_and_parents(self):
@@ -112,7 +110,8 @@ class ApiTests(unittest.TestCase):
         for key in CLEAR + RISE + CONTROLLER:
             self.assertIn(key, source)
         self.assertIn("if (key == 'zoomOutFit' || key == 'edgeOvershoot')", source)
-        self.assertIn("if (key == 'backdrop')\n\t\t\t\t{\n\t\t\t\t\treturn 39; // Look_Frames", source)
+        # API 15: the backdrop moved to Movement_Area with the rest of the map part.
+        self.assertNotIn("backdrop", source)
         self.assertTrue(source.rstrip().endswith('return PartChoice(part);\n\t}'))
         # Every key the mirror sends to a new piece is a key that part takes.
         for part, keys in (('tooltip', CLEAR), ('pinLabel', RISE), ('navigation', ZOOM_OUT + CONTROLLER)):
@@ -237,7 +236,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(cmf_pack.theme_key_row('navigation', 'zoomOutFit'), 'Map movement > Zoom out to the whole region')
         self.assertEqual(cmf_pack.theme_key_row('navigation', 'safeLeft'), 'Map movement > Controller crosshair')
         self.assertEqual(cmf_pack.theme_key_row('navigation', 'stepMs'), 'Map movement > Pan and zoom feel')
-        self.assertEqual(cmf_pack.theme_key_row('map', 'backdrop'), 'Map look > Frames and panels')
+        self.assertEqual(cmf_pack.theme_key_row('map', 'backdrop'), 'The map > Map size, position and backdrop')
         self.assertEqual(cmf_pack.theme_key_row('wide', 'fill'), 'Map movement > Fill wide screens')
         self.assertEqual(cmf_pack.theme_key_row('spread', 'on'), 'Map behaviour > Stacked pins spread out')
         from ws_contract_runner import bind

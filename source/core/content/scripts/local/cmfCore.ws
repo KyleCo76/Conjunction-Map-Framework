@@ -21,7 +21,7 @@
 // place apart from its height (the tooltip keys tallMinHeight and the tall* places).
 // Never remove a call once published.
 
-function CMFGetVersion() : int { return 14; }
+function CMFGetVersion() : int { return 15; }
 
 // API 14: frame programs and their winning provider's per-layer phase.
 function CMFPropertyIconFrames() : int { return 45; }
@@ -495,7 +495,9 @@ function CMFIsVanillaCategory(category : string, ignoreCase : bool) : bool
 // and its pieces Behaviour_InfoBoxDodge (63) and Behaviour_InfoBoxHeight (64), Movement_ZoomOut (65),
 // Movement_Controller (66), Behaviour_HoverNames (67) and Movement_Wide (68); Size_Lead, Size_Spread and Labels_Place
 // keep their index and name and answer the Behaviour feature (CMFChoiceParent). Version 11 keeps 69 (Reserved69, never
-// offered) and appends Icons_Undiscovered (70) and Look_InfoText (71).
+// offered) and appends Icons_Undiscovered (70) and Look_InfoText (71). Version 15 appends the Map feature (80), "The map":
+// Movement_Area (44) keeps its index and name and answers it (CMFChoiceParent), and the map part's backdrop moves
+// from Look_Frames to Movement_Area, so the map and the frames and panels are chosen apart.
 function CMFChoiceKeys() : string
 {
 	return "Icons,Colours,Size,Labels,Clicks,Legend,Hidden,Look,Movement,Painting,Drawings," +
@@ -509,17 +511,21 @@ function CMFChoiceKeys() : string
 		"Movement_View,Behaviour,Behaviour_InfoBoxDodge,Behaviour_InfoBoxHeight,Movement_ZoomOut,Movement_Controller," +
 		"Behaviour_HoverNames,Movement_Wide,Reserved69,Icons_Undiscovered,Look_InfoText," +
 		"Behaviour_InfoBoxMotion,Look_Sounds,Behaviour_InfoFold,Behaviour_PanelModes,Look_Badges,Look_PinLook," +
-		"Size_Place,Behaviour_PinZoom";
+		"Size_Place,Behaviour_PinZoom,Map";
 }
 
 // Version 10: the feature of the three pieces that moved under Behaviour (62) without a new name, or -1 when the key's
-// prefix names its feature.
+// prefix names its feature. Version 15: Movement_Area (44) answers the Map feature (80).
 // Piece-parent inheritance is separate: CMFCore.PieceParentTable (empty in revision 13).
 function CMFChoiceParent(choice : int) : int
 {
 	if (choice == 28 || choice == 29 || choice == 31)
 	{
 		return 62; // Behaviour
+	}
+	if (choice == 44)
+	{
+		return 80; // Map: Movement_Area
 	}
 	return -1;
 }
@@ -800,6 +806,8 @@ class CMFCore extends CObject
 	private var dirty : bool;
 	private var revision : int;
 	private var seenPins : array<string>;
+	// 1.8.0: legend log notes keep their own cap, so a full seenPins never hides them.
+	private var seenLegend : array<string>;
 	private var failedArt : array<string>;
 	private var categories : array<SCMFClaim>;
 	private var hideClaims : array<SCMFClaim>;
@@ -831,6 +839,9 @@ class CMFCore extends CObject
 	private var coverFill : int;
 	private var coverAlpha : float;
 	private var coverArea : name;
+	// 1.8.0: set by the first full build of the session. Before it no grid is kept, so a grid drawing a provider declared
+	// ahead (CMFDraw with its fill and alpha, before the first opening) gives the first opening its cover.
+	private var spaceBuiltOnce : bool;
 	private var spaceArea : name;
 	private var catchArray : CScriptedFlashArray;
 	private var catching : bool;
@@ -2697,7 +2708,9 @@ class CMFCore extends CObject
 	// A part's look piece is independent from its motion, placement and input pieces.
 	private function ThemeLookChoice(part : name) : int
 	{
-		if (part == 'map' || part == 'crosshair' || part == 'edgePointer') { return 39; }
+		// Version 15: the map part (backdrop included) is decided by Movement_Area, the crosshair and edge pointers by Look_Frames.
+		if (part == 'map') { return 44; }
+		if (part == 'crosshair' || part == 'edgePointer') { return 39; }
 		if (part == 'mapSpace' || part == 'navigation' || part == 'opening' || part == 'spread' || part == 'wide' || part == 'sounds') { return -1; }
 		return PartChoice(part);
 	}
@@ -2765,6 +2778,39 @@ class CMFCore extends CObject
 			}
 		}
 		return '';
+	}
+
+	// Version 15: the panels whose look is chosen as Frames and panels, Legend, Info box or Key hints. A drawing pinned to
+	// one of them is part of its owner's look of that panel.
+	private function PanelPart(part : name) : bool
+	{
+		return part == 'screen' || part == 'mapEdge' || part == 'title' || part == 'tracker' || part == 'preview' ||
+			part == 'worldButton' || part == 'worldHint' || part == 'markerPanel' || part == 'legend' ||
+			part == 'legendRow' || part == 'legendTab' || part == 'tooltip' || part == 'hints';
+	}
+
+	// Version 15: a provider's drawing pinned to a panel it also styles belongs to its look of that panel, so it is left
+	// out while another provider (or Vanilla, owner "vanilla") wins that panel's look. A provider that only draws on a
+	// panel it does not style keeps its drawing. Only look keys count: a key that answers another piece (the info box's clear* and
+	// tall* places, fold keys, show) does not tie the drawing to the look. owner is the winner of the panel's look.
+	private function PanelDrawingLeftOut(entryValue : SCMFThemeEntry, out owner : string) : bool
+	{
+		var root : name;
+		var i : int;
+		root = DrawingRoot(entryValue.target);
+		if (!PanelPart(root)) { return false; }
+		for (i = 0; i < themeEntries.Size(); i += 1)
+		{
+			if (themeEntries[i].kind == 1 && themeEntries[i].target == root && themeEntries[i].key != 'list' &&
+				themeEntries[i].provider == entryValue.provider && PartKeyChoice(root, themeEntries[i].key) == ThemeLookChoice(root))
+			{
+				owner = ThemeStyleOwner(root, themeEntries[i].key);
+				if (owner == entryValue.provider) { return false; }
+				if (owner == "") { owner = "vanilla"; }
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// Map-space drawing: true when the drawing's owner tied it to the mapSpace anchor. Such a drawing and its
@@ -2959,6 +3005,7 @@ class CMFCore extends CObject
 				owner = ThemeStyleOwner(themeEntries[i].target, themeEntries[i].key);
 				if (owner != themeEntries[i].provider)
 				{
+					if (owner == "") { owner = "vanilla"; }
 					NoteTheme("theme style shadowed provider=" + themeEntries[i].provider + " part=" +
 						NameToString(themeEntries[i].target) + " piece=" +
 						ChoiceKey(PartKeyChoice(themeEntries[i].target, themeEntries[i].key)) + " by=" + owner);
@@ -2986,6 +3033,12 @@ class CMFCore extends CObject
 						NameToString(themeEntries[i].target) + " owner=" + owner);
 					continue;
 				}
+			}
+			if (themeEntries[i].kind != 1 && PanelDrawingLeftOut(themeEntries[i], owner))
+			{
+				NoteTheme("theme drawing left out provider=" + themeEntries[i].provider + " id=" +
+					NameToString(themeEntries[i].target) + " reason=panel by=" + owner);
+				continue;
 			}
 			if (themeEntries[i].kind != 1 && !DrawingSourceOk(themeEntries[i])) { continue; }
 			item = storage.CreateTempFlashObject();
@@ -3075,9 +3128,9 @@ class CMFCore extends CObject
 				list.PushBackFlashObject(item);
 			}
 			note = "legend row art:" + row + ":" + CMFYesNo(art) + CMFYesNo(tint);
-			if (seenPins.Size() < 64 && !seenPins.Contains(note))
+			if (seenLegend.Size() < 64 && !seenLegend.Contains(note))
 			{
-				seenPins.PushBack(note);
+				seenLegend.PushBack(note);
 				CMFLog("legend row art row=" + row + " art=" + CMFYesNo(art) + " tint=" + CMFYesNo(tint));
 			}
 		}
@@ -3327,9 +3380,22 @@ class CMFCore extends CObject
 	// The earliest point the core knows the shown area (the game asks for the map's picture name): when the last full
 	// build left a grid for this area and nothing has changed since, the menu gets cmfCoverFill and cmfCoverAlpha, and the
 	// panel covers the tiles from its first frame until the first grid is drawn. Logs "cover set" or "cover skipped reason=".
+	// 1.8.0: before the session's first full build nothing is kept, so a grid drawing already declared for this area
+	// (a provider's CMFDraw before the first opening, with its fill and alpha) gives the cover ("cover set ... declared").
 	public function SendCover(menuFlash : CScriptedFlashSprite, area : name, place : string)
 	{
 		if (!menuFlash) { CMFLog("cover skipped reason=no menu flash at=" + place); return; }
+		if (!spaceBuiltOnce)
+		{
+			RememberCover(area);
+			if (coverKnown)
+			{
+				menuFlash.SetMemberFlashNumber("cmfCoverAlpha", coverAlpha);
+				menuFlash.SetMemberFlashNumber("cmfCoverFill", coverFill);
+				CMFLog("cover set area=" + NameToString(area) + " fill=" + coverFill + " alpha=" + coverAlpha + " declared at=" + place);
+				return;
+			}
+		}
 		// No cover: say so, so the panel returns the painting it has been holding since its first frame.
 		if (!coverKnown || coverArea != area)
 		{
@@ -3448,6 +3514,7 @@ class CMFCore extends CObject
 		if (!gridsOnly && !refresh)
 		{
 			spaceEarlyOk = true;
+			spaceBuiltOnce = true;
 			RememberCover(area);
 		}
 		if (gridsOnly && sent == 0)
@@ -4069,6 +4136,15 @@ class CMFCore extends CObject
 			case 'preview':
 				if (key == 'show' || key == 'movingMs') { return 75; }
 				break;
+			case 'tracker':
+			case 'title':
+			case 'worldButton':
+			case 'worldHint':
+			case 'crosshair':
+			case 'edgePointer':
+				// Version 15: whether the panel shows is behaviour (Panel visibility), apart from its look (Frames and panels).
+				if (key == 'show') { return 75; }
+				break;
 			case 'pinLabel':
 				if (CMFListHas("rise,riseOffset,riseTracked,riseOffsetTracked", NameToString(key)))
 				{
@@ -4084,12 +4160,6 @@ class CMFCore extends CObject
 					NameToString(key)))
 				{
 					return 66; // Movement_Controller
-				}
-				break;
-			case 'map':
-				if (key == 'backdrop')
-				{
-					return 39; // Look_Frames
 				}
 				break;
 		}
@@ -5456,9 +5526,9 @@ class CMFCore extends CObject
 			dataObject.SetMemberFlashBool("cmfLegendFitEnabled", true);
 		}
 		note = "marker legend:" + pinType;
-		if (seenPins.Size() < 64 && !seenPins.Contains(note))
+		if (seenLegend.Size() < 64 && !seenLegend.Contains(note))
 		{
-			seenPins.PushBack(note);
+			seenLegend.PushBack(note);
 			CMFLog("marker legend type=" + pinType + " filteredType=" + legendKey + " art=" + CMFYesNo(art) + " tint=" +
 				CMFYesNo(tint));
 		}
@@ -8892,9 +8962,10 @@ function CMFThemePartKeys(part : name) : string
 		case 'mapEdge':
 			return "hide";
 		case 'title':
-			return CMFThemeTextKeys() + ",x,y,screenX,screenY,wrap,hide,text";
+			return CMFThemeTextKeys() + ",x,y,screenX,screenY,wrap,hide,text,show";
 		case 'tracker':
-			return CMFThemeGlowKeys() + ",nameFont,nameSize,nameColor,hide,x,y,scale";
+			// Version 15: show (always, nokeys or never) is the panel's visibility, apart from its look (Panel visibility).
+			return CMFThemeGlowKeys() + ",nameFont,nameSize,nameColor,hide,x,y,scale,show";
 		case 'legend':
 			return CMFThemeGlowKeys() + ",allText,x,y,scale,show,autoHideMs,padShowFirst";
 		case 'legendRow':
@@ -8917,9 +8988,9 @@ function CMFThemePartKeys(part : name) : string
 		case 'preview':
 			return "hide,x,y,scale,show,movingMs";
 		case 'worldButton':
-			return CMFThemeGlowKeys() + ",hide,text,x,y,scale,font,size";
+			return CMFThemeGlowKeys() + ",hide,text,x,y,scale,font,size,show";
 		case 'worldHint':
-			return CMFThemeGlowKeys() + ",hide,text,x,y,scale,font,size";
+			return CMFThemeGlowKeys() + ",hide,text,x,y,scale,font,size,show";
 		case 'hints':
 			return CMFThemeGlowKeys() + ",x,y,scale,align,list,font,size";
 		case 'keyCap':
@@ -8932,7 +9003,7 @@ function CMFThemePartKeys(part : name) : string
 			return "width,height,curve,fill,alpha,stroke,strokeWidth,offsetX,offsetY," + CMFThemeTextKeys();
 		case 'crosshair':
 		case 'edgePointer':
-			return CMFThemeGlowKeys() + ",color,alpha,scale,hide";
+			return CMFThemeGlowKeys() + ",color,alpha,scale,hide,show";
 		case 'navigation':
 			return "frameTimed,stepMs,worldStepMs,maxStepMs,crosshairRoam,safeLeft,safeTop,safeRight,safeBottom," +
 				"snapSeconds,centerSeconds," + CMFThemeNavigationKeys();
@@ -9096,6 +9167,12 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 	if (part == 'map' && (key == 'frameTop' || key == 'frameBottom')) { return number >= 0 && number <= 1; }
 	if (part == 'legend' && key == 'show') { return text == "always" || text == "auto"; }
 	if (part == 'preview' && key == 'show') { return text == "always" || text == "moving" || text == "never"; }
+	if (part == 'tracker' && key == 'show') { return text == "always" || text == "nokeys" || text == "never"; }
+	if ((part == 'title' || part == 'worldButton' || part == 'worldHint' || part == 'crosshair' || part == 'edgePointer') &&
+		key == 'show')
+	{
+		return text == "always" || text == "never";
+	}
 	if (key == 'autoHideMs' || key == 'movingMs') { return number >= 0 && number <= 600000; }
 	if (key == 'padShowFirst') { return number == 0 || number == 1; }
 	if (part == 'tooltip' && key == 'titleCase') { return text == "upper" || text == "keep"; }

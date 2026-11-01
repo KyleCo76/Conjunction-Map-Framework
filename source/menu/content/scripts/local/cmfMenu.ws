@@ -215,6 +215,11 @@ function CMFMenuGroupOf(key : string) : name
 	{
 		return 'CMFMenuAdvLook';
 	}
+	// API 15: the map's area moved from the Map movement page to The map page (the key keeps its name).
+	if (StrBeginsWith(key, "Movement_Area"))
+	{
+		return 'CMFMenuAdvMap';
+	}
 	if (StrBeginsWith(key, "Movement_"))
 	{
 		return 'CMFMenuAdvMovement';
@@ -239,6 +244,7 @@ function CMFMenuChoiceGroups() : array<name>
 	groups.PushBack('CMFMenuAdvColours');
 	groups.PushBack('CMFMenuAdvSize');
 	groups.PushBack('CMFMenuAdvLegend');
+	groups.PushBack('CMFMenuAdvMap');
 	groups.PushBack('CMFMenuAdvLook');
 	groups.PushBack('CMFMenuAdvMovement');
 	groups.PushBack('CMFMenuAdvBehaviour');
@@ -366,6 +372,8 @@ function CMFMenuFeatureName(feature : int) : string
 			return "Drawings";
 		case 62:
 			return "Behaviour";
+		case 80:
+			return "The map";
 	}
 	return "";
 }
@@ -1017,7 +1025,7 @@ function CMFMenuFillMod(storage : CScriptedFlashValueStorage, row : CScriptedFla
 	var core : CMFCore;
 	var labels : array<string>;
 	var text : string;
-	var feature, behaviour, shown, more : int;
+	var feature, behaviour, mapFeature, shown, more : int;
 	if (index < 0 || index >= providers.Size())
 	{
 		return false;
@@ -1076,6 +1084,23 @@ function CMFMenuFillMod(storage : CScriptedFlashValueStorage, row : CScriptedFla
 					text += ", ";
 				}
 				text += CMFMenuFeatureName(behaviour);
+			}
+		}
+		// API 15: The map (80) after Behaviour, when the installed CMF knows it.
+		mapFeature = core.ChoiceIndex("Map");
+		if (mapFeature >= 0 && core.Offers(mapFeature, providers[index]))
+		{
+			if (shown >= 3)
+			{
+				more += 1;
+			}
+			else
+			{
+				if (text != "")
+				{
+					text += ", ";
+				}
+				text += CMFMenuFeatureName(mapFeature);
 			}
 		}
 		if (more > 0)
@@ -1281,6 +1306,8 @@ function CMFMenuDescription(varName : name) : string
 			return "Changes the list of pin types beside the map: which rows it has, what they are called, and its filter tabs.";
 		case 'CMFPick_Hidden':
 			return "Hides or greys out pins to keep the map tidy. Automatic keeps every mod's hiding, Vanilla shows every pin, a mod keeps only its own.";
+		case 'CMFPick_Map':
+			return "The map itself: how much of the screen it fills, where it sits and its backdrop. Pick a different mod for the frames and panels around it.";
 		case 'CMFPick_Look':
 			return "Restyles the screen around the map: frames, region title, the list beside the map, the pin info box, key hints and pin text.";
 		case 'CMFPick_Painting':
@@ -1291,7 +1318,7 @@ function CMFMenuDescription(varName : name) : string
 		case 'CMFPick_Clicks_Pins':
 			return "Makes using a pin do something, such as travelling to it or opening a list, with a button beside the pin.";
 		case 'CMFPick_Movement':
-			return "Changes how the map scrolls, zooms and opens, how much of the screen it fills and where it is centred when it opens.";
+			return "Changes how the map scrolls, zooms and opens, and where it is centred when it opens. Its size and place are under The map.";
 		case 'CMFPick_Behaviour':
 			return "Changes how the map reacts under the cursor: stacked pins fan out, text and the info box step aside, names appear on hover.";
 		case 'CMFPick_Icons_General':
@@ -1342,8 +1369,10 @@ function CMFMenuDescription(varName : name) : string
 		case 'CMFPick_Hidden_Ignore2':
 		case 'CMFPick_Hidden_Ignore3':
 			return "Brings back the pins one mod hides or greys out, while every other mod's hiding stays. Nobody brings none back.";
+		case 'CMFPick_Movement_Area':
+			return "Changes how much of the screen the map fills, where it sits, its backdrop and how far you can scroll it.";
 		case 'CMFPick_Look_Frames':
-			return "Restyles the map frame, title, tracker, overview and world view controls, including their size and position, the crosshair and edge arrows.";
+			return "Restyles the frames and panels around the map: title, tracker, overview and world view controls, crosshair and edge arrows.";
 		case 'CMFPick_Look_Legend':
 			return "Restyles the list of pin types beside the map: its fonts, colours and backgrounds.";
 		case 'CMFPick_Look_InfoBox':
@@ -1360,8 +1389,6 @@ function CMFMenuDescription(varName : name) : string
 			return "The picture behind a pin icon and its colour.";
 		case 'CMFPick_Look_PinLook':
 			return "The highlight, glow and grey look around pin icons.";
-		case 'CMFPick_Movement_Area':
-			return "Changes how much of the screen the map fills from top to bottom, and how far you can scroll it.";
 		case 'CMFPick_Movement_Pan':
 			return "Makes scrolling and zooming smoother or faster, with keys, mouse or stick.";
 		case 'CMFPick_Movement_ZoomOut':
@@ -1391,7 +1418,7 @@ function CMFMenuDescription(varName : name) : string
 		case 'CMFPick_Behaviour_InfoFold':
 			return "Whether extra info box text starts folded, and how its more and less controls work.";
 		case 'CMFPick_Behaviour_PanelModes':
-			return "When the legend and corner overview show, hide or wait for input.";
+			return "When the legend, overview, tracker, title and world buttons show, hide or wait for input.";
 		case 'CMFPick_Behaviour_PinZoom':
 			return "Which zoom levels can show a pin.";
 		case 'CMFPick_Painting_WhiteOrchard':
@@ -1428,7 +1455,6 @@ function CMFMenuDescription(varName : name) : string
 			return "For bug reports: writes which mod decides each part of the map into the game's script log.";
 		case 'CMFAnimatedPins':
 			return GetLocStringByKeyExt("cmf_menu_animated_help");
-			return "How many times a second moving pin pictures are redrawn (default 15). Lower is lighter on slower PCs; the animations keep their speed and skip frames. Off shows one still picture. Changes apply the next time you open the map.";
 		case 'CMFAnimationDragPause':
 			return GetLocStringByKeyExt("cmf_menu_drag_pause_help");
 		case 'CMFAnimationMemory':

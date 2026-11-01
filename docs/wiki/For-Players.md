@@ -3,7 +3,7 @@
 # For players: installing CMF, icon packs and other map mods
 
 - **CMF is the single map.** Install CMF once; icon packs and other map mods work through it. Packs need no particular load order relative to CMF, and they do not need Script Merger.
-- **Two packs, same pin type:** the pack whose folder name sorts first wins. To change that without renaming folders, close the game and add these lines to `dx12user.settings` in `Documents\The Witcher 3`, one pack folder name per line, earliest first (up to eight, `CMFProviderOrder1` to `CMFProviderOrder8`):
+- **Two packs, same pin type:** the pack whose folder name sorts first wins. With CMF's in-game menu add-on, the Mod order and each feature's row change that in game. Without it, close the game and add these lines to `dx12user.settings` in `Documents\The Witcher 3`, one pack folder name per line, earliest first (up to eight, `CMFProviderOrder1` to `CMFProviderOrder8`):
 
   ```
   [CMFSettings]

@@ -20,7 +20,7 @@ function AddPinTypeData(out dataObject : CScriptedFlashObject, targetPin : SComm
 }
 ```
 
-- **Which properties.** Icon (1: `text` is an image path, or from API version 4 `"frame:<label>"` for a frame of the game's pin icon), tint (3: `number` is a colour), hide (9) and, from API version 4, 10 to 13 and 15 with the values in the table above. Other ids are refused with `reason=style`.
+- **Which properties.** Icon (1: `text` is an image path, or from API version 4 `"frame:<label>"` for a frame of the game's pin icon), tint (3: `number` is a colour), hide (9) and, from API version 4, 10 to 13 and 15 with the values in the table above; from API version 5 also 17, from API version 6 16, 20, 21 and 22, from API version 10 28, and from API version 11 14, 18, 19, 29 and 30. Other ids, greying (5) among them, are refused with `reason=style`.
 - **It beats every registered value** on that pin: tag, type and `filteredType` claims.
 - **The followed quest's gold is yours to keep.** Type-level tints skip tracked and highlighted pins; a per-pin call does not, so read `tracked` or `highlighted` yourself, as above.
 - **Conflicts do not depend on wrapper order.** CMF records which pack styled each property of the pin. When two packs style the same pin, the earlier folder name wins, whichever wrapper runs first. The call returns `false` for the loser, and CMF logs `style shadowed provider=... by=...` once per pack, pin type and property.

@@ -1,5 +1,5 @@
-// Map Quest Insight adapter 2.3.0 for Conjunction Map Framework. Requires CMF 1.6.0 (API version 13) and Map Quest
-// Insight 2.1.0 or later (Nexus 14219; the Quest List file uses names that exist from 2.1.0), which stays
+// Map Quest Insight adapter 2.4.0 for Conjunction Map Framework. Requires CMF 1.6.0 (API version 13) and Map Quest
+// Insight 2.1.0 or later (checked against 2.1.0 and 2.2.0) (Nexus 14219; the Quest List file uses names that exist from 2.1.0), which stays
 // unchanged. Install and remove the two together: this file calls Map Quest Insight's own functions (QMI_OptTypeIcons, QMI_IconKind, QMI_LevelBandTint and QMI_ColorTrackedIcon exist
 // from 2.0.0, which Wolfer named stable), so the game stops at the script compile screen when Map Quest Insight is
 // missing or older, and it uses CMF 13's per-type theme call (CMFStyle) and info box fold hook (OnInfoFold), which
@@ -211,18 +211,69 @@ function MqiAdapterSendSpread(travelMap : bool)
 // menu names, not through QMI_OptUwMap and QMI_OptUwSidePos, so Map Quest Insight 1.6.1, which has no such page, still
 // compiles and sends nothing (CMF's own layout then applies). A value never saved reads "" or "-1" and means Map Quest
 // Insight's own default (On, 100 %).
+//
+// 2.4.0, for Map Quest Insight 2.2.0: the switch moved to the General page (qmiGeneral, qmiUwMap, default On) and the
+// slider became "Map side panels position" (qmiGeneral, qmiUwPanels: 0 = 16:9, 1 = 21:9, the default, 2 = 32:9). Its
+// map then puts the side panels at the edges of a centred area of that shape (1920, 2560 or 3840 units wide on a
+// 1080-high stage), never past the screen's edge. CMF's panels key is the share of the way from the 16:9 place to the
+// edge, so the adapter sends (shape width - 1920) / (screen width - 1920), capped at 1, with CMFScreenWidth() in the
+// same units. Before the map has opened once the screen width is 0, and the panels go to the edges for that opening.
+// The old qmiWide page is read only when the General page has no qmiUwPanels (Map Quest Insight 1.6.2 to 2.1.0).
 function MqiAdapterSendWide()
 {
 	var config : CInGameConfigWrapper;
-	var on, side : string;
-	var panels : float;
-	var i : int;
+	var on, side, shape : string;
+	var panels, screen, target : float;
+	var i, w, h : int;
 	var found : bool;
 	if (!CMFHasAbility('wide', 'fill'))
 	{
 		return;
 	}
 	config = theGame.GetInGameConfigWrapper();
+	if (MqiAdapterHasOption(config, 'qmiGeneral', 'qmiUwPanels'))
+	{
+		on = config.GetVarValue('qmiGeneral', 'qmiUwMap');
+		if (on != "" && on != "-1" && on != "true" && on != "1")
+		{
+			MqiAdapterMotion('wide', 'fill', "", 0);
+			MqiAdapterMotion('wide', 'panels', "unset", 0);
+			return;
+		}
+		shape = config.GetVarValue('qmiGeneral', 'qmiUwPanels');
+		target = 2560;
+		if (shape == "0")
+		{
+			target = 1920;
+		}
+		else if (shape == "2")
+		{
+			target = 3840;
+		}
+		// CMF knows the screen only after the first opening; before it, the game's own resolution gives the same width
+		// in map units (1080 high), so the first opening places the panels as every later one does.
+		screen = CMFScreenWidth();
+		if (screen <= 0)
+		{
+			theGame.GetCurrentViewportResolution(w, h);
+			if (w > 0 && h > 0)
+			{
+				screen = 1080.0 * w / h;
+			}
+		}
+		panels = 1;
+		if (target <= 1920)
+		{
+			panels = 0;
+		}
+		else if (screen > 1920)
+		{
+			panels = ClampF((target - 1920) / (screen - 1920), 0, 1);
+		}
+		MqiAdapterMotion('wide', 'fill', "", 1);
+		MqiAdapterMotion('wide', 'panels', "", panels);
+		return;
+	}
 	found = false;
 	for (i = 0; i < config.GetGroupsNum() && !found; i += 1)
 	{
@@ -247,6 +298,21 @@ function MqiAdapterSendWide()
 	}
 	MqiAdapterMotion('wide', 'fill', "", 1);
 	MqiAdapterMotion('wide', 'panels', "", panels);
+}
+
+// True when Map Quest Insight's menu page group has the option, so a version without it is never read by mistake.
+function MqiAdapterHasOption(config : CInGameConfigWrapper, group : name, option : name) : bool
+{
+	var i, count : int;
+	count = config.GetVarsNumByGroupName(group);
+	for (i = 0; i < count; i += 1)
+	{
+		if (config.GetVarNameByGroupName(group, i) == option)
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 // Where Map Quest Insight's own map file puts a tall info box (1.6.2 and 2.0.0 MapMenu.as alike, read 2026-10-25,
@@ -987,6 +1053,12 @@ function MqiAdapterFade(id : name, side : string, alpha : float, size : float)
 // Map Quest Insight 2.0's "Corner HUD" ([qmiGeneral] qmiSideHud: 0 Clean, the default, 1 Game look). Clean takes
 // the tracked quest's dark boxes away and keeps its text readable with a black outline and shadow; CMF's tracker
 // part does the same with its plate hidden and two glows. Game look withdraws them.
+// 2.4.0: the font of the tracked quest's name in the Clean corner HUD, "" until Map Quest Insight's author names it.
+function MqiAdapterTrackerFont() : string
+{
+	return "";
+}
+
 function MqiAdapterSendCornerHud()
 {
 	var text : string;
@@ -1002,10 +1074,18 @@ function MqiAdapterSendCornerHud()
 	if (text == "")
 	{
 		MqiAdapterMotion('tracker', 'hide', "plate", 0);
+		// 2.4.0 (CMF API 15): under Clean the tracker's key row goes too (Panel visibility, apart from the look): Map Quest
+		// Insight moves those keys, and "Quests" and "Change tracked objective" are carried in CMF's hint row.
+		MqiAdapterMotion('tracker', 'show', "nokeys", 0);
+		if (MqiAdapterTrackerFont() != "")
+		{
+			MqiAdapterMotion('tracker', 'nameFont', MqiAdapterTrackerFont(), 0);
+		}
 	}
 	else
 	{
 		MqiAdapterMotion('tracker', 'hide', "unset", 0);
+		MqiAdapterMotion('tracker', 'show', "unset", 0);
 	}
 	MqiAdapterMotion('tracker', 'glow1Color', text, 0);
 	MqiAdapterMotion('tracker', 'glow1Alpha', text, 1);

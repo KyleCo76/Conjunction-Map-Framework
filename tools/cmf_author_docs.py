@@ -649,6 +649,12 @@ class Build:
                 self.errors.append('%s or %s lost %s' % (SETTINGS_MENU, CHOICE_MENU, key))
                 continue
             lines.append('| `%s` | %s | %s | %s |' % (key, feature, rows[var][0], rows[var][1]))
+        # Keys only the settings file sets (no menu row).
+        for key, feature in (('CMFLogPins', 'the log'), ('CMFMapCheck', 'the map file warning')):
+            if key not in stored:
+                self.errors.append('%s lost %s' % (SETTINGS_MENU, key))
+                continue
+            lines.append('| `%s` | %s | settings file only | none |' % (key, feature))
         for number in range(1, 9):
             var = 'CMFOrder%d' % number
             if 'CMFProviderOrder%d' % number not in stored or var not in rows:
@@ -659,6 +665,9 @@ class Build:
                   'own look there, instead of the next mod\'s. `CMFDebug=true` writes the who-wins report to the '
                   'script log. `CMFLogPins=true` (version 11) writes one line per pin the map shows to the script log, '
                   'with its type, tag, id and place, so an author can find the name of the one pin they want to change. '
+                  '`CMFMapCheck` (version 11, on when unset) warns once per session when a fully shown world map '
+                  'closes and CMF\'s map never reported that it loaded, which means another map file loaded in its '
+                  'place; `false` turns the warning off. It does not name the other mod. '
                   '`CMFProviderOrder1` to `CMFProviderOrder8` hold one folder name each, earliest first.']
         return lines
 

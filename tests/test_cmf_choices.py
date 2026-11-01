@@ -68,14 +68,16 @@ def pin_group(pin_type, lists):
 class ChoiceKeyTests(unittest.TestCase):
     def test_keys_are_features_then_pieces(self):
         keys = choice_keys()
-        self.assertEqual(len(keys), 80)
-        self.assertEqual(len(set(keys)), 80)
+        self.assertEqual(len(keys), 81)
+        self.assertEqual(len(set(keys)), 81)
+        # API 15 appends the Map feature; Movement_Area answers it.
+        self.assertEqual(keys[80], 'Map')
         self.assertEqual(keys[:11], FEATURES)
         # Version 10: the Behaviour feature (62) follows the version 9 pieces; its new pieces carry its name.
         self.assertEqual(keys[62], 'Behaviour')
         # Version 11 keeps 69 as Reserved69 (rev 10 left it unused; never offered, no menu row).
         self.assertEqual(keys[69], 'Reserved69')
-        for key in keys[11:62] + keys[63:69] + keys[70:]:
+        for key in keys[11:62] + keys[63:69] + keys[70:80]:
             self.assertIn(key.split('_')[0], FEATURES + ['Behaviour'], key)
             self.assertRegex(key, r'^[A-Za-z]+_[A-Za-z0-9]+$')
         self.assertEqual(keys[11:19], ['Icons_' + k for k, _ in addon.GROUP_NAMES])

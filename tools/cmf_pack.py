@@ -133,8 +133,8 @@ THEME_PART_KEYS = {
     'screen': (),
     'map': ('top', 'bottom', 'panLimit', 'centerInLimit', 'backdrop', 'frame', 'frameTop', 'frameBottom'),
     'mapEdge': ('hide',),
-    'title': THEME_TEXT + ('x', 'y', 'screenX', 'screenY', 'wrap', 'hide', 'text'),
-    'tracker': THEME_GLOW + ('nameFont', 'nameSize', 'nameColor', 'hide', 'x', 'y', 'scale'),
+    'title': THEME_TEXT + ('x', 'y', 'screenX', 'screenY', 'wrap', 'hide', 'text', 'show'),
+    'tracker': THEME_GLOW + ('nameFont', 'nameSize', 'nameColor', 'hide', 'x', 'y', 'scale', 'show'),
     'legend': THEME_GLOW + ('allText', 'x', 'y', 'scale', 'show', 'autoHideMs', 'padShowFirst'),
     'legendRow': THEME_GLOW + ('color', 'colorSelected', 'colorOff', 'counterColor', 'hide', 'font', 'size'),
     'legendTab': THEME_GLOW + ('color', 'spacing', 'hide', 'font', 'size'),
@@ -146,8 +146,8 @@ THEME_PART_KEYS = {
                              'plateColor', 'plateAlpha', 'thumbColor', 'trackColor', 'scrollStep', 'titleCase', 'hideScrollBar',
                              'foldTag', 'foldMoreText', 'foldLessText', 'foldKeyPad', 'foldKeyKb', 'foldOpen', 'clearAnchor') + tuple(prefix + k[0].upper() + k[1:] for prefix in ('title', 'body') for k in THEME_GLOW),
     'preview': ('hide', 'x', 'y', 'scale', 'show', 'movingMs'),
-    'worldButton': THEME_GLOW + ('hide', 'text', 'x', 'y', 'scale', 'font', 'size'),
-    'worldHint': THEME_GLOW + ('hide', 'text', 'x', 'y', 'scale', 'font', 'size'),
+    'worldButton': THEME_GLOW + ('hide', 'text', 'x', 'y', 'scale', 'font', 'size', 'show'),
+    'worldHint': THEME_GLOW + ('hide', 'text', 'x', 'y', 'scale', 'font', 'size', 'show'),
     'hints': THEME_GLOW + ('x', 'y', 'scale', 'align', 'list', 'font', 'size'),
     'keyCap': THEME_GLOW + ('color', 'iconColor', 'brackets', 'keyGap', 'labelGap', 'hide', 'font', 'size'),
     'pinLabel': ('font', 'size', 'color', 'rise', 'riseTracked', 'riseOffset', 'riseOffsetTracked') + THEME_SHADOW,
@@ -167,8 +167,8 @@ THEME_PART_KEYS = {
     'pin': ('highlightColor', 'highlightAlpha', 'glowColor', 'glowAlpha', 'disabledAlpha', 'disabledGrey', 'pulse', 'hide'),
     'sounds': ('open', 'close', 'select', 'zoom', 'tab', 'click', 'travel'),
     'world': ('crestX', 'crestY', 'nameX', 'nameY', 'text', 'font', 'size', 'color', 'outlineColor', 'outlineAlpha', 'hide'),
-    'crosshair': THEME_GLOW + ('color', 'alpha', 'scale', 'hide'),
-    'edgePointer': THEME_GLOW + ('color', 'alpha', 'scale', 'hide'),
+    'crosshair': THEME_GLOW + ('color', 'alpha', 'scale', 'hide', 'show'),
+    'edgePointer': THEME_GLOW + ('color', 'alpha', 'scale', 'hide', 'show'),
 }
 # Version 10: the menu row that decides each theme key (cmfCore.ws PartKeyChoice): behaviour keys on a look part and
 # the map's backdrop colour answer their own row; every other key answers its part's row.
@@ -179,7 +179,7 @@ THEME_PART_ROWS = {'world': 'Map paintings > Region crests and markers', 'sounds
                    'legend': 'Map look > Legend', 'legendRow': 'Map look > Legend', 'legendTab': 'Map look > Legend',
                    'tooltip': 'Map look > Info box', 'hints': 'Map look > Key hints', 'keyCap': 'Map look > Key hints',
                    'pinLabel': 'Map look > Pin text style', 'pinName': 'Map look > Pin text style',
-                   'pinButton': 'Map look > Pin text style', 'map': 'Map movement > Map area',
+                   'pinButton': 'Map look > Pin text style', 'map': 'The map > Map size, position and backdrop',
                    'navigation': 'Map movement > Pan and zoom feel', 'opening': 'Map movement > Opening and closing',
                    'spread': 'Map behaviour > Stacked pins spread out', 'wide': 'Map movement > Fill wide screens'}
 THEME_KEY_ROWS = {
@@ -199,8 +199,7 @@ THEME_KEY_ROWS.update({('tooltip', k): 'Map behaviour > Info box folding'
                        for k in ('foldTag', 'foldMoreText', 'foldLessText', 'foldKeyPad', 'foldKeyKb', 'foldOpen')})
 THEME_KEY_ROWS.update({('tooltip', k): 'Map behaviour > Info box motion' for k in ('showSeconds', 'hideSeconds', 'slide')})
 THEME_KEY_ROWS.update({('tooltip', k): 'Map behaviour > Info box size and scrolling' for k in ('scrollStep', 'hideScrollBar')})
-THEME_KEY_ROWS.update({(p, k): 'Map behaviour > Panel visibility' for p, keys in (('legend', ('show', 'autoHideMs', 'padShowFirst')), ('preview', ('show', 'movingMs'))) for k in keys})
-THEME_KEY_ROWS[('map', 'backdrop')] = 'Map look > Frames and panels'
+THEME_KEY_ROWS.update({(p, k): 'Map behaviour > Panel visibility' for p, keys in (('legend', ('show', 'autoHideMs', 'padShowFirst')), ('preview', ('show', 'movingMs')), ('tracker', ('show',)), ('title', ('show',)), ('worldButton', ('show',)), ('worldHint', ('show',)), ('crosshair', ('show',)), ('edgePointer', ('show',))) for k in keys})
 
 
 def theme_key_row(part, key):

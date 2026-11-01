@@ -28,7 +28,7 @@
     },
     {
       "id": 2000200901,
-      "key": "cmf_adapter_check_enabled",
+      "key": "option_cmf_adapter_check_enabled",
       "text": {
         "ar": "Warn about missing CMF adapters",
         "br": "Warn about missing CMF adapters",

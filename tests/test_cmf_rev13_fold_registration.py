@@ -100,7 +100,7 @@ def style_env():
     )
     for name,args,outs in methods:env[name]=bind(CORE,name,env,args,outs)
     # Independent channels are not part of fold registration/wire assertions.
-    for name in ("SendWideVanilla","SendLookOwners","SendMovieTags","SendWorld"):env[name]=lambda *args:None
+    for name in ("SendWideVanilla","SendLookOwners","SendMovieTags","SendWorld","SendLegendRowArt"):env[name]=lambda *args:None
     env["SendDefaultMotion"]=lambda *args:0
     core=Obj(**{name:fn for name,fn in env.items() if callable(fn)})
     env.update(__ws_core_receiver__=core,theGame=Obj(CMFGetCore=lambda:core))

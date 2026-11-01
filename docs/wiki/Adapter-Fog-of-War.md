@@ -47,7 +47,7 @@ With `propertyId` 9 (`Hidden`), `text` `""` and `number` 1, CMF marks the pin an
 
 ### What the adapter does
 
-One `UpdateEntityPins` wrapper in a file named to sort last (`zz_modcmfadapterfogofwar_cmf.ws`). It puts every pin of the finished list into one scratch array, each followed by a shared marker your travel-point rule always keeps, calls your `FogOfWarFilterPins(scratch, 0)` once, and hides through CMF each pin your filter dropped. Your rule decides everything: explored cells, reach, the tracked quest, travel points, hints and remote discoveries, and your on/off option (`FogOfWarEnabled`).
+Two wrappers in a file named to sort last (`zz_modcmfadapterfogofwar_cmf.ws`). From adapter 1.0.1 an `OnGameStarted` wrapper tells CMF that Fog of War is installed (property `38`, `CMFRegister("modFogOfWar", 38, '', '', "", 1)` behind `CMFHasProperty(38)`), so CMF's menu and the Adapter Check see it before the map opens; this part has not yet run in game. The `UpdateEntityPins` wrapper does the work. It puts every pin of the finished list into one scratch array, each followed by a shared marker your travel-point rule always keeps, calls your `FogOfWarFilterPins(scratch, 0)` once, and hides through CMF each pin your filter dropped. Your rule decides everything: explored cells, reach, the tracked quest, travel points, hints and remote discoveries, and your on/off option (`FogOfWarEnabled`).
 
 A mod that ships `CR4MapMenu.UpdateEntityPins` precompiled (The Stable 2.2.1 in Ard Dhu Stable) skips every loose wrapper on that method, your filter and the adapter's alike. The game's `UpdateData` builds one list: `UpdateEntityPins`, the player pin, then `UpdateUserMapPins(list, -1)`. So from adapter 1.0.3, when the entity wrapper did not run in a build, an `UpdateUserMapPins` wrapper (also sorting last, so it runs before CMF's late pass) asks your filter about every pin already in the list, once per build, and the log line ends with `step=fallback`. Your filter only reads and removes entries of the array it is given and ticks your recorder once per call, so it behaves there as in your own wrapper.
 
@@ -55,7 +55,7 @@ Because it calls your functions, the adapter compiles only with Fog of War 1.2.1
 
 ### The quick change for you
 
-An optional "CMF support" folder of your own can replace the adapter: the same script with the provider id `modCMFAdapterFogOfWar` replaced by your folder name. A simpler form is possible on your side, because you own the filter: in a wrapper that sorts last, call your per-pin test directly and `CMFStylePin(yourFolder, obj, 9, "", 1)` where you now call `RemoveElement`, with no scratch array. It must stay a separate folder, because a CMF call fails to compile when CMF is not installed.
+An optional "CMF support" folder of your own can replace the adapter: the same script, unchanged, because every call already names `modFogOfWar`, your own folder. A simpler form is possible on your side, because you own the filter: in a wrapper that sorts last, call your per-pin test directly and `CMFStylePin(yourFolder, obj, 9, "", 1)` where you now call `RemoveElement`, with no scratch array. It must stay a separate folder, because a CMF call fails to compile when CMF is not installed.
 
 ### Your fog, without the clouds (adapter 1.1.0)
 

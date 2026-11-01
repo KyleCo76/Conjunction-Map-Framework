@@ -17,6 +17,33 @@
 | `CMF version provider=modAcmeIcons needs=2 have=1` | Your `CMFRequireVersion` asked for a newer CMF. |
 | `CMF pin type=Innkeeper tag=...` | A pin of a type you gave an icon, with its tag ([section 6](Choosing-Pin-Types.md)). |
 
+Every `reason=` CMF writes when it refuses or leaves out a value:
+
+| Reason | Meaning |
+| --- | --- |
+| `unknown` | a property id, part, key, kind or layer this CMF does not have |
+| `empty` | an empty provider, type, tag, image path, text or name |
+| `context` | a map context on a property other than 5 and 9 |
+| `level` | the property does not take a tag (or a place) target |
+| `range` | a number out of the property's range |
+| `value` | a theme value out of its key's range, or a word the key does not take |
+| `text` | text the property cannot read, such as an unknown label hide word, or tabs given to 15 as its target |
+| `exemption` | an unknown word in a hide claim's exemptions; the whole claim is refused |
+| `target` | a target the property does not take (37 on `All`, a picture slot that does not exist) |
+| `vanilla` | a tab claim (8 or 23) on one of the game's own tabs |
+| `undeclared` | a legend row names a tab nobody declared; it stays under All |
+| `style` | the property cannot be styled on one pin object, greying (5) among them |
+| `user` | a per-pin call on the player's marker or a player-placed pin |
+| `player` | a click claim on the player's marker |
+| `state` | an undiscovered or completed icon (29, 30) on a pin that is not in that state |
+| `late` | a per-pin call after CMF has sent the pin list |
+| `game` | a click claim on a fast-travel or quest pin that left none of its inputs, because the game keeps its own there |
+| `choice` | the player's choices leave this mod out for that piece (the value stays stored) |
+| `key` | a choice key CMF does not know (`CMFRegisterChoiceOnly`, the menu add-on) |
+| `nohandler` | a click or drawing click reached no wrapper of the mod that won it |
+
+Per-pin refusals, shadowed styles and the `pin type=` lines share one cap of 64 lines per session, so on a busy map a missing line does not prove the value was accepted. Claim refusals (`rejected provider= property=`) are logged on every call.
+
 | What you see | Likely cause |
 | --- | --- |
 | A pin keeps its stock icon | The image path does not match an image in your cache (spelling, capitals, folder name): look for `CMF art failed`. Or another pack won (`shadowed`). |

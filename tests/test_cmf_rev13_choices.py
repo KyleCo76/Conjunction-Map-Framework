@@ -31,11 +31,15 @@ class Rev13ChoiceTests(unittest.TestCase):
 
     def test_existing_positions_0_to_71_unchanged(self):
         self.assertEqual(self.keys[:72], BASE)
-        self.assertEqual(len(self.keys), 80)
+        self.assertEqual(len(self.keys), 81)  # API 15 appends Map (80)
         self.assertEqual(body(self.core, "CMFChoiceParent").count("return 62;"), 1)
 
     def test_exact_append_72_to_79(self):
-        self.assertEqual(self.keys[72:], ADDED)
+        self.assertEqual(self.keys[72:80], ADDED)
+        self.assertEqual(self.keys[80:], ["Map"])
+        # API 15: Movement_Area (44) keeps its index and name and answers the Map feature.
+        self.assertEqual(self.keys[44], "Movement_Area")
+        self.assertRegex(body(self.core, "CMFChoiceParent"), r"choice == 44\)\s*\{\s*return 80;")
         self.assertNotIn("Look_Pins", self.keys)
 
     def test_empty_parent_table_is_inert(self):
@@ -66,8 +70,11 @@ class Rev13ChoiceTests(unittest.TestCase):
             self.assertEqual(wins.count(key), 1, key)
             self.assertTrue(descriptions.get("CMFPick_" + key), key)
         actual = menu.catalog()
-        self.assertEqual([x["id"] for x in actual["strings"]], list(range(2000200101, 2000200132)))
-        self.assertEqual(menu.VERSION, "1.5.0")
+        ids = [x["id"] for x in actual["strings"]]
+        # Ids are append-only: the rev 13 block stays in place and later releases only add after it.
+        self.assertEqual(ids[:31], list(range(2000200101, 2000200132)))
+        self.assertEqual(ids, list(range(2000200101, 2000200101 + len(ids))))
+        self.assertGreaterEqual(tuple(map(int, menu.VERSION.split("."))), (1, 5, 0))
         self.assertTrue(menu.up_to_date())
 
 

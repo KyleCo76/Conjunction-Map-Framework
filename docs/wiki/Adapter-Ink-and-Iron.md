@@ -133,7 +133,7 @@ CMF measures each part the way your `inkTextBounds` does: visible text trimmed t
 | Full-height map, ink backdrop, pan limit, centring (`inkEdgeFill`, `inkViewport`, `inkLim`) | `map`: `top`, `bottom`, `backdrop`, `panLimit` screen, `centerInLimit` |
 | Edge fade (`HubMapContainer.inkEdge`) | `mapEdge`: `hide` edgeFade; four `band` drawings |
 | Top and side fades (`inkTopFade`, `inkCreateOverlay`) | three `rect` drawings on `screen`, layer `aboveMap` |
-| Frames round the tracker, the legend and, on the world view only, the tooltip (`iiFrame`) | a shadow `ring` repeated 28 times (`repeat`, `repeatStep`, `alphaList`), a fill `rect`, 12 sheen `rect`s and three `ring` lines on each part. The tooltip's have `view` world, and the tracker's are clamped at `maxRight` 1912 |
+| Frames round the tracker, the legend and, on the world view only, the tooltip (`iiFrame`) | a shadow `ring` repeated 28 times (`repeat`, `repeatStep`, `alphaList`), a fill `rect`, 12 sheen `rect`s and three `ring` lines on each part. The tooltip's show on every view (`view` `""`, from adapter 1.1.0, as Ink and Iron 0.8.10 frames it), and the tracker's are clamped at `maxRight` 1912 |
 | Text glow, fonts and colours (`inkShadow`, `inkTrackerCard`, `TooltipMap`) | `glow1…`/`glow2…`, `nameFont`, `titleFont`, `bodyFont` and the colours on `tracker`, `tooltip`, `legend`, `legendRow`, `legendTab`, `worldHint`; the button glow on `worldButton` |
 | Legend (`inkLegendPanel`, `setColoredText`) | `legendRow` colours and `hide`; a graded `rect` and a diamond `polygon` with `when` selected; the tab's spacing and its underline |
 | Corner overview (`inkFrame3`) | `preview`: `hide` frame; two `ring` lines and four `ellipse` dots |
@@ -173,6 +173,16 @@ if (CMFHasAbility('navigation', 'frameRate'))
 
 You change nothing in how the map opens or closes and draw no button beside a pin, so you need no `opening` key and no `pinButton` style. The author guide's [Smooth map movement](Map-Movement.md) ([section 5](Writing-Your-Script.md#5-write-your-script) of [`icon-pack-guide.md`](Getting-Started.md)) lists every key.
 
+### Your long info box (adapters 1.1.0 and 1.2.1)
+
+Ink and Iron 0.8.10 changed its info box, and the adapter follows it with CMF's general keys, each asked for with `CMFHasAbility` first:
+
+- **A second fill under a tall box** (adapter 1.1.0, CMF API 7): the drawing `inkTipBacking` on `tooltip`, a dark `rect` 20 px outside the box with `minPartHeight` 290, so it shows only under a box at least that tall, on the region and interior maps.
+- **The box moved clear of the cursor and the panels** (adapter 1.1.0, `MapMenu.inkTipPlace`): the `tooltip` keys `clearMinHeight` 290, `clearView` `region,interior`, `clearSide` `right`, the screen rectangle `clearLeft` 44, `clearTop` 124, `clearRight` 1876, `clearBottom` 980, and `clearCursor` 70 (from adapter 1.2.2 sent only on a CMF that has `clearCursorAbove`, CMF 1.5.0 and later, so an older CMF keeps its own gap).
+- **The larger clear area round the cursor** (adapter 1.2.1, CMF API 11): `clearCursorTitle` 1, `clearCursorAbove` 20, `clearCursorBelow` 90, `clearPadX` 12, `clearPadY` 20, `clearGap` 6, `clearBoxPad` 28, `clearPick` 1 and `clearCursorWeight`, read from the 0.8.10 and 0.9.0 code. On CMF 1.3.0 to 1.4.x these keys are skipped and the 1.1.0 behaviour stays.
+
+The values come from reading your code, not from your settings. The keys answer the player's "Info box moves out of the way" choice, apart from your look ([Theme parts and keys](Theme-Parts-and-Keys.md)).
+
 ### Your gold buttons and World Map overview (adapter 1.2.0)
 
 Two parts of Ink and Iron's look were pictures inside your map files, which CMF's map replaces. CMF 1.3.0 (API version 9) adds general calls for both, which any mod can use, and since adapter 1.2.0 the adapter brings both back with your own art, with your permission and credited to you. They only ever show with Ink and Iron installed.
@@ -203,7 +213,7 @@ Two ways to write it:
 
 When you ship it, players uninstall the adapter; say so in your README. If both are installed, the game stops at the script compile screen, because both add the same `OnCMFMapHintsReady` event to the map menu; removing the adapter fixes it. That is expected, not a fault of either mod.
 
-The adapter targets Ink and Iron 0.8.8 (0.8.7 has the same map file and the same scripts it calls). Check its names again when you change `InkGatherHints`, `iaiLv` or `iaiDiff`.
+From adapter 1.2.2 the adapter supports Ink and Iron 0.8.10 and later only: it shows 0.8.10's info box, which older versions never had, and it cannot tell which version is installed. Players on 0.8.9 or earlier update Ink and Iron. Check its names again when you change `InkGatherHints`, `iaiLv` or `iaiDiff`.
 
 ### Two of your map's glitches that CMF does not copy
 

@@ -6,7 +6,7 @@ Conjunction Map Framework (CMF) is a single world map that map mods can share. C
 
 An **icon pack** is the simplest kind of CMF mod. It changes how existing map pins look on the full-screen world map: their icon, their legend icon and their colour. It does not add or move pins; from API version 3 any CMF mod can also hide pins, and from API version 4 resize pins and change their labels ([section 5](Writing-Your-Script.md#5-write-your-script)). You do not edit any map file and you do not need Script Merger, FFDec, REDkit or WolvenKit.
 
-This guide is for someone who has made a Witcher 3 mod before but has never seen CMF. It documents API version 14 (`CMFGetVersion()` returns `14`), independently of release numbering. The map applies the registered styles and dispatches the hooks described here. Source and offline package checks are separate from engine compilation, actual loading and gameplay acceptance; features without game-launch evidence say so. [Section 12](Porting-a-Map-Mod.md#12-teaching-examples-moving-a-map-mod-onto-cmf) shows how existing map mods move onto CMF. A finished example is in [`examples/modCMFExampleIconPack`](../../examples/modCMFExampleIconPack/).
+This guide is for someone who has made a Witcher 3 mod before but has never seen CMF. It documents API version 15 (`CMFGetVersion()` returns `15`), independently of release numbering. The map applies the registered styles and dispatches the hooks described here. Source and offline package checks are separate from engine compilation, actual loading and gameplay acceptance; features without game-launch evidence say so. [Section 12](Porting-a-Map-Mod.md#12-teaching-examples-moving-a-map-mod-onto-cmf) shows how existing map mods move onto CMF. A finished example is in [`examples/modCMFExampleIconPack`](../../examples/modCMFExampleIconPack/).
 
 ## 1. What you need
 
@@ -42,7 +42,7 @@ Pick a folder name like `modAcmeIcons`.
 - It starts with `mod` and uses only letters, digits and `_`.
 - It does **not** start with `mod0000_` or `mod0001_`. Those are reserved for CMF and for Script Merger's output. Avoid `modCMF` too, which CMF uses for its own example and test packs, so players do not mistake yours for part of CMF.
 - Your **provider id**, the first argument of every CMF call, is this folder name exactly, with the same capitals.
-- **The folder name decides conflicts.** When two packs change the same thing on the same pin type, the pack whose folder name sorts first wins, the way the game picks between two mods that ship the same file. Name your pack earlier to win, later to be a fallback. Players can rename folders to change the order. Capital letters do not affect the order.
+- **The folder name decides conflicts.** When two packs change the same thing on the same pin type, the pack whose folder name sorts first wins, the way the game picks between two mods that ship the same file. Pick a plain name for your pack; do not choose it to sort early. The player decides the order: in CMF's in-game menu (the Mod order and the rows of each feature) or with `CMFProviderOrder1` to `8` in the settings file ([section 11](For-Players.md)). Capital letters do not affect the order.
 
 ## 4. Make your art
 

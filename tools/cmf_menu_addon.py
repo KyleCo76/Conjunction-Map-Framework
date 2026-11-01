@@ -82,6 +82,8 @@ PAGES = [
         ('pick', 'Labels', 'Pin labels'),
         ('pick', 'Legend', 'Legend and filter tabs'),
         ('pick', 'Hidden', 'Hidden pins'),
+        # Menu add-on (CMF API 15): the map apart from the frames and panels; the script hides the row on an older CMF.
+        ('pick', 'Map', 'The map'),
         ('pick', 'Look', 'Map look'),
         ('pick', 'Painting', 'Map painting'),
         ('pick', 'Drawings', 'Drawings on the map'),
@@ -105,6 +107,9 @@ PAGES = [
         ('pick', 'Hidden_Ignore1', 'Ignore hidden pins from (1st)'),
         ('pick', 'Hidden_Ignore2', 'Ignore hidden pins from (2nd)'),
         ('pick', 'Hidden_Ignore3', 'Ignore hidden pins from (3rd)')]),
+    # Menu add-on (CMF API 15): the map's own area (Movement_Area moved here from Map movement, key unchanged).
+    ('CMFMenuAdvMap', 'cmf_advanced.cmf_adv_map', 'The map', [
+        ('pick', 'Movement_Area', 'Map size, position and backdrop')]),
     ('CMFMenuAdvLook', 'cmf_advanced.cmf_adv_look', 'Map look', [
         ('pick', 'Look_Frames', 'Frames and panels'),
         ('pick', 'Look_Legend', 'Legend'),
@@ -116,7 +121,6 @@ PAGES = [
         ('pick', 'Look_Badges', 'Pictures under pin icons'),
         ('pick', 'Look_PinLook', 'Pin highlights and glow')]),
     ('CMFMenuAdvMovement', 'cmf_advanced.cmf_adv_movement', 'Map movement', [
-        ('pick', 'Movement_Area', 'Map area'),
         ('pick', 'Movement_Pan', 'Pan and zoom feel'),
         ('pick', 'Movement_ZoomOut', 'Zoom out to the whole region'),
         ('pick', 'Movement_Controller', 'Controller crosshair'),
@@ -179,6 +183,8 @@ PAGES = [
         ('win', 'Legend_Names', 'Row names'),
         ('win', 'Legend_Tabs', 'Tab names'),
         ('win', 'Hidden', 'Hidden pins')]),
+    ('CMFMenuWinMap', 'cmf_status.cmf_win_map', 'Who wins: the map', [
+        ('win', 'Movement_Area', 'Map size, position and backdrop')]),
     ('CMFMenuWinLook', 'cmf_status.cmf_win_look', 'Who wins: map look', [
         ('win', 'Look_Frames', 'Frames and panels'),
         ('win', 'Look_Legend', 'Legend'),
@@ -190,7 +196,6 @@ PAGES = [
         ('win', 'Look_Badges', 'Pictures under pin icons'),
         ('win', 'Look_PinLook', 'Pin highlights and glow')]),
     ('CMFMenuWinMovement', 'cmf_status.cmf_win_movement', 'Who wins: map movement', [
-        ('win', 'Movement_Area', 'Map area'),
         ('win', 'Movement_Pan', 'Pan and zoom feel'),
         ('win', 'Movement_ZoomOut', 'Zoom out to the whole region'),
         ('win', 'Movement_Controller', 'Controller crosshair'),
@@ -229,6 +234,8 @@ NODE_TITLES = {'cmf_advanced': 'Advanced choices', 'cmf_status': 'Status'}
 # Page titles added after the first release, in the order they were added. Their string IDs follow every earlier
 # string (the script strings included), so no ID ever moves or is reused: 1.3.0 Map behaviour and its Who wins page.
 LATER_TITLES = ['cmf_adv_behaviour', 'cmf_win_behaviour']
+# API 15: The map pages, after every other string (the animation strings were added before them), so no ID moves.
+LATEST_TITLES = ['cmf_adv_map', 'cmf_win_map']
 # The remembered list of map mods (title screen), one folder name per value; a one-segment group with no
 # visible rows, so the game adds no Options entry for it.
 KNOWN_GROUP = 'CMFMenuKnown'
@@ -239,7 +246,7 @@ ANIMATION_STRINGS = [
     ('cmf_menu_animated_pins', 'Animated pins'),
     ('cmf_menu_animated_off', 'Off'),
     ('cmf_menu_animated_on', 'On'),
-    ('cmf_menu_animated_help', 'How many times a second moving pin pictures are redrawn (default 15). Lower is lighter on slower PCs; the animations keep their speed and skip frames. Off shows one still picture. Changes apply the next time you open the map.'),
+    ('cmf_menu_animated_help', 'Redraws per second for moving pin pictures (default 15). Lower is lighter on slower PCs. Off shows one still picture. Applies the next time you open the map.'),
     ('cmf_menu_animated_10', '10'),
     ('cmf_menu_animated_15', '15'),
     # Retired with the 20 choice (2026-10-31); kept so no string id moves.
@@ -251,7 +258,7 @@ ANIMATION_STRINGS = [
     ('cmf_menu_memory_normal', 'Normal (32 MB)'),
     ('cmf_menu_memory_large', 'Large (64 MB)'),
     ('cmf_menu_memory_huge', 'Huge (128 MB)'),
-    ('cmf_menu_memory_help', 'How much memory moving pin pictures may use while the map is open. Large suits most packs; Huge is for big icon packs with many frames. Pictures past the limit show still. Changes apply the next time you open the map.'),
+    ('cmf_menu_memory_help', 'Memory moving pin pictures may use with the map open. Large suits most packs, Huge big packs; past it they show still. Applies when you next open the map.'),
 ]
 SCRIPT_STRINGS = [
     ('cmf_menu_rule_box', '\u2550' * 12),
@@ -366,7 +373,7 @@ def catalog(probe=False):
             if segment not in seen:
                 seen.add(segment)
                 keys.append(('panel_' + segment, NODE_TITLES[segment]))
-        if segments[-1] in LATER_TITLES:
+        if segments[-1] in LATER_TITLES or segments[-1] in LATEST_TITLES:
             later[segments[-1]] = title
         else:
             keys.append(('panel_' + segments[-1], title))
@@ -374,6 +381,7 @@ def catalog(probe=False):
     keys += [('panel_' + segment, later[segment]) for segment in LATER_TITLES]
     keys.append(('cmf_menu_support_present', 'CMF support present'))
     keys += ANIMATION_STRINGS
+    keys += [('panel_' + segment, later[segment]) for segment in LATEST_TITLES]
     if probe:
         keys.append(('panel_' + HEAD_TEST_PATH, HEAD_TEST_TITLE))
     return {
@@ -424,7 +432,7 @@ def description_ws():
                 lines.append("\t\tcase '%s':" % var)
         if any(var == 'CMFAnimatedPins' and other == text for var, other in exact):
             lines.append('\t\t\treturn GetLocStringByKeyExt("cmf_menu_animated_help");')
-        if any(var == 'CMFAnimationDragPause' and other == text for var, other in exact):
+        elif any(var == 'CMFAnimationDragPause' and other == text for var, other in exact):
             lines.append('\t\t\treturn GetLocStringByKeyExt("cmf_menu_drag_pause_help");')
         elif any(var == 'CMFAnimationMemory' and other == text for var, other in exact):
             lines.append('\t\t\treturn GetLocStringByKeyExt("cmf_menu_memory_help");')

@@ -123,7 +123,7 @@ def validate_strings(catalog):
 
 def strings_catalog(entries):
     texts = [('panel_cmf_adapter_check', 'CMF Adapter Check'),
-             ('cmf_adapter_check_enabled', 'Warn about missing CMF adapters'),
+             ('option_cmf_adapter_check_enabled', 'Warn about missing CMF adapters'),
              ('cmf_adapter_check_intro', 'Some map mods may need CMF adapters to keep their map features:'),
              ('cmf_adapter_check_footer', FILES_GUIDANCE)]
     texts += [('cmf_adapter_check_mod_%03d' % i, guidance(row, include_files=False)) for i, row in enumerate(entries)]
