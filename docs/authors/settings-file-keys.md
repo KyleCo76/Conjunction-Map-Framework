@@ -120,9 +120,9 @@ CMFFile_Painting_Skellige=Vanilla
 `CMFFile_Fallthrough=Vanilla` makes a chosen mod that has nothing for a pin show the game's own look there, instead of the next mod's. `CMFDebug=true` writes the who-wins report to the script log. `CMFLogPins=true` (version 11) writes one line per pin the map shows to the script log, with its type, tag, id and place, so an author can find the name of the one pin they want to change. `CMFMapCheck` (version 11, on when unset) warns once per session when a fully shown world map closes and CMF's map never reported that it loaded, which means another map file loaded in its place; `false` turns the warning off. It does not name the other mod. `CMFProviderOrder1` to `CMFProviderOrder8` hold one folder name each, earliest first.
 <!-- cmf:settings-keys end -->
 
-## The Adapter Check add-on
+## The Adapter Check add-on (retired)
 
-CMF's optional Adapter Check add-on (API version 11) keeps its own settings: `CMFAdapterCheckEnabled` (on by default) and a hidden `CMFAdapterCheckKnown`, which remembers the set of missing adapters it last warned about. A clean check while it is on clears that memory; while it is off the memory is left alone. From Adapter Check 1.0.1 (with CMF 1.6.0) it logs `adapter check missing mod=.. adapter=..` for each missing adapter, and `adapter check deferred reason=noplayer wait=mapclose` when it waits for the first map close because no player is loaded yet. Once it has shown its box in a game session, an adapter that registers later in that session does not bring the box back.
+The CMF Adapter Check add-on was retired on 2026-11-02; its job is on the In-Game Menu add-on's Status page. `CMFAdapterCheckEnabled` and `CMFAdapterCheckKnown` are no longer read and can stay in user.settings harmlessly.
 
 ## Names that kept their old meaning
 

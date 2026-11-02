@@ -38,7 +38,7 @@ class MapFeatureTests(unittest.TestCase):
         self.assertEqual(KEYS[44], "Movement_Area")
         self.assertRegex(body(CORE, "CMFChoiceParent"), r"choice == 44\)\s*\{\s*return 80;")
         self.assertIn("return 62;", body(CORE, "CMFChoiceParent"))  # Behaviour keeps its three
-        self.assertIn("function CMFGetVersion() : int { return 15; }", CORE)
+        self.assertIn("function CMFGetVersion() : int { return 16; }", CORE)
 
     def test_the_map_part_incl_backdrop_belongs_to_movement_area(self):
         look = body(CORE, "ThemeLookChoice")
@@ -120,7 +120,7 @@ class PanelVisibilityTests(unittest.TestCase):
         words = body(CORE, "CMFThemeHideWords")
         self.assertNotIn("keys", words)
         self.assertNotIn("hideKeys", CORE)
-        self.assertRegex(words, r"case 'tracker':\s*case 'worldButton':\s*case 'worldHint':\s*return \"plate\";")
+        self.assertRegex(words, r"case 'worldButton':\s*case 'worldHint':\s*return \"plate\";")
 
     def test_panel_hides_and_restores_by_show(self):
         text = "".join(e["replace"] for e in MENU)
@@ -138,8 +138,10 @@ class PanelVisibilityTests(unittest.TestCase):
         adapter = (ROOT / "source/adapters/map-quest-insight/modCMFAdapterMapQuestInsight/content/scripts/local/"
                    "zz_modcmfadaptermapquestinsight_cmf.ws").read_text(encoding="utf-8")
         hud = body(adapter, "MqiAdapterSendCornerHud")
-        self.assertIn("MqiAdapterMotion('tracker', 'show', \"nokeys\", 0);", hud)
         self.assertIn("MqiAdapterMotion('tracker', 'hide', \"plate\", 0);", hud)
+        # Round 2: Clean sends the key row hiding ungated (as MQI 2.2.0 alone shows it).
+        self.assertIn("MqiAdapterMotion('tracker', 'show', \"nokeys\", 0);", hud)
+        self.assertNotIn("MqiAdapterNextUpdate()", hud)
         self.assertNotIn("keys\"", hud.replace('"nokeys"', ""))
 
 

@@ -65,7 +65,7 @@ class PresenceSourceTests(unittest.TestCase):
 
     def test_property_is_generic_only_and_named_helper_uses_empty_payload(self):
         self.assertEqual(body(self.core, 'CMFPropertyPresent').strip(), 'return 38;')
-        self.assertEqual(body(self.core, 'CMFGetVersion').strip(), 'return 15;')
+        self.assertEqual(body(self.core, 'CMFGetVersion').strip(), 'return 16;')
         self.assertIn('CMFPropertyPresent()', body(self.core, 'CMFHasProperty'))
         self.assertNotIn('CMFPropertyPresent()', body(self.core, 'CMFOnePinProperty'))
         self.assertIn('CMFRegister(provider, CMFPropertyPresent(), \'\', \'\', "", 1)',

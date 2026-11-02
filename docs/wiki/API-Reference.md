@@ -2,7 +2,7 @@
 
 # API reference
 
-Every function, property id, hook and map event CMF offers to mods (API version 15). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
+Every function, property id, hook and map event CMF offers to mods (API version 16). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
 
 ## Functions
 
@@ -209,6 +209,7 @@ CMF's map calls these events on `CR4MapMenu`. New events are core-owned; wrap th
 - **13**: `CMFAddPin`, `CMFClickInputHold`, `CMFDeclareTag`, `CMFRemovePin`, `CMFStyle`, hook `OnMapTab`, hook `OnMapHints`, hook `OnInfoFold`, hook `OnMovieEvent`, hook `OnMapAreaReady`
 - **14**: `CMFDrawSetBits`, `CMFGridKeepPin`, `CMFPropertyFrameOffset`, `CMFPropertyIconFrames`, `CMFPropertyIconUnderFrames`, `CMFPropertyPictureFit`
 - **15**: no new calls (new theme keys only)
+- **16**: no new calls (new theme keys only)
 
 ---
 

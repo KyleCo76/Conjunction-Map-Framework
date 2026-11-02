@@ -103,7 +103,7 @@ The named calls require API 11. `CMFProviderPresent(provider : string) : bool` a
 
 Queries such as `CMFProviderPresent`, `CMFGetVersion` and `CMFHasProperty` never declare a provider. Use a declaration only when your mod itself is present; do not move a declaration into an untied adapter merely to quiet a warning.
 
-Presence adds no feature offers, priority or selectable choices. The updated menu's Loaded map mods page includes declaration-only providers as "CMF support present", using separate title-screen memory. From CMF 1.6.0 a `CMFRequireVersion` call also records presence for its provider, as any claim does. Presence records provider activity: an untied art adapter's presence does not prove that its source mod is installed. The optional CMF Adapter Check can use the declaration to recognize a mod that now supplies its own CMF support. Engine and gameplay validation of these new API 11 calls is pending.
+Presence adds no feature offers, priority or selectable choices. The updated menu's Loaded map mods page includes declaration-only providers as "CMF support present", using separate title-screen memory. From CMF 1.6.0 a `CMFRequireVersion` call also records presence for its provider, as any claim does. Presence records provider activity: an untied art adapter's presence does not prove that its source mod is installed. CMF's Status page (In-Game Menu add-on) uses the declaration to recognize a mod that now supplies its own CMF support, so its row never asks for an adapter. Engine and gameplay validation of these new API 11 calls is pending.
 
 ### The CMF calls
 

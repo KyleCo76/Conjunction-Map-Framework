@@ -10,7 +10,6 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 CORE = ROOT / 'source/core/content/scripts/local/cmfCore.ws'
 MENU = ROOT / 'source/menu/content/scripts/local/cmfMenu.ws'
-CHECK = ROOT / 'source/adapter-check/content/scripts/local/cmfAdapterCheck.ws'
 EDITS = ROOT / 'source/panel/pin-fields/edits.json'
 INK = ROOT / ('source/adapters/ink-and-iron/modCMFAdapterInkAndIron/content/scripts/local/'
               'modcmfadapterinkandiron_cmf.ws')
@@ -101,15 +100,7 @@ class AddOnReviewTests(unittest.TestCase):
         menu = MENU.read_text()
         self.assertIn('CMFMenuInsertInOrder(core, combined, providers[i]);', body(menu, 'CMFMenuStatusProviders'))
         self.assertIn('if (core.ProviderBeats(provider, list[i]))', body(menu, 'CMFMenuInsertInOrder'))
-        self.assertIn('if (index == 15 && providers.Size() > 16)', body(menu, 'CMFMenuFillMod'))
-
-    def test_a2_a_warned_set_survives_a_later_empty_set(self):
-        check = CHECK.read_text()
-        run = body(check, 'CMFAdapterCheckRun')
-        self.assertLess(run.index('if (signature == "" && theGame.cmfAdapterCheckWarned) { return; }'),
-                        run.index("SetVarValue('CMFAdapterCheck', 'CMFAdapterCheckKnown', signature);"))
-        self.assertIn('theGame.CMFAdapterCheckSetWarned();', run)
-        self.assertIn('CMFLog("adapter check missing mod=" + missing[i].modName + " adapter=" + missing[i].adapterFolder);', run)
+        self.assertIn('if (index == 47 && providers.Size() > 48)', body(menu, 'CMFMenuFillMod'))
 
 
 class AdapterReviewTests(unittest.TestCase):

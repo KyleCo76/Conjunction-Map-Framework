@@ -40,8 +40,7 @@ function OnConfigUI()
 	result = wrappedMethod();
 	mqiAdapterQlOpen = 0;
 	mqiAdapterQlSeq = 0;
-	mqiAdapterQlOn = MqiAdapterOn('qmiQuest', 'qmiQjPanel', true) && CMFHasAbility('movie', 'focus') &&
-		CMFHasAbility('hints', 'list');
+	mqiAdapterQlOn = MqiAdapterQlWanted();
 	MqiAdapterQlDrawing(mqiAdapterQlOn);
 	if (mqiAdapterQlOn)
 	{
@@ -56,8 +55,13 @@ function OnConfigUI()
 	return result;
 }
 
-// The list's place: the left edge of the screen (the edge itself on a wide screen), between the map's region title
-// and the legend.
+// Whether this opening has the Quest List: Map Quest Insight's panel is on and CMF can draw and focus it.
+function MqiAdapterQlWanted() : bool
+{
+	return MqiAdapterOn('qmiQuest', 'qmiQjPanel', true) && CMFHasAbility('movie', 'focus') && CMFHasAbility('hints', 'list');
+}
+
+// The list's place: the left edge of the screen (the edge itself on a wide screen), full height.
 function MqiAdapterQlDrawing(on : bool)
 {
 	var id : name;
@@ -71,15 +75,26 @@ function MqiAdapterQlDrawing(on : bool)
 	CMFDrawSet("modMapQuestInsight", id, 'src', "swf/modcmfadaptermqi/questlist.swf", 0);
 	CMFDrawSet("modMapQuestInsight", id, 'listen', "mqiadapter.questlist", 0);
 	CMFDrawSet("modMapQuestInsight", id, 'focus', "", 1);
-	CMFDrawSet("modMapQuestInsight", id, 'width', "", 560);
-	CMFDrawSet("modMapQuestInsight", id, 'screenLeft', "", 40);
+	CMFDrawSet("modMapQuestInsight", id, 'width', "", 640);
+	CMFDrawSet("modMapQuestInsight", id, 'screenLeft', "", 0);
 	CMFDrawSet("modMapQuestInsight", id, 'alignX', "", 0);
 	CMFDrawSet("modMapQuestInsight", id, 'alignY', "", 0);
 	CMFDrawSet("modMapQuestInsight", id, 'wideAnchor', "edges", 0);
-	// CMF draws the region title and the legend above screen drawings and cannot hide them yet, so the list sits
-	// between them: below the title (bottom about 170) and above the legend's frame (top about 640), launch start A.
-	CMFDrawSet("modMapQuestInsight", id, 'screenTop', "", 180);
-	CMFDrawSet("modMapQuestInsight", id, 'height', "", 450);
+	// As in Map Quest Insight's own map the list takes the whole left edge, top to bottom (1080 map units): the movie
+	// asks CMF to hide the region title, the legend and the common menu's top bar while it shows (map.hidePanels, CMF API 16; on an older CMF
+	// they stay).
+	// On an older CMF the title and legend cannot be hidden and CMF draws them above screen drawings, so the list
+	// keeps the gap between them (screen y 180 to 630) as in 2.5.0 before this round.
+	if (CMFGetVersion() >= 16)
+	{
+		CMFDrawSet("modMapQuestInsight", id, 'screenTop', "", 0);
+		CMFDrawSet("modMapQuestInsight", id, 'height', "", 1080);
+	}
+	else
+	{
+		CMFDrawSet("modMapQuestInsight", id, 'screenTop', "", 180);
+		CMFDrawSet("modMapQuestInsight", id, 'height', "", 450);
+	}
 }
 
 // The map only receives the list's value once it listens; send it then (and again on every change).
@@ -145,6 +160,12 @@ function OnDrawingClicked(menu : CR4MapMenu, provider : string, id : name, input
 {
 	var result : bool;
 	result = wrappedMethod(menu, provider, id, input, value);
+	// The [F] Quests box under the region title (Clean) does what the F key does.
+	if (provider == "modMapQuestInsight" && id == 'mqiQuestsBox' && input == "click" && menu && menu.mqiAdapterQlOn)
+	{
+		menu.MqiAdapterQlOpenList();
+		return true;
+	}
 	if (provider != "modMapQuestInsight" || id != 'hints' || input != "hint" || !menu)
 	{
 		return result;
@@ -467,22 +488,28 @@ function MqiAdapterQlSend()
 	root.SetMemberFlashObject("conf", conf);
 
 	words = storage.CreateTempFlashObject();
-	words.SetMemberFlashString("title", GetLocStringByKeyExt("mqiadapter_ql_title"));
+	words.SetMemberFlashString("listTitle", GetLocStringByKeyExt("mqiadapter_ql_list_title"));
+	words.SetMemberFlashString("sort", GetLocStringByKeyExt("mqiadapter_ql_sort"));
 	words.SetMemberFlashString("sorts", GetLocStringByKeyExt("mqiadapter_ql_sort_nearest") + "|" +
 		GetLocStringByKeyExt("mqiadapter_ql_sort_level") + "|" + GetLocStringByKeyExt("mqiadapter_ql_sort_level_high") + "|" +
 		GetLocStringByKeyExt("mqiadapter_ql_sort_name") + "|" + GetLocStringByKeyExt("mqiadapter_ql_sort_log"));
 	words.SetMemberFlashString("otherRegion", GetLocStringByKeyExt("mqiadapter_ql_other_region"));
 	words.SetMemberFlashString("thisRegion", GetLocStringByKeyExt("mqiadapter_ql_this_region"));
-	words.SetMemberFlashString("filters", GetLocStringByKeyExt("mqiadapter_ql_filters"));
+	words.SetMemberFlashString("filtersTitle", GetLocStringByKeyExt("mqiadapter_ql_filters_title"));
+	words.SetMemberFlashString("on", GetLocStringByKeyExt("mqiadapter_ql_on"));
+	words.SetMemberFlashString("off", GetLocStringByKeyExt("mqiadapter_ql_off"));
+	words.SetMemberFlashString("collapse", GetLocStringByKeyExt("mqiadapter_ql_collapse"));
+	words.SetMemberFlashString("objectives", GetLocStringByKeyExt("mqiadapter_ql_objectives"));
+	words.SetMemberFlashString("close", GetLocStringByKeyExt("mqiadapter_ql_hint_close"));
+	words.SetMemberFlashString("track", GetLocStringByKeyExt("mqiadapter_ql_hint_track"));
+	words.SetMemberFlashString("allRegions", GetLocStringByKeyExt("mqiadapter_ql_hint_all_regions"));
 	words.SetMemberFlashString("filterNames", GetLocStringByKeyExt("mqiadapter_ql_filter_contracts") + "|" +
 		GetLocStringByKeyExt("mqiadapter_ql_filter_treasure") + "|" + GetLocStringByKeyExt("mqiadapter_ql_filter_gwent") + "|" +
 		GetLocStringByKeyExt("mqiadapter_ql_filter_horse_races") + "|" + GetLocStringByKeyExt("mqiadapter_ql_filter_boat_races") + "|" +
 		GetLocStringByKeyExt("mqiadapter_ql_filter_fist_fights") + "|" + GetLocStringByKeyExt("mqiadapter_ql_filter_heroes") + "|" +
 		GetLocStringByKeyExt("mqiadapter_ql_filter_vintner") + "|" + GetLocStringByKeyExt("mqiadapter_ql_filter_secondary") + "|" +
 		GetLocStringByKeyExt("mqiadapter_ql_filter_deadly") + "|" + GetLocStringByKeyExt("mqiadapter_ql_filter_main"));
-	words.SetMemberFlashString("help", GetLocStringByKeyExt("mqiadapter_ql_help"));
 	words.SetMemberFlashString("empty", GetLocStringByKeyExt("mqiadapter_ql_empty"));
-	words.SetMemberFlashString("level", GetLocStringByKeyExt("mqiadapter_ql_level"));
 	words.SetMemberFlashString("currentLevel", GetLocStringByKeyExt("mqiadapter_ql_current_level"));
 	words.SetMemberFlashString("regionCount", GetLocStringByKeyExt("mqiadapter_ql_region_count"));
 	words.SetMemberFlashString("regionCountOne", GetLocStringByKeyExt("mqiadapter_ql_region_count_one"));

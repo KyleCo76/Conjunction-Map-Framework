@@ -38,6 +38,8 @@ MIN_API = 11
 MENU = ROOT/'source/menu'/(MOD + '.xml')
 CATALOG = ROOT/'source/menu/strings.json'
 SCRIPT = ROOT/'source/menu/content/scripts/local/cmfMenu.ws'
+# Map-mod inventory: the add-on's second script, copied as it is.
+INVENTORY = ROOT/'source/menu/content/scripts/local/cmfMenuInventory.ws'
 # 1.4.0: the row descriptions, written into cmfMenu.ws between the two
 # marker lines. A var ending in * stands for every var that starts with the rest.
 DESCRIPTIONS = ROOT/'source/menu/descriptions.json'
@@ -52,7 +54,7 @@ ID_BASE = 2000200100
 # Choices a live row can show: Automatic, Vanilla and up to 23 map mods. The game stores the position;
 # the add-on stores the folder name.
 LIVE_CHOICES = 25
-STATUS_MOD_ROWS = 16
+STATUS_MOD_ROWS = 48
 ORDER_ROWS = 8
 
 ORDINALS = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th']
@@ -288,6 +290,13 @@ def options_var(var, label, labels, value='0', localized=False):
             option_xml(var, labels) + ['\t\t\t</Var>'])
 
 
+def value_var(var, label):
+    # A read-only Status row: the game draws a BUTTON row as its label plus the value text, with no bar or arrows
+    # (options movie W3SubMenuListItemRenderer, read 2026-11-02); the script fills the value into "current".
+    return ['\t\t\t<Var id="%s" value="" displayName=%s displayType="BUTTON" '
+            'tags="nonLocalizedName;customNames;nonLocalized"/>' % (var, quoteattr(label))]
+
+
 def hidden_var(var):
     return ['\t\t\t<Var id="%s" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>' % var]
 
@@ -325,11 +334,11 @@ def page_vars(rows):
                 lines += options_var(row[1], row[2], row[3])
         elif kind == 'mods':
             for n in range(1, STATUS_MOD_ROWS + 1):
-                lines += options_var('CMFStatusMod%d' % n, 'Map mod %d' % n, ['-', '-'])
+                lines += value_var('CMFStatusMod%d' % n, 'Map mod %d' % n)
         elif kind == 'win':
-            lines += options_var('CMFWin_' + row[1], row[2], ['-', '-'])
+            lines += value_var('CMFWin_' + row[1], row[2])
         elif kind == 'screen':
-            lines += options_var('CMFStatusScreen', 'Screen', ['-', '-'])
+            lines += value_var('CMFStatusScreen', 'Screen')
         else:
             raise ValueError(kind)
     return lines + hidden
@@ -452,7 +461,7 @@ def script_text():
 
 def up_to_date():
     return (MENU.read_text(encoding='utf-8') == menu_xml() and CATALOG.read_text(encoding='utf-8') == catalog_json()
-            and SCRIPT.read_text(encoding='utf-8') == script_text())
+            and SCRIPT.read_text(encoding='utf-8') == script_text() and INVENTORY.is_file())
 
 
 def choice_rows():
@@ -481,6 +490,7 @@ def build(out, w3strings, probe=False):
     (mod/'content/scripts/local').mkdir(parents=True)
     (out/MENUS).mkdir(parents=True)
     (mod/'content/scripts/local/cmfMenu.ws').write_bytes(SCRIPT.read_bytes())
+    (mod/'content/scripts/local/cmfMenuInventory.ws').write_bytes(INVENTORY.read_bytes())
     catalog_file = CATALOG
     if probe:
         (out/MENUS/(MOD + '.xml')).write_text(menu_xml(True), encoding='utf-8', newline='\n')

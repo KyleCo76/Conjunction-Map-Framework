@@ -1,4 +1,4 @@
-// Map Quest Insight adapter 2.4.0 for Conjunction Map Framework. Requires CMF 1.6.0 (API version 13) and Map Quest
+// Map Quest Insight adapter 2.5.0 for Conjunction Map Framework. Requires CMF 1.6.0 (API version 13) and Map Quest
 // Insight 2.1.0 or later (checked against 2.1.0 and 2.2.0) (Nexus 14219; the Quest List file uses names that exist from 2.1.0), which stays
 // unchanged. Install and remove the two together: this file calls Map Quest Insight's own functions (QMI_OptTypeIcons, QMI_IconKind, QMI_LevelBandTint and QMI_ColorTrackedIcon exist
 // from 2.0.0, which Wolfer named stable), so the game stops at the script compile screen when Map Quest Insight is
@@ -1052,13 +1052,46 @@ function MqiAdapterFade(id : name, side : string, alpha : float, size : float)
 
 // Map Quest Insight 2.0's "Corner HUD" ([qmiGeneral] qmiSideHud: 0 Clean, the default, 1 Game look). Clean takes
 // the tracked quest's dark boxes away and keeps its text readable with a black outline and shadow; CMF's tracker
-// part does the same with its plate hidden and two glows. Game look withdraws them.
-// 2.4.0: the font of the tracked quest's name in the Clean corner HUD, "" until Map Quest Insight's author names it.
-function MqiAdapterTrackerFont() : string
+// part does the same with its plate hidden and up to three glows. Game look withdraws them.
+// 2.5.0: false until Wolfer names a stable way to detect his next Map Quest Insight version. It gates only what
+// that unreleased version adds beyond Map Quest Insight 2.2.0 (nothing is gated by it yet).
+function MqiAdapterNextUpdate() : bool
 {
-	return "";
+	return false;
 }
 
+// The "[F] Quests" box Map Quest Insight 2.2.0 shows under the region title in Clean: 100 x 32, its top 16 below
+// the title box (bottom-aligned to the title, moved down by 16 + 32), the plate #0B0B0B at 0.78 with a 1 px
+// #8C877E frame. A left click opens the Quest List, as the F key does (OnDrawingClicked, questlist file).
+function MqiAdapterQuestsBox(on : bool)
+{
+	var id : name;
+	id = 'mqiQuestsBox';
+	if (!on || !CMFHasAbility('text', 'click'))
+	{
+		CMFDraw("modMapQuestInsight", 'title', id, '');
+		return;
+	}
+	CMFDraw("modMapQuestInsight", 'title', id, 'text');
+	CMFDrawSet("modMapQuestInsight", id, 'text', "[F] " + GetLocStringByKeyExt("mqi_adapter_quests_box"), 0);
+	CMFDrawSet("modMapQuestInsight", id, 'size', "", 18);
+	CMFDrawSet("modMapQuestInsight", id, 'color', "", 16777215);
+	CMFDrawSet("modMapQuestInsight", id, 'fill', "", 723723);
+	CMFDrawSet("modMapQuestInsight", id, 'alpha', "", 0.78);
+	CMFDrawSet("modMapQuestInsight", id, 'stroke', "", 9209726);
+	CMFDrawSet("modMapQuestInsight", id, 'strokeAlpha', "", 1);
+	CMFDrawSet("modMapQuestInsight", id, 'strokeWidth', "", 1);
+	CMFDrawSet("modMapQuestInsight", id, 'width', "", 100);
+	CMFDrawSet("modMapQuestInsight", id, 'height', "", 32);
+	CMFDrawSet("modMapQuestInsight", id, 'alignX', "", 0);
+	CMFDrawSet("modMapQuestInsight", id, 'alignY', "", 1);
+	CMFDrawSet("modMapQuestInsight", id, 'offsetY', "", 48);
+	CMFDrawSet("modMapQuestInsight", id, 'wrap', "none", 0);
+	CMFDrawSet("modMapQuestInsight", id, 'click', "", 1);
+}
+
+// 2.5.0: the glows are Wolfer's own (glow 1: black, alpha 1, blur 2, strength 8; glow 2: black, alpha 1, blur 4,
+// strength 3; glow 3, CMF API 16: black, alpha 0.6, blur 10, strength 1.5). The font is the game's.
 function MqiAdapterSendCornerHud()
 {
 	var text : string;
@@ -1073,28 +1106,43 @@ function MqiAdapterSendCornerHud()
 	}
 	if (text == "")
 	{
-		MqiAdapterMotion('tracker', 'hide', "plate", 0);
-		// 2.4.0 (CMF API 15): under Clean the tracker's key row goes too (Panel visibility, apart from the look): Map Quest
-		// Insight moves those keys, and "Quests" and "Change tracked objective" are carried in CMF's hint row.
-		MqiAdapterMotion('tracker', 'show', "nokeys", 0);
-		if (MqiAdapterTrackerFont() != "")
+		// Map Quest Insight 2.2.0 alone, Clean: no quest boxes, no key row and no plate behind it, the tracked quest's
+		// name level with the region title, and a small [F] Quests box under that title instead.
+		if (CMFHasAbility('tracker', 'show'))
 		{
-			MqiAdapterMotion('tracker', 'nameFont', MqiAdapterTrackerFont(), 0);
+			MqiAdapterMotion('tracker', 'show', "nokeys", 0);
+			MqiAdapterMotion('tracker', 'hide', "plate", 0);
+			MqiAdapterMotion('tracker', 'y', "", -58);
 		}
+		else
+		{
+			// An older CMF cannot hide the key row: it keeps the layout it had, with the quest boxes hidden.
+			MqiAdapterMotion('tracker', 'hide', "plate", 0);
+		}
+		MqiAdapterQuestsBox(MqiAdapterQlWanted());
 	}
 	else
 	{
 		MqiAdapterMotion('tracker', 'hide', "unset", 0);
 		MqiAdapterMotion('tracker', 'show', "unset", 0);
+		MqiAdapterMotion('tracker', 'y', "unset", 0);
+		MqiAdapterQuestsBox(false);
 	}
 	MqiAdapterMotion('tracker', 'glow1Color', text, 0);
 	MqiAdapterMotion('tracker', 'glow1Alpha', text, 1);
 	MqiAdapterMotion('tracker', 'glow1Blur', text, 2);
-	MqiAdapterMotion('tracker', 'glow1Strength', text, 6);
+	MqiAdapterMotion('tracker', 'glow1Strength', text, 8);
 	MqiAdapterMotion('tracker', 'glow2Color', text, 0);
-	MqiAdapterMotion('tracker', 'glow2Alpha', text, 0.8);
-	MqiAdapterMotion('tracker', 'glow2Blur', text, 6);
-	MqiAdapterMotion('tracker', 'glow2Strength', text, 2);
+	MqiAdapterMotion('tracker', 'glow2Alpha', text, 1);
+	MqiAdapterMotion('tracker', 'glow2Blur', text, 4);
+	MqiAdapterMotion('tracker', 'glow2Strength', text, 3);
+	if (CMFHasAbility('tracker', 'glow3Color'))
+	{
+		MqiAdapterMotion('tracker', 'glow3Color', text, 0);
+		MqiAdapterMotion('tracker', 'glow3Alpha', text, 0.6);
+		MqiAdapterMotion('tracker', 'glow3Blur', text, 10);
+		MqiAdapterMotion('tracker', 'glow3Strength', text, 1.5);
+	}
 }
 
 // One line per map opening: which of Map Quest Insight's settings the adapter follows now.

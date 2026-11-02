@@ -125,8 +125,10 @@ BUTTON_NAMES = ('gamepad_X', 'enter-gamepad_A', 'escape-gamepad_B', 'gamepad_Y',
 BUTTON_NAMES_NOT_STEAM = ('gamepad_dpad_up_down', 'gamepad_dpad_all')
 # The map theme's fixed names and keys, as cmfCore.ws lists them (CMFThemeParts, CMFThemePartKeys and the rest;
 # tests/test_cmf_pack.py keeps the two in step).
-THEME_GLOW = ('glow1Color', 'glow1Alpha', 'glow1Blur', 'glow1Strength', 'glow2Color', 'glow2Alpha', 'glow2Blur',
-              'glow2Strength')
+# Two-glow list: the tooltip's title and body overrides stay at two glows (API 16 added the third glow to the rest).
+THEME_GLOW_12 = ('glow1Color', 'glow1Alpha', 'glow1Blur', 'glow1Strength', 'glow2Color', 'glow2Alpha', 'glow2Blur',
+                 'glow2Strength')
+THEME_GLOW = THEME_GLOW_12 + ('glow3Color', 'glow3Alpha', 'glow3Blur', 'glow3Strength')
 THEME_SHADOW = ('shadowDistance', 'shadowAngle', 'shadowColor', 'shadowAlpha', 'shadowBlur', 'shadowStrength')
 THEME_TEXT = ('font', 'size', 'color', 'spacing', 'align') + THEME_GLOW
 THEME_PART_KEYS = {
@@ -144,7 +146,7 @@ THEME_PART_KEYS = {
                              'clearGap', 'clearBoxPad', 'clearPick', 'clearCursorWeight', 'tallMinHeight', 'tallX',
                              'tallTop', 'tallBottom', 'tallAltX', 'tallAltTop', 'tallAltBottom', 'tallUnderLegend', 'tallClear', 'showSeconds', 'hideSeconds', 'slide',
                              'plateColor', 'plateAlpha', 'thumbColor', 'trackColor', 'scrollStep', 'titleCase', 'hideScrollBar',
-                             'foldTag', 'foldMoreText', 'foldLessText', 'foldKeyPad', 'foldKeyKb', 'foldOpen', 'clearAnchor') + tuple(prefix + k[0].upper() + k[1:] for prefix in ('title', 'body') for k in THEME_GLOW),
+                             'foldTag', 'foldMoreText', 'foldLessText', 'foldKeyPad', 'foldKeyKb', 'foldOpen', 'clearAnchor') + tuple(prefix + k[0].upper() + k[1:] for prefix in ('title', 'body') for k in THEME_GLOW_12),
     'preview': ('hide', 'x', 'y', 'scale', 'show', 'movingMs'),
     'worldButton': THEME_GLOW + ('hide', 'text', 'x', 'y', 'scale', 'font', 'size', 'show'),
     'worldHint': THEME_GLOW + ('hide', 'text', 'x', 'y', 'scale', 'font', 'size', 'show'),

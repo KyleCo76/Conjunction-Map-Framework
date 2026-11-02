@@ -476,6 +476,9 @@ function CMFMenuStatusProviders(out providers : array<string>) : bool
 		{
 			theGame.SaveUserSettings();
 		}
+		// Map-mod inventory: mods found in the game's settings are added after the memory above, so they are found live
+		// every time and never remembered.
+		CMFMenuAddInventoryFound(core, providers);
 		return false;
 	}
 	// 1.5.1: at the title screen the list is always the remembered one, also while it is still empty (the first start
@@ -488,7 +491,31 @@ function CMFMenuStatusProviders(out providers : array<string>) : bool
 			providers.PushBack(value);
 		}
 	}
+	CMFMenuAddInventoryFound(core, providers);
 	return true;
+}
+
+// Map-mod inventory: adds the providers cmfMenuInventory.ws finds in the game's settings that the list does not
+// hold yet (same lower-case identity check), in the order that decides between mods.
+function CMFMenuAddInventoryFound(core : CMFCore, out providers : array<string>)
+{
+	var found, identities : array<string>;
+	var identity : string;
+	var i : int;
+	CMFMenuInventoryFound(found);
+	for (i = 0; i < providers.Size(); i += 1)
+	{
+		identities.PushBack(StrLower(providers[i]));
+	}
+	for (i = 0; i < found.Size(); i += 1)
+	{
+		identity = StrLower(found[i]);
+		if (!identities.Contains(identity))
+		{
+			identities.PushBack(identity);
+			CMFMenuInsertInOrder(core, providers, found[i]);
+		}
+	}
 }
 
 // 1.5.1: Loaded map mods lists mods in the order that decides between them (folder order, or the Mod order page),
@@ -753,6 +780,15 @@ function CMFMenuSetChoices(storage : CScriptedFlashValueStorage, row : CScripted
 	row.SetMemberFlashArray("subElements", choices);
 	row.SetMemberFlashString("current", IntToString(current));
 	row.SetMemberFlashString("startingValue", IntToString(current));
+	row.SetMemberFlashBool("disabled", disabled);
+}
+
+// A read-only Status row (a BUTTON row in the menu XML): the game shows "current" as plain text on the right, with no
+// bar or arrows. A disabled row is dimmed and cannot be pressed.
+function CMFMenuSetValue(row : CScriptedFlashObject, text : string, disabled : bool)
+{
+	row.SetMemberFlashString("current", text);
+	row.SetMemberFlashString("startingValue", text);
 	row.SetMemberFlashBool("disabled", disabled);
 }
 
@@ -1024,26 +1060,52 @@ function CMFMenuFillMod(storage : CScriptedFlashValueStorage, row : CScriptedFla
 {
 	var core : CMFCore;
 	var labels : array<string>;
-	var text : string;
-	var feature, behaviour, mapFeature, shown, more : int;
+	var text, inventoryName, inventoryWhat : string;
+	var found : array<string>;
+	var feature, behaviour, mapFeature, shown, more, inventory : int;
 	if (index < 0 || index >= providers.Size())
 	{
 		return false;
 	}
 	core = theGame.CMFGetCore();
-	// 1.5.1: the last of the 16 rows says how many more there are when they do not all fit.
-	if (index == 15 && providers.Size() > 16)
+	// 1.5.1: the last of the 48 rows (16 before the map-mod inventory) says how many more there are when they do not all fit.
+	if (index == 47 && providers.Size() > 48)
 	{
-		row.SetMemberFlashString("label", "+" + IntToString(providers.Size() - 15) + " more map mods");
-		labels.PushBack("-");
-		CMFMenuSetChoices(storage, row, labels, 0, true);
+		row.SetMemberFlashString("label", "+" + IntToString(providers.Size() - 47) + " more map mods");
+		CMFMenuSetValue(row, "-", true);
 		return true;
 	}
-	row.SetMemberFlashString("label", core.ProviderName(providers[index]));
+	// Map-mod inventory: a mod in the inventory shows its known name, and what it does when it offers no CMF feature.
+	inventory = CMFMenuInventoryIndex(providers[index]);
+	inventoryName = "";
+	inventoryWhat = "";
+	if (inventory >= 0)
+	{
+		inventoryName = CMFMenuInventoryField(CMFMenuInventoryEntry(inventory), 1);
+		inventoryWhat = CMFMenuInventoryField(CMFMenuInventoryEntry(inventory), 2);
+	}
+	if (inventoryName != "")
+	{
+		row.SetMemberFlashString("label", inventoryName);
+	}
+	else
+	{
+		row.SetMemberFlashString("label", core.ProviderName(providers[index]));
+	}
 	text = "";
 	if (remembered)
 	{
 		text = "Seen last time";
+		// A mod found in the settings now is not remembered: it is there.
+		// An adapter-needing mod may have its adapter installed, which the title screen cannot tell: it stays "Seen last time".
+		if (inventoryWhat != "" && inventoryWhat != "Needs its adapter")
+		{
+			CMFMenuInventoryFound(found);
+			if (found.Contains(providers[index]))
+			{
+				text = inventoryWhat;
+			}
+		}
 	}
 	else
 	{
@@ -1107,6 +1169,15 @@ function CMFMenuFillMod(storage : CScriptedFlashValueStorage, row : CScriptedFla
 		{
 			text += " +" + IntToString(more);
 		}
+		// "Needs its adapter" is decided by presence (the mod is in the settings and no provider told CMF it is there).
+		if (CMFMenuInventoryNeedsAdapter(providers[index]))
+		{
+			text = "Needs its adapter";
+		}
+		else if (text == "" && inventoryWhat != "" && inventoryWhat != "Needs its adapter")
+		{
+			text = inventoryWhat;
+		}
 		// 1.5.1: an adapter that declared itself at game start brings its features with the first map opening.
 		if (text == "" && !core.MapSeen())
 		{
@@ -1117,8 +1188,7 @@ function CMFMenuFillMod(storage : CScriptedFlashValueStorage, row : CScriptedFla
 			text = GetLocStringByKeyExt("cmf_menu_support_present");
 		}
 	}
-	labels.PushBack(text);
-	CMFMenuSetChoices(storage, row, labels, 0, false);
+	CMFMenuSetValue(row, text, false);
 	return true;
 }
 
@@ -1180,9 +1250,46 @@ function CMFMenuFillWin(storage : CScriptedFlashValueStorage, row : CScriptedFla
 			text = CMFMenuFit("", core.ProviderName(winner), " (" + core.LevelName(level) + ")");
 		}
 	}
-	labels.PushBack(text);
-	CMFMenuSetChoices(storage, row, labels, 0, greyed);
+	CMFMenuSetValue(row, text, greyed);
 	return true;
+}
+
+// The screen's shape as the nearest common aspect ratio (smallest absolute difference of width / height).
+function CMFMenuAspectText(width : float, height : float) : string
+{
+	var ratio, gap, best : float;
+	var names : array<string>;
+	var values : array<float>;
+	var i, pick : int;
+	names.PushBack("5:4");
+	values.PushBack(1.25);
+	names.PushBack("4:3");
+	values.PushBack(1.3333);
+	names.PushBack("3:2");
+	values.PushBack(1.5);
+	names.PushBack("16:10");
+	values.PushBack(1.6);
+	names.PushBack("16:9");
+	values.PushBack(1.7778);
+	names.PushBack("21:9");
+	values.PushBack(2.3333);
+	names.PushBack("32:9");
+	values.PushBack(3.5556);
+	names.PushBack("48:9");
+	values.PushBack(5.3333);
+	ratio = width / height;
+	pick = 0;
+	best = AbsF(ratio - values[0]);
+	for (i = 1; i < names.Size(); i += 1)
+	{
+		gap = AbsF(ratio - values[i]);
+		if (gap < best)
+		{
+			best = gap;
+			pick = i;
+		}
+	}
+	return names[pick];
 }
 
 // 1.3.0: the Screen line on Loaded map mods (ultrawide spec 6.5). The label holds the screen in map units from the
@@ -1214,7 +1321,7 @@ function CMFMenuFillScreen(storage : CScriptedFlashValueStorage, row : CScripted
 	}
 	else
 	{
-		row.SetMemberFlashString("label", "Screen: " + IntToString(RoundF(width)) + " x " + IntToString(RoundF(height)));
+		row.SetMemberFlashString("label", "Screen: " + CMFMenuAspectText(width, height));
 	}
 	if (remembered)
 	{
@@ -1236,8 +1343,7 @@ function CMFMenuFillScreen(storage : CScriptedFlashValueStorage, row : CScripted
 			text = CMFMenuFit("Map fills it (", core.ProviderName(winner), ")");
 		}
 	}
-	labels.PushBack(text);
-	CMFMenuSetChoices(storage, row, labels, 0, remembered || width < 1);
+	CMFMenuSetValue(row, text, remembered || width < 1);
 	return true;
 }
 
@@ -1275,7 +1381,7 @@ function CMFMenuDescription(varName : name) : string
 	varText = NameToString(varName);
 	if (StrBeginsWith(varText, "CMFStatusMod"))
 	{
-		return "A map mod CMF found, and which parts of the map it changes. Some show only after the map has been opened once.";
+		return "A map mod CMF found and what it changes (some show after the map opens once). Needs its adapter: get it from CMF's Nexus page, Miscellaneous files.";
 	}
 	if (StrBeginsWith(varText, "CMFWin_"))
 	{
@@ -1460,7 +1566,7 @@ function CMFMenuDescription(varName : name) : string
 		case 'CMFAnimationMemory':
 			return GetLocStringByKeyExt("cmf_menu_memory_help");
 		case 'CMFStatusScreen':
-			return "Your screen size as the map last saw it, and whether the map fills it. Open the map once to see it.";
+			return "Your screen's shape as the map last saw it, and whether the map fills it. Open the map once to see it.";
 	}
 	return "";
 }

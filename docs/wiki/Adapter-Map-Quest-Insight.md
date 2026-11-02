@@ -70,7 +70,7 @@ Because it calls your functions and reads your fields, the adapter compiles only
 
 From CMF 1.4.1 your faster map, zoom-out, spreading and info box height are behaviour choices of their own, apart from your icons: a player can keep another mod's look and still take them (author guide, "Players' choices").
 
-**Telling CMF you are here** (adapter 1.1.1, API version 11). An `OnGameStarted` wrapper registers property `38` for `modMapQuestInsight` when `CMFHasProperty(38)` answers true, so CMF's menu and the Adapter Check know Map Quest Insight is installed from the start of the game, before the map has been opened. Your own CMF support folder should keep this line.
+**Telling CMF you are here** (adapter 1.1.1, API version 11). An `OnGameStarted` wrapper registers property `38` for `modMapQuestInsight` when `CMFHasProperty(38)` answers true, so CMF's Status page (In-Game Menu add-on) knows Map Quest Insight is installed from the start of the game, before the map has been opened. Your own CMF support folder should keep this line.
 
 **Pin fields.** The game builds pin objects from the map's pin class and drops any field that class does not declare. CMF's map declares your `qmi*` field names for the adapter, under a compatibility comment; CMF itself never reads them.
 
@@ -104,6 +104,8 @@ When you ship it, players drop the adapter. If both are installed, both name `mo
 ### Status
 
 Passed in game on 2026-10-20 with API version 4 (the N4 launch): the handshake, the converted level labels and colours, the stand-in quest icons (then stored in CMF; they moved into the adapter on 2026-10-20 and are re-checked in the next launch) and the scrolling info box. The adapter is unchanged under API version 5. In the CMF 1.4.1 launch (2026-10-24) the spreading of stacked quest markers, the behaviour rows and the Ultrawide map page's fill ran in game with adapter 1.1.0.
+
+**Corner HUD, Clean (adapter 2.5.0).** Under Clean the adapter shows the map's top left as your 2.2.0 does: the tracker's key row and every dark plate go (`tracker show` `nokeys`, `tracker hide` `plate`), the tracked quest's name sits 58 map units higher than the game puts it (`tracker y` -58, level with the region title), and a small drawing under the region title, `mqiQuestsBox` on `title` (100 x 32, plate #0B0B0B at 0.78, 1 px #8C877E frame, "[F]" and the word from the adapter's string table), opens the Quest List when clicked, as the F key does. Game look sends none of it and withdraws anything sent before. `MqiAdapterNextUpdate()` stays false and gates only what your unreleased update adds beyond 2.2.0.
 
 ---
 

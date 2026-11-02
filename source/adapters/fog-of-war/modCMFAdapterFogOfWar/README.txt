@@ -23,7 +23,7 @@ WHAT CHANGED
   older CMF keep 1.0.2.
 - 1.0.2: writes less to the game's log: one line per map, none per icon.
 - 1.0.1: tells CMF 1.5.0 or later that the adapter is installed as soon as the game
-  starts, so CMF's optional adapter check can see it.
+  starts, so CMF's Status page can see it.
 
 REQUIREMENTS
 - Conjunction Map Framework 1.7.0 or later (API version 14).

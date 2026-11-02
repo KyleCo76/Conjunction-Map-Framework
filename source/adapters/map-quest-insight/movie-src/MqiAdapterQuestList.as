@@ -1,11 +1,14 @@
 package
 {
+   import flash.display.GradientType;
    import flash.display.Loader;
    import flash.display.MovieClip;
    import flash.display.Sprite;
    import flash.events.Event;
    import flash.events.MouseEvent;
+   import flash.filters.GlowFilter;
    import flash.geom.ColorTransform;
+   import flash.geom.Matrix;
    import flash.net.URLRequest;
    import flash.text.TextField;
    import flash.text.TextFieldAutoSize;
@@ -20,17 +23,64 @@ package
    public class MqiAdapterQuestList extends MovieClip
    {
       private static const GOLD:uint = 0xFFD402;
+      // Map Quest Insight's look (Wolfer's values). The panel width does not scale; the row heights and the text
+      // sizes scale with the list text size (qmiQjTextSize, default 90).
+      private static const PANEL_W:Number = 640;
+      private static const HEADER_H:Number = 56;
+      private static const QUEST_H:Number = 90;
+      private static const FILTER_H:Number = 46;
+      private static const ICON_SIZE:Number = 58;
+      private static const BOX_SIZE:Number = 22;
+      private static const BOX_FILL:Number = 14;
+      private static const PLATE_COLOR:uint = 0x0B0B0B;
+      private static const HEAD_TOP:uint = 0x2C2925;
+      private static const HEAD_REST:uint = 0x242220;
+      private static const TEXT_ON:uint = 0xDCD6C8;
+      private static const TEXT_SUB:uint = 0xC4C0B8;
+      private static const TEXT_OFF:uint = 0x9C9890;
+      private static const ACCENT:uint = 0xC9A452;
+      private static const SELECT_FILL:uint = 0x3A2E14;
+      private static const BOX_COLOR:uint = 0x8C877E;
+      private static const TRACK_COLOR:uint = 0x3C3832;
+      private static const RING_COLOR:uint = 0xFF9900;
+      // The stripe of each section header (estimated from the screenshots, which clip bright colours).
+      private static const STRIPE_MAIN:uint = 0xFFD402;
+      private static const STRIPE_SECONDARY:uint = 0xFFD402;
+      private static const STRIPE_AVAILABLE:uint = 0xDEB25C;
+      private static const STRIPE_FILTERS:uint = 0xDCD6C8;
+      private static const TITLE_COLOR:uint = 0xDEB25C;
+      private static const WHITE:uint = 0xFFFFFF;
+      private static const OBJ_ON:uint = 0xF0BE38;
+      private static const OBJ_OFF:uint = 0xDFDEDE;
+      private static const DLC_COLOR:uint = 0x9A9A9A;
+      private static const ARROW_COLOR:uint = 0xD8D2C4;
+      // Places in map units at text size 100% (the panel's own width, so these do not scale).
+      private static const INSET:Number = 22;
+      private static const LIST_TOP:Number = 112;
+      // The key row sits above the game's own bottom hint row (about 64 units tall, as in Map Quest Insight alone).
+      private static const GAME_HINTS_H:Number = 64;
+      private static const BAR_LINE:Number = 70 + GAME_HINTS_H;
+      private static const HINT_GAP:Number = 28;
+      private static const OBJECT_H:Number = 22;
+      private static const OBJ_BOX:Number = 13;
+      private static const OBJ_BOX_X:Number = 173;
+      private static const OBJ_TEXT_X:Number = 190;
+      private static const ICON_CX:Number = 62;
+      private static const LEVEL_X:Number = 112;
+      private static const NAME_X:Number = 168;
+      private static const ROW_RIGHT:Number = 610;
+      private static const COUNT_RIGHT:Number = 572;
+      private static const ARROW_X:Number = 595;
       private static const ROW_CAT:int = 1;
       private static const ROW_QUEST:int = 2;
       private static const ROW_OBJECTIVE:int = 3;
       private static const ROW_REGION:int = 4;
-      private static const ROW_FILTERS:int = 5;
       private static const ROW_FILTER:int = 6;
 
       private var map:Object;
       private var drawingId:String = "";
-      private var boxW:Number = 520;
-      private var boxH:Number = 830;
+      private var boxW:Number = PANEL_W;
+      private var boxH:Number = 1080;
       private var data:Object;
       private var lastSeq:Number = -1;
       private var lastOpen:Number = -1;
@@ -42,8 +92,8 @@ package
       private var selected:int = 0;
       private var top:int = 0;
       private var sortMode:int = 0;
-      // Quests Available starts folded, as in Map Quest Insight's own list.
-      private var folded:Object = {"avail":true};
+      // Quests Available and Quest Filters start folded, as in Map Quest Insight's own list.
+      private var folded:Object = {"avail":true,"filters":true};
       private var expanded:Object = {};
       private var filters:Array = [];
       private var thisRegion:Boolean = false;
@@ -64,30 +114,35 @@ package
       private var restRow:int = -1;
       private var restAt:int = 0;
       private var restDone:Boolean = true;
+      private var drawn:int = 0;
 
       private var bg:Sprite;
       private var bar:Sprite;
       private var title:TextField;
       private var counter:TextField;
       private var levelLine:TextField;
-      private var help:TextField;
+      private var sortLine:TextField;
+      private var regionLine:TextField;
+      private var hints:Array = [];
+      private var countBold:String = "";
       private var slots:Array = [];
-      private var rowH:Number = 26;
-      private var fontSize:Number = 18;
+      private var scale:Number = 0.9;
 
       public function MqiAdapterQuestList()
       {
          super();
          bg = new Sprite();
          addChild(bg);
+         bg.filters = [new GlowFilter(0x000000,0.6,5,5,2,1)];
          bar = new Sprite();
          bar.mouseEnabled = false;
          addChild(bar);
          title = field(false);
          counter = field(true);
          levelLine = field(false);
-         help = field(false);
-         help.wordWrap = true;
+         sortLine = field(false);
+         regionLine = field(true);
+         hints = [field(true),field(true),field(true),field(true)];
          doubleClickEnabled = true;
          addEventListener(MouseEvent.CLICK,onClick);
          addEventListener(MouseEvent.DOUBLE_CLICK,onDoubleClick);
@@ -121,13 +176,13 @@ package
          {
             lit = [];
             pinsRef = null;
+            hidePanelsAgain();
             if(focusAt == 0) { takeFocus(); }
          }
          if(map) { lastArea = curMap(); }
          if(!opened && pendingHome && map && curMap() == String(data.homeMap)) { goHome(); }
          if(entry.number)
          {
-            if(Number(entry.number.width) > 0) { boxW = Number(entry.number.width); }
             if(Number(entry.number.height) > 0) { boxH = Number(entry.number.height); }
          }
          addEventListener(Event.ENTER_FRAME,onFrame);
@@ -194,8 +249,7 @@ package
             pinsRef = null;
          }
          availDistances();
-         fontSize = 20 * confNum("textSize",90) / 100;
-         rowH = Math.round(fontSize * 1.45);
+         scale = confNum("textSize",90) / 100;
          if(Number(data.open) > lastOpen)
          {
             lastOpen = Number(data.open);
@@ -240,6 +294,7 @@ package
          pendingQa = false;
          expanded = {};
          visible = true;
+         hidePanelsAgain();
          // Start quest sections folded (qmiQjFoldAll): every section, Quests Available too, at each opening.
          if(conf("foldAll")) { foldAll(); }
          snapshot();
@@ -259,6 +314,7 @@ package
          folded = {};
          for each(q in quests) { folded[String(q.cat)] = true; }
          folded["avail"] = true;
+         folded["filters"] = true;
       }
 
       private function close() : void
@@ -272,6 +328,7 @@ package
          {
             map.lockPan(false);
             map.focus(false);
+            if(map.hidePanels is Function) { map.hidePanels(null); }
          }
          focused = false;
          // Map when the list closes (qmiQjClose): 0 back to you, only after a switch the list made; 1 stays.
@@ -285,6 +342,12 @@ package
          visible = false;
          bg.graphics.clear();
          note("open","0");
+      }
+
+      // CMF brings the hidden panels back on an area change: hide them again (nothing on a CMF without hidePanels).
+      private function hidePanelsAgain() : void
+      {
+         if(map && map.hidePanels is Function) { map.hidePanels(["legend","title","hubBar"]); }
       }
 
       private function takeFocus() : void
@@ -566,9 +629,13 @@ package
             rows.push({"type":ROW_CAT,"label":word("available"),"cat":"avail","count":list.length});
             if(!folded["avail"]) { for each(q in list) { rows.push({"type":ROW_QUEST,"q":q}); } }
          }
-         rows.push({"type":ROW_REGION});
-         rows.push({"type":ROW_FILTERS});
-         for(i = 0; i < 11; i++) { rows.push({"type":ROW_FILTER,"k":i,"label":i < names.length ? names[i] : ""}); }
+         // Quest Filters: a section of its own at the end, holding Only this region and the filter rows.
+         rows.push({"type":ROW_CAT,"label":word("filtersTitle"),"cat":"filters","count":-1});
+         if(!folded["filters"])
+         {
+            rows.push({"type":ROW_REGION});
+            for(i = 0; i < 11; i++) { rows.push({"type":ROW_FILTER,"k":i,"label":i < names.length ? names[i] : ""}); }
+         }
          selected = 0;
          for(i = 0; i < rows.length; i++)
          {
@@ -576,7 +643,6 @@ package
          }
          if(keepKey != "") { for(i = 0; i < rows.length; i++) { if(rowKey(rows[i]) == keepKey) { selected = i; break; } } }
          if(selected == 0 && rows.length > 1 && rows[0].type == ROW_CAT) { selected = 1; }
-         if(rows[selected] && rows[selected].type == ROW_FILTERS) { selected = 0; }
       }
 
       private function slot(i:int) : Object
@@ -584,7 +650,9 @@ package
          var s:Object = null;
          while(slots.length <= i)
          {
-            s = {"left":field(false),"right":field(true),"icon":new Sprite(),"loader":new Loader(),"url":""};
+            s = {"left":field(false),"right":field(false),"dist":field(true),"obj":field(true),"lvl":field(false),"icon":new Sprite(),"loader":new Loader(),"url":""};
+            s.right.width = 330;
+            s.lvl.width = 56;
             s.icon.mouseEnabled = false;
             s.icon.mouseChildren = false;
             s.icon.addChild(s.loader);
@@ -606,7 +674,7 @@ package
 
       private function fitIcon(s:Object) : void
       {
-         var size:Number = rowH * 0.8;
+         var size:Number = ICON_SIZE;
          if(!s.loader.content || !(s.loader.content.width > 0)) { return; }
          s.loader.scaleX = s.loader.scaleY = size / Math.max(s.loader.content.width,s.loader.content.height);
       }
@@ -632,131 +700,362 @@ package
          return Number(d) >= 1000 ? (Math.round(Number(d) / 100) / 10) + " km" : Math.round(Number(d)) + " m";
       }
 
-      private function render() : void
+      // The height of a row: section headers, quests and the filter-style rows each have their own.
+      private function heightOf(r:Object) : Number
       {
-         var g:Object = bg.graphics;
-         var listTop:Number = 0;
-         var count:int = 0;
+         switch(r.type)
+         {
+            case ROW_CAT:
+               return Math.round(HEADER_H * scale);
+            case ROW_QUEST:
+               return Math.round(QUEST_H * scale);
+            case ROW_OBJECTIVE:
+               return Math.round(OBJECT_H * scale);
+            default:
+               return Math.round(FILTER_H * scale);
+         }
+         return Math.round(FILTER_H * scale);
+      }
+
+      private function heightSum(from:int, to:int) : Number
+      {
+         var sum:Number = 0;
          var i:int = 0;
-         var r:Object = null;
-         var s:Object = null;
-         var y:Number = 0;
-         var left:String = "";
-         var right:String = "";
-         var sorts:Array = wordList("sorts");
-         var fmt:TextFormat = new TextFormat("$NormalFont",fontSize,0xFFFFFF);
-         var small:TextFormat = new TextFormat("$NormalFont",Math.round(fontSize * 0.8),0xBBBBBB);
-         var iconUrl:String = "";
-         var tint:Number = 0;
-         for each(s in slots) { s.left.visible = false; s.right.visible = false; s.icon.visible = false; }
-         bar.graphics.clear();
-         g.clear();
-         if(!opened || !data) { return; }
-         g.beginFill(0x000000,conf("fullScreen") ? 0.85 : 0.92);
-         g.drawRect(0,0,boxW,boxH);
+         for(i = from; i <= to && i < rows.length; i++) { sum += heightOf(rows[i]); }
+         return sum;
+      }
+
+      // A run of text in one of the game's fonts, for a row's html.
+      private function span(text:String, color:uint, size:Number, bold:Boolean) : String
+      {
+         text = text.split("&").join("&amp;").split("<").join("&lt;").split(">").join("&gt;");
+         return "<font face='" + (bold ? "$BoldFont" : "$NormalFont") + "' size='" + Math.round(size) + "' color='" + hex(color) + "'>" + text + "</font>";
+      }
+
+      // A section header: the dark gradient with the section's stripe at its left edge.
+      private function gradientBar(x:Number, y:Number, w:Number, h:Number, stripe:uint) : void
+      {
+         var m:Matrix = new Matrix();
+         m.createGradientBox(w,h,0,x,y);
+         bar.graphics.beginGradientFill(GradientType.LINEAR,[HEAD_TOP,HEAD_REST,HEAD_REST],[1,0.85,0.22],[0,128,255],m);
+         bar.graphics.drawRect(x,y,w,h);
+         bar.graphics.endFill();
+         bar.graphics.beginFill(stripe,1);
+         bar.graphics.drawRect(x,y,6,h);
+         bar.graphics.endFill();
+      }
+
+      private function stripeOf(cat:String) : uint
+      {
+         if(cat == "avail") { return STRIPE_AVAILABLE; }
+         if(cat == "filters") { return STRIPE_FILTERS; }
+         if(cat == "0") { return STRIPE_MAIN; }
+         return STRIPE_SECONDARY;
+      }
+
+      // The section a row belongs to: a header's own, a quest's, or the filters section for its rows.
+      private function catOf(r:Object) : String
+      {
+         if(!r) { return ""; }
+         if(r.type == ROW_CAT) { return String(r.cat); }
+         if(r.type == ROW_REGION || r.type == ROW_FILTER) { return "filters"; }
+         if(r.q) { return r.q.avail ? "avail" : String(r.q.cat); }
+         return "";
+      }
+
+      private function checkBox(x:Number, y:Number, checked:Boolean) : void
+      {
+         bar.graphics.lineStyle(2,BOX_COLOR,1);
+         bar.graphics.drawRect(x + 1,y + 1,BOX_SIZE - 2,BOX_SIZE - 2);
+         bar.graphics.lineStyle();
+         if(checked)
+         {
+            bar.graphics.beginFill(ACCENT,1);
+            bar.graphics.drawRect(x + (BOX_SIZE - BOX_FILL) / 2,y + (BOX_SIZE - BOX_FILL) / 2,BOX_FILL,BOX_FILL);
+            bar.graphics.endFill();
+         }
+      }
+
+      // An objective's small box: empty while open, crossed when done.
+      private function objectiveBox(x:Number, y:Number, done:Boolean) : void
+      {
+         bar.graphics.lineStyle(1.5,OBJ_OFF,1);
+         bar.graphics.drawRect(x,y,OBJ_BOX,OBJ_BOX);
+         if(done)
+         {
+            bar.graphics.moveTo(x + 3,y + 3);
+            bar.graphics.lineTo(x + OBJ_BOX - 3,y + OBJ_BOX - 3);
+            bar.graphics.moveTo(x + OBJ_BOX - 3,y + 3);
+            bar.graphics.lineTo(x + 3,y + OBJ_BOX - 3);
+         }
+         bar.graphics.lineStyle();
+      }
+
+      // A small solid triangle: dir 0 up, 1 down, 2 right, 3 left; w across, h along its direction; cx, cy its centre.
+      private function triangle(cx:Number, cy:Number, w:Number, h:Number, dir:int, color:uint) : void
+      {
+         var g:Object = bar.graphics;
+         g.beginFill(color,1);
+         if(dir == 0) { g.moveTo(cx - w / 2,cy + h / 2); g.lineTo(cx + w / 2,cy + h / 2); g.lineTo(cx,cy - h / 2); }
+         else if(dir == 1) { g.moveTo(cx - w / 2,cy - h / 2); g.lineTo(cx + w / 2,cy - h / 2); g.lineTo(cx,cy + h / 2); }
+         else if(dir == 2) { g.moveTo(cx - h / 2,cy - w / 2); g.lineTo(cx - h / 2,cy + w / 2); g.lineTo(cx + h / 2,cy); }
+         else { g.moveTo(cx + h / 2,cy - w / 2); g.lineTo(cx + h / 2,cy + w / 2); g.lineTo(cx - h / 2,cy); }
          g.endFill();
-         title.defaultTextFormat = new TextFormat("$BoldFont",Math.round(fontSize * 1.1),0xFFFFFF);
-         title.x = 12;
-         title.y = 8;
-         title.width = boxW - 24;
-         title.height = rowH + 6;
-         // The region count at the top right; with Quests not started yet on, "Current Level: N" on a line of its own,
-         // centred under the title (Map Quest Insight's own list centres it between the sort and its region prompt).
-         counter.defaultTextFormat = small;
-         counter.htmlText = html(countText(),"#BBBBBB");
-         counter.y = title.y + Math.round(rowH * 0.12);
-         counter.x = boxW - 14 - counter.width;
-         counter.visible = counter.text != "";
-         title.width = (counter.visible ? counter.x - 8 : boxW - 12) - title.x;
-         title.htmlText = html(word("title"),"#FFFFFF") + "   " + html(sortMode < sorts.length ? sorts[sortMode] : "","#BBBBBB");
-         listTop = title.y + rowH + 10;
+      }
+
+      // The tracked quest's ring with an arrow on each side of it.
+      private function trackedRing(cx:Number, cy:Number) : void
+      {
+         var r:Number = ICON_SIZE / 2 + 2;
+         bar.graphics.lineStyle(3,RING_COLOR,1);
+         bar.graphics.drawCircle(cx,cy,r);
+         bar.graphics.lineStyle();
+         triangle(cx,cy - r - 5,10,8,0,RING_COLOR);
+         triangle(cx,cy + r + 5,10,8,1,RING_COLOR);
+         triangle(cx - r - 5,cy,10,8,3,RING_COLOR);
+         triangle(cx + r + 5,cy,10,8,2,RING_COLOR);
+      }
+
+      // A one-line field centred on a height; a field that sizes itself keeps its own height.
+      private function placeLine(f:TextField, centre:Number, size:Number) : void
+      {
+         if(f.autoSize == TextFieldAutoSize.NONE) { f.height = Math.round(size * 1.3 + 4); }
+         f.y = Math.round(centre - f.height / 2);
+      }
+
+      // The title block: the list's name and the region count, then the sort, the player's level and Only this region.
+      private function drawTitleBlock(sorts:Array) : void
+      {
+         var text:String = countText();
+         var bold:String = countBold;
+         var sortName:String = sortMode < sorts.length ? sorts[sortMode] : "";
+         title.htmlText = span(word("listTitle").toUpperCase(),TITLE_COLOR,32 * scale,true);
+         title.x = 20;
+         title.width = 280;
+         placeLine(title,54,32 * scale);
+         if(bold != "" && text.indexOf(bold) == 0)
+         {
+            counter.htmlText = span(bold,TEXT_ON,20 * scale,true) + span(text.substr(bold.length),WHITE,20 * scale,false);
+         }
+         else { counter.htmlText = span(text,WHITE,20 * scale,false); }
+         counter.x = PANEL_W - INSET + 2 - counter.width;
+         placeLine(counter,54,20 * scale);
+         counter.visible = text != "";
+         sortLine.htmlText = span(word("sort") + ": ",WHITE,18 * scale,false) + span(sortName,WHITE,18 * scale,true) + span(" [T]",TEXT_OFF,18 * scale,false);
+         sortLine.x = 20;
+         sortLine.width = 200;
+         placeLine(sortLine,87,18 * scale);
          levelLine.visible = conf("givers") && Number(data.playerLevel) > 0;
          if(levelLine.visible)
          {
-            levelLine.defaultTextFormat = new TextFormat("$NormalFont",Math.round(fontSize * 0.9),0xBBBBBB,null,null,null,null,null,"center");
-            levelLine.x = 12;
-            levelLine.width = boxW - 24;
-            levelLine.height = rowH;
-            levelLine.y = listTop - 6;
-            levelLine.htmlText = "<p align='center'>" + html(word("currentLevel") + ": " + int(data.playerLevel),"#BBBBBB") + "</p>";
+            levelLine.htmlText = "<p align='center'>" + span(word("currentLevel") + ": " + int(data.playerLevel),WHITE,18 * scale,true) + "</p>";
+            levelLine.width = 220;
+            levelLine.x = 313 - 110;
+            placeLine(levelLine,87,18 * scale);
          }
-         listTop = listStart();
-         help.defaultTextFormat = small;
-         help.x = 12;
-         help.width = boxW - 24;
-         help.height = rowH * 2.2;
-         help.y = boxH - help.height - 6;
-         help.htmlText = html(word("help"),"#BBBBBB");
-         count = Math.max(1,int((help.y - listTop - 4) / rowH));
+         regionLine.htmlText = span(word("thisRegion") + ": " + (thisRegion ? word("on") : word("off")),TITLE_COLOR,18 * scale,false);
+         regionLine.x = PANEL_W - INSET + 2 - regionLine.width;
+         placeLine(regionLine,87,18 * scale);
+      }
+
+      // The bottom bar: a thin line, and the four keys with their words, centred.
+      private function drawHintBar() : void
+      {
+         var keys:Array = ["F","E","H","T"];
+         var words:Array = [word("close"),word("track"),thisRegion ? word("allRegions") : word("thisRegion"),word("sort")];
+         var total:Number = 0;
+         var x:Number = 0;
+         var i:int = 0;
+         bar.graphics.beginFill(TRACK_COLOR,1);
+         bar.graphics.drawRect(INSET,boxH - BAR_LINE,PANEL_W - 2 * INSET,1);
+         bar.graphics.endFill();
+         for(i = 0; i < 4; i++)
+         {
+            hints[i].htmlText = span(keys[i],TEXT_OFF,18 * scale,false) + span("  ",TEXT_OFF,18 * scale,false) + span(words[i],WHITE,20 * scale,false);
+            total += hints[i].width;
+         }
+         x = (PANEL_W - (total + HINT_GAP * 3)) / 2;
+         for(i = 0; i < 4; i++)
+         {
+            hints[i].x = x;
+            placeLine(hints[i],boxH - 44 - GAME_HINTS_H,20 * scale);
+            hints[i].visible = true;
+            x += hints[i].width + HINT_GAP;
+         }
+      }
+
+      private function render() : void
+      {
+         var g:Object = bg.graphics;
+         var listTop:Number = LIST_TOP;
+         var avail:Number = boxH - BAR_LINE - 8 - LIST_TOP;
+         var maxTop:int = 0;
+         var shown:int = 0;
+         var selEnd:int = 0;
+         var i:int = 0;
+         var j:int = 0;
+         var r:Object = null;
+         var s:Object = null;
+         var y:Number = 0;
+         var h:Number = 0;
+         var extra:Number = 0;
+         var wide:Number = PANEL_W - 2 * INSET;
+         var left:String = "";
+         var lvl:String = "";
+         var second:String = "";
+         var distHtml:String = "";
+         var objLabel:String = "";
+         var key:String = "";
+         var selCat:String = catOf(selected >= 0 && selected < rows.length ? rows[selected] : null);
+         var checked:Boolean = false;
+         var sorts:Array = wordList("sorts");
+         var iconUrl:String = "";
+         var tint:Number = 0;
+         var tracked:Boolean = false;
+         var trackY:Number = 0;
+         var trackH:Number = 0;
+         var thumbH:Number = 0;
+         var ring:Number = 0;
+         var colour:uint = 0;
+         for each(s in slots)
+         {
+            s.left.visible = false;
+            s.right.visible = false;
+            s.dist.visible = false;
+            s.lvl.visible = false;
+            s.obj.visible = false;
+            s.icon.visible = false;
+         }
+         for(i = 0; i < hints.length; i++) { hints[i].visible = false; }
+         bar.graphics.clear();
+         g.clear();
+         if(!opened || !data) { return; }
+         g.beginFill(PLATE_COLOR,conf("fullScreen") ? 0.68 : 0.78);
+         g.drawRect(0,0,boxW,boxH);
+         g.endFill();
+         drawTitleBlock(sorts);
+         drawHintBar();
+         // Keep the highlighted row on the page; the page never ends in empty room while rows are left above it.
          if(selected < top) { top = selected; }
-         if(selected >= top + count) { top = selected - count + 1; }
-         top = Math.max(0,Math.min(top,Math.max(0,rows.length - count)));
-         for(i = top; i < Math.min(rows.length,top + count); i++)
+         // The highlighted quest stays on the page with its objective rows where they fit.
+         selEnd = selected;
+         while(selEnd + 1 < rows.length && selected >= 0 && selected < rows.length && rows[selected].type == ROW_QUEST && rows[selEnd + 1].type == ROW_OBJECTIVE) { selEnd++; }
+         while(top < selected && heightSum(top,selEnd) > avail) { top++; }
+         maxTop = Math.max(0,rows.length - 1);
+         while(maxTop > 0 && heightSum(maxTop - 1,rows.length - 1) <= avail) { maxTop--; }
+         top = Math.max(0,Math.min(top,maxTop));
+         y = listTop;
+         for(i = top; i < rows.length; i++)
          {
             r = rows[i];
+            h = heightOf(r);
+            if(i > top && y + h > listTop + avail + 0.5) { break; }
+            shown++;
             s = slot(i - top);
-            y = listTop + (i - top) * rowH;
             left = "";
-            right = "";
+            lvl = "";
+            second = "";
+            distHtml = "";
+            objLabel = "";
             iconUrl = "";
-            s.left.defaultTextFormat = fmt;
-            s.right.defaultTextFormat = small;
-            s.left.x = 12;
+            checked = false;
+            tracked = false;
+            s.left.x = 20;
+            s.left.width = boxW - 40;
             switch(r.type)
             {
                case ROW_CAT:
-                  left = html((folded[r.cat] ? "+ " : "- ") + String(r.label) + (r.count >= 0 ? "  (" + r.count + ")" : ""),"#E0C890");
+                  key = String(r.cat);
+                  gradientBar(INSET,y,wide,h,stripeOf(key));
+                  s.left.x = 42;
+                  left = span(String(r.label).toUpperCase(),TEXT_ON,22 * scale,true);
+                  if(r.count >= 0) { distHtml = span(String(r.count),TEXT_ON,22 * scale,true); }
+                  if(key != "") { triangle(ARROW_X,y + h / 2,14,10,folded[key] ? 1 : 0,ARROW_COLOR); }
+                  if(key != "" && key == selCat)
+                  {
+                     objLabel = span("C",TEXT_OFF,18 * scale,false) + span("  ",TEXT_OFF,18 * scale,false) + span(word("collapse"),TEXT_ON,18 * scale,false);
+                  }
                   break;
                case ROW_QUEST:
                   iconUrl = String(r.q.icon);
                   tint = Number(r.q.band);
-                  s.left.x = 12 + rowH;
+                  tracked = r.q.tracked;
+                  s.left.x = NAME_X - 2;
+                  s.left.width = boxW - NAME_X - INSET;
+                  if(int(r.q.lvl) > 0) { lvl = span(String(int(r.q.lvl)),WHITE,30 * scale,true); }
                   left = questText(r.q,String(r.q.name));
-                  right = (conf("region") ? html(String(r.q.region),"#BBBBBB") + "  " : "") + html(distText(r.q),"#BBBBBB");
-                  if(r.q.tracked)
+                  if(conf("region")) { second = span(String(r.q.region),TEXT_SUB,19 * scale,false); }
+                  distHtml = span(distText(r.q),TEXT_SUB,19 * scale,false);
+                  if(i == selected && !r.q.avail && r.q.objs is Array && (r.q.objs as Array).length > 0)
                   {
-                     bar.graphics.beginFill(GOLD,1);
-                     bar.graphics.drawRect(3,y + 3,4,rowH - 6);
-                     bar.graphics.endFill();
+                     objLabel = span(word("objectives"),WHITE,18 * scale,false);
                   }
                   break;
                case ROW_OBJECTIVE:
-                  s.left.x = 12 + rowH * 1.5;
-                  left = html((int(r.o.state) == 1 ? "[x] " : "[ ] ") + String(r.o.text),
-                     int(r.o.state) == 2 ? "#D61010" : (r.o.tracked ? hex(GOLD) : (int(r.o.state) == 1 ? "#8A8A8A" : "#DDDDDD")));
+                  s.left.x = OBJ_TEXT_X - 2;
+                  s.left.width = boxW - OBJ_TEXT_X - INSET;
+                  colour = int(r.o.state) == 2 ? 0xD61010 : (r.o.tracked ? OBJ_ON : OBJ_OFF);
+                  left = span(String(r.o.text),colour,19 * scale,false);
                   break;
                case ROW_REGION:
-                  left = html((thisRegion ? "[x] " : "[ ] ") + word("thisRegion"),"#DDDDDD");
-                  break;
-               case ROW_FILTERS:
-                  left = html(word("filters"),"#E0C890");
+                  checked = thisRegion;
+                  s.left.x = INSET + 12 + BOX_SIZE + 12;
+                  left = span(word("thisRegion"),checked ? TEXT_ON : TEXT_OFF,20 * scale,false);
                   break;
                case ROW_FILTER:
-                  left = html((filters[int(r.k)] ? "[ ] " : "[x] ") + String(r.label),"#DDDDDD");
+                  checked = !filters[int(r.k)];
+                  s.left.x = INSET + 12 + BOX_SIZE + 12;
+                  left = span(String(r.label),checked ? TEXT_ON : TEXT_OFF,20 * scale,false);
                   break;
             }
             if(i == selected)
             {
-               bar.graphics.beginFill(0xFFFFFF,focused ? 0.16 : 0.08);
-               bar.graphics.drawRect(8,y,boxW - 16,rowH);
-               bar.graphics.endFill();
+               if(r.type == ROW_CAT)
+               {
+                  bar.graphics.lineStyle(2,ACCENT,focused ? 1 : 0.55);
+                  bar.graphics.drawRect(INSET + 1,y + 1,wide - 2,h - 2);
+                  bar.graphics.lineStyle();
+               }
+               else
+               {
+                  extra = 0;
+                  if(r.type == ROW_QUEST)
+                  {
+                     for(j = i + 1; j < rows.length && rows[j].type == ROW_OBJECTIVE; j++) { extra += heightOf(rows[j]); }
+                  }
+                  bar.graphics.lineStyle(2,ACCENT,focused ? 1 : 0.55);
+                  bar.graphics.beginFill(SELECT_FILL,focused ? 1 : 0.55);
+                  extra = Math.max(0,Math.min(extra,listTop + avail - (y + h)));
+                  bar.graphics.drawRect(INSET + 1,y + 1,wide - 2,h + extra - 2);
+                  bar.graphics.endFill();
+                  bar.graphics.lineStyle();
+               }
             }
-            s.left.width = boxW - s.left.x - 12;
-            s.left.height = rowH;
-            s.left.y = y + 1;
+            if(r.type == ROW_REGION || r.type == ROW_FILTER) { checkBox(INSET + 12,y + (h - BOX_SIZE) / 2,checked); }
+            if(r.type == ROW_OBJECTIVE) { objectiveBox(OBJ_BOX_X,y + (h - OBJ_BOX) / 2,int(r.o.state) == 1); }
             s.left.htmlText = left;
             s.left.visible = true;
-            s.right.y = y + Math.round(rowH * 0.12);
-            s.right.htmlText = right;
-            // The field sizes itself to its text, so its right edge is placed after the text is set: a reused
-            // row keeps its previous width and would otherwise start at the edge and run off the list.
-            s.right.x = boxW - 14 - s.right.width;
-            s.right.visible = right != "";
-            if(right != "")
-            {
-               // The name gives way to the region and distance on the right.
-               s.left.width = Math.max(40,s.right.x - s.left.x - 8);
-            }
+            placeLine(s.left,r.type == ROW_QUEST ? y + h * 0.31 : y + h / 2,r.type == ROW_QUEST ? 24 * scale : 20 * scale);
+            // The level sits in its own column, centred on the row.
+            s.lvl.htmlText = lvl;
+            s.lvl.x = LEVEL_X - 2;
+            placeLine(s.lvl,y + h / 2,30 * scale);
+            s.lvl.visible = lvl != "";
+            // The right-hand text: a count or a distance at the right edge, a label before it.
+            s.dist.htmlText = distHtml;
+            s.dist.x = (r.type == ROW_CAT ? COUNT_RIGHT : ROW_RIGHT) + 2 - s.dist.width;
+            placeLine(s.dist,r.type == ROW_QUEST ? y + h * 0.69 : y + h / 2,20 * scale);
+            s.dist.visible = distHtml != "";
+            s.obj.htmlText = objLabel;
+            s.obj.x = (distHtml != "" ? s.dist.x + 2 : (r.type == ROW_CAT ? COUNT_RIGHT : ROW_RIGHT)) - 14 + 2 - s.obj.width;
+            placeLine(s.obj,r.type == ROW_QUEST ? y + h * 0.69 : y + h / 2,18 * scale);
+            s.obj.visible = objLabel != "";
+            if(objLabel != "" && r.type == ROW_QUEST) { triangle(s.obj.x - 4,s.obj.y + s.obj.height / 2,9,6,2,WHITE); }
+            // The region line sits under the name.
+            s.right.htmlText = second;
+            s.right.x = NAME_X - 2;
+            placeLine(s.right,y + h * 0.69,19 * scale);
+            s.right.visible = second != "";
             if(r.type == ROW_QUEST) { fitName(s.left,r.q); }
             if(iconUrl != "")
             {
@@ -766,17 +1065,37 @@ package
                   try { s.loader.load(new URLRequest(iconUrl)); } catch(error:Error) { }
                }
                fitIcon(s);
-               s.icon.x = 12;
-               s.icon.y = y + rowH * 0.1;
-               s.icon.transform.colorTransform = r.q.tracked ? tintOf(GOLD) : (tint > 0 ? tintOf(tint) : new ColorTransform());
+               // The tracked quest's icon is gold at 0.85 size inside an orange ring with an arrow on each side.
+               ring = tracked ? 0.85 : 1;
+               s.icon.scaleX = s.icon.scaleY = ring;
+               s.icon.x = ICON_CX - ICON_SIZE * ring / 2;
+               s.icon.y = y + (h - ICON_SIZE * ring) / 2;
+               s.icon.transform.colorTransform = tracked ? tintOf(GOLD) : (tint > 0 ? tintOf(tint) : new ColorTransform());
                s.icon.visible = true;
+               if(tracked) { trackedRing(ICON_CX,y + h / 2); }
             }
+            y += h;
+         }
+         drawn = shown;
+         // The scroll bar: a 3 px track with a 5 px thumb, at least 24 px tall.
+         if(shown < rows.length)
+         {
+            trackY = listTop;
+            trackH = avail;
+            thumbH = Math.max(24,trackH * shown / rows.length);
+            bar.graphics.beginFill(TRACK_COLOR,0.9);
+            bar.graphics.drawRect(boxW - 8,trackY,3,trackH);
+            bar.graphics.endFill();
+            bar.graphics.beginFill(ACCENT,1);
+            bar.graphics.drawRect(boxW - 9,trackY + (trackH - thumbH) * (maxTop > 0 ? top / maxTop : 0),5,thumbH);
+            bar.graphics.endFill();
          }
          setChildIndex(bar,1);
       }
 
-      // "%r: %n/%t active quests": the shown map's region, your active quests there and in all regions, without the
-      // types the filter rows leave out (Only this region does not change the total). Quests not started yet never count.
+      // "%r: %n/%t active quests": the shown map's region (upper case, kept in countBold), your active quests there and
+      // in all regions, without the types the filter rows leave out (Only this region does not change the total).
+      // Quests not started yet never count.
       private function countText() : String
       {
          var q:Object = null;
@@ -784,6 +1103,7 @@ package
          var here:int = 0;
          var all:int = 0;
          var text:String = "";
+         countBold = "";
          for each(q in quests)
          {
             if(String(q.map) == curMap() && region == "") { region = String(q.region); }
@@ -793,8 +1113,9 @@ package
          }
          for each(q in available()) { if(region == "" && String(q.map) == curMap()) { region = String(q.region); } }
          if(region == "") { return ""; }
+         countBold = region.toUpperCase();
          text = all == 0 ? word("regionNone") : (all == 1 ? word("regionCountOne") : word("regionCount"));
-         return text.split("%r").join(region).split("%n").join(String(here)).split("%t").join(String(all));
+         return text.split("%r").join(countBold).split("%n").join(String(here)).split("%t").join(String(all));
       }
 
       private function counted(q:Object) : Boolean
@@ -807,21 +1128,21 @@ package
          return shown;
       }
 
+      // The quest's name in its difficulty colour, then its expansion in brackets, smaller.
       private function questText(q:Object, name:String) : String
       {
-         return (int(q.lvl) > 0 ? html(word("level") + " " + int(q.lvl) + "  ",hex(Number(q.band) > 0 ? Number(q.band) : 0xFFFFFF)) : "") +
-            html(name,conf("nameCol") ? String(q.diff) : "#FFFFFF") +
-            (conf("dlc") && String(q.dlc) != "" ? html("  " + String(q.dlc),"#9A9A9A") : "");
+         return html(name,conf("nameCol") ? String(q.diff) : "#FFFFFF").replace("<font ","<font face='$BoldFont' size='" + Math.round(24 * scale) + "' ") +
+            (conf("dlc") && String(q.dlc) != "" ? span("  (" + String(q.dlc) + ")",DLC_COLOR,18 * scale,false) : "");
       }
 
-      // A name too long for its row ends in an ellipsis instead of being cut off at the region column.
+      // A name too long for its row ends in an ellipsis instead of being cut off at the row's edge.
       private function fitName(f:TextField, q:Object) : void
       {
          var name:String = String(q.name);
          while(f.textWidth > f.width - 6 && name.length > 1)
          {
             name = name.substr(0,name.length - 1);
-            f.htmlText = questText(q,name.replace(/\s+$/,"") + "\u2026");
+            f.htmlText = questText(q,name.replace(/\s+$/,"") + "…");
          }
       }
 
@@ -832,9 +1153,8 @@ package
 
       // ---- actions ----
 
-      // Objective lines cannot be selected (Map Quest Insight 2.1.0): the highlight steps over them and the filters
-      // heading. An open objective list closes when the highlight leaves its quest, and with "Show objectives on
-      // highlight" (qmiQjObjHover) the highlighted quest's list opens by itself.
+      // Objective lines cannot be selected (Map Quest Insight 2.1.0): the highlight steps over them. The highlighted
+      // quest shows its objectives under it, and they close when the highlight leaves it.
       private function move(to:int) : void
       {
          var step:int = to > selected ? 1 : -1;
@@ -852,7 +1172,7 @@ package
 
       private function skipped(r:Object) : Boolean
       {
-         return r.type == ROW_FILTERS || r.type == ROW_OBJECTIVE;
+         return r.type == ROW_OBJECTIVE;
       }
 
       private function followObjectives() : void
@@ -862,7 +1182,7 @@ package
          var id:String = r && r.q && !r.q.avail ? String(r.q.i) : "";
          var key:String = "";
          var changed:Boolean = false;
-         if(id != "" && (expanded[id] || conf("objHover"))) { want[id] = true; }
+         if(id != "") { want[id] = true; }
          for(key in expanded) { if(expanded[key] && !want[key]) { changed = true; } }
          for(key in want) { if(!expanded[key]) { changed = true; } }
          if(!changed) { return; }
@@ -918,9 +1238,7 @@ package
                note("objective",String(r.q.i) + ":" + String(r.o.o));
                break;
             case ROW_REGION:
-               thisRegion = !thisRegion;
-               note("thisRegion",thisRegion ? "1" : "0");
-               rebuild();
+               toggleRegion();
                break;
             case ROW_FILTER:
                filters[int(r.k)] = !filters[int(r.k)];
@@ -939,25 +1257,28 @@ package
          render();
       }
 
+      // H: Only this region on or off; the highlight stays on its row when that row is still listed.
+      private function toggleRegion() : void
+      {
+         var keepId:Number = selectedQuestId();
+         var keepKey:String = selected >= 0 && selected < rows.length ? rowKey(rows[selected]) : "";
+         thisRegion = !thisRegion;
+         note("thisRegion",thisRegion ? "1" : "0");
+         build(keepId,keepKey);
+         followObjectives();
+         render();
+      }
+
       private function fold(row:int) : void
       {
          var r:Object = rows[row];
-         var cat:String = r.type == ROW_CAT ? String(r.cat) : (r.q ? String(r.q.cat) : "");
+         var cat:String = catOf(r);
          var i:int = 0;
          if(cat == "") { return; }
          folded[cat] = !folded[cat];
          build(-1);
          for(i = 0; i < rows.length; i++) { if(rows[i].type == ROW_CAT && String(rows[i].cat) == cat) { selected = i; break; } }
-         render();
-      }
-
-      private function objectives(row:int, on:Boolean) : void
-      {
-         var r:Object = row >= 0 && row < rows.length ? rows[row] : null;
-         if(!r || !r.q || r.q.avail) { return; }
-         if(Boolean(expanded[String(r.q.i)]) == on) { return; }
-         expanded[String(r.q.i)] = on;
-         build(Number(r.q.i));
+         followObjectives();
          render();
       }
 
@@ -974,18 +1295,19 @@ package
          render();
       }
 
-      // The first row's top: under the title, and under the Current Level line while it shows.
-      private function listStart() : Number
-      {
-         return title.y + rowH + 10 + (levelLine.visible ? rowH - 2 : 0);
-      }
-
       private function rowAt(localY:Number) : int
       {
-         var listTop:Number = listStart();
-         var row:int = top + int((localY - listTop) / rowH);
-         if(localY < listTop || localY > help.y || row < 0 || row >= rows.length) { return -1; }
-         return row;
+         var listTop:Number = LIST_TOP;
+         var row:int = top;
+         var edge:Number = listTop;
+         if(localY < listTop || localY > boxH - BAR_LINE - 8) { return -1; }
+         while(row < rows.length && row < top + drawn)
+         {
+            edge += heightOf(rows[row]);
+            if(localY < edge) { return row; }
+            row++;
+         }
+         return -1;
       }
 
       private function onClick(event:MouseEvent) : void
@@ -1039,10 +1361,9 @@ package
          if(code == 27 || code == 70 || nav == "escape-gamepad_B" || nav == "gamepad_L2") { close(); }
          else if(code == 38 || nav == "up" || nav == "dpad_up") { move(selected - 1); }
          else if(code == 40 || nav == "down" || nav == "dpad_down") { move(selected + 1); }
-         else if(code == 39 || nav == "right" || nav == "dpad_right") { objectives(selected,true); }
-         else if(code == 37 || nav == "left" || nav == "dpad_left") { objectives(selected,false); }
          else if(code == 13 || code == 69 || nav == "enter-gamepad_A") { activate(selected); }
-         else if(code == 72 || nav == "gamepad_X") { journal(selected); }
+         else if(code == 72) { toggleRegion(); }
+         else if(code == 74 || nav == "gamepad_X") { journal(selected); }
          else if(code == 84 || nav == "gamepad_R2") { cycleSort(); }
          else if(code == 67 || nav == "gamepad_Y") { fold(selected); }
          event.handled = true;
@@ -1065,6 +1386,7 @@ package
       {
          // CMF releases focus, the pan lock and the highlights itself on removal; the list forgets that it was open.
          removeEventListener(Event.ENTER_FRAME,onFrame);
+         if(opened && map && map.hidePanels is Function) { map.hidePanels(null); }
          opened = false;
          focused = false;
          lit = [];

@@ -8,7 +8,7 @@ CORE = (ROOT / "source/core/content/scripts/local/cmfCore.ws").read_text(encodin
 CLASSES = json.loads((ROOT / "source/panel/pin-fields/edits.json").read_text(encoding="utf-8"))["classes"]
 MENU = CLASSES["red/game/witcher3/menus/worldmap/MapMenu.as"]
 SPACE = MENU[40]["replace"]
-GRID = MENU[229]["replace"]
+GRID = next(e for e in MENU if "private function cmfDrawGrids(" in e["replace"])["replace"]
 
 
 class CoverCoreTests(unittest.TestCase):

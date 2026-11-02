@@ -1,5 +1,5 @@
 Map Quest Insight adapter for Conjunction Map Framework
-Version 2.4.0 (for Map Quest Insight 2.1.0 and 2.2.0; icons by Wolfer, Map Quest Insight's author)
+Version 2.5.0 (for Map Quest Insight 2.1.0 and 2.2.0; icons by Wolfer, Map Quest Insight's author)
 
 Brings Map Quest Insight's world map features back on Conjunction Map Framework's
 world map. Map Quest Insight stays exactly as its author ships it. Map Quest Insight
@@ -19,7 +19,7 @@ Each follows Map Quest Insight's own menu setting.
 It also sends where Map Quest Insight's own map puts a tall info box (beside the
 legend or on the right) as its own setting, which CMF 1.6.0 keeps apart from the box
 height. Version 1.1.1 tells CMF 1.5.0 or later that the adapter is installed as soon
-as the game starts, so CMF's optional adapter check can see it.
+as the game starts, so CMF's Status page can see it.
 
 REQUIREMENTS
 - Conjunction Map Framework 1.6.0 (version 13) or later.
@@ -78,7 +78,7 @@ All of it follows Map Quest Insight's own menu settings:
   dark faded edges, or none (Clear). From 2.3.0, with CMF API 14 or later, no dark
   bars stay under the tabs and the button hints, and the fades look as on Map Quest
   Insight's own map.
-- "Corner HUD" Clean: the tracked quest's dark boxes go, its text keeps an outline. From 2.4.0, with a CMF that has Panel visibility for the tracker (API 15), that row goes too; its two keys are in the key hints.
+- "Corner HUD" Clean: as in Map Quest Insight 2.2.0 alone, the tracked quest's dark boxes, its key row and their plates go, the quest name sits level with the region title, and a small "[F] Quests" box under the title opens the Quest List when clicked; its text keeps Wolfer's outline, and with CMF API 16 or later the soft third glow is added. Game look shows none of this.
 - Signposts hidden in the wider set of filter tabs Map Quest Insight 2.0 names.
 - No spreading of stacked markers on the fast travel map, as Map Quest Insight 2.0.1.
 - "Ultrawide map" and "Side panels position": on a wide screen the map fills the
@@ -90,19 +90,27 @@ All of it follows Map Quest Insight's own menu settings:
 - The Quest List (2.1.0), with "Quest list on the map" on: press F (LT on a controller) or click
   "Quests" in the key hints. It lists your active quests by category, the tracked one
   first, with type icon, level, name in its difficulty colour, region and distance.
-  Up/Down choose, Right/Left show a quest's objectives, E or Enter track, H opens the
-  journal, T sorts, C folds a category, F or Esc closes. Click to pick, double click
-  to track. From 2.2.0, as in Map Quest Insight 2.1.0: Gwent quests have their own
+  Up/Down choose, E or Enter track, H switches "Only this region", J opens the
+  journal, T sorts, C folds a section, F or Esc closes. Click to pick, double click
+  to track. From 2.5.0 the list is laid out as in Map Quest Insight 2.2.0 alone: it
+  takes the whole left edge of the screen (the region title, the legend and the
+  game's top bar with your level, crowns and the menu tabs are hidden while it is
+  open; with a CMF older than 1.9.0 they stay), its keys sit just above the game's
+  key hints, and it has a title block (QUEST LIST, the
+  region and your active quests, the sort, your level, "Only this region: On/Off"),
+  sections with a coloured stripe (Main Quests, Secondary Quests, Quests Available and
+  Quest Filters, each with its count and a fold arrow), rows 90 high with the quest's
+  objectives under the highlighted one, and the keys F, E, H and T along the bottom. From 2.2.0, as in Map Quest Insight 2.1.0: Gwent quests have their own
   section after Treasure hunts; objective lines are not selected and an open list
   closes when you move to another quest; on the tracked quest, E again, a second
   click or a double click swaps to its next objective not done yet (Swap Obj); the
   top right shows "Region: n/t active quests". It follows "Start quest sections
-  folded" and "Show objectives on highlight". With "Quests not started yet" on, a
+  folded". With "Quests not started yet" on, a
   Quests Available section (folded at first) lists the quests you have not started:
   highlighting a row moves the map to its "!" marker, E or a click on it puts a custom
   map marker there, and the header shows your level. Picking a quest rings its markers and centres on them; a quest in another
   region switches the map, as "Quests in other regions" says. "Only this region" and
-  the "Show on the map" rows sit at the bottom of the list. It follows "Sort quests
+  the "Show on the map" rows sit in the Quest Filters section (folded at first). It follows "Sort quests
   by", "Quest list text size", "Centre the map on the picked quest", "Map when the
   list closes", "Distance", "Region under quest names", "Names in difficulty colour"
   and "DLC name after quest names".
@@ -121,9 +129,10 @@ KNOWN DIFFERENCES
 - A "Show on the map" row changes the list at once and the map markers the next time
   the map opens.
 - A short click on a quest marker does not track it; hold to track, as in the game.
-- The Quest List sits between the region title and the legend, which CMF's map
-  cannot hide while the list is open. Map Quest Insight's own list covers the
-  whole left side.
+- The Quest List hides the region title, the legend and the game's top bar while it
+  is open, as Map Quest Insight's own list does; with a CMF older than 1.9.0 (API 16)
+  they cannot be hidden and stay on screen. Esc closes the list first, then the map,
+  as in Map Quest Insight. The stripe colours of the sections are estimates.
 - If another CMF pack styles the same pin one by one, the pack whose folder name sorts
   first wins. This adapter counts as Map Quest Insight's folder (modMapQuestInsight).
 

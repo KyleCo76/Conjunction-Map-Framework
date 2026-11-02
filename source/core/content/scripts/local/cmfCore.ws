@@ -21,7 +21,7 @@
 // place apart from its height (the tooltip keys tallMinHeight and the tall* places).
 // Never remove a call once published.
 
-function CMFGetVersion() : int { return 15; }
+function CMFGetVersion() : int { return 16; }
 
 // API 14: frame programs and their winning provider's per-layer phase.
 function CMFPropertyIconFrames() : int { return 45; }
@@ -8817,7 +8817,7 @@ function CMFThemeListKeys(kind : name) : string
 
 function CMFThemeGlowKeys() : string
 {
-	return "glow1Color,glow1Alpha,glow1Blur,glow1Strength,glow2Color,glow2Alpha,glow2Blur,glow2Strength";
+	return "glow1Color,glow1Alpha,glow1Blur,glow1Strength,glow2Color,glow2Alpha,glow2Blur,glow2Strength,glow3Color,glow3Alpha,glow3Blur,glow3Strength";
 }
 
 function CMFThemeShadowKeys() : string
@@ -9034,8 +9034,9 @@ function CMFThemeHideWords(part : name) : string
 			return "highlight,glow,pulse";
 		case 'mapEdge':
 			return "edgeFade";
-		case 'title':
 		case 'tracker':
+			return "plate,questPlate";
+		case 'title':
 		case 'worldButton':
 		case 'worldHint':
 			return "plate";
@@ -9770,6 +9771,62 @@ event OnCMFPanelNote(note : string)
 	CMFLog("panel " + note);
 }
 
+// The map panel saw a mod call its own function in the map file (a presence listener, see edits.json): that mod is installed.
+@addMethod(CR4MapMenu)
+event OnCMFPresenceSeen(folder : string)
+{
+	CMFDeclareProvider(folder);
+	CMFLog("presence seen folder=" + folder);
+}
+
+// API 16 (map.hidePanels, part hubBar): the common menu's top bar (level, crowns, weight, tab strip) lives in the hub
+// movie, not the map movie, so the map panel asks script and script calls the hub movie's own function.
+@addMethod(CR4CommonMenu)
+function CMFSetHubBarVisible(value : bool)
+{
+	var hubFlash : CScriptedFlashSprite;
+	var setBar : CScriptedFlashFunction;
+	hubFlash = GetMenuFlash();
+	if (!hubFlash)
+	{
+		return;
+	}
+	setBar = hubFlash.GetMemberFlashFunction("setPlayerDetailsVisible");
+	if (setBar)
+	{
+		setBar.InvokeSelfOneArg(FlashArgBool(value));
+	}
+}
+
+@addMethod(CR4MapMenu)
+function CMFFindHubMenu() : CR4CommonMenu
+{
+	var hubMenu : CR4CommonMenu;
+	hubMenu = (CR4CommonMenu)m_parentMenu;
+	if (!hubMenu)
+	{
+		hubMenu = (CR4CommonMenu)theGame.GetGuiManager().GetRootMenu();
+	}
+	return hubMenu;
+}
+
+// True while a movie has the common menu's top bar hidden; the close wrap only restores it then.
+@addField(CR4MapMenu)
+var cmfHubBarHidden : bool;
+
+// The map panel hides (false) or shows (true) the common menu's top bar for a movie that asked for the hubBar part.
+@addMethod(CR4MapMenu)
+event OnCMFHubBar(visible : bool)
+{
+	var hubMenu : CR4CommonMenu;
+	cmfHubBarHidden = !visible;
+	hubMenu = CMFFindHubMenu();
+	if (hubMenu)
+	{
+		hubMenu.CMFSetHubBarVisible(visible);
+	}
+}
+
 // The map panel calls this when a registered pin or legend image fails to load (see edits.json).
 @addMethod(CR4MapMenu)
 event OnCMFArtFailed(url : string)
@@ -9983,6 +10040,10 @@ function OnClosingMenu()
 {
 	var result : bool;
 	CMFReportView('close');
+	if (cmfHubBarHidden)
+	{
+		OnCMFHubBar(true);
+	}
 	result = wrappedMethod();
 	CMFMapCheckClose();
 	theGame.CMFMapClosed(this);

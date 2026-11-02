@@ -76,7 +76,7 @@ class TableTests(unittest.TestCase):
     def test_screen_line_ends_the_loaded_mods_page(self):
         # Above the heading it made the game list the page's parts in the right-hand column (start B, 2026-10-24).
         self.assertEqual(rows_of('CMFMenuStatusMods'), [('head', 'Mods', 'Map mods loaded'), ('mods',), ('screen',)])
-        self.assertIn('<Var id="CMFStatusScreen" value="0" displayName="Screen" displayType="OPTIONS"', addon.menu_xml())
+        self.assertIn('<Var id="CMFStatusScreen" value="" displayName="Screen" displayType="BUTTON"', addon.menu_xml())
 
     def test_string_ids_never_move(self):
         # Menu add-on 1.2.0 shipped these; 1.3.0 only appends.
@@ -135,8 +135,7 @@ class ScriptTests(unittest.TestCase):
         screen = body(self.script, 'function CMFMenuFillScreen(')
         self.assertLess(screen.index('if (CMFGetVersion() < 10)\n\t{\n\t\treturn false;'), screen.index('CMFScreenWidth()'))
         self.assertIn('core.ChoiceIndex("Movement_Wide")', screen)
-        for text in ('"Screen: open the map once"', '"Screen: " + IntToString(RoundF(width)) + " x " + '
-                     'IntToString(RoundF(height))', '"Map fills it (CMF)"', '"16:9 map (Vanilla)"',
+        for text in ('"Screen: open the map once"', '"Screen: " + CMFMenuAspectText(width, height)', '"Map fills it (CMF)"', '"16:9 map (Vanilla)"',
                      'CMFMenuFit("Map fills it (", core.ProviderName(winner), ")")'):
             self.assertIn(text, screen)
         self.assertEqual(self.script.count('CMFScreenWidth()'), 1)
@@ -144,6 +143,22 @@ class ScriptTests(unittest.TestCase):
         page = body(self.script, 'function CMFMenuFillPage(')
         self.assertIn('else if (varText == "CMFStatusScreen")\n\t\t{\n\t\t\tif (!CMFMenuFillScreen(storage, row, '
                       'remembered))\n\t\t\t{\n\t\t\t\trows.RemoveElement(i);', page)
+
+    def test_screen_label_reports_the_nearest_aspect_ratio(self):
+        text = body(self.script, 'function CMFMenuAspectText(')
+        names = re.findall(r'names\.PushBack\("([^"]+)"\)', text)
+        values = [float(v) for v in re.findall(r'values\.PushBack\(([0-9.]+)\)', text)]
+        self.assertEqual(names, ['5:4', '4:3', '3:2', '16:10', '16:9', '21:9', '32:9', '48:9'])
+        self.assertEqual(len(values), 8)
+        self.assertIn('AbsF(ratio - values[i])', text)
+        self.assertIn('if (gap < best)', text)
+
+        def nearest(w, h):
+            ratio = w / h
+            return min(range(8), key=lambda i: (abs(ratio - values[i]), i))
+        for w, h, want in ((2580, 1080, '21:9'), (1920, 1200, '16:10'), (3840, 1080, '32:9'),
+                           (1920, 1080, '16:9'), (1280, 1024, '5:4'), (1024, 768, '4:3'), (5120, 960, '48:9')):
+            self.assertEqual(names[nearest(w, h)], want, (w, h))
 
     def test_wide_vanilla_asks_the_cores_deciding_answer(self):
         wide = body(self.script, 'function CMFMenuWideVanilla() : bool')

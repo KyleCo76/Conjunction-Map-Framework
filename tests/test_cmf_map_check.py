@@ -173,7 +173,7 @@ class LifecycleTests(unittest.TestCase):
 
     def test_box_waits_until_the_menus_have_closed(self):
         # A box asked for while the map's menus close can be cleared with them, so it waits on a timer until no
-        # menu, message box, black screen or scene is up, as the adapter check's own box does.
+        # menu, message box, black screen or scene is up, as CMF's other boxes do.
         later = body(self.core, 'CMFMapCheckLater')
         self.assertRegex(later, r'if \(CMFMapCheckBusy\(\)\)\s*\{\s*CMFMapCheckSchedule\(\);\s*return;')
         self.assertIn('ShowUserDialogAdv(0, GetLocStringByKeyExt("cmf_popup_title"),', later)

@@ -541,12 +541,12 @@
     {
      "var": "CMFStatusScreen",
      "row": "Screen",
-     "text": "Your screen size as the map last saw it, and whether the map fills it. Open the map once to see it."
+     "text": "Your screen's shape as the map last saw it, and whether the map fills it. Open the map once to see it."
     },
     {
      "var": "CMFStatusMod*",
      "row": "Map mod 1 to 16 (shows each mod's name)",
-     "text": "A map mod CMF found, and which parts of the map it changes. Some show only after the map has been opened once."
+     "text": "A map mod CMF found and what it changes (some show after the map opens once). Needs its adapter: get it from CMF's Nexus page, Miscellaneous files."
     }
    ]
   },

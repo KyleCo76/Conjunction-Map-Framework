@@ -91,11 +91,11 @@ On `tooltip`, the title and body can override each generic glow suffix independe
 
 **Text keys**: `font` takes any font the game has loaded, such as `$TitleFont`, `$BodyFont`, `$BoldFont` or `$NormalFont`; `size` is in px; `color` is a colour; `spacing` is letter spacing in px; `align` is `left`, `center` or `right`.
 
-**Glow keys**: two glows, `glow1Color`, `glow1Alpha`, `glow1Blur`, `glow1Strength` and `glow2Color`, `glow2Alpha`, `glow2Blur`, `glow2Strength`. On `title` and `keyCap` they replace the text's own glow. On other parts they are added only to text that has no glow or shadow of its own, so the game's own shadows stay; on `worldButton` and `hints` they apply to the whole button.
+**Glow keys**: three glows, `glow1Color`, `glow1Alpha`, `glow1Blur`, `glow1Strength`, `glow2Color`, `glow2Alpha`, `glow2Blur`, `glow2Strength` and `glow3Color`, `glow3Alpha`, `glow3Blur`, `glow3Strength` (the third glow is API 16). On `title` and `keyCap` they replace the text's own glow. On other parts they are added only to text that has no glow or shadow of its own, so the game's own shadows stay; on `worldButton` and `hints` they apply to the whole button.
 
 **Shadow keys**: `shadowDistance`, `shadowAngle` (degrees), `shadowColor`, `shadowAlpha`, `shadowBlur`, `shadowStrength`.
 
-**`hide`** takes a comma-separated list of the game's own decorations on that part, from the words listed for it in the table at the end: `plate` (the backing plate), `selection` (the highlight of the selected row or tab), `arrowPlate` (the plate behind a row's arrow), `trackedPlate` (the tooltip's plate for the followed quest), `divider` (the tooltip's divider line), `frame` (the corner overview's frame), `edgeFade` (the map's edge gradients), `clickRect` (a key cap's click area) and `keys` (the tracker's key row).
+**`hide`** takes a comma-separated list of the game's own decorations on that part, from the words listed for it in the table at the end: `plate` (the backing plate), `selection` (the highlight of the selected row or tab), `arrowPlate` (the plate behind a row's arrow), `trackedPlate` (the tooltip's plate for the followed quest), `divider` (the tooltip's divider line), `frame` (the corner overview's frame), `edgeFade` (the map's edge gradients), `clickRect` (a key cap's click area), `keys` (the tracker's key row) and `questPlate` (on the tracker: only the quest boxes' plates, API 16; `plate` there still hides both the quest boxes and the key row's plate, as before).
 
 The other keys, part by part:
 
@@ -179,7 +179,7 @@ Revision 13 adds replacement text with the `allText` key and a managed hint offe
 ### Key groups
 
 - **text keys**: `font` (text), `size`, `color`, `spacing`, `align` (text)
-- **glow keys**: `glow1Color`, `glow1Alpha`, `glow1Blur`, `glow1Strength`, `glow2Color`, `glow2Alpha`, `glow2Blur`, `glow2Strength`
+- **glow keys**: `glow1Color`, `glow1Alpha`, `glow1Blur`, `glow1Strength`, `glow2Color`, `glow2Alpha`, `glow2Blur`, `glow2Strength`, `glow3Color`, `glow3Alpha`, `glow3Blur`, `glow3Strength`
 - **shadow keys**: `shadowDistance`, `shadowAngle`, `shadowColor`, `shadowAlpha`, `shadowBlur`, `shadowStrength`
 - **box keys** (every kind but `line`): `left`, `top`, `right`, `bottom`, `width`, `height`, `widthShare`, `heightShare`, `minWidth`, `minHeight`, `alignX`, `alignY`, `offsetX`, `offsetY`, `minLeft`, `maxRight`, `minTop`, `maxBottom`, `screenLeft`, `screenRight`, `screenTop`, `screenBottom`, `measure` (text), `fill`, `alpha`, `fill2`, `alpha2`, `gradient` (text), `angle`, `curve`, `stroke`, `strokeAlpha`, `strokeWidth`, `layer` (text), `order`, `view` (text), `when` (text), `repeat`, `repeatStep`, `alphaList` (text), `tab` (text), `tabLabel` (text), `click`, `above`, `fillHover`, `alphaHover`, `strokeHover`, `strokeAlphaHover`, `strokeWidthHover`, `colorHover`, `minPartHeight`, `wideAnchor` (text), `pinType` (text), `pinTag` (text), `withLook`, glow keys, shadow keys
 - **map-space keys** (`line` and `movie`): `layer` (text), `order`, `alpha`, `view` (text), `area` (text), `preview`, `fadeMs`, `tab` (text), `tabLabel` (text), `listen` (text), `listenFields` (text), `withLook`
@@ -194,7 +194,7 @@ Revision 13 adds replacement text with the `allText` key and a managed hint offe
 | `map` | `top`, `bottom`, `panLimit` (text), `centerInLimit`, `backdrop`, `frame` (text), `frameTop`, `frameBottom` | none | The map > Map size, position and backdrop |
 | `mapEdge` | `hide` (text) | `edgeFade` | Map look > Frames and panels |
 | `title` | text keys, glow keys, `x`, `y`, `screenX`, `screenY`, `wrap` (text), `hide` (text), `text` (text), `show` (text) | `plate` | Map look > Frames and panels; `show`: Map behaviour > Panel visibility |
-| `tracker` | glow keys, `nameFont` (text), `nameSize`, `nameColor`, `hide` (text), `x`, `y`, `scale`, `show` (text) | `plate` | Map look > Frames and panels; `show`: Map behaviour > Panel visibility |
+| `tracker` | glow keys, `nameFont` (text), `nameSize`, `nameColor`, `hide` (text), `x`, `y`, `scale`, `show` (text) | `plate`, `questPlate` | Map look > Frames and panels; `show`: Map behaviour > Panel visibility |
 | `legend` | glow keys, `allText` (text), `x`, `y`, `scale`, `show` (text), `autoHideMs`, `padShowFirst` | none | Map look > Legend; `show`, `autoHideMs`, `padShowFirst`: Map behaviour > Panel visibility |
 | `legendRow` | glow keys, `color`, `colorSelected`, `colorOff`, `counterColor`, `hide` (text), `font` (text), `size` | `plate`, `selection`, `arrowPlate` | Map look > Legend |
 | `legendTab` | glow keys, `color`, `spacing`, `hide` (text), `font` (text), `size` | `plate`, `selection` | Map look > Legend |

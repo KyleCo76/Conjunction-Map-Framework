@@ -204,6 +204,83 @@
       "text": {
         "en": "%r: %n/%t active quest"
       }
+    },
+    {
+      "id": 2000240030,
+      "key": "mqi_adapter_quests_box",
+      "text": {
+        "en": "Quests"
+      }
+    },
+    {
+      "id": 2000240031,
+      "key": "mqiadapter_ql_list_title",
+      "text": {
+        "en": "Quest List"
+      }
+    },
+    {
+      "id": 2000240032,
+      "key": "mqiadapter_ql_sort",
+      "text": {
+        "en": "Sort"
+      }
+    },
+    {
+      "id": 2000240033,
+      "key": "mqiadapter_ql_on",
+      "text": {
+        "en": "On"
+      }
+    },
+    {
+      "id": 2000240034,
+      "key": "mqiadapter_ql_off",
+      "text": {
+        "en": "Off"
+      }
+    },
+    {
+      "id": 2000240035,
+      "key": "mqiadapter_ql_filters_title",
+      "text": {
+        "en": "Quest Filters"
+      }
+    },
+    {
+      "id": 2000240036,
+      "key": "mqiadapter_ql_collapse",
+      "text": {
+        "en": "Collapse"
+      }
+    },
+    {
+      "id": 2000240037,
+      "key": "mqiadapter_ql_objectives",
+      "text": {
+        "en": "Objectives"
+      }
+    },
+    {
+      "id": 2000240038,
+      "key": "mqiadapter_ql_hint_close",
+      "text": {
+        "en": "Close"
+      }
+    },
+    {
+      "id": 2000240039,
+      "key": "mqiadapter_ql_hint_track",
+      "text": {
+        "en": "Track Quest"
+      }
+    },
+    {
+      "id": 2000240040,
+      "key": "mqiadapter_ql_hint_all_regions",
+      "text": {
+        "en": "All regions"
+      }
     }
   ]
 }

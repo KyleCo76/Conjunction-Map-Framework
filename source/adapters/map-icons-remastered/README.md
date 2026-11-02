@@ -4,7 +4,7 @@
 
 ## Why it also works without Map Icons - Remastered
 
-Map Icons - Remastered is a map-file-only mod: its icons live in its own copy of the world map file, which does not load while CMF draws the map, and it has no script or setting that another mod could check. So, like the Coloured Map Markers adapter, this pack cannot require the mod, and the pictures show with or without Map Icons installed. Map Icons - Remastered stays its Nexus requirement. Its claims name the mod's own folder, `mod000MapIconsRemastered`, so the order between map mods stays what it would be without CMF, and CMF's menu shows it as "Map Icons Remastered". The Adapter Check add-on cannot see the mod, so it never warns about it; the offline list checker names this pack.
+Map Icons - Remastered is a map-file-only mod: its icons live in its own copy of the world map file, which does not load while CMF draws the map, and it has no script or setting that another mod could check. So, like the Coloured Map Markers adapter, this pack cannot require the mod, and the pictures show with or without Map Icons installed. Map Icons - Remastered stays its Nexus requirement. Its claims name the mod's own folder, `mod000MapIconsRemastered`, so the order between map mods stays what it would be without CMF, and CMF's menu shows it as "Map Icons Remastered". CMF's Status page cannot see the mod, so it never lists it.
 
 ## Provenance
 

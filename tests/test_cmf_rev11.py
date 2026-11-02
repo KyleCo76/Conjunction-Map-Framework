@@ -93,7 +93,7 @@ class ApiTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_and_header(self):
-        self.assertIn('function CMFGetVersion() : int { return 15; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 16; }', self.core)
         self.assertRegex(self.core.split('function CMFGetVersion')[0], r'[Vv]ersion 11')
 
     def test_new_properties_are_declared_known_and_in_the_pack_tool(self):
