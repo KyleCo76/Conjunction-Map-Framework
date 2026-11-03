@@ -1,6 +1,6 @@
 """Write and stage CMF's optional in-game menu add-on, modCMFInGameMenu (developer only).
 
-Version 1.5.0 requires CMF API 11 for provider presence in Loaded map mods.
+Version 1.5.1 requires CMF API 11 for provider presence in Loaded map mods.
 
 The add-on is CMF's Options > Mods > Conjunction Map Framework entry: Mod order, Basic choices,
 Advanced choices (9 pages), General and Status (Loaded map mods with the Screen line, and 9 "Who wins"
@@ -33,7 +33,7 @@ from xml.sax.saxutils import quoteattr
 
 ROOT = Path(__file__).resolve().parents[1]
 MOD = 'modCMFInGameMenu'
-VERSION = '1.5.0'
+VERSION = '1.5.1'
 MIN_API = 11
 MENU = ROOT/'source/menu'/(MOD + '.xml')
 CATALOG = ROOT/'source/menu/strings.json'

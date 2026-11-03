@@ -1,14 +1,21 @@
 package
 {
+   import flash.display.Bitmap;
+   import flash.display.BitmapData;
    import flash.display.GradientType;
    import flash.display.Loader;
+   import flash.display.DisplayObject;
+   import flash.display.DisplayObjectContainer;
    import flash.display.MovieClip;
+   import flash.display.Shape;
    import flash.display.Sprite;
    import flash.events.Event;
    import flash.events.MouseEvent;
-   import flash.filters.GlowFilter;
+   import flash.filters.ColorMatrixFilter;
    import flash.geom.ColorTransform;
    import flash.geom.Matrix;
+   import flash.geom.Point;
+   import flash.geom.Rectangle;
    import flash.net.URLRequest;
    import flash.text.TextField;
    import flash.text.TextFieldAutoSize;
@@ -23,8 +30,8 @@ package
    public class MqiAdapterQuestList extends MovieClip
    {
       private static const GOLD:uint = 0xFFD402;
-      // Map Quest Insight's look (Wolfer's values). The panel width does not scale; the row heights and the text
-      // sizes scale with the list text size (qmiQjTextSize, default 90).
+      // Map Quest Insight 2.2.0 values (colours, sizes, places). The panel width does not scale; the row heights and
+      // the text sizes scale with the list text size (qmiQjTextSize, default 90).
       private static const PANEL_W:Number = 640;
       private static const HEADER_H:Number = 56;
       private static const QUEST_H:Number = 90;
@@ -32,6 +39,20 @@ package
       private static const ICON_SIZE:Number = 58;
       private static const BOX_SIZE:Number = 22;
       private static const BOX_FILL:Number = 14;
+      private static const BOX_OFF_FILL:Number = 18;
+      private static const BOX_OFF_COLOR:uint = 0x0B0B0B;
+      // Quest Filters rows (Map Quest Insight 2.2.0): the symbol's centre and scale (quest rows use 4.5), the label,
+      // and the count's right edge measured from the panel's right edge; the rows run in Map Quest Insight's order,
+      // each holding its hide-switch index.
+      private static const FILTER_ICON_X:Number = 48;
+      private static const FILTER_ICON_SCALE:Number = 2.3;
+      private static const FILTER_LABEL_X:Number = 80;
+      private static const FILTER_COUNT_RIGHT:Number = 76;
+      private static const FILTER_ORDER:Array = [10,8,0,1,2,3,4,5,6,7,9];
+      // The Heroes' Pursuits row's symbol (hide index 6) is drawn in grey through this colour matrix, once, into a
+      // bitmap (greyCopy): no filter sits on a row picture, whose cached image the game's player does not redraw when
+      // the row moves.
+      private static const GREY_MATRIX:Array = [0.299,0.587,0.114,0,0,0.299,0.587,0.114,0,0,0.299,0.587,0.114,0,0,0,0,0,1,0];
       private static const PLATE_COLOR:uint = 0x0B0B0B;
       private static const HEAD_TOP:uint = 0x2C2925;
       private static const HEAD_REST:uint = 0x242220;
@@ -43,34 +64,58 @@ package
       private static const BOX_COLOR:uint = 0x8C877E;
       private static const TRACK_COLOR:uint = 0x3C3832;
       private static const RING_COLOR:uint = 0xFF9900;
-      // The stripe of each section header (estimated from the screenshots, which clip bright colours).
-      private static const STRIPE_MAIN:uint = 0xFFD402;
-      private static const STRIPE_SECONDARY:uint = 0xFFD402;
-      private static const STRIPE_AVAILABLE:uint = 0xDEB25C;
-      private static const STRIPE_FILTERS:uint = 0xDCD6C8;
-      private static const TITLE_COLOR:uint = 0xDEB25C;
+      private static const TITLE_COLOR:uint = 0xD7B060;
+      private static const TAB_ON:uint = 0xF0F0F0;
+      private static const TAB_OFF:uint = 0x7E7A74;
+      private static const SORT_LABEL:uint = 0xC8C4BC;
+      private static const SORT_VALUE:uint = 0xE3D9C4;
+      private static const JUST_CHANGED:uint = 0xFFD966;
+      private static const REGION_ON:uint = 0xFFD966;
+      private static const REGION_OFF:uint = 0xC8C4BC;
+      private static const DIVIDER_COLOR:uint = 0x5A4A2A;
       private static const WHITE:uint = 0xFFFFFF;
       private static const OBJ_ON:uint = 0xF0BE38;
       private static const OBJ_OFF:uint = 0xDFDEDE;
-      private static const DLC_COLOR:uint = 0x9A9A9A;
+      private static const DLC_COLOR:uint = 0xBEBAB2;
       private static const ARROW_COLOR:uint = 0xD8D2C4;
       // Places in map units at text size 100% (the panel's own width, so these do not scale).
-      private static const INSET:Number = 22;
-      private static const LIST_TOP:Number = 112;
-      // The key row sits above the game's own bottom hint row (about 64 units tall, as in Map Quest Insight alone).
+      private static const INSET:Number = 20;
+      // The footer (round(56 x text size)) sits above the game's own bottom hint row (about 64 units tall, as in
+      // Map Quest Insight alone), so the divider is at the bottom minus both.
       private static const GAME_HINTS_H:Number = 64;
-      private static const BAR_LINE:Number = 70 + GAME_HINTS_H;
-      private static const HINT_GAP:Number = 28;
+      // The bottom key row (Map Quest Insight 2.2.0): labels in the normal font, size 28 at the row scale
+      // (0.6 x text size x 1.3), 24 apart, centred and capped to the panel width less 40.
+      private static const FOOT_LABEL:uint = 0xDCD6C8;
+      private static const FOOT_FONT:Number = 28;
+      private static const FOOT_GAP:Number = 24;
+      private static const FOOT_SCALE:Number = 0.78;
+      // The Objectives prompt sits on the quest row's second line, right-aligned, 14 px left of the distance text
+      // (or ending at ROW_RIGHT when there is none); the region text is clipped for it, to 40 px at the least.
+      private static const OBJ_PROMPT_GAP:Number = 14;
+      private static const REGION_MIN_W:Number = 40;
+      // Prompt key names: the keyboard key, then the controller button, then the PlayStation button. The only place
+      // that names them, so the game's button pictures can replace the text in promptButton alone.
+      private static const PROMPT_KEYS:Object = {"close":["F","LT","L2"],"track":["E","A","Cross"],"region":["H","X","Square"],"sort":["T","RT","R2"],"objs":[">","D-pad Right","D-pad Right"],"fold":["C","Y","Triangle"]};
+      // The game's button pictures (CMF API 17, map.cmfMakeButton): the controller button's navigation name and the
+      // keyboard key code per prompt, the same ones handleInput takes. On an older CMF, or when the map gives no
+      // button, the text prompts above stay. BUTTON_FONT is the size the game's button draws its word at; the
+      // pictures are scaled so the word matches the text prompt's size.
+      private static const PROMPT_NAV:Object = {"close":["gamepad_L2",70],"track":["enter-gamepad_A",69],"region":["gamepad_X",72],"sort":["gamepad_R2",84],"objs":["dpad_right",39],"fold":["gamepad_Y",67]};
+      private static const BUTTON_FONT:Number = 28;
+      // The Objectives prompt on the keyboard: the key cap's text gives way to a filled right triangle this share of
+      // the cap's height, in the cap's text colour.
+      private static const CAP_TRIANGLE:Number = 0.42;
       private static const OBJECT_H:Number = 22;
       private static const OBJ_BOX:Number = 13;
       private static const OBJ_BOX_X:Number = 173;
       private static const OBJ_TEXT_X:Number = 190;
       private static const ICON_CX:Number = 62;
-      private static const LEVEL_X:Number = 112;
-      private static const NAME_X:Number = 168;
-      private static const ROW_RIGHT:Number = 610;
+      private static const LEVEL_X:Number = 96;
+      private static const NAME_X:Number = 164;
+      private static const ROW_RIGHT:Number = 612;
       private static const COUNT_RIGHT:Number = 572;
-      private static const ARROW_X:Number = 595;
+      private static const ARROW_X:Number = 596;
+      private static const SHADOW_ALPHAS:Array = [0.4,0.28,0.18,0.1,0.05];
       private static const ROW_CAT:int = 1;
       private static const ROW_QUEST:int = 2;
       private static const ROW_OBJECTIVE:int = 3;
@@ -92,6 +137,7 @@ package
       private var selected:int = 0;
       private var top:int = 0;
       private var sortMode:int = 0;
+      private var sortChanged:Boolean = false;
       // Quests Available and Quest Filters start folded, as in Map Quest Insight's own list.
       private var folded:Object = {"avail":true,"filters":true};
       private var expanded:Object = {};
@@ -100,6 +146,18 @@ package
       private var touched:Boolean = false;
       private var lastArea:String = "";
       private var focusAt:int = 0;
+      // The device the prompts show: the game's input manager when it can be read, else what the keys came from.
+      private var pad:Boolean = false;
+      private var playStation:Boolean = false;
+      private var managerClass:Class = null;
+      private var managerTried:Boolean = false;
+      private var managerKnown:Boolean = false;
+      // Quests whose objectives the player closed (Left, or Right again); the selected quest shows them otherwise.
+      private var closedObjs:Object = {};
+      // The game buttons on show, by place ("foot0" to "foot3", "row_objs", "row_fold"): {key, clip}; key names the
+      // prompt, its word and the device, so a change of any makes a new button. The fold and Objectives prompts keep
+      // a place each, so moving between a header and a quest row only shows one and hides the other.
+      private var buttons:Object = {};
 
       private var pinsRef:Object;
       private var pinById:Object = {};
@@ -115,9 +173,13 @@ package
       private var restAt:int = 0;
       private var restDone:Boolean = true;
       private var drawn:int = 0;
+      // Until this time (getTimer) the list hides the map's panels again on every frame: a filter save rebuilds the
+      // map's pins (the game's UpdateData), which shows the legend again a frame or more after the list's new value.
+      private var rehideUntil:int = 0;
 
       private var bg:Sprite;
       private var bar:Sprite;
+      private var edge:Sprite;
       private var title:TextField;
       private var counter:TextField;
       private var levelLine:TextField;
@@ -133,12 +195,11 @@ package
          super();
          bg = new Sprite();
          addChild(bg);
-         bg.filters = [new GlowFilter(0x000000,0.6,5,5,2,1)];
          bar = new Sprite();
          bar.mouseEnabled = false;
          addChild(bar);
          title = field(false);
-         counter = field(true);
+         counter = field(false);
          levelLine = field(false);
          sortLine = field(false);
          regionLine = field(true);
@@ -191,6 +252,7 @@ package
             lastSeq = Number(listened.seq);
             take(listened);
          }
+         placeCorner();
          if(opened && map && focused) { map.lockPan(!conf("pan")); }
          return true;
       }
@@ -217,6 +279,35 @@ package
          return isNaN(value) ? fallback : value;
       }
 
+      // Quest list corner (conf.corner, stage units, 0 = the left edge): the list moves right by it, and a mask keeps
+      // anything it draws left of its own x (a slide-in or a wide label) from showing left of the corner.
+      private function placeCorner() : void
+      {
+         var offset:Number = Math.max(0,confNum("corner",0));
+         x = offset;
+         if(offset > 0)
+         {
+            if(!edge)
+            {
+               edge = new Sprite();
+               edge.mouseEnabled = false;
+               addChild(edge);
+            }
+            // Only the panel and its shadow strips (5 px to the right), redrawn on every call as the height can change.
+            edge.graphics.clear();
+            edge.graphics.beginFill(0,1);
+            edge.graphics.drawRect(0,0,boxW + 5,boxH);
+            edge.graphics.endFill();
+            mask = edge;
+         }
+         else
+         {
+            mask = null;
+            if(edge && edge.parent) { removeChild(edge); }
+            edge = null;
+         }
+      }
+
       private function word(key:String) : String
       {
          return data && data.words && data.words[key] != null ? String(data.words[key]) : "";
@@ -231,7 +322,8 @@ package
       {
          var first:Boolean = data == null;
          var keepId:Number = selectedQuestId();
-         var keepKey:String = selected >= 0 && selected < rows.length ? rowKey(rows[selected]) : "";
+         var keepKey:String = selectedKey();
+         var keepIndex:int = rows.length > 0 ? selected : -1;
          var i:int = 0;
          data = listened;
          quests = data.quests is Array ? data.quests as Array : [];
@@ -240,6 +332,7 @@ package
          if(first || Number(data.open) > lastOpen)
          {
             sortMode = int(confNum("sort",0));
+            sortChanged = false;
             thisRegion = conf("thisRegion");
             touched = false;
             filters = [];
@@ -250,13 +343,15 @@ package
          }
          availDistances();
          scale = confNum("textSize",90) / 100;
+         // Every value while the list is open: hide the panels again now and for the next second (see rehideUntil).
+         if(opened) { rehide(); }
          if(Number(data.open) > lastOpen)
          {
             lastOpen = Number(data.open);
             open(int(Number(data.at)));
             return;
          }
-         build(keepId,keepKey);
+         build(keepId,keepKey,keepIndex);
          render();
       }
 
@@ -293,6 +388,7 @@ package
          pendingObj = -1;
          pendingQa = false;
          expanded = {};
+         closedObjs = {};
          visible = true;
          hidePanelsAgain();
          // Start quest sections folded (qmiQjFoldAll): every section, Quests Available too, at each opening.
@@ -322,6 +418,7 @@ package
          if(!opened) { return; }
          opened = false;
          focusAt = 0;
+         rehideUntil = 0;
          unlight();
          restDone = true;
          if(map)
@@ -344,10 +441,17 @@ package
          note("open","0");
       }
 
-      // CMF brings the hidden panels back on an area change: hide them again (nothing on a CMF without hidePanels).
+      // CMF brings the hidden panels back on an area change, and the game's own pin build (UpdateData, run again on a
+      // filter save) shows the legend again: hide them again (nothing on a CMF without hidePanels).
       private function hidePanelsAgain() : void
       {
          if(map && map.hidePanels is Function) { map.hidePanels(["legend","title","hubBar"]); }
+      }
+
+      private function rehide() : void
+      {
+         hidePanelsAgain();
+         rehideUntil = getTimer() + 1000;
       }
 
       private function takeFocus() : void
@@ -488,7 +592,17 @@ package
       private function onFrame(event:Event) : void
       {
          var pins:Object = null;
+         var device:int = 0;
          if(!map || !opened) { return; }
+         device = managerDevice();
+         managerKnown = device >= 0;
+         if(managerKnown) { setDevice(device > 0,device == 2); }
+         if(rehideUntil > 0)
+         {
+            hidePanelsAgain();
+            if(getTimer() >= rehideUntil) { rehideUntil = 0; }
+         }
+         dressButtons();
          if(focusAt > 0 && getTimer() >= focusAt)
          {
             focusAt = 0;
@@ -497,6 +611,8 @@ package
          pins = map.pins;
          if(pins && pins !== pinsRef && (pins as Array).length > 0)
          {
+            // New pins: the map ran its pin build again, which shows the legend again.
+            rehide();
             snapshot();
             if(pendingPick >= 0)
             {
@@ -582,7 +698,24 @@ package
          return r.type + ":" + String(r.cat) + ":" + String(r.k);
       }
 
-      private function build(keepId:Number, keepKey:String = "") : void
+      // The selected row's key, kept across a rebuild (see build).
+      private function selectedKey() : String
+      {
+         return selected >= 0 && selected < rows.length ? rowKey(rows[selected]) : "";
+      }
+
+      // Rebuilds the rows keeping the selection as Map Quest Insight 2.2.0 does after any rebuild (a value sent after a
+      // filter save or the pin build, a filter, Only this region, the sort, objectives opening or closing).
+      private function buildKept() : void
+      {
+         build(selectedQuestId(),selectedKey(),selected);
+      }
+
+      // The selection after a rebuild (Map Quest Insight 2.2.0): the row with the same key (a quest by its id, a section
+      // header by its section, a filter row by its filter); when that row is gone, the same index, clamped to the last
+      // row (keepIndex -1: no index to keep, the first row under a leading header). render then scrolls only as far
+      // as the selection needs.
+      private function build(keepId:Number, keepKey:String = "", keepIndex:int = -1) : void
       {
          var cats:Array = [];
          var byCat:Object = {};
@@ -634,15 +767,20 @@ package
          if(!folded["filters"])
          {
             rows.push({"type":ROW_REGION});
-            for(i = 0; i < 11; i++) { rows.push({"type":ROW_FILTER,"k":i,"label":i < names.length ? names[i] : ""}); }
+            for(i = 0; i < FILTER_ORDER.length; i++) { rows.push({"type":ROW_FILTER,"k":FILTER_ORDER[i],"label":FILTER_ORDER[i] < names.length ? names[FILTER_ORDER[i]] : ""}); }
          }
-         selected = 0;
+         selected = -1;
          for(i = 0; i < rows.length; i++)
          {
             if(rows[i].type == ROW_QUEST && Number(rows[i].q.i) == keepId) { selected = i; break; }
          }
          if(keepKey != "") { for(i = 0; i < rows.length; i++) { if(rowKey(rows[i]) == keepKey) { selected = i; break; } } }
-         if(selected == 0 && rows.length > 1 && rows[0].type == ROW_CAT) { selected = 1; }
+         if(selected < 0 && keepIndex >= 0) { selected = Math.max(0,Math.min(keepIndex,rows.length - 1)); }
+         if(selected < 0)
+         {
+            selected = 0;
+            if(rows.length > 1 && rows[0].type == ROW_CAT) { selected = 1; }
+         }
       }
 
       private function slot(i:int) : Object
@@ -650,13 +788,12 @@ package
          var s:Object = null;
          while(slots.length <= i)
          {
-            s = {"left":field(false),"right":field(false),"dist":field(true),"obj":field(true),"lvl":field(false),"icon":new Sprite(),"loader":new Loader(),"url":""};
+            s = {"left":field(false),"right":field(false),"dist":field(true),"obj":field(true),"lvl":field(false),"icon":new Sprite(),"loader":null,"grey":false,"greyOn":false,"greyPic":null,"url":"","type":-1};
             s.right.width = 330;
-            s.lvl.width = 56;
+            s.lvl.width = 62;
             s.icon.mouseEnabled = false;
             s.icon.mouseChildren = false;
-            s.icon.addChild(s.loader);
-            s.loader.contentLoaderInfo.addEventListener(Event.COMPLETE,iconLoaded,false,0,true);
+            newLoader(s);
             addChild(s.icon);
             slots.push(s);
          }
@@ -672,11 +809,128 @@ package
          }
       }
 
+      // Each slot owns one picture holder (s.icon) holding exactly one Loader. A new picture never goes into the old
+      // Loader: the old one is closed, unloaded and taken out with everything else in the holder, and a fresh Loader
+      // takes its place, so a reused slot can never show its last row's picture behind the new one.
+      private function newLoader(s:Object) : void
+      {
+         var old:Loader = s.loader as Loader;
+         if(old)
+         {
+            old.contentLoaderInfo.removeEventListener(Event.COMPLETE,iconLoaded);
+            try { old.close(); } catch(error:Error) { }
+            try { old.unload(); } catch(error:Error) { }
+         }
+         while(s.icon.numChildren > 0) { s.icon.removeChildAt(0); }
+         if(s.greyPic)
+         {
+            try { BitmapData(Bitmap(s.greyPic.getChildAt(0)).bitmapData).dispose(); } catch(error:Error) { }
+         }
+         s.greyPic = null;
+         s.loader = new Loader();
+         s.loader.visible = false;
+         s.loader.contentLoaderInfo.addEventListener(Event.COMPLETE,iconLoaded,false,0,true);
+         s.icon.addChild(s.loader);
+         s.greyOn = false;
+      }
+
+      // A reused slot starts clean whenever its row type changes: the old picture holder is emptied (a fresh Loader) and
+      // its scale, tint and filters are gone, so a filter row never shows a quest badge under its symbol (or the other
+      // way round).
+      private function resetSlot(s:Object, type:int) : void
+      {
+         if(s.type == type) { return; }
+         s.type = type;
+         newLoader(s);
+         s.url = "";
+         s.icon.scaleX = s.icon.scaleY = 1;
+         s.icon.transform.colorTransform = new ColorTransform();
+         s.icon.visible = false;
+      }
+
+      // The panel's backing: one plate, redrawn from clear on every render, at the spec colour and alpha.
+      private function drawPlate() : void
+      {
+         var g:Object = bg.graphics;
+         g.clear();
+         g.beginFill(PLATE_COLOR,conf("fullScreen") ? 0.68 : 0.78);
+         g.drawRect(0,0,boxW,boxH);
+         g.endFill();
+      }
+
+      // Map pins and the edge arrow are siblings in CMF's holder: keep the list on top of them (nothing if it cannot).
+      private function toFront() : void
+      {
+         try
+         {
+            if(parent && parent.getChildIndex(this) < parent.numChildren - 1) { parent.setChildIndex(this,parent.numChildren - 1); }
+         }
+         catch(error:Error) { }
+      }
+
+      // Shows the slot's picture once its Loader has content: every Loader is fresh for its one picture (newLoader), so
+      // any content it has is the row's own, whether its load finished with an event or not. The grey matrix sits on
+      // the Loader itself, put on or taken off only when the content is there and the wanted state changes (never
+      // cleared and set again on every render, which left the grey symbol blank after a redraw).
       private function fitIcon(s:Object) : void
       {
          var size:Number = ICON_SIZE;
+         var k:Number = 0;
          if(!s.loader.content || !(s.loader.content.width > 0)) { return; }
-         s.loader.scaleX = s.loader.scaleY = size / Math.max(s.loader.content.width,s.loader.content.height);
+         k = size / Math.max(s.loader.content.width,s.loader.content.height);
+         s.loader.scaleX = s.loader.scaleY = k;
+         // The grey copy is made once per loaded picture (greyOn), then shown or not on every call like the picture.
+         if(s.grey && !s.greyOn)
+         {
+            s.greyOn = true;
+            s.greyPic = greyCopy(s.loader.content);
+            if(s.greyPic) { s.icon.addChild(s.greyPic); }
+         }
+         if(s.greyPic)
+         {
+            s.greyPic.scaleX = s.greyPic.scaleY = k;
+            s.greyPic.visible = s.grey;
+         }
+         // Without a grey copy (the draw failed) the picture shows as it is rather than not at all.
+         s.loader.visible = !(s.grey && s.greyPic);
+      }
+
+      // The loaded picture drawn once into a bitmap and turned grey there (BitmapData.applyFilter), in a holder placed
+      // as the picture is; null when the draw fails or draws nothing (the caller then shows the picture ungreyed).
+      private function greyCopy(content:DisplayObject) : Sprite
+      {
+         var box:Rectangle = null;
+         var data:BitmapData = null;
+         var m:Matrix = null;
+         var pic:Bitmap = null;
+         var holder:Sprite = null;
+         try
+         {
+            box = content.getBounds(content);
+            if(!(box.width >= 1 && box.height >= 1)) { return null; }
+            data = new BitmapData(Math.ceil(box.width),Math.ceil(box.height),true,0);
+            m = new Matrix();
+            m.translate(-box.x,-box.y);
+            data.draw(content,m);
+            if(data.getColorBoundsRect(0xFF000000,0,false).width <= 0)
+            {
+               data.dispose();
+               return null;
+            }
+            data.applyFilter(data,data.rect,new Point(0,0),new ColorMatrixFilter(GREY_MATRIX));
+            pic = new Bitmap(data,"auto",true);
+            pic.x = box.x;
+            pic.y = box.y;
+            holder = new Sprite();
+            holder.mouseEnabled = false;
+            holder.addChild(pic);
+         }
+         catch(error:Error)
+         {
+            if(data) { try { data.dispose(); } catch(error2:Error) { } }
+            holder = null;
+         }
+         return holder;
       }
 
       private function html(text:String, color:String) : String
@@ -706,15 +960,38 @@ package
          switch(r.type)
          {
             case ROW_CAT:
-               return Math.round(HEADER_H * scale);
+               return Math.max(30,Math.round(HEADER_H * scale));
             case ROW_QUEST:
-               return Math.round(QUEST_H * scale);
+               return Math.max(75,Math.round(QUEST_H * scale));
             case ROW_OBJECTIVE:
                return Math.round(OBJECT_H * scale);
             default:
-               return Math.round(FILTER_H * scale);
+               return Math.max(34,Math.round(FILTER_H * scale));
          }
-         return Math.round(FILTER_H * scale);
+         return Math.max(34,Math.round(FILTER_H * scale));
+      }
+
+      // A font size at the list text size, rounded (Map Quest Insight 2.2.0 rounds each size).
+      private function px(size:Number) : Number
+      {
+         return Math.round(size * scale);
+      }
+
+      // The list starts round(100 x text size) down; the footer is round(56 x text size) tall and sits above the
+      // game's own bottom hint row, so the list ends and the divider stands that far above the bottom.
+      private function listTopY() : Number
+      {
+         return Math.round(100 * scale);
+      }
+
+      private function footerH() : Number
+      {
+         return Math.round(56 * scale);
+      }
+
+      private function barLine() : Number
+      {
+         return GAME_HINTS_H + footerH();
       }
 
       private function heightSum(from:int, to:int) : Number
@@ -737,7 +1014,7 @@ package
       {
          var m:Matrix = new Matrix();
          m.createGradientBox(w,h,0,x,y);
-         bar.graphics.beginGradientFill(GradientType.LINEAR,[HEAD_TOP,HEAD_REST,HEAD_REST],[1,0.85,0.22],[0,128,255],m);
+         bar.graphics.beginGradientFill(GradientType.LINEAR,[HEAD_TOP,HEAD_REST,HEAD_REST],[1,0.85,0.22],[0,110,255],m);
          bar.graphics.drawRect(x,y,w,h);
          bar.graphics.endFill();
          bar.graphics.beginFill(stripe,1);
@@ -745,12 +1022,18 @@ package
          bar.graphics.endFill();
       }
 
+      // The stripe of a section header by its key: Main 0, Secondary 1, Contracts 2, Treasure 3, Hearts of Stone 5,
+      // Blood and Wine 6, Filters; Gwent (4), Quests Available and any other section take the Other colour.
       private function stripeOf(cat:String) : uint
       {
-         if(cat == "avail") { return STRIPE_AVAILABLE; }
-         if(cat == "filters") { return STRIPE_FILTERS; }
-         if(cat == "0") { return STRIPE_MAIN; }
-         return STRIPE_SECONDARY;
+         if(cat == "0") { return 0xFFC400; }
+         if(cat == "1") { return 0x9C8C00; }
+         if(cat == "2") { return 0x5BA65F; }
+         if(cat == "3") { return 0xB44100; }
+         if(cat == "5") { return 0x4F8FD0; }
+         if(cat == "6") { return 0xC0506A; }
+         if(cat == "filters") { return 0xA08D6B; }
+         return 0x7A8899;
       }
 
       // The section a row belongs to: a header's own, a quest's, or the filters section for its rows.
@@ -774,6 +1057,61 @@ package
             bar.graphics.drawRect(x + (BOX_SIZE - BOX_FILL) / 2,y + (BOX_SIZE - BOX_FILL) / 2,BOX_FILL,BOX_FILL);
             bar.graphics.endFill();
          }
+         else
+         {
+            bar.graphics.beginFill(BOX_OFF_COLOR,1);
+            bar.graphics.drawRect(x + (BOX_SIZE - BOX_OFF_FILL) / 2,y + (BOX_SIZE - BOX_OFF_FILL) / 2,BOX_OFF_FILL,BOX_OFF_FILL);
+            bar.graphics.endFill();
+         }
+      }
+
+      // The Deadly row's skull, drawn here (the row has no picture): a round head with two eye holes and a jaw line,
+      // on a dark backing the size of the other rows' symbols; x, y its top left.
+      private function deadlySkull(x:Number, y:Number, on:Boolean) : void
+      {
+         var g:Object = bar.graphics;
+         var size:Number = ICON_SIZE * FILTER_ICON_SCALE / 4.5;
+         var cx:Number = x + size / 2;
+         var cy:Number = y + size * 0.44;
+         var fill:uint = on ? 0xFFFFFF : 0x6E6A64;
+         g.beginFill(0x161412,1);
+         g.drawRect(x,y,size,size);
+         g.endFill();
+         g.beginFill(fill,1);
+         g.drawCircle(cx,cy,size * 0.32);
+         g.endFill();
+         g.beginFill(fill,1);
+         g.drawRect(cx - size * 0.17,cy + size * 0.18,size * 0.34,size * 0.22);
+         g.endFill();
+         g.beginFill(0x161412,1);
+         g.drawCircle(cx - size * 0.12,cy + size * 0.02,size * 0.08);
+         g.drawCircle(cx + size * 0.12,cy + size * 0.02,size * 0.08);
+         g.endFill();
+         g.lineStyle(1.5,0x161412,1);
+         g.moveTo(cx - size * 0.17,cy + size * 0.29);
+         g.lineTo(cx + size * 0.17,cy + size * 0.29);
+         g.lineStyle();
+      }
+
+      // The picture of a filter row, sent by the script in the hide-switch order; empty for Deadly.
+      private function filterIcon(k:int) : String
+      {
+         var sent:Array = data && data.filterIcons is Array ? data.filterIcons as Array : [];
+         if(k < 0 || k >= sent.length) { return ""; }
+         return String(sent[k]);
+      }
+
+      // How many quests (all regions) the row's switch hides: the quests of its kind, or the deadly ones for Deadly.
+      private function filterCount(k:int) : int
+      {
+         var q:Object = null;
+         var n:int = 0;
+         for each(q in quests)
+         {
+            if(k == 9) { if(q.deadly) { n++; } }
+            else if(int(q.fk) == k) { n++; }
+         }
+         return n;
       }
 
       // An objective's small box: empty while open, crossed when done.
@@ -829,66 +1167,344 @@ package
          var text:String = countText();
          var bold:String = countBold;
          var sortName:String = sortMode < sorts.length ? sorts[sortMode] : "";
-         title.htmlText = span(word("listTitle").toUpperCase(),TITLE_COLOR,32 * scale,true);
-         title.x = 20;
-         title.width = 280;
-         placeLine(title,54,32 * scale);
+         var lineY:Number = listTopY() - px(24);
+         title.htmlText = span(word("listTitle").toUpperCase(),TITLE_COLOR,px(32),true);
+         title.x = 18;
+         title.width = 262;
+         title.height = Math.round(px(32) * 1.3 + 4);
+         title.y = px(12);
          if(bold != "" && text.indexOf(bold) == 0)
          {
-            counter.htmlText = span(bold,TEXT_ON,20 * scale,true) + span(text.substr(bold.length),WHITE,20 * scale,false);
+            counter.htmlText = "<p align='right'>" + span(bold,TAB_ON,px(20),true) + span(text.substr(bold.length),TAB_ON,px(20),false) + "</p>";
          }
-         else { counter.htmlText = span(text,WHITE,20 * scale,false); }
-         counter.x = PANEL_W - INSET + 2 - counter.width;
-         placeLine(counter,54,20 * scale);
+         else { counter.htmlText = "<p align='right'>" + span(text,TAB_ON,px(20),false) + "</p>"; }
+         // Starts at W-360 and is right-aligned up to the panel's inset, so it never covers the title.
+         counter.x = PANEL_W - 360;
+         counter.width = PANEL_W - INSET - (PANEL_W - 360);
+         counter.height = Math.round(px(20) * 1.3 + 4);
+         counter.y = px(20);
          counter.visible = text != "";
-         sortLine.htmlText = span(word("sort") + ": ",WHITE,18 * scale,false) + span(sortName,WHITE,18 * scale,true) + span(" [T]",TEXT_OFF,18 * scale,false);
-         sortLine.x = 20;
+         sortLine.htmlText = span(word("sort") + ": ",SORT_LABEL,px(18),false) + span(sortName,sortChanged ? JUST_CHANGED : SORT_VALUE,px(18),true) + (pad ? "" : span(" [" + promptKey("sort") + "]",TAB_OFF,px(18),false));
+         sortLine.x = 18;
          sortLine.width = 200;
-         placeLine(sortLine,87,18 * scale);
+         placeLine(sortLine,lineY,px(18));
          levelLine.visible = conf("givers") && Number(data.playerLevel) > 0;
          if(levelLine.visible)
          {
-            levelLine.htmlText = "<p align='center'>" + span(word("currentLevel") + ": " + int(data.playerLevel),WHITE,18 * scale,true) + "</p>";
+            levelLine.htmlText = "<p align='center'>" + span(word("currentLevel") + ": " + int(data.playerLevel),SORT_LABEL,px(18),true) + "</p>";
             levelLine.width = 220;
             levelLine.x = 313 - 110;
-            placeLine(levelLine,87,18 * scale);
+            placeLine(levelLine,lineY,px(18));
          }
-         regionLine.htmlText = span(word("thisRegion") + ": " + (thisRegion ? word("on") : word("off")),TITLE_COLOR,18 * scale,false);
+         regionLine.htmlText = span(word("thisRegion") + ": " + (thisRegion ? word("on") : word("off")),thisRegion ? REGION_ON : REGION_OFF,px(18),false);
          regionLine.x = PANEL_W - INSET + 2 - regionLine.width;
-         placeLine(regionLine,87,18 * scale);
+         placeLine(regionLine,lineY,px(18));
       }
 
-      // The bottom bar: a thin line, and the four keys with their words, centred.
+      // The footer: a divider line above it and the four keys with their words, centred in it.
       private function drawHintBar() : void
       {
-         var keys:Array = ["F","E","H","T"];
+         var ids:Array = ["close","track","region","sort"];
          var words:Array = [word("close"),word("track"),thisRegion ? word("allRegions") : word("thisRegion"),word("sort")];
          var total:Number = 0;
+         var k:Number = 1;
          var x:Number = 0;
          var i:int = 0;
-         bar.graphics.beginFill(TRACK_COLOR,1);
-         bar.graphics.drawRect(INSET,boxH - BAR_LINE,PANEL_W - 2 * INSET,1);
+         var made:MovieClip = null;
+         var widths:Array = [];
+         bar.graphics.beginFill(DIVIDER_COLOR,1);
+         bar.graphics.drawRect(INSET,boxH - barLine(),PANEL_W - 2 * INSET,1);
          bar.graphics.endFill();
          for(i = 0; i < 4; i++)
          {
-            hints[i].htmlText = span(keys[i],TEXT_OFF,18 * scale,false) + span("  ",TEXT_OFF,18 * scale,false) + span(words[i],WHITE,20 * scale,false);
-            total += hints[i].width;
+            hints[i].scaleX = hints[i].scaleY = 1;
+            hints[i].htmlText = span(promptButton(ids[i],words[i]),FOOT_LABEL,px(FOOT_FONT * FOOT_SCALE),false);
+            made = gameButton("foot" + i,ids[i],words[i]);
+            if(made) { made.scaleX = made.scaleY = footFont() / BUTTON_FONT; }
+            widths[i] = made ? made.getBounds(this).width : hints[i].width;
+            total += widths[i];
          }
-         x = (PANEL_W - (total + HINT_GAP * 3)) / 2;
+         total += FOOT_GAP * 3;
+         if(total > PANEL_W - 40) { k = (PANEL_W - 40) / total; }
+         x = (PANEL_W - total * k) / 2;
          for(i = 0; i < 4; i++)
          {
+            hints[i].scaleX = hints[i].scaleY = k;
             hints[i].x = x;
-            placeLine(hints[i],boxH - 44 - GAME_HINTS_H,20 * scale);
-            hints[i].visible = true;
-            x += hints[i].width + HINT_GAP;
+            placeLine(hints[i],boxH - GAME_HINTS_H - footerH() / 2,footFont());
+            made = gameButton("foot" + i,ids[i],words[i]);
+            if(made)
+            {
+               made.scaleX = made.scaleY = footFont() / BUTTON_FONT * k;
+               placeButton(made,x,boxH - GAME_HINTS_H - footerH() / 2,false);
+            }
+            hints[i].visible = !made;
+            x += widths[i] * k + FOOT_GAP * k;
          }
+      }
+
+      private function footFont() : Number
+      {
+         return px(FOOT_FONT * FOOT_SCALE);
+      }
+
+      // ---- prompts and the device ----
+
+      // The name of a prompt's key on the device in use.
+      private function promptKey(id:String) : String
+      {
+         var names:Array = PROMPT_KEYS[id] as Array;
+         return names[pad ? (playStation ? 2 : 1) : 0];
+      }
+
+      // One prompt: the key and its word. Text today; the game's button picture replaces this one function.
+      private function promptButton(id:String, label:String) : String
+      {
+         return "[" + promptKey(id) + "] " + label;
+      }
+
+      // The game's own button for a prompt (CMF API 17), made once per prompt, word and device; null on an older CMF
+      // or when the map gives none, and the caller keeps its text.
+      private function gameButton(place:String, id:String, label:String) : MovieClip
+      {
+         var nav:Array = PROMPT_NAV[id] as Array;
+         var key:String = id + "|" + label + "|" + (pad ? (playStation ? "ps" : "pad") : "kb");
+         var held:Object = buttons[place];
+         var made:MovieClip = null;
+         if(held && held.key == key && held.clip)
+         {
+            dressButton(held);
+            return held.clip as MovieClip;
+         }
+         dropButton(place);
+         if(!map || !(map.cmfMakeButton is Function) || !nav) { return null; }
+         try { made = map.cmfMakeButton(String(nav[0]),int(nav[1]),label) as MovieClip; } catch(error:Error) { made = null; }
+         if(!made) { return null; }
+         made.mouseEnabled = false;
+         made.mouseChildren = false;
+         made.visible = false;
+         keyPicture(made);
+         addChild(made);
+         held = {"key":key,"clip":made,"cap":id == "objs" && !pad,"capField":null,"mark":null};
+         buttons[place] = held;
+         dressButton(held);
+         return made;
+      }
+
+      // The game's button draws a clickable button's key as "[F]" text in a box (the tracker's and the world map's
+      // buttons) and a hint row button's key as the key picture (the map's own bottom row). These buttons are never
+      // clicked, so they take the hint row's look: not clickable, set up again.
+      private function keyPicture(made:MovieClip) : void
+      {
+         try
+         {
+            if("clickable" in made && made["clickable"] != false)
+            {
+               made["clickable"] = false;
+               made["updateDataFromStage"]();
+               made["validateNow"]();
+            }
+         }
+         catch(error:Error) { }
+      }
+
+      // What the list changes on a game button, applied again whenever the button may have redrawn itself (it redraws
+      // once it is on the stage and on the game's own updates): the word in the footer colour and, for the keyboard
+      // Objectives prompt, the cap's text hidden under the triangle.
+      private function dressButton(held:Object) : void
+      {
+         var made:MovieClip = held ? held.clip as MovieClip : null;
+         if(!made) { return; }
+         try
+         {
+            if(made["textField"] is TextField && TextField(made["textField"]).textColor != FOOT_LABEL) { TextField(made["textField"]).textColor = FOOT_LABEL; }
+         }
+         catch(error:Error) { }
+         if(held.cap) { capTriangle(held); }
+      }
+
+      private function dressButtons() : void
+      {
+         var place:String = null;
+         for(place in buttons) { dressButton(buttons[place]); }
+      }
+
+      // A text field the player sees: on, with text.
+      private static function shownText(f:TextField) : Boolean
+      {
+         return f != null && f.visible && f.text != "";
+      }
+
+      // The key cap's text in a button's hint row look: the first shown text field (the label word excepted) that
+      // ends left of the label, searched four clips deep; null when there is none.
+      private function capSearch(clip:DisplayObjectContainer, made:MovieClip, label:TextField, labelLeft:Number, depth:int) : TextField
+      {
+         var i:int = 0;
+         var child:DisplayObject = null;
+         var found:TextField = null;
+         if(!clip || depth > 4) { return null; }
+         for(i = 0; i < clip.numChildren; i++)
+         {
+            child = clip.getChildAt(i);
+            if(child is TextField)
+            {
+               if(child !== label && shownText(child as TextField) && child.getBounds(made).right <= labelLeft + 4) { return child as TextField; }
+            }
+            else if(child is DisplayObjectContainer && child.visible)
+            {
+               found = capSearch(child as DisplayObjectContainer,made,label,labelLeft,depth + 1);
+               if(found) { return found; }
+            }
+         }
+         return null;
+      }
+
+      // The cap's text the button shows now: the field found before when the game shows it again, else tfKeyLabel
+      // when shown (the clickable look, "[RIGHT]"), else the hint row look's own key text ("Right"). The hint row look
+      // keeps tfKeyLabel hidden, so a hidden tfKeyLabel must never end the search.
+      private function capField(held:Object, made:MovieClip) : TextField
+      {
+         var cap:TextField = held.capField as TextField;
+         var label:TextField = null;
+         var labelLeft:Number = Number.MAX_VALUE;
+         if(shownText(cap)) { return cap; }
+         try { cap = made["tfKeyLabel"] as TextField; } catch(error:Error) { cap = null; }
+         if(shownText(cap)) { return cap; }
+         try { label = made["textField"] as TextField; } catch(error:Error) { label = null; }
+         if(shownText(label)) { labelLeft = label.getBounds(made).left; }
+         return capSearch(made,made,label,labelLeft,0);
+      }
+
+      // On the keyboard the Objectives key is Right: its cap's text is hidden and a filled right triangle, 0.42 x the
+      // cap's height, drawn in the cap instead, in the cap's text colour; otherwise the button stays as the game drew
+      // it. Run again on every frame and whenever the button may have redrawn (a device switch, a pin build): a cap
+      // text the game showed again is hidden again and the button's one triangle moved onto it, on top of the
+      // button's own clips.
+      private function capTriangle(held:Object) : void
+      {
+         var made:MovieClip = held.clip as MovieClip;
+         var cap:TextField = null;
+         var mark:Shape = held.mark as Shape;
+         var box:Rectangle = null;
+         var size:Number = 0;
+         var cx:Number = 0;
+         var cy:Number = 0;
+         try
+         {
+            if(mark && mark.parent == made && made.getChildIndex(mark) < made.numChildren - 1) { made.addChild(mark); }
+            cap = capField(held,made);
+            if(!cap) { return; }
+            box = cap.getBounds(made);
+            if(box.height <= 0) { return; }
+            held.capField = cap;
+            size = CAP_TRIANGLE * box.height;
+            cx = box.x + box.width / 2;
+            cy = box.y + box.height / 2;
+            if(!mark) { mark = new Shape(); }
+            mark.graphics.clear();
+            mark.graphics.beginFill(cap.textColor,1);
+            mark.graphics.moveTo(cx - size * 0.433,cy - size / 2);
+            mark.graphics.lineTo(cx - size * 0.433,cy + size / 2);
+            mark.graphics.lineTo(cx + size * 0.433,cy);
+            mark.graphics.endFill();
+            mark.visible = true;
+            if(mark.parent != made || made.getChildIndex(mark) < made.numChildren - 1) { made.addChild(mark); }
+            held.mark = mark;
+            cap.visible = false;
+         }
+         catch(error:Error) { }
+      }
+
+      // Moves a button so its left (or right) edge is at edge and its middle at centre, and shows it.
+      private function placeButton(made:MovieClip, edge:Number, centre:Number, alignRight:Boolean) : void
+      {
+         var box:Rectangle = made.getBounds(this);
+         made.x += alignRight ? edge - box.right : edge - box.left;
+         made.y += centre - (box.top + box.bottom) / 2;
+         made.visible = true;
+      }
+
+      // The selected row's prompt as a game button: right-aligned where the text prompt ends, the text hidden, and
+      // the prompt's left edge moved to the button's so the region text is clipped against it.
+      private function promptPicture(s:Object, id:String, label:String, centre:Number) : void
+      {
+         var made:MovieClip = gameButton("row_" + id,id,label);
+         var right:Number = s.obj.x + s.obj.width - 2;
+         if(!made) { return; }
+         made.scaleX = made.scaleY = px(18) / BUTTON_FONT;
+         placeButton(made,right,centre,true);
+         s.obj.visible = false;
+         s.obj.x = made.getBounds(this).left;
+      }
+
+      private function hideButtons() : void
+      {
+         var place:String = null;
+         for(place in buttons) { if(buttons[place].clip) { buttons[place].clip.visible = false; } }
+      }
+
+      private function dropButton(place:String) : void
+      {
+         var held:Object = buttons[place];
+         var clip:DisplayObject = held ? held.clip as DisplayObject : null;
+         if(clip && clip.parent) { clip.parent.removeChild(clip); }
+         delete buttons[place];
+      }
+
+      private function dropButtons() : void
+      {
+         var places:Array = [];
+         var place:String = null;
+         for(place in buttons) { places.push(place); }
+         for each(place in places) { dropButton(place); }
+      }
+
+      private function setDevice(isPad:Boolean, isPs:Boolean) : void
+      {
+         if(isPad == pad && isPs == playStation) { return; }
+         pad = isPad;
+         playStation = isPs;
+         if(opened && data) { render(); }
+      }
+
+      // What the keys say: a gamepad_ navigation name is a button (Enter and Esc carry the pad's A and B names on the
+      // keyboard too, so they say nothing), a letter, Enter, Esc or Space is the keyboard. PlayStation comes only
+      // from the game's input manager.
+      private function learnDevice(code:int, nav:String) : void
+      {
+         var padName:Boolean = nav.indexOf("gamepad_") == 0 || nav.indexOf("enter-gamepad_") == 0 || nav.indexOf("escape-gamepad_") == 0;
+         if(managerKnown) { return; }
+         if((padName && code != 13 && code != 27) || nav.indexOf("dpad_") == 0) { setDevice(true,playStation); }
+         else if((code >= 37 && code <= 40) || (code >= 65 && code <= 90) || code == 13 || code == 27 || code == 32) { setDevice(false,false); }
+      }
+
+      // The game's input manager, read every frame: -1 not readable, 0 keyboard, 1 controller, 2 PlayStation.
+      private function managerDevice() : int
+      {
+         var manager:Object = null;
+         if(!managerTried)
+         {
+            managerTried = true;
+            try { managerClass = getDefinitionByName("red.game.witcher3.managers.InputManager") as Class; } catch(error:Error) { managerClass = null; }
+         }
+         if(managerClass == null) { return -1; }
+         try
+         {
+            manager = managerClass["getInstance"]();
+            if(manager == null) { return -1; }
+            if(!manager.isGamepad()) { return 0; }
+            return String(manager.gamepadType).toLowerCase().indexOf("ps") >= 0 ? 2 : 1;
+         }
+         catch(error:Error) { }
+         return -1;
       }
 
       private function render() : void
       {
          var g:Object = bg.graphics;
-         var listTop:Number = LIST_TOP;
-         var avail:Number = boxH - BAR_LINE - 8 - LIST_TOP;
+         var listTop:Number = listTopY();
+         var avail:Number = boxH - barLine() - 8 - listTop;
+         var k:int = 0;
          var maxTop:int = 0;
          var shown:int = 0;
          var selEnd:int = 0;
@@ -905,6 +1521,8 @@ package
          var second:String = "";
          var distHtml:String = "";
          var objLabel:String = "";
+         var objId:String = "";
+         var objWord:String = "";
          var key:String = "";
          var selCat:String = catOf(selected >= 0 && selected < rows.length ? rows[selected] : null);
          var checked:Boolean = false;
@@ -916,7 +1534,9 @@ package
          var trackH:Number = 0;
          var thumbH:Number = 0;
          var ring:Number = 0;
+         var symbol:Number = 0;
          var colour:uint = 0;
+         var clipW:Number = 0;
          for each(s in slots)
          {
             s.left.visible = false;
@@ -927,12 +1547,17 @@ package
             s.icon.visible = false;
          }
          for(i = 0; i < hints.length; i++) { hints[i].visible = false; }
+         hideButtons();
          bar.graphics.clear();
-         g.clear();
-         if(!opened || !data) { return; }
-         g.beginFill(PLATE_COLOR,conf("fullScreen") ? 0.68 : 0.78);
-         g.drawRect(0,0,boxW,boxH);
-         g.endFill();
+         if(!opened || !data) { g.clear(); return; }
+         drawPlate();
+         // The right edge shadow: five 1 px black strips, fading outwards.
+         for(k = 0; k < 5; k++)
+         {
+            g.beginFill(0x000000,SHADOW_ALPHAS[k]);
+            g.drawRect(boxW + k,0,1,boxH);
+            g.endFill();
+         }
          drawTitleBlock(sorts);
          drawHintBar();
          // Keep the highlighted row on the page; the page never ends in empty room while rows are left above it.
@@ -957,23 +1582,28 @@ package
             second = "";
             distHtml = "";
             objLabel = "";
+            objId = "";
+            objWord = "";
             iconUrl = "";
             checked = false;
             tracked = false;
             s.left.x = 20;
             s.left.width = boxW - 40;
+            resetSlot(s,r.type);
             switch(r.type)
             {
                case ROW_CAT:
                   key = String(r.cat);
                   gradientBar(INSET,y,wide,h,stripeOf(key));
-                  s.left.x = 42;
-                  left = span(String(r.label).toUpperCase(),TEXT_ON,22 * scale,true);
-                  if(r.count >= 0) { distHtml = span(String(r.count),TEXT_ON,22 * scale,true); }
-                  if(key != "") { triangle(ARROW_X,y + h / 2,14,10,folded[key] ? 1 : 0,ARROW_COLOR); }
+                  s.left.x = 38;
+                  left = span(String(r.label).toUpperCase(),TEXT_ON,px(22),true);
+                  if(r.count >= 0) { distHtml = span(String(r.count),TEXT_ON,px(22),true); }
+                  if(key != "") { triangle(ARROW_X,y + h / 2,14,8,folded[key] ? 1 : 0,ARROW_COLOR); }
                   if(key != "" && key == selCat)
                   {
-                     objLabel = span("C",TEXT_OFF,18 * scale,false) + span("  ",TEXT_OFF,18 * scale,false) + span(word("collapse"),TEXT_ON,18 * scale,false);
+                     objLabel = span(promptButton("fold",word("collapse")),FOOT_LABEL,px(18),false);
+                     objId = "fold";
+                     objWord = word("collapse");
                   }
                   break;
                case ROW_QUEST:
@@ -982,30 +1612,34 @@ package
                   tracked = r.q.tracked;
                   s.left.x = NAME_X - 2;
                   s.left.width = boxW - NAME_X - INSET;
-                  if(int(r.q.lvl) > 0) { lvl = span(String(int(r.q.lvl)),WHITE,30 * scale,true); }
+                  if(int(r.q.lvl) > 0) { lvl = "<p align='center'>" + span(String(int(r.q.lvl)),WHITE,px(30),true) + "</p>"; }
                   left = questText(r.q,String(r.q.name));
-                  if(conf("region")) { second = span(String(r.q.region),TEXT_SUB,19 * scale,false); }
-                  distHtml = span(distText(r.q),TEXT_SUB,19 * scale,false);
+                  if(conf("region")) { second = span(String(r.q.region),TEXT_SUB,px(19),false); }
+                  distHtml = span(distText(r.q),TEXT_SUB,px(19),false);
                   if(i == selected && !r.q.avail && r.q.objs is Array && (r.q.objs as Array).length > 0)
                   {
-                     objLabel = span(word("objectives"),WHITE,18 * scale,false);
+                     objLabel = span(promptButton("objs",word("objectives")),FOOT_LABEL,px(18),false);
+                     objId = "objs";
+                     objWord = word("objectives");
                   }
                   break;
                case ROW_OBJECTIVE:
                   s.left.x = OBJ_TEXT_X - 2;
                   s.left.width = boxW - OBJ_TEXT_X - INSET;
                   colour = int(r.o.state) == 2 ? 0xD61010 : (r.o.tracked ? OBJ_ON : OBJ_OFF);
-                  left = span(String(r.o.text),colour,19 * scale,false);
+                  left = span(String(r.o.text),colour,px(19),false);
                   break;
                case ROW_REGION:
                   checked = thisRegion;
                   s.left.x = INSET + 12 + BOX_SIZE + 12;
-                  left = span(word("thisRegion"),checked ? TEXT_ON : TEXT_OFF,20 * scale,false);
+                  left = span(word("thisRegion"),checked ? TEXT_ON : TEXT_OFF,px(20),false);
                   break;
                case ROW_FILTER:
                   checked = !filters[int(r.k)];
-                  s.left.x = INSET + 12 + BOX_SIZE + 12;
-                  left = span(String(r.label),checked ? TEXT_ON : TEXT_OFF,20 * scale,false);
+                  s.left.x = FILTER_LABEL_X - 2;
+                  left = span(String(r.label),checked ? TEXT_ON : TEXT_OFF,px(20),false);
+                  distHtml = span(String(filterCount(int(r.k))),checked ? TEXT_ON : TEXT_OFF,px(20),false);
+                  iconUrl = filterIcon(int(r.k));
                   break;
             }
             if(i == selected)
@@ -1031,30 +1665,46 @@ package
                   bar.graphics.lineStyle();
                }
             }
-            if(r.type == ROW_REGION || r.type == ROW_FILTER) { checkBox(INSET + 12,y + (h - BOX_SIZE) / 2,checked); }
+            if(r.type == ROW_REGION) { checkBox(INSET + 12,y + (h - BOX_SIZE) / 2,checked); }
+            if(r.type == ROW_FILTER) { checkBox(boxW - 60,y + (h - BOX_SIZE) / 2,checked); }
+            if(r.type == ROW_FILTER && int(r.k) == 9)
+            {
+               symbol = ICON_SIZE * FILTER_ICON_SCALE / 4.5;
+               deadlySkull(FILTER_ICON_X - symbol / 2,y + (h - symbol) / 2,checked);
+            }
             if(r.type == ROW_OBJECTIVE) { objectiveBox(OBJ_BOX_X,y + (h - OBJ_BOX) / 2,int(r.o.state) == 1); }
             s.left.htmlText = left;
             s.left.visible = true;
-            placeLine(s.left,r.type == ROW_QUEST ? y + h * 0.31 : y + h / 2,r.type == ROW_QUEST ? 24 * scale : 20 * scale);
+            placeLine(s.left,r.type == ROW_QUEST ? y + h * 0.31 : y + h / 2,r.type == ROW_QUEST ? px(24) : px(20));
             // The level sits in its own column, centred on the row.
             s.lvl.htmlText = lvl;
             s.lvl.x = LEVEL_X - 2;
-            placeLine(s.lvl,y + h / 2,30 * scale);
+            placeLine(s.lvl,y + h / 2,px(30));
             s.lvl.visible = lvl != "";
             // The right-hand text: a count or a distance at the right edge, a label before it.
             s.dist.htmlText = distHtml;
-            s.dist.x = (r.type == ROW_CAT ? COUNT_RIGHT : ROW_RIGHT) + 2 - s.dist.width;
-            placeLine(s.dist,r.type == ROW_QUEST ? y + h * 0.69 : y + h / 2,20 * scale);
+            s.dist.x = r.type == ROW_FILTER ? boxW - FILTER_COUNT_RIGHT + 2 - s.dist.width : (r.type == ROW_CAT ? COUNT_RIGHT : ROW_RIGHT) + 2 - s.dist.width;
+            placeLine(s.dist,r.type == ROW_QUEST ? y + h * 0.69 : y + h / 2,r.type == ROW_CAT ? px(22) : (r.type == ROW_QUEST ? px(19) : px(20)));
             s.dist.visible = distHtml != "";
             s.obj.htmlText = objLabel;
-            s.obj.x = (distHtml != "" ? s.dist.x + 2 : (r.type == ROW_CAT ? COUNT_RIGHT : ROW_RIGHT)) - 14 + 2 - s.obj.width;
-            placeLine(s.obj,r.type == ROW_QUEST ? y + h * 0.69 : y + h / 2,18 * scale);
+            s.obj.x = r.type == ROW_QUEST ? (distHtml != "" ? s.dist.x + 2 - OBJ_PROMPT_GAP : ROW_RIGHT) + 2 - s.obj.width : (distHtml != "" ? s.dist.x + 2 : COUNT_RIGHT) - 14 + 2 - s.obj.width;
+            placeLine(s.obj,r.type == ROW_QUEST ? y + h * 0.69 : y + h / 2,px(18));
             s.obj.visible = objLabel != "";
-            if(objLabel != "" && r.type == ROW_QUEST) { triangle(s.obj.x - 4,s.obj.y + s.obj.height / 2,9,6,2,WHITE); }
+            if(objLabel != "") { promptPicture(s,objId,objWord,r.type == ROW_QUEST ? y + h * 0.69 : y + h / 2); }
             // The region line sits under the name.
+            s.right.autoSize = TextFieldAutoSize.RIGHT;
             s.right.htmlText = second;
             s.right.x = NAME_X - 2;
-            placeLine(s.right,y + h * 0.69,19 * scale);
+            placeLine(s.right,y + h * 0.69,px(19));
+            // The region text keeps its old 330 px width; on the prompt row it ends before the prompt (40 px at least).
+            clipW = objLabel != "" && r.type == ROW_QUEST ? Math.min(330,Math.max(REGION_MIN_W,s.obj.x - OBJ_PROMPT_GAP / 2 - s.right.x)) : 330;
+            if(s.right.width > clipW)
+            {
+               s.right.autoSize = TextFieldAutoSize.NONE;
+               s.right.width = clipW;
+               s.right.height = Math.round(px(19) * 1.3 + 4);
+               placeLine(s.right,y + h * 0.69,px(19));
+            }
             s.right.visible = second != "";
             if(r.type == ROW_QUEST) { fitName(s.left,r.q); }
             if(iconUrl != "")
@@ -1062,20 +1712,37 @@ package
                if(s.url != iconUrl)
                {
                   s.url = iconUrl;
+                  newLoader(s);
                   try { s.loader.load(new URLRequest(iconUrl)); } catch(error:Error) { }
                }
+               // Heroes' Pursuits (hide index 6) in grey.
+               s.grey = r.type == ROW_FILTER && int(r.k) == 6;
                fitIcon(s);
-               // The tracked quest's icon is gold at 0.85 size inside an orange ring with an arrow on each side.
-               ring = tracked ? 0.85 : 1;
-               s.icon.scaleX = s.icon.scaleY = ring;
-               s.icon.x = ICON_CX - ICON_SIZE * ring / 2;
-               s.icon.y = y + (h - ICON_SIZE * ring) / 2;
-               s.icon.transform.colorTransform = tracked ? tintOf(GOLD) : (tint > 0 ? tintOf(tint) : new ColorTransform());
-               s.icon.visible = true;
-               if(tracked) { trackedRing(ICON_CX,y + h / 2); }
+               if(r.type == ROW_FILTER)
+               {
+                  // A filter row's symbol: normal when on, multiplied by 6E6A64 when off; Heroes' Pursuits in grey.
+                  symbol = ICON_SIZE * FILTER_ICON_SCALE / 4.5;
+                  s.icon.scaleX = s.icon.scaleY = FILTER_ICON_SCALE / 4.5;
+                  s.icon.x = FILTER_ICON_X - symbol / 2;
+                  s.icon.y = y + (h - symbol) / 2;
+                  s.icon.transform.colorTransform = checked ? new ColorTransform() : tintOf(0x6E6A64);
+                  s.icon.visible = true;
+               }
+               else
+               {
+                  // The tracked quest's icon is gold at 0.85 size inside an orange ring with an arrow on each side.
+                  ring = tracked ? 0.85 : 1;
+                  s.icon.scaleX = s.icon.scaleY = ring;
+                  s.icon.x = ICON_CX - ICON_SIZE * ring / 2;
+                  s.icon.y = y + (h - ICON_SIZE * ring) / 2;
+                  s.icon.transform.colorTransform = tracked ? tintOf(GOLD) : (tint > 0 ? tintOf(tint) : new ColorTransform());
+                  s.icon.visible = true;
+                  if(tracked) { trackedRing(ICON_CX,y + h / 2); }
+               }
             }
             y += h;
          }
+         for(j = shown; j < slots.length; j++) { slots[j].type = -1; }
          drawn = shown;
          // The scroll bar: a 3 px track with a 5 px thumb, at least 24 px tall.
          if(shown < rows.length)
@@ -1084,13 +1751,14 @@ package
             trackH = avail;
             thumbH = Math.max(24,trackH * shown / rows.length);
             bar.graphics.beginFill(TRACK_COLOR,0.9);
-            bar.graphics.drawRect(boxW - 8,trackY,3,trackH);
+            bar.graphics.drawRect(boxW - 9,trackY,3,trackH);
             bar.graphics.endFill();
             bar.graphics.beginFill(ACCENT,1);
-            bar.graphics.drawRect(boxW - 9,trackY + (trackH - thumbH) * (maxTop > 0 ? top / maxTop : 0),5,thumbH);
+            bar.graphics.drawRect(boxW - 10,trackY + (trackH - thumbH) * (maxTop > 0 ? top / maxTop : 0),5,thumbH);
             bar.graphics.endFill();
          }
          setChildIndex(bar,1);
+         toFront();
       }
 
       // "%r: %n/%t active quests": the shown map's region (upper case, kept in countBold), your active quests there and
@@ -1131,8 +1799,8 @@ package
       // The quest's name in its difficulty colour, then its expansion in brackets, smaller.
       private function questText(q:Object, name:String) : String
       {
-         return html(name,conf("nameCol") ? String(q.diff) : "#FFFFFF").replace("<font ","<font face='$BoldFont' size='" + Math.round(24 * scale) + "' ") +
-            (conf("dlc") && String(q.dlc) != "" ? span("  (" + String(q.dlc) + ")",DLC_COLOR,18 * scale,false) : "");
+         return html(name,conf("nameCol") ? String(q.diff) : "#FFFFFF").replace("<font ","<font face='$BoldFont' size='" + px(24) + "' ") +
+            (conf("dlc") && String(q.dlc) != "" ? span("  (" + String(q.dlc) + ")",DLC_COLOR,px(18),false) : "");
       }
 
       // A name too long for its row ends in an ellipsis instead of being cut off at the row's edge.
@@ -1182,12 +1850,45 @@ package
          var id:String = r && r.q && !r.q.avail ? String(r.q.i) : "";
          var key:String = "";
          var changed:Boolean = false;
-         if(id != "") { want[id] = true; }
+         if(id != "" && !closedObjs[id]) { want[id] = true; }
          for(key in expanded) { if(expanded[key] && !want[key]) { changed = true; } }
          for(key in want) { if(!expanded[key]) { changed = true; } }
          if(!changed) { return; }
          expanded = want;
-         build(-1,rowKey(r));
+         build(-1,rowKey(r),selected);
+      }
+
+      // Right (D-pad Right) shows or hides the selected quest's objectives; Left (keyboard) hides them.
+      private function toggleObjectives() : void
+      {
+         var r:Object = selected >= 0 && selected < rows.length ? rows[selected] : null;
+         if(!r || r.type != ROW_QUEST || r.q.avail) { return; }
+         objectivesOpen(closedObjs[String(r.q.i)] == true);
+      }
+
+      private function objectivesOpen(open:Boolean) : void
+      {
+         var r:Object = selected >= 0 && selected < rows.length ? rows[selected] : null;
+         if(!r || r.type != ROW_QUEST || r.q.avail) { return; }
+         closedObjs[String(r.q.i)] = !open;
+         followObjectives();
+         render();
+      }
+
+      // Left and Right keys, the D-pad and the stick. On a quest row Right (D-pad Right) toggles the objectives, the
+      // keyboard's Left closes them, and D-pad Left and the stick do nothing; on a section header Left and Right (the
+      // D-pad's) fold it.
+      private function sideKey(code:int, nav:String, isStick:Boolean) : void
+      {
+         var r:Object = selected >= 0 && selected < rows.length ? rows[selected] : null;
+         if(!r) { return; }
+         if(r.type == ROW_QUEST)
+         {
+            if(isStick || nav == "dpad_left") { return; }
+            if(code == 39 || nav == "dpad_right") { toggleObjectives(); }
+            else if(code == 37) { objectivesOpen(false); }
+         }
+         else if(r.type == ROW_CAT && !isStick) { fold(selected); }
       }
 
       // Swap Obj: the tracked quest's next objective you have not done, in the journal's order, round again at the end.
@@ -1251,20 +1952,16 @@ package
 
       private function rebuild() : void
       {
-         var keep:int = selected;
-         build(selectedQuestId());
-         selected = Math.min(keep,rows.length - 1);
+         buildKept();
          render();
       }
 
       // H: Only this region on or off; the highlight stays on its row when that row is still listed.
       private function toggleRegion() : void
       {
-         var keepId:Number = selectedQuestId();
-         var keepKey:String = selected >= 0 && selected < rows.length ? rowKey(rows[selected]) : "";
          thisRegion = !thisRegion;
          note("thisRegion",thisRegion ? "1" : "0");
-         build(keepId,keepKey);
+         buildKept();
          followObjectives();
          render();
       }
@@ -1282,29 +1979,24 @@ package
          render();
       }
 
-      private function journal(row:int) : void
-      {
-         var r:Object = row >= 0 && row < rows.length ? rows[row] : null;
-         if(r && r.q && !r.q.avail) { note("journal",String(r.q.i)); }
-      }
-
       private function cycleSort() : void
       {
          sortMode = (sortMode + 1) % 5;
-         build(selectedQuestId());
+         sortChanged = true;
+         buildKept();
          render();
       }
 
       private function rowAt(localY:Number) : int
       {
-         var listTop:Number = LIST_TOP;
+         var listTop:Number = listTopY();
          var row:int = top;
-         var edge:Number = listTop;
-         if(localY < listTop || localY > boxH - BAR_LINE - 8) { return -1; }
+         var rowEdge:Number = listTop;
+         if(localY < listTop || localY > boxH - barLine() - 8) { return -1; }
          while(row < rows.length && row < top + drawn)
          {
-            edge += heightOf(rows[row]);
-            if(localY < edge) { return row; }
+            rowEdge += heightOf(rows[row]);
+            if(localY < rowEdge) { return row; }
             row++;
          }
          return -1;
@@ -1355,15 +2047,24 @@ package
          var code:int = details ? int(details.code) : 0;
          var nav:String = details ? String(details.navEquivalent) : "";
          var held:Boolean = details && details.value == "keyHold";
-         if(!opened || !focused || !details) { return; }
-         // A held arrow keeps moving through the list; every other key acts once, on its press.
+         var isStick:Boolean = (nav == "left" || nav == "right") && code != 37 && code != 39;
+         if(!details) { return; }
+         learnDevice(code,nav);
+         if(!opened || !focused) { return; }
+         // Esc and B close when released; every other key acts once, on its press (a held arrow keeps moving).
+         if(details.value == "keyUp")
+         {
+            if(code == 27 || nav == "escape-gamepad_B") { close(); event.handled = true; }
+            return;
+         }
          if(details.value != "keyDown" && !(held && (code == 38 || code == 40 || nav == "up" || nav == "down" || nav == "dpad_up" || nav == "dpad_down"))) { return; }
-         if(code == 27 || code == 70 || nav == "escape-gamepad_B" || nav == "gamepad_L2") { close(); }
+         if(code == 70 || nav == "gamepad_L2") { close(); }
+         else if(code == 27 || nav == "escape-gamepad_B") { }
          else if(code == 38 || nav == "up" || nav == "dpad_up") { move(selected - 1); }
          else if(code == 40 || nav == "down" || nav == "dpad_down") { move(selected + 1); }
+         else if(code == 37 || code == 39 || nav == "dpad_left" || nav == "dpad_right" || isStick) { sideKey(code,nav,isStick); }
          else if(code == 13 || code == 69 || nav == "enter-gamepad_A") { activate(selected); }
-         else if(code == 72) { toggleRegion(); }
-         else if(code == 74 || nav == "gamepad_X") { journal(selected); }
+         else if(code == 72 || nav == "gamepad_X") { toggleRegion(); }
          else if(code == 84 || nav == "gamepad_R2") { cycleSort(); }
          else if(code == 67 || nav == "gamepad_Y") { fold(selected); }
          event.handled = true;
@@ -1386,7 +2087,9 @@ package
       {
          // CMF releases focus, the pan lock and the highlights itself on removal; the list forgets that it was open.
          removeEventListener(Event.ENTER_FRAME,onFrame);
+         rehideUntil = 0;
          if(opened && map && map.hidePanels is Function) { map.hidePanels(null); }
+         dropButtons();
          opened = false;
          focused = false;
          lit = [];

@@ -1,4 +1,4 @@
-// Map Quest Insight adapter 2.5.0 for Conjunction Map Framework. Requires CMF 1.6.0 (API version 13) and Map Quest
+// Map Quest Insight adapter 2.5.1 for Conjunction Map Framework. Requires CMF 1.6.0 (API version 13) and Map Quest
 // Insight 2.1.0 or later (checked against 2.1.0 and 2.2.0) (Nexus 14219; the Quest List file uses names that exist from 2.1.0), which stays
 // unchanged. Install and remove the two together: this file calls Map Quest Insight's own functions (QMI_OptTypeIcons, QMI_IconKind, QMI_LevelBandTint and QMI_ColorTrackedIcon exist
 // from 2.0.0, which Wolfer named stable), so the game stops at the script compile screen when Map Quest Insight is
@@ -560,6 +560,44 @@ function MqiAdapterVar(group : name, item : name, fallback : string) : string
 	return value;
 }
 
+// Map Quest Insight 2.2.0 "Quest list corner" (qmiGeneral, qmiUwQlCorner: 0 = 21:9, the default, 1 = 32:9), used only
+// while "Ultrawide map" is on. Its list sits at the left edge of a centred area that wide on the 1080-high stage
+// (2560 or 3840 units), so the list moves right by half of what the screen is wider than that area: a 32:9 screen
+// with 21:9 picked gives 640, everything else 0. A value never saved (Map Quest Insight 2.1.0 has none) reads "" and
+// means no offset. Sent as conf.corner, in stage units.
+function MqiAdapterQlCorner() : int
+{
+	var choice : string;
+	var cornerWidth, offset, screen : float;
+	var w, h : int;
+	choice = MqiAdapterVar('qmiGeneral', 'qmiUwQlCorner', "");
+	if (choice == "" || !MqiAdapterOn('qmiGeneral', 'qmiUwMap', true))
+	{
+		return 0;
+	}
+	cornerWidth = 2560;
+	if (choice == "1")
+	{
+		cornerWidth = 3840;
+	}
+	// CMF knows the screen only after the first opening; before it, the game's resolution gives the same width.
+	screen = CMFScreenWidth();
+	if (screen <= 0)
+	{
+		theGame.GetCurrentViewportResolution(w, h);
+		if (w > 0 && h > 0)
+		{
+			screen = 1080.0 * w / h;
+		}
+	}
+	offset = (screen - cornerWidth) / 2;
+	if (offset < 0)
+	{
+		offset = 0;
+	}
+	return RoundF(offset);
+}
+
 function MqiAdapterOn(group : name, item : name, fallback : bool) : bool
 {
 	var value : string;
@@ -1053,11 +1091,12 @@ function MqiAdapterFade(id : name, side : string, alpha : float, size : float)
 // Map Quest Insight 2.0's "Corner HUD" ([qmiGeneral] qmiSideHud: 0 Clean, the default, 1 Game look). Clean takes
 // the tracked quest's dark boxes away and keeps its text readable with a black outline and shadow; CMF's tracker
 // part does the same with its plate hidden and up to three glows. Game look withdraws them.
-// 2.5.0: false until Wolfer names a stable way to detect his next Map Quest Insight version. It gates only what
-// that unreleased version adds beyond Map Quest Insight 2.2.0 (nothing is gated by it yet).
+// 2.5.1: Wolfer's next Map Quest Insight update declares a settings group named qmiV230, so its presence tells
+// that update from 2.2.0. It gates only what that unreleased update adds beyond Map Quest Insight 2.2.0 (nothing
+// is gated by it yet); the Clean corner HUD below does not depend on it. The opening log line reports it.
 function MqiAdapterNextUpdate() : bool
 {
-	return false;
+	return theGame.GetInGameConfigWrapper().GetGroupIdx('qmiV230') >= 0;
 }
 
 // The "[F] Quests" box Map Quest Insight 2.2.0 shows under the region title in Clean: 100 x 32, its top 16 below
@@ -1073,7 +1112,7 @@ function MqiAdapterQuestsBox(on : bool)
 		return;
 	}
 	CMFDraw("modMapQuestInsight", 'title', id, 'text');
-	CMFDrawSet("modMapQuestInsight", id, 'text', "[F] " + GetLocStringByKeyExt("mqi_adapter_quests_box"), 0);
+	CMFDrawSet("modMapQuestInsight", id, 'text', "[F] " + GetLocStringByKeyExt("panel_title_journal_quest"), 0);
 	CMFDrawSet("modMapQuestInsight", id, 'size', "", 18);
 	CMFDrawSet("modMapQuestInsight", id, 'color', "", 16777215);
 	CMFDrawSet("modMapQuestInsight", id, 'fill', "", 723723);
@@ -1159,7 +1198,8 @@ function MqiAdapterLogOpening(descMore : bool, root : CScriptedFlashSprite, trav
 		MqiAdapterYes(MqiAdapterOn('qmiBox', 'qmiQjBoxBeside', true)) + " panel=" + MqiAdapterVar('qmiGeneral', 'qmiCatPanel', "0") +
 		" overview=" + MqiAdapterVar('qmiGeneral', 'qmiMapOverview', "1") + " showMore=" + MqiAdapterYes(descMore) + " words=" + words +
 		" fullScreen=" + MqiAdapterVar('qmiGeneral', 'qmiFullScreen', "3") + " cornerHud=" +
-		MqiAdapterVar('qmiGeneral', 'qmiSideHud', "0") + " travelMap=" + MqiAdapterYes(travelMap));
+		MqiAdapterVar('qmiGeneral', 'qmiSideHud', "0") + " travelMap=" + MqiAdapterYes(travelMap) +
+		" next=" + MqiAdapterYes(MqiAdapterNextUpdate()));
 }
 
 function MqiAdapterYes(on : bool) : string

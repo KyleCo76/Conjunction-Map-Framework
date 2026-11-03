@@ -65,7 +65,7 @@ class PresenceSourceTests(unittest.TestCase):
 
     def test_property_is_generic_only_and_named_helper_uses_empty_payload(self):
         self.assertEqual(body(self.core, 'CMFPropertyPresent').strip(), 'return 38;')
-        self.assertEqual(body(self.core, 'CMFGetVersion').strip(), 'return 16;')
+        self.assertEqual(body(self.core, 'CMFGetVersion').strip(), 'return 17;')
         self.assertIn('CMFPropertyPresent()', body(self.core, 'CMFHasProperty'))
         self.assertNotIn('CMFPropertyPresent()', body(self.core, 'CMFOnePinProperty'))
         self.assertIn('CMFRegister(provider, CMFPropertyPresent(), \'\', \'\', "", 1)',
@@ -170,6 +170,17 @@ class PresenceSourceTests(unittest.TestCase):
         self.assertRegex(body(self.menu, 'CMFMenuFillMod'),
                          r'if \(text == "" && !core\.MapSeen\(\)\)\s*\{\s*text = "Nothing yet \(open the map\)";')
 
+    def test_loaded_save_with_no_map_mods_reads_live_not_remembered(self):
+        # 1.5.1: an empty live list in a loaded save is not the title screen.
+        func = body(self.menu, 'CMFMenuProviders')
+        self.assertIn('theGame.IsActive()', func)
+        self.assertLess(func.index('theGame.IsActive()'), func.index('.Providers(providers)'))
+        self.assertNotIn('providers.Size() > 0', func)
+        live = func[func.index('theGame.IsActive()'):func.index('return false;')]
+        self.assertIn('.Providers(providers)', live)
+        self.assertIn("SetVarValue('CMFMenuKnown'", live)
+        self.assertIn('return true;', func[func.index('return false;'):])
+
     def test_empty_status_memory_does_not_unlock_prebuilt_title_screen_picks_or_order(self):
         # Source-bound regression for an upgrade: old choice memory exists while the
         # new status memory is empty. A status-page build must leave stray callbacks
@@ -207,7 +218,7 @@ class PresenceSourceTests(unittest.TestCase):
         strings = {s['key']: s for s in addon.catalog()['strings']}
         self.assertEqual(strings['cmf_menu_support_present'], {'id': 2000200127, 'key': 'cmf_menu_support_present',
                                                              'text': {'en': 'CMF support present'}})
-        self.assertEqual(addon.VERSION, '1.5.0')
+        self.assertEqual(addon.VERSION, '1.5.1')
         self.assertEqual(addon.MIN_API, 11)
 
 

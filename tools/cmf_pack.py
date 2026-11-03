@@ -111,6 +111,8 @@ VERSION11 = {'CMFPropertyInfoTitle', 'CMFPropertyInfoText', 'CMFPropertyIconUndi
 VERSION13 = {'CMFStyle', 'CMFAddPin', 'CMFRemovePin', 'CMFDeclareTag', 'CMFClickInputHold'}
 VERSION14 = {'CMFPropertyIconFrames', 'CMFPropertyIconUnderFrames', 'CMFPropertyFrameOffset', 'CMFPropertyPictureFit', 'CMFDrawSetBits', 'CMFGridKeepPin'}
 API |= VERSION14
+# CMF 17 (additive): the open map's pins rebuilt; an adapter asks CMFHasAbility('map', 'refreshPins') first.
+API.add('CMFMapRefreshPins')
 # The world overview's crest names (UniverseMapContainer.configUI); a region another mod adds goes by its area name.
 WORLD_REGIONS = ('kaer_morhen', 'skellige', 'novigrad', 'no_mans_land', 'prolog_village', 'wyzima_castle', 'bob')
 WORLD_MARKERS = ('player', 'quest')

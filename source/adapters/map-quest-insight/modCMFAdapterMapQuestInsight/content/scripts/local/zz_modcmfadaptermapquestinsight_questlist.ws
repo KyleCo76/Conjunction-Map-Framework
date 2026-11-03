@@ -6,7 +6,7 @@
 // movie of the adapter's own (movie-src/MqiAdapterQuestList.as, built into swf/modcmfadaptermqi/questlist.swf),
 // fed through a listen key, and a managed key hint list. It copies no Map Quest Insight code; it reads Map Quest
 // Insight's settings and calls only the names Wolfer listed as stable from 2.0.1 (QMI_QjHomeArea,
-// QMI_QuestHiddenByCategory, QMI_OptQjClose) and from 2.0.0 (QMI_GetQuestLevel, QMI_IconKind, QMI_LevelBandTint).
+// QMI_QuestHiddenByCategory, QMI_OptQjClose, QMI_CfgReload) and from 2.0.0 (QMI_GetQuestLevel, QMI_IconKind, QMI_LevelBandTint).
 // From 2.2.0 it also reads the Quests Available names Wolfer listed as stable for 2.1.0 (2026-10-28): the QMI_qa*
 // arrays its map fills while "Quests not started yet" is on, QMI_OptQuestGivers, QMI_QaTitleWord and the
 // OnQmiQaPick event, which sets or removes the custom map marker at a row's "!" marker.
@@ -210,6 +210,14 @@ function OnMovieEvent(menu : CR4MapMenu, provider : string, id : string, eventNa
 	return true;
 }
 
+// A filter changed: the game's own pin build runs again on this open map (Map Quest Insight itself calls UpdateData(true)
+// on a filter change). CMF's UpdateData wrapper still runs. Plain game call, so no CMF API above the adapter's own.
+@addMethod(CR4MapMenu)
+function MqiAdapterRefreshPins()
+{
+	UpdateData(true);
+}
+
 @addMethod(CR4MapMenu)
 function MqiAdapterQlEvent(eventName : string, value : string)
 {
@@ -263,7 +271,11 @@ function MqiAdapterQlEvent(eventName : string, value : string)
 	{
 		theGame.GetInGameConfigWrapper().SetVarValue('qmiHide', 'qmiQjThisRegion', MqiAdapterQlBool(value == "1"));
 		theGame.SaveUserSettings();
+		QMI_CfgReload();
+		MqiAdapterRefreshPins();
 		LogChannel('CMF', "CMF mqi adapter questlist thisRegion=" + value);
+		// The pin build shows the map's legend again: the list's next value has the movie hide its panels again.
+		MqiAdapterQlSend();
 		return;
 	}
 	if (eventName == "filter")
@@ -276,7 +288,11 @@ function MqiAdapterQlEvent(eventName : string, value : string)
 		{
 			theGame.GetInGameConfigWrapper().SetVarValue('qmiHide', hide[index], MqiAdapterQlBool(right == "1"));
 			theGame.SaveUserSettings();
+			QMI_CfgReload();
+			MqiAdapterRefreshPins();
 			LogChannel('CMF', "CMF mqi adapter questlist filter " + hide[index] + "=" + right);
+			// Also the movie's cue to hide the map's panels again after the pin build.
+			MqiAdapterQlSend();
 		}
 		return;
 	}
@@ -320,6 +336,36 @@ function MqiAdapterQlHideVars() : array<name>
 	vars.PushBack('qmiHideDeadly');
 	vars.PushBack('qmiHideMain');
 	return vars;
+}
+
+// The picture of a filter row, by its MqiAdapterQlHideVars index: Wolfer's symbol of that kind; Deadly (9) has none and
+// the list draws its own skull.
+function MqiAdapterQlFilterIcon(base : string, index : int) : string
+{
+	switch (index)
+	{
+		case 0:
+			return base + "symbol_contract.png";
+		case 1:
+			return base + "symbol_treasure.png";
+		case 2:
+			return base + "symbol_gwent.png";
+		case 3:
+			return base + "symbol_horse_race.png";
+		case 4:
+			return base + "symbol_boat_race.png";
+		case 5:
+			return base + "symbol_fist_fight.png";
+		case 6:
+			return base + "symbol_heroes_pursuits.png";
+		case 7:
+			return base + "symbol_vintners_contract.png";
+		case 8:
+			return base + "symbol_secondary.png";
+		case 10:
+			return base + "symbol_main.png";
+	}
+	return "";
 }
 
 // Velen and Novigrad share one map, which the game names either way.
@@ -434,7 +480,7 @@ function MqiAdapterQlSend()
 {
 	var storage : CScriptedFlashValueStorage;
 	var root, conf, words, questObject, objectiveEntry : CScriptedFlashObject;
-	var questList, questPins, objectivePins, objectiveList, filterList, availList : CScriptedFlashArray;
+	var questList, questPins, objectivePins, objectiveList, filterList, iconList, availList : CScriptedFlashArray;
 	var journal : CWitcherJournalManager;
 	var quests : array<CJournalQuest>;
 	var journalQuest : CJournalQuest;
@@ -485,6 +531,7 @@ function MqiAdapterQlSend()
 	conf.SetMemberFlashBool("foldAll", MqiAdapterOn('qmiQuest', 'qmiQjFoldAll', false));
 	conf.SetMemberFlashBool("objHover", MqiAdapterOn('qmiQuest', 'qmiQjObjHover', false));
 	conf.SetMemberFlashBool("givers", QMI_OptQuestGivers());
+	conf.SetMemberFlashInt("corner", MqiAdapterQlCorner());
 	root.SetMemberFlashObject("conf", conf);
 
 	words = storage.CreateTempFlashObject();
@@ -524,6 +571,13 @@ function MqiAdapterQlSend()
 		filterList.PushBackFlashBool(MqiAdapterOn('qmiHide', hide[i], false));
 	}
 	root.SetMemberFlashArray("filters", filterList);
+
+	iconList = storage.CreateTempFlashArray();
+	for (i = 0; i < hide.Size(); i += 1)
+	{
+		iconList.PushBackFlashString(MqiAdapterQlFilterIcon(base, i));
+	}
+	root.SetMemberFlashArray("filterIcons", iconList);
 
 	questList = storage.CreateTempFlashArray();
 	for (i = 0; i < quests.Size(); i += 1)
@@ -673,6 +727,11 @@ function MqiAdapterQlAvailable(storage : CScriptedFlashValueStorage, base : stri
 	{
 		journalQuest = QMI_qaQuest[i];
 		level = QMI_qaLvl[i];
+		// Map Quest Insight's own rule: a row whose quest the hide switches hide is left out (the counts never include these rows).
+		if (journalQuest && QMI_QuestHiddenByCategory(journalQuest, level))
+		{
+			continue;
+		}
 		lvlDiff = 0;
 		if (level > 0)
 		{

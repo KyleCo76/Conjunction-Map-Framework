@@ -162,6 +162,8 @@ API version 2 adds legend rows, filter tabs and per-pin styling to the API versi
 
 The map root supports arbitrary public script-set values when `CMFHasAbility('map', 'rootValues')` is true. Native `SetMemberFlash*` / `GetMemberFlash*` calls may store a mod's own number or string before `OnConfigUI` and read it back there. Existing declared fields and methods retain their meaning; use your own names.
 
+A screen movie may show the game's own key buttons when `CMFHasAbility('screen', 'button')` is true (API 17): its `map.cmfMakeButton(navCode, keyCode, label)` returns one, or `null`, and an older CMF has no such function, so keep a text fallback ([Your own movie on the screen](own-screen-movie.md)). `CMFMapRefreshPins()` (API 17; `CMFHasAbility('map', 'refreshPins')` says it exists) runs the game's full pin build again on the open map, for a mod whose settings change which markers show; it returns false when no map is open.
+
 **Revision 13 changes.** Label hides (13) now merge the union of every eligible provider's pin/crosshair hides, including direct per-pin contributions. A zero contribution never unhides another provider's labels. Row tint 41 overrides the row's tint 3 without changing its pin tint. Ids 6 and 8 still couple row/tab placement and priority; 28 still couples its two hover-name bits.
 
 The every-pin target `''` now accepts 1,3,10,11,12,13,17,22,42,43,44,48, as well as ids 31 to 36 and the earlier every-pin properties. A type, tag, place or direct pin claim beats a global claim even when the player selected the global provider, including strict fallthrough. Vanilla and choice-only exclusions still apply. Every-pin styling does not remove the existing player/user/unknown/completed-pin protections.

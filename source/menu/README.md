@@ -1,4 +1,4 @@
-# CMF In-Game Menu 1.5.0
+# CMF In-Game Menu 1.5.1
 
 This build requires CMF API 11. Its script calls `CMFCore.PresentProviders` directly;
 installing it beside an older core causes a script compile error.
@@ -12,6 +12,10 @@ Loaded map mods also lists map mods that never tell CMF they are installed. The 
 `cmfMenuInventory.ws` finds them in the game's settings (a menu group, or a string) and shows
 the mod's name and what it does; these rows are found again every time and never remembered.
 The list and how to remove a row are in `docs/development/map-mod-inventory.md`.
+
+1.5.1: with a save loaded and no map mod found, the Status page's "Who wins" rows and its Screen row now show
+their live texts ("Vanilla (none loaded)", "Open the map once to see") instead of "Load a save to see".
+An empty live list was taken for the title screen and read the remembered list.
 
 Build locally with `python -B tools/cmf_menu_addon.py build --out <new-directory>`.
 The build manifest records `minCmfApi: 11`, package version, and file SHA-256 hashes.

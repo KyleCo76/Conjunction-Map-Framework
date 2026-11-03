@@ -38,7 +38,7 @@ class MapFeatureTests(unittest.TestCase):
         self.assertEqual(KEYS[44], "Movement_Area")
         self.assertRegex(body(CORE, "CMFChoiceParent"), r"choice == 44\)\s*\{\s*return 80;")
         self.assertIn("return 62;", body(CORE, "CMFChoiceParent"))  # Behaviour keeps its three
-        self.assertIn("function CMFGetVersion() : int { return 16; }", CORE)
+        self.assertIn("function CMFGetVersion() : int { return 17; }", CORE)
 
     def test_the_map_part_incl_backdrop_belongs_to_movement_area(self):
         look = body(CORE, "ThemeLookChoice")

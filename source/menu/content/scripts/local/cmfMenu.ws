@@ -1,4 +1,4 @@
-// CMF In-Game Menu 1.5.0 requires CMF API 11: PresentProviders is a direct compile-time dependency.
+// CMF In-Game Menu 1.5.1 requires CMF API 11: PresentProviders is a direct compile-time dependency.
 // CMF In-Game Menu (modCMFInGameMenu): the optional Options > Mods > Conjunction Map Framework entry for CMF 1.2.0
 // and later (CMFGetVersion 8). 1.2.0 adds the World overview, Region crests and markers, and Opening view rows, which
 // need CMF 1.3.0 (CMFGetVersion 9); on an older CMF the page leaves out every row whose choice key that CMF does not
@@ -378,8 +378,8 @@ function CMFMenuFeatureName(feature : int) : string
 	return "";
 }
 
-// The map mods the pages list: CMF's providers when a save is loaded, which also become the remembered list;
-// otherwise (the title screen) the remembered list from last time, and true.
+// The map mods the pages list: CMF's providers when a save is loaded (also an empty list: 1.5.1), which also become the
+// remembered list; otherwise (the title screen) the remembered list from last time, and true.
 function CMFMenuProviders(out providers : array<string>) : bool
 {
 	var config : CInGameConfigWrapper;
@@ -388,10 +388,11 @@ function CMFMenuProviders(out providers : array<string>) : bool
 	var i, count : int;
 	var changed : bool;
 	config = theGame.GetInGameConfigWrapper();
-	theGame.CMFGetCore().Providers(providers);
+	providers.Clear();
 	count = config.GetVarsNumByGroupName('CMFMenuKnown');
-	if (providers.Size() > 0)
+	if (theGame.IsActive())
 	{
+		theGame.CMFGetCore().Providers(providers);
 		changed = false;
 		for (i = 0; i < count; i += 1)
 		{

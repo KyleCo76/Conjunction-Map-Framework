@@ -29,6 +29,12 @@ sys.path.insert(0, str(TOOLS))
 import cmf_pack
 
 GUIDE = 'docs/authors/icon-pack-guide.md'
+# What an API version added beyond calls and hooks, for "What each API version added" (versions with no new call).
+VERSION_NOTES = {
+    16: ['movie facade `map.hidePanels`', 'the tracker glow keys'],
+    17: ["`CMFHasAbility('screen', 'button')`", 'movie facade `map.cmfMakeButton`',
+         '`CMFMapRefreshPins()`', "`CMFHasAbility('map', 'refreshPins')`"],
+}
 THEME = 'docs/authors/theme-parts-and-keys.md'
 SETTINGS = 'docs/authors/settings-file-keys.md'
 CORE = 'source/core/content/scripts/local/cmfCore.ws'
@@ -537,7 +543,8 @@ class Build:
             added = sorted(c for c in cmf_pack.API if self.version(c) == number)
             hooks_added = [h for h in cmf_pack.HOOKS if hook_since(h) == number]
             names = ['`%s`' % c for c in added] + ['hook `%s`' % h for h in hooks_added]
-            lines.append('- **%d**: %s' % (number, ', '.join(names) or 'no new calls (new theme keys only)'))
+            names += VERSION_NOTES.get(number, [])
+            lines.append('- **%d**: %s' % (number, ', '.join(names) or 'no new calls (new keys or abilities only)'))
         return lines
 
     def theme_tables(self):

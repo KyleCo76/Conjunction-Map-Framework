@@ -45,6 +45,7 @@ CMF validates the live movie holder and drawing owner, then forwards three strin
 | `map.highlightPin(id,style)` | Temporary `pin` look keys for that pin; restores its previous look on release. `map.highlightPin(id,null)` takes that pin's temporary look back at once. |
 | `map.noSpread(id)` | Keeps that id out of a spread while the movie owns it. |
 | `map.hidePanels(parts)` | While this live movie is shown, hides the named map panels: any of `"legend"`, `"title"`, `"tracker"`, `"preview"`, `"worldButton"`, `"worldHint"`, `"hubBar"`; `"hubBar"` is the common menu's top bar (level, crowns, weight, tab strip; the close X stays); other names are ignored. `map.hidePanels(null)` or `map.hidePanels([])` shows again what this movie hid. Calls add to the movie's set. |
+| `map.cmfMakeButton(navCode,keyCode,label)` | API 17 (`CMFHasAbility('screen', 'button')`). Returns a new game key button (a `MovieClip`) for the controller button `navCode` (the `navEquivalent` names your `handleInput` sees, for example `"gamepad_L2"`, `"enter-gamepad_A"`, `"dpad_right"`) and the keyboard key `keyCode`, with `label` beside it; add it to your own clip. It follows the device in use like the game's key hints. `null` when the map has no key button to copy or the live movie is gone; on an older CMF the function is missing, so test `map.cmfMakeButton is Function` and keep a text fallback. |
 | `map.focus(on)` | Acquires keys/pad only if the drawing set `focus` 1, or releases them with false. |
 
 Prefer descriptor numeric ids. For known text tags, supply the typed name through a tag claim, an added pin, a style target or `CMFDeclareTag(provider, tag)`. Never convert an arbitrary id back into a name.
@@ -56,6 +57,8 @@ Set the drawing's `focus` key to 1 before calling `map.focus(true)`. Your `handl
 Hiding a movie or one of its display parents releases its focus, pan lock, centring and temporary pin effects. Its loader may stay ready, but callbacks and data requests are inactive while hidden. Showing it again calls `cmfScreen` again with the live map, but does not restore controls automatically; request them again explicitly. A key press consumed by the movie keeps its release, so returning focus does not also trigger a map action.
 
 Removal, ownership loss, load failure, area change and map close always release focus, pan locks, temporary highlights, spread exclusions and hidden panels (each panel returns to the visibility it had before the first movie hid it). Retained callbacks from an old facade are inert. Remove your own frame/listener/timer work when your clip leaves the stage; keep providers' persistence in their own scripts. Static/offline checks do not establish engine loading or controller acceptance.
+
+A screen movie whose own settings change which markers show (for example a filter list) can ask the map to rebuild its pins: `CMFMapRefreshPins()` (API 17; `CMFHasAbility('map', 'refreshPins')` says it exists) runs the game's full pin build again on the open map and returns false when no map is open. Call it from script after the setting is saved, and only when the ability answers true.
 
 ---
 

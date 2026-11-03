@@ -1,5 +1,20 @@
 Map Quest Insight adapter for Conjunction Map Framework
-Version 2.5.0 (for Map Quest Insight 2.1.0 and 2.2.0; icons by Wolfer, Map Quest Insight's author)
+Version 2.5.1 (for Map Quest Insight 2.1.0 and 2.2.0; icons by Wolfer, Map Quest Insight's author)
+
+What is new in 2.5.1: the Quest Filters rows follow Map Quest Insight's order and use
+Wolfer's glyphs (Wolfer is Map Quest Insight's author; the symbols are his). Colours,
+sizes and rows are read from Map Quest Insight's own file values. "[F] Quests" uses the
+game's own word. Saving in the Quest List reloads Map Quest Insight's settings. On an
+ultrawide screen the Quest List corner follows Map Quest Insight's own "Quest list
+corner" setting (21:9 / 32:9). The adapter detects Map Quest Insight's next update.
+A filter row changes the markers on the map at once, and Quests Available follows the
+filters. The list's key row and its prompts use the game's own button pictures, on
+keyboard and controller, and switch when you change between them (needs CMF 1.10.0;
+an older CMF shows text keys such as "[F] Close"). D-pad Right (Right on the keyboard)
+shows or hides a quest's objectives, as in Map Quest Insight, and the Objectives
+prompt shows that button. The highlight keeps its row when a filter or the sort
+changes, the legend stays hidden while the list is open, and The Heroes' Pursuits
+row has its symbol.
 
 Brings Map Quest Insight's world map features back on Conjunction Map Framework's
 world map. Map Quest Insight stays exactly as its author ships it. Map Quest Insight
@@ -126,8 +141,8 @@ KNOWN DIFFERENCES
   game's row instead.
 - While the Quest List is open it takes the keyboard: with "Move the map with the
   list open" on, the map moves with the mouse only.
-- A "Show on the map" row changes the list at once and the map markers the next time
-  the map opens.
+- A filter row ("Show on the map") changes the list and, from 2.5.1, the map markers at
+  once (the game's own pin build runs again on the open map).
 - A short click on a quest marker does not track it; hold to track, as in the game.
 - The Quest List hides the region title, the legend and the game's top bar while it
   is open, as Map Quest Insight's own list does; with a CMF older than 1.9.0 (API 16)

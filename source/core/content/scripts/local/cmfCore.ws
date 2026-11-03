@@ -21,7 +21,7 @@
 // place apart from its height (the tooltip keys tallMinHeight and the tall* places).
 // Never remove a call once published.
 
-function CMFGetVersion() : int { return 16; }
+function CMFGetVersion() : int { return 17; }
 
 // API 14: frame programs and their winning provider's per-layer phase.
 function CMFPropertyIconFrames() : int { return 45; }
@@ -3536,6 +3536,18 @@ class CMFCore extends CObject
 		}
 		spaceEarlyOk = false;
 		spaceMenu.CMFMapSpaceSend(true);
+		return true;
+	}
+
+	// API 17: rebuilds the open map's pins (the game's full pin build, which CMF's wrapper also re-sends the covers and
+	// the space after). False when no map is open.
+	public function RefreshPins() : bool
+	{
+		if (!spaceMenu)
+		{
+			return false;
+		}
+		spaceMenu.CMFRefreshPins();
 		return true;
 	}
 
@@ -9328,13 +9340,17 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 // 'revealEase'). Version 11 adds ('tooltip', 'x') and ('tooltip', 'y'), and ('tooltip', 'clearCursorAbove') and the
 // other new clear keys (clearCursorBelow, clearCursorTitle, clearPadX, clearPadY, clearGap, clearBoxPad, clearPick,
 // clearCursorWeight). Version 12 adds ('tooltip', 'tallMinHeight') and the other tall keys (tallX, tallTop, tallBottom,
-// tallAltX, tallAltTop, tallAltBottom, tallUnderLegend, tallClear). Abilities designed for later (images,
-// the map hold) answer false until a CMF version adds them.
+// tallAltX, tallAltTop, tallAltBottom, tallUnderLegend, tallClear). Version 17 adds ('screen', 'button'): a screen
+// movie's map.cmfMakeButton(navCode, keyCode, label) gives it one of the game's key buttons, and ('map', 'refreshPins')
+// says CMFMapRefreshPins() exists (it rebuilds the open map's pins). Abilities designed for later
+// (images, the map hold) answer false until a CMF version adds them.
 function CMFHasAbility(part : name, key : name) : bool
 {
 	var p : string;
 	p = NameToString(part);
 	if (part == 'map' && key == 'rootValues') { return true; }
+	if (part == 'screen' && key == 'button') { return true; }
+	if (part == 'map' && key == 'refreshPins') { return true; }
 	if (part == 'claims')
 	{
 		return CMFListHas("tagTint,placeClaims,playerArt,levelVariants,vanillaRows,everyPinIcon,withdraw,labelHideMerge,everyPin,iconFrames,iconPrograms,pictureFit",
@@ -9629,6 +9645,14 @@ function CMFMapRefresh() : bool
 	return theGame.CMFGetCore().RefreshMap();
 }
 
+// Version 17 (additive, same API 17). For a mod whose pin settings change while the map stays open (a filter that
+// hides some markers): runs the game's full pin build again on the open map. False when no map is open.
+// CMFHasAbility('map', 'refreshPins') says the function exists.
+function CMFMapRefreshPins() : bool
+{
+	return theGame.CMFGetCore().RefreshPins();
+}
+
 // Any in-game option changing (Fog of War's own switch included) drops the grids kept for the early send, so turning a
 // drawing Off never shows the old one for a frame.
 @wrapMethod(CR4Game)
@@ -9712,6 +9736,13 @@ function UpdateData(optional ignoreSelectionChange : bool)
 	theGame.CMFGetCore().ReportPinAsks();
 	theGame.CMFGetCore().ClearLabelHideState();
 	CMFStamp("end");
+}
+
+// API 17: the full pin build again on the open map (CMFMapRefreshPins); CMF's UpdateData wrapper re-sends covers and space.
+@addMethod(CR4MapMenu)
+function CMFRefreshPins()
+{
+	UpdateData(true);
 }
 
 // Map-space drawing: sends the map-space drawings for the shown area; refresh (CMFMapRefresh) first runs

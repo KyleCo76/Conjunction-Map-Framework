@@ -2,7 +2,7 @@
 
 # API reference
 
-Every function, property id, hook and map event CMF offers to mods (API version 16). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
+Every function, property id, hook and map event CMF offers to mods (API version 17). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
 
 ## Functions
 
@@ -10,6 +10,7 @@ Every function, property id, hook and map event CMF offers to mods (API version 
 | --- | --- | --- | --- |
 | `CMFGetVersion() : int` | 1 | `CMFRegisterIcon`, `CMFRegisterIconForTag` \| image path \| unused (`0`) \| 40 with this id at the same slot | [Writing your script](Writing-Your-Script.md), [Getting started](Getting-Started.md) |
 | `CMFHasProperty(propertyId : int) : bool` | 1 | `true` when the installed CMF understands that property id. | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md), [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md) |
+| `CMFMapRefreshPins() : bool` | 1 | `CMFMapRefreshPins()` (API 17; `CMFHasAbility('map', 'refreshPins')` says it exists) runs the game's full pin build again on the open map, for a mod whose settings change which markers show; it returns false when no map is open. | [Writing your script](Writing-Your-Script.md), [Map theme parts and keys](Theme-Parts-and-Keys.md), [Your own movie on the screen](Your-Own-Movie-on-the-Screen.md) |
 | `CMFRegister(provider : string, propertyId : int, target : name, mapContext : name, text : string, number : int) : bool` | 1 | One claim for a pin type (a map area for property 4). | [Writing your script](Writing-Your-Script.md), [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Animated pictures](Animated-Pictures.md) |
 | `CMFRegisterBackground(provider : string, area : name, imageRoot : string)` | 1 | Replaces the map image of one area, such as `'AN_NMLandNovigrad'` (Velen and Novigrad). | [Writing your script](Writing-Your-Script.md) |
 | `CMFRegisterDisabled(provider : string, pinType : name, mapContext : name, disable : bool)` | 1 | Draws every pin of that type greyed (grey art at reduced opacity, tint skipped). | [Writing your script](Writing-Your-Script.md), [Greying pins](Greying-Pins.md), [Settings file keys](Settings-File-Keys.md) |
@@ -194,22 +195,23 @@ CMF's map calls these events on `CR4MapMenu`. New events are core-owned; wrap th
 
 ## What each API version added
 
-- **1**: `CMFGetVersion`, `CMFHasProperty`, `CMFPropertyBackground`, `CMFPropertyDisabled`, `CMFPropertyIcon`, `CMFPropertyLegendIcon`, `CMFPropertyTint`, `CMFRegister`, `CMFRegisterBackground`, `CMFRegisterDisabled`, `CMFRegisterDisabledForTag`, `CMFRegisterForTag`, `CMFRegisterIcon`, `CMFRegisterIconForTag`, `CMFRegisterLegendIcon`, `CMFRegisterTint`, `CMFReleaseProvider`, `CMFRequireVersion`
+- **1**: `CMFGetVersion`, `CMFHasProperty`, `CMFMapRefreshPins`, `CMFPropertyBackground`, `CMFPropertyDisabled`, `CMFPropertyIcon`, `CMFPropertyLegendIcon`, `CMFPropertyTint`, `CMFRegister`, `CMFRegisterBackground`, `CMFRegisterDisabled`, `CMFRegisterDisabledForTag`, `CMFRegisterForTag`, `CMFRegisterIcon`, `CMFRegisterIconForTag`, `CMFRegisterLegendIcon`, `CMFRegisterTint`, `CMFReleaseProvider`, `CMFRequireVersion`
 - **2**: `CMFPropertyLegendCategory`, `CMFPropertyLegendLabel`, `CMFPropertyLegendRow`, `CMFRegisterLegendCategory`, `CMFRegisterLegendLabel`, `CMFRegisterLegendRow`, `CMFStylePin`, `CMFStylePinIcon`, `CMFStylePinTint`
 - **3**: `CMFHidePin`, `CMFPropertyHidden`, `CMFRegisterHidden`, `CMFRegisterHiddenForTag`
 - **4**: `CMFLabelHideCrosshair`, `CMFLabelHidePin`, `CMFLevelLabel`, `CMFPropertyInfoBoxHeight`, `CMFPropertyLabelHide`, `CMFPropertyLabelPlace`, `CMFPropertyLabelText`, `CMFPropertyPinScale`, `CMFPropertyTabHide`, `CMFStylePinLabel`, `CMFStylePinScale`, hook `OnPinReady`, hook `OnMapReady`
 - **5**: `CMFDraw`, `CMFDrawSet`, `CMFHasAbility`, `CMFPropertyLabelColor`, `CMFStylePart`
 - **6**: `CMFDrawSetList`, `CMFMapRefresh`, `CMFPropertyCategoryNoDefault`, `CMFPropertyHoverName`, `CMFPropertyIconCompleted`, `CMFPropertyIconUndiscovered`, `CMFPropertyInfoText`, `CMFPropertyInfoTitle`, `CMFPropertyPinClick`, `CMFPropertyPinClickButton`, `CMFPropertyPinClickHint`, `CMFPropertySpreadRank`, `CMFPropertyTabHidden`, `CMFRegisterCategoryNoDefault`, hook `OnPinClicked`, hook `OnDrawingClicked`, hook `OnMapListening`
-- **7**: no new calls (new theme keys only)
+- **7**: no new calls (new keys or abilities only)
 - **8**: `CMFChoicesChanged`, `CMFSetProviderName`
 - **9**: `CMFPropertyButtonPicture`, `CMFPropertyWorldCrest`, `CMFPropertyWorldMarker`, `CMFPropertyWorldPainting`, `CMFRegisterButtonPicture`, `CMFRegisterChoiceOnly`, `CMFRegisterWorldCrest`, `CMFRegisterWorldMarker`, `CMFRegisterWorldPainting`, `CMFRegisterWorldPaintingTiles`, `CMFSetOpeningView`, `CMFSetOpeningWorld`, hook `OnMapView`, hook `OnMapOpening`
 - **10**: `CMFScreenHeight`, `CMFScreenWidth`
 - **11**: `CMFDeclareProvider`, `CMFInfoAdd`, `CMFInfoReplace`, `CMFLevelPlace`, `CMFPlaceRadius`, `CMFPropertyPresent`, `CMFProviderPresent`, `CMFRegisterForPlace`, `CMFSetLogPins`
-- **12**: no new calls (new theme keys only)
+- **12**: no new calls (new keys or abilities only)
 - **13**: `CMFAddPin`, `CMFClickInputHold`, `CMFDeclareTag`, `CMFRemovePin`, `CMFStyle`, hook `OnMapTab`, hook `OnMapHints`, hook `OnInfoFold`, hook `OnMovieEvent`, hook `OnMapAreaReady`
 - **14**: `CMFDrawSetBits`, `CMFGridKeepPin`, `CMFPropertyFrameOffset`, `CMFPropertyIconFrames`, `CMFPropertyIconUnderFrames`, `CMFPropertyPictureFit`
-- **15**: no new calls (new theme keys only)
-- **16**: no new calls (new theme keys only)
+- **15**: no new calls (new keys or abilities only)
+- **16**: movie facade `map.hidePanels`, the tracker glow keys
+- **17**: `CMFHasAbility('screen', 'button')`, movie facade `map.cmfMakeButton`, `CMFMapRefreshPins()`, `CMFHasAbility('map', 'refreshPins')`
 
 ---
 
