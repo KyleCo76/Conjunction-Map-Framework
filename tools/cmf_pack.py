@@ -112,7 +112,8 @@ VERSION13 = {'CMFStyle', 'CMFAddPin', 'CMFRemovePin', 'CMFDeclareTag', 'CMFClick
 VERSION14 = {'CMFPropertyIconFrames', 'CMFPropertyIconUnderFrames', 'CMFPropertyFrameOffset', 'CMFPropertyPictureFit', 'CMFDrawSetBits', 'CMFGridKeepPin'}
 API |= VERSION14
 # CMF 17 (additive): the open map's pins rebuilt; an adapter asks CMFHasAbility('map', 'refreshPins') first.
-API.add('CMFMapRefreshPins')
+VERSION17 = {'CMFMapRefreshPins'}
+API |= VERSION17
 # The world overview's crest names (UniverseMapContainer.configUI); a region another mod adds goes by its area name.
 WORLD_REGIONS = ('kaer_morhen', 'skellige', 'novigrad', 'no_mans_land', 'prolog_village', 'wyzima_castle', 'bob')
 WORLD_MARKERS = ('player', 'quest')
@@ -163,7 +164,7 @@ THEME_PART_KEYS = {
     'pinButton': ('width', 'height', 'curve', 'fill', 'alpha', 'stroke', 'strokeWidth', 'offsetX', 'offsetY') + THEME_TEXT,
     'mapSpace': (),
     'opening': ('slideSeconds', 'slideOffset', 'closeSeconds', 'pinsDuringSlide', 'pinStepMs', 'pinBatch',
-                'pinBudgetMs', 'showDelayMs', 'fadeSeconds', 'tileFadeSeconds', 'revealSeconds', 'readyAtFadeStart',
+                'pinBudgetMs', 'pinBudgetAfterSlideMs', 'showDelayMs', 'fadeSeconds', 'tileFadeSeconds', 'revealSeconds', 'readyAtFadeStart',
                 'revealEase', 'revealLegendSeconds', 'revealTrackerSeconds', 'revealCrosshairSeconds', 'waitForMap'),
     'spread': ('on', 'anyPin', 'enterRadius', 'stackDistance', 'gap', 'maxPins', 'openMs', 'closeMs', 'lockRadius',
                'keepRadius'),
@@ -1347,6 +1348,10 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
     if needs14:
         report.note(path_label, 'calls %s, so the pack compiles only with CMF API 14 or later, even inside a runtime guard; say so in its README'
                     % ', '.join(needs14))
+    needs17 = sorted(set(m.group(1) for m in CALL.finditer(code)) & VERSION17)
+    if needs17:
+        report.note(path_label, 'calls %s, so the pack compiles only with CMF API 17 (1.10.0) or later, even inside a runtime guard; say so in its README'
+                    % ', '.join(needs17))
     needs11 = sorted(set(m.group(1) for m in CALL.finditer(code)) & VERSION11)
     if needs11:
         report.note(path_label, 'calls %s, so the pack compiles only with CMF 11 or later; say so in its README '

@@ -73,7 +73,7 @@ class ReviewFixTests(unittest.TestCase):
                     env={"propertyId":10,"pinType":"Herbalist","pinTag":"tag","maxLevel":3,
                          "result":result,"propertyWon":Array([True]*64),"winners":winners,
                          "specificWon":Array([True]*64),"globalWinner":Array([1 if reverse else 0]*64),
-                         "propertyFirst":Array([0]*64),"propertyNext":Array([1,-1]),
+                         "propertyFirst":Array([0]*64),"candidates":Array(),"indexBuilt":False,"debugTiming":False,"timingFinds":0,"timingCandidates":0,"timingMemoHits":0,"propertyNext":Array([1,-1]),
                          "choicesActive":True,"decideAnswer":Array(["modGlobal"]*80),"fallVanilla":strict,
                          "PropertyChoice":lambda *a:27,"Covers":lambda *a:True,
                          "CMFLevelPlace":lambda:3,"CMFKindHidden":lambda t:False,

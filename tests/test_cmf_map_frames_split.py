@@ -26,7 +26,8 @@ def left_out(entries, drawing, root, owners):
     env = dict(themeEntries=Array(entries), DrawingRoot=lambda id: root,
                ThemeStyleOwner=lambda part, key: owners.get((part, key), ""),
                PartKeyChoice=lambda part, key: PIECES.get((part, key), 41 if part == "tooltip" else 39),
-               ThemeLookChoice=lambda part: 41 if part == "tooltip" else 39)
+               ThemeLookChoice=lambda part: 41 if part == "tooltip" else 39, themeMemoOn=False)
+    env["ComputePanelDrawingLeftOut"] = bind(CORE, "ComputePanelDrawingLeftOut", env, ("entryValue", "owner"), out_indices=(1,))
     env["PanelPart"] = bind(CORE, "PanelPart", env, ("part",))
     run = bind(CORE, "PanelDrawingLeftOut", env, ("entryValue", "owner"), out_indices=(1,))
     return run(drawing, "")

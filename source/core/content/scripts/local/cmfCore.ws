@@ -793,6 +793,10 @@ class CMFCore extends CObject
 	private var animationBlanks : string;
 	private var animationDirect : array<SCMFAnimationDirect>;
 	private var animationBindings : array<SCMFAnimationBinding>;
+	// 1.10.1: animationBindingKeys[i] is animationBindings[i]'s pin key and property, so a pin's binding is found by a
+	// native search instead of a script loop over every binding (that loop made the late pass grow with the square of
+	// the pins that carry animated art).
+	private var animationBindingKeys : array<string>;
 	private var animationPins : array<CScriptedFlashObject>;
 	private var animationMenu : CR4MapMenu;
 	private var animationEnabled, animationOptionsRead : bool;
@@ -829,6 +833,19 @@ class CMFCore extends CObject
 	private var hintListOwnerSent : string;
 	private var hintListPreparedOwner : string;
 	private var themeNotes : array<string>;
+	// Memo for one SendTheme call (themeMemoOn); cleared at both ends of the call.
+	private var themeMemoOn : bool;
+	private var styleMemoKeys : array<string>;
+	private var styleMemoOwners : array<string>;
+	private var drawingMemoIds : array<name>;
+	private var drawingMemoOwners : array<string>;
+	private var kindMemoKeys : array<string>;
+	private var kindMemoValues : array<name>;
+	private var leftOutMemoKeys : array<string>;
+	private var leftOutMemoFlags : array<bool>;
+	private var leftOutMemoOwners : array<string>;
+	private var rankMemoProviders : array<string>;
+	private var rankMemoValues : array<int>;
 	private var providerOrder : string;
 	private var clickNotes : array<string>;
 	private var spaceMenu : CR4MapMenu;
@@ -919,6 +936,31 @@ class CMFCore extends CObject
 	private var specificWon : array<bool>;
 	private var propertyFirst : array<int>;
 	private var propertyNext : array<int>;
+	// Opening speed (1.10.1): the winners indexed by what a pin can match, built once per preparation (BuildLookupIndex),
+	// so Find looks at the few winners that can cover a pin instead of every winner of the property. Heads and next
+	// links hold a winner index plus one (0 = none). typeHead and tagHead are indexed slot * 64 + property.
+	private var indexBuilt : bool;
+	private var typeKeys : array<string>;
+	private var tagKeys : array<name>;
+	private var typeHead : array<int>;
+	private var typeTail : array<int>;
+	private var typeNext : array<int>;
+	private var tagHead : array<int>;
+	private var tagTail : array<int>;
+	private var tagNext : array<int>;
+	private var globalHead : array<int>;
+	private var globalTail : array<int>;
+	private var globalNext : array<int>;
+	// The answer of a Find for a pin type with no tag, variant or place: 0 unknown, 1 nothing, winner index plus two.
+	private var memoState : array<int>;
+	private var candidates : array<int>;
+	// CMFDebug timing and counts, read once per preparation and per build; nothing is timed or counted without it.
+	private var debugTiming : bool;
+	private var timingPins : int;
+	private var timingCovered : int;
+	private var timingFinds : int;
+	private var timingCandidates : int;
+	private var timingMemoHits : int;
 	private var activeWriteSlots : array<int>;
 	private var placeClaims : int;
 	private var tagIds : array<int>;
@@ -1490,10 +1532,8 @@ class CMFCore extends CObject
 		if (IsNameValid(tag)) { return "tag/" + NameToString(tag); }
 		id = dataObject.GetMemberFlashUInt("id");
 		if (id != 0) { return "id/" + id + "/" + dataObject.GetMemberFlashString("type"); }
-		for (i = 0; i < animationPins.Size(); i += 1)
-		{
-			if (animationPins[i] == dataObject) { return "object/" + i; }
-		}
+		i = animationPins.FindFirst(dataObject);
+		if (i >= 0) { return "object/" + i; }
 		animationPins.PushBack(dataObject);
 		return "object/" + (animationPins.Size() - 1);
 	}
@@ -1626,6 +1666,7 @@ class CMFCore extends CObject
 			if (animationBindings[i].pinKey == pinKey && animationBindings[i].propertyId == propertyId)
 			{
 				animationBindings.Erase(i);
+				animationBindingKeys.Erase(i);
 			}
 		}
 		AnimationPrune();
@@ -1638,22 +1679,37 @@ class CMFCore extends CObject
 		var pinKey : string;
 		var i : int;
 		pinKey = AnimationPinKey(dataObject);
-		for (i = 0; i < animationBindings.Size(); i += 1)
+		i = animationBindingKeys.FindFirst(pinKey + "#" + propertyId);
+		if (i >= 0)
 		{
-			if (animationBindings[i].pinKey == pinKey && animationBindings[i].propertyId == propertyId)
-			{
-				if (animationBindings[i].text == text && animationBindings[i].fps == fps) { return; }
-				animationBindings[i].text = text;
-				animationBindings[i].fps = fps;
-				AnimationPrune();
-				return;
-			}
+			if (animationBindings[i].text == text && animationBindings[i].fps == fps) { return; }
+			animationBindings[i].text = text;
+			animationBindings[i].fps = fps;
+			AnimationPrune();
+			return;
 		}
 		binding.pinKey = pinKey;
 		binding.propertyId = propertyId;
 		binding.text = text;
 		binding.fps = fps;
 		animationBindings.PushBack(binding);
+		animationBindingKeys.PushBack(pinKey + "#" + propertyId);
+	}
+
+	// Pins without a tag or an id are keyed by their data object, and every build makes new objects, so the previous
+	// build's object keys can never match again. They are dropped when a build starts (they grew by one set per rebuild).
+	private function AnimationForgetObjects()
+	{
+		var i : int;
+		for (i = animationBindings.Size() - 1; i >= 0; i -= 1)
+		{
+			if (StrBeginsWith(animationBindings[i].pinKey, "object/"))
+			{
+				animationBindings.Erase(i);
+				animationBindingKeys.Erase(i);
+			}
+		}
+		animationPins.Clear();
 	}
 
 	private function AnimationPrune()
@@ -1784,6 +1840,7 @@ class CMFCore extends CObject
 		animationDirect.Clear();
 		animationPins.Clear();
 		animationBindings.Clear();
+		animationBindingKeys.Clear();
 		for (i = animationCache.Size() - 1; i >= 0; i -= 1)
 		{
 			if (!animationCache[i].valid) { animationCache.Erase(i); }
@@ -2636,7 +2693,49 @@ class CMFCore extends CObject
 		return key;
 	}
 
+	private function ClearThemeMemo()
+	{
+		styleMemoKeys.Clear();
+		styleMemoOwners.Clear();
+		drawingMemoIds.Clear();
+		drawingMemoOwners.Clear();
+		kindMemoKeys.Clear();
+		kindMemoValues.Clear();
+		leftOutMemoKeys.Clear();
+		leftOutMemoFlags.Clear();
+		leftOutMemoOwners.Clear();
+		rankMemoProviders.Clear();
+		rankMemoValues.Clear();
+	}
+
+	// Inside SendTheme the answer is remembered per (part, key) group; see the plan for what each key holds.
 	private function ThemeStyleOwner(part : name, key : name) : string
+	{
+		var at : int;
+		var memoKey, owner : string;
+		if (!themeMemoOn) { return ComputeThemeStyleOwner(part, key); }
+		if (part == 'map' && (key == 'frame' || key == 'frameTop' || key == 'frameBottom'))
+		{
+			memoKey = NameToString(part) + "/" + NameToString(key);
+		}
+		else if (part == 'map' || part == 'navigation' || part == 'opening' || part == 'spread' || part == 'wide' ||
+			(part == 'hints' && key == 'list'))
+		{
+			memoKey = NameToString(part) + "/" + NameToString(ThemeOwnershipKey(part, key));
+		}
+		else
+		{
+			memoKey = NameToString(part) + "#" + PartKeyChoice(part, key);
+		}
+		at = styleMemoKeys.FindFirst(memoKey);
+		if (at >= 0) { return styleMemoOwners[at]; }
+		owner = ComputeThemeStyleOwner(part, key);
+		styleMemoKeys.PushBack(memoKey);
+		styleMemoOwners.PushBack(owner);
+		return owner;
+	}
+
+	private function ComputeThemeStyleOwner(part : name, key : name) : string
 	{
 		var i, choice, keyChoice : int;
 		var owner, answer : string;
@@ -2752,6 +2851,19 @@ class CMFCore extends CObject
 
 	private function ThemeDrawingOwner(id : name) : string
 	{
+		var at : int;
+		var owner : string;
+		if (!themeMemoOn) { return ComputeThemeDrawingOwner(id); }
+		at = drawingMemoIds.FindFirst(id);
+		if (at >= 0) { return drawingMemoOwners[at]; }
+		owner = ComputeThemeDrawingOwner(id);
+		drawingMemoIds.PushBack(id);
+		drawingMemoOwners.PushBack(owner);
+		return owner;
+	}
+
+	private function ComputeThemeDrawingOwner(id : name) : string
+	{
 		var i : int;
 		var owner : string;
 		owner = "";
@@ -2768,6 +2880,21 @@ class CMFCore extends CObject
 
 	// Map-space drawing: the kind of the drawing this provider made with this id ('' before CMFDraw).
 	public function DrawingKind(provider : string, id : name) : name
+	{
+		var at : int;
+		var memoKey : string;
+		var kind : name;
+		if (!themeMemoOn) { return ComputeDrawingKind(provider, id); }
+		memoKey = provider + "|" + NameToString(id);
+		at = kindMemoKeys.FindFirst(memoKey);
+		if (at >= 0) { return kindMemoValues[at]; }
+		kind = ComputeDrawingKind(provider, id);
+		kindMemoKeys.PushBack(memoKey);
+		kindMemoValues.PushBack(kind);
+		return kind;
+	}
+
+	private function ComputeDrawingKind(provider : string, id : name) : name
 	{
 		var i : int;
 		for (i = 0; i < themeEntries.Size(); i += 1)
@@ -2794,6 +2921,28 @@ class CMFCore extends CObject
 	// panel it does not style keeps its drawing. Only look keys count: a key that answers another piece (the info box's clear* and
 	// tall* places, fold keys, show) does not tie the drawing to the look. owner is the winner of the panel's look.
 	private function PanelDrawingLeftOut(entryValue : SCMFThemeEntry, out owner : string) : bool
+	{
+		var at : int;
+		var memoKey, found : string;
+		var result : bool;
+		if (!themeMemoOn) { return ComputePanelDrawingLeftOut(entryValue, owner); }
+		memoKey = NameToString(DrawingRoot(entryValue.target)) + "|" + entryValue.provider;
+		at = leftOutMemoKeys.FindFirst(memoKey);
+		if (at >= 0)
+		{
+			if (leftOutMemoFlags[at]) { owner = leftOutMemoOwners[at]; }
+			return leftOutMemoFlags[at];
+		}
+		found = "";
+		result = ComputePanelDrawingLeftOut(entryValue, found);
+		leftOutMemoKeys.PushBack(memoKey);
+		leftOutMemoFlags.PushBack(result);
+		leftOutMemoOwners.PushBack(found);
+		if (result) { owner = found; }
+		return result;
+	}
+
+	private function ComputePanelDrawingLeftOut(entryValue : SCMFThemeEntry, out owner : string) : bool
 	{
 		var root : name;
 		var i : int;
@@ -2939,6 +3088,18 @@ class CMFCore extends CObject
 	// Position of a provider in folder order among the theme's providers (0 = earliest folder).
 	private function ThemeFolderRank(provider : string) : int
 	{
+		var at, rank : int;
+		if (!themeMemoOn) { return ComputeThemeFolderRank(provider); }
+		at = rankMemoProviders.FindFirst(provider);
+		if (at >= 0) { return rankMemoValues[at]; }
+		rank = ComputeThemeFolderRank(provider);
+		rankMemoProviders.PushBack(provider);
+		rankMemoValues.PushBack(rank);
+		return rank;
+	}
+
+	private function ComputeThemeFolderRank(provider : string) : int
+	{
 		var i, rank : int;
 		var counted : array<string>;
 		rank = 0;
@@ -2987,11 +3148,14 @@ class CMFCore extends CObject
 		var item : CScriptedFlashObject;
 		var owner : string;
 		var i, k, sent, ownMotion : int;
+		debugTiming = CMFSettingsDebug();
 		if (!storage)
 		{
 			return;
 		}
 		if (dirty) { Prepare(); }
+		ClearThemeMemo();
+		themeMemoOn = true;
 		flashArray = storage.CreateTempFlashArray();
 		sent = 0;
 		for (i = 0; i < themeEntries.Size(); i += 1)
@@ -3065,13 +3229,20 @@ class CMFCore extends CObject
 		}
 		ownMotion = SendDefaultMotion(storage, flashArray);
 		SendWideVanilla(storage, flashArray);
+		SendPinRecycle(flashArray, storage);
 		SendLookOwners(storage);
+		themeMemoOn = false;
+		ClearThemeMemo();
 		SendMovieTags(storage);
 		storage.SetFlashArray("cmf.map.theme", flashArray);
 		NoteTheme("theme sent entries=" + sent + " of=" + themeEntries.Size() + " cmfMotion=" + ownMotion);
 		SendWorld(storage);
 		SendItemStyles(storage);
 		SendLegendRowArt(storage);
+		if (debugTiming)
+		{
+			CMFLog("timing theme entries=" + themeEntries.Size() + " sent=" + sent);
+		}
 	}
 
 	// Legend rows with no pins: the legend's "Custom marker" row (User1) and the shared Quest row (StoryQuest) can list no pin
@@ -3251,6 +3422,29 @@ class CMFCore extends CObject
 	// Version 10: the map fills a wide or tall screen unless the Fill wide screens row (Movement_Wide) says Vanilla.
 	// Filling is CMF's base layout, not a behaviour value: the map does it with no wide entry, so CMF sends an entry of
 	// its own (fill 0, p -1) only for Vanilla. Logs who decides the layout once per opening.
+	// Version 17 (hidden): the panel recycles pin clips in a full pin update unless the file setting CMFPinRecycle is off.
+	// Only the off answer is sent, as the opening key pinRecycle 0; the panel reads no key as on. Logs "pin recycle off".
+	private function SendPinRecycle(flashArray : CScriptedFlashArray, storage : CScriptedFlashValueStorage)
+	{
+		var item : CScriptedFlashObject;
+		if (CMFSettingsPinRecycle())
+		{
+			return;
+		}
+		item = storage.CreateTempFlashObject();
+		item.SetMemberFlashInt("k", 1);
+		item.SetMemberFlashString("t", "opening");
+		item.SetMemberFlashString("a", "");
+		item.SetMemberFlashString("y", "pinRecycle");
+		item.SetMemberFlashString("s", "");
+		item.SetMemberFlashNumber("n", 0);
+		item.SetMemberFlashInt("p", -1);
+		item.SetMemberFlashInt("o", 0);
+		flashArray.PushBackFlashObject(item);
+		NoteTheme("theme default part=opening key=pinRecycle value=0");
+		CMFLog("pin recycle off");
+	}
+
 	private function SendWideVanilla(storage : CScriptedFlashValueStorage, flashArray : CScriptedFlashArray)
 	{
 		var item : CScriptedFlashObject;
@@ -4704,6 +4898,7 @@ class CMFCore extends CObject
 	{
 		var i, w : int;
 		var found : bool;
+		debugTiming = CMFSettingsDebug();
 		providerOrder = CMFSettingsProviderOrder();
 		ReadChoices();
 		animationClaimIndices.Clear();
@@ -4855,6 +5050,47 @@ class CMFCore extends CObject
 			CMFLog("info add provider=" + infoAdds[i].provider + " property=" + infoAdds[i].propertyId + " level=" +
 				infoAdds[i].level + " type=" + NameToString(infoAdds[i].pinType) + " tag=" + NameToString(infoAdds[i].pinTag));
 		}
+		if (debugTiming)
+		{
+			ReportIndex();
+		}
+	}
+
+	// CMFDebug only: the size of the prepared lookup index, one line per preparation, so a log shows whether almost
+	// every pin is covered (every-pin and place claims) and how many winners each property holds.
+	private function ReportIndex()
+	{
+		var i, n : int;
+		var counts : array<int>;
+		var perProperty : string;
+		for (i = 0; i < 64; i += 1) { counts.PushBack(0); }
+		for (i = 0; i < winners.Size(); i += 1)
+		{
+			if (winners[i].propertyId >= 0 && winners[i].propertyId < 64) { counts[winners[i].propertyId] += 1; }
+		}
+		perProperty = "";
+		for (n = 0; n < 64; n += 1)
+		{
+			if (counts[n] > 0) { perProperty += " p" + n + "=" + counts[n]; }
+		}
+		CMFLog("timing prepare claims=" + claims.Size() + " winners=" + winners.Size() + " types=" +
+			typeKeys.Size() + " tags=" + tagKeys.Size() + " everyPinClaims=" + everyPinClaims + " placeClaims=" + placeClaims +
+			" claimedTypes=" + claimedTypes.Size() + " tagNames=" + tagNames.Size() + " hides=" + hideClaims.Size() +
+			" perProperty:" + perProperty);
+	}
+
+	// CMFDebug only: the per-pin totals of one map build, logged once when the build ends (UpdateData).
+	public function ReportTiming()
+	{
+		if (!debugTiming) { return; }
+		CMFLog("timing build pins=" + timingPins + " covered=" + timingCovered +
+			" finds=" + timingFinds + " candidates=" + timingCandidates +
+			" memoHits=" + timingMemoHits + " animPins=" + animationPins.Size() + " animBindings=" + animationBindings.Size());
+		timingPins = 0;
+		timingCovered = 0;
+		timingFinds = 0;
+		timingCandidates = 0;
+		timingMemoHits = 0;
 	}
 
 	// Version 11, opening speed: the per-preparation lookup aids (propertyWon, placeClaims, tagIds and tagNames, the
@@ -4936,6 +5172,100 @@ class CMFCore extends CObject
 			NoteLookupClaim(infoAdds[i]);
 			NoteInfoClaim(infoAdds[i]);
 		}
+		BuildLookupIndex();
+	}
+
+	// Opening speed (1.10.1): indexes the winners for Find. Every winner that is not a hide or an info add sits in one
+	// list: the every-pin winners of its property, the winners of its property naming a type (levels 1 and 3, by type),
+	// or the winners of its property naming a tag (level 2, by tag). Each list keeps the order of winners, so Find
+	// examines the same candidates in the same order as the chain of the property, only without the ones that cannot
+	// cover the pin.
+	private function BuildLookupIndex()
+	{
+		var i, p, slot, key, last : int;
+		var typeName : string;
+		var winnerType, winnerTag : array<int>;
+		indexBuilt = false;
+		typeKeys.Clear();
+		tagKeys.Clear();
+		typeHead.Clear();
+		typeTail.Clear();
+		typeNext.Clear();
+		tagHead.Clear();
+		tagTail.Clear();
+		tagNext.Clear();
+		globalHead.Clear();
+		globalTail.Clear();
+		globalNext.Clear();
+		memoState.Clear();
+		for (i = 0; i < winners.Size(); i += 1)
+		{
+			typeNext.PushBack(0);
+			tagNext.PushBack(0);
+			globalNext.PushBack(0);
+			winnerType.PushBack(-1);
+			winnerTag.PushBack(-1);
+			if (winners[i].level == 1 || winners[i].level == CMFLevelPlace())
+			{
+				typeName = NameToString(winners[i].pinType);
+				slot = typeKeys.FindFirst(typeName);
+				if (slot < 0)
+				{
+					slot = typeKeys.Size();
+					typeKeys.PushBack(typeName);
+				}
+				winnerType[i] = slot;
+			}
+			else if (winners[i].level == 2)
+			{
+				slot = tagKeys.FindFirst(winners[i].pinTag);
+				if (slot < 0)
+				{
+					slot = tagKeys.Size();
+					tagKeys.PushBack(winners[i].pinTag);
+				}
+				winnerTag[i] = slot;
+			}
+		}
+		globalHead.Resize(64);
+		globalTail.Resize(64);
+		typeHead.Resize(typeKeys.Size() * 64 + 1);
+		typeTail.Resize(typeKeys.Size() * 64 + 1);
+		tagHead.Resize(tagKeys.Size() * 64 + 1);
+		tagTail.Resize(tagKeys.Size() * 64 + 1);
+		memoState.Resize(4 * typeKeys.Size() * 64 + 1);
+		for (i = 0; i < winners.Size(); i += 1)
+		{
+			p = winners[i].propertyId;
+			if (p < 0 || p >= 64)
+			{
+				continue;
+			}
+			if (winners[i].level == 0)
+			{
+				last = globalTail[p] - 1;
+				if (last < 0) { globalHead[p] = i + 1; }
+				else { globalNext[last] = i + 1; }
+				globalTail[p] = i + 1;
+			}
+			else if (winnerType[i] >= 0)
+			{
+				key = winnerType[i] * 64 + p;
+				last = typeTail[key] - 1;
+				if (last < 0) { typeHead[key] = i + 1; }
+				else { typeNext[last] = i + 1; }
+				typeTail[key] = i + 1;
+			}
+			else if (winnerTag[i] >= 0)
+			{
+				key = winnerTag[i] * 64 + p;
+				last = tagTail[key] - 1;
+				if (last < 0) { tagHead[key] = i + 1; }
+				else { tagNext[last] = i + 1; }
+				tagTail[key] = i + 1;
+			}
+		}
+		indexBuilt = true;
 	}
 
 	private function NoteInfoClaim(claim : SCMFClaim)
@@ -4984,7 +5314,6 @@ class CMFCore extends CObject
 	// its type, legend name or level variant, a tag claim on its tag, or any place claim (checked by Covers there).
 	private function PinCovered(pinKey : string, legendKey : string, pinTag : name) : bool
 	{
-		var i : int;
 		if (everyPinClaims > 0 || placeClaims > 0 || claimedTypes.Contains(pinKey) || claimedTypes.Contains(legendKey) ||
 			(variantNow != "" && claimedTypes.Contains(variantNow)))
 		{
@@ -4994,14 +5323,7 @@ class CMFCore extends CObject
 		{
 			return false;
 		}
-		for (i = 0; i < tagNames.Size(); i += 1)
-		{
-			if (tagNames[i] == pinTag)
-			{
-				return true;
-			}
-		}
-		return false;
+		return tagNames.FindFirst(pinTag) >= 0;
 	}
 
 	private function PropertyWon(propertyId : int) : bool
@@ -5324,6 +5646,7 @@ class CMFCore extends CObject
 		{
 			return;
 		}
+		if (debugTiming) { timingPins += 1; }
 		dataObject.SetMemberFlashBool("cmfDone", true);
 		pinKey = NameToString(pinType);
 		NoteListPin(dataObject, pinKey, pinTag, NameToString(realType));
@@ -5346,6 +5669,7 @@ class CMFCore extends CObject
 			if (PinCovered(pinKey, pinKey, pinTag))
 			{
 				NotePin(pinType, pinTag);
+				if (debugTiming) { timingCovered += 1; }
 				gamePinNow = true;
 				WriteFields(dataObject, pinKey, pinKey, pinTag, CMFLevelPlace(), mapContext);
 				gamePinNow = false;
@@ -5649,6 +5973,7 @@ class CMFCore extends CObject
 			if (!isPlayer && !isUser && !dataObject.GetMemberFlashBool("cmfDone"))
 			{
 				fresh = true;
+				if (debugTiming) { timingPins += 1; }
 				dataObject.SetMemberFlashBool("cmfDone", true);
 				dataObject.SetMemberFlashBool("cmfRowHide", true);
 				// Pin art, tint and appearance key on the pin's own type (script-pushed pins often share one
@@ -5692,6 +6017,7 @@ class CMFCore extends CObject
 				{
 					if (PinCovered(pinType, filtered, pinTag))
 					{
+						if (debugTiming) { timingCovered += 1; }
 						WriteFields(dataObject, pinType, filtered, pinTag, maxLevel, mapContext);
 					}
 					WriteStateIcon(dataObject, pinType, "", pinTag);
@@ -5785,12 +6111,10 @@ class CMFCore extends CObject
 		{
 			return '';
 		}
-		for (i = 0; i < tagIds.Size(); i += 1)
+		i = tagIds.FindFirst(id);
+		if (i >= 0)
 		{
-			if (tagIds[i] == id)
-			{
-				return tagNames[i];
-			}
+			return tagNames[i];
 		}
 		return '';
 	}
@@ -6064,7 +6388,14 @@ class CMFCore extends CObject
 	public function BeginBuild(area : name)
 	{
 		askedPins.Clear();
+		AnimationForgetObjects();
 		ClearLabelHideState();
+		debugTiming = CMFSettingsDebug();
+		timingPins = 0;
+		timingCovered = 0;
+		timingFinds = 0;
+		timingCandidates = 0;
+		timingMemoHits = 0;
 		inBuild = true;
 		entityStepRan = false;
 		fieldsStepCount = 0;
@@ -6740,7 +7071,7 @@ class CMFCore extends CObject
 	// when it has none the most specific other claim does, or nothing when the General row says Vanilla.
 	private function Find(propertyId : int, pinType : string, pinTag : name, maxLevel : int, out result : SCMFClaim) : bool
 	{
-		var i, next, best, picked, choice, rank, bestRank, pickedRank : int;
+		var i, a, b, c, next, best, picked, chosen, choice, rank, bestRank, pickedRank, t, tv, g, memoAt : int;
 		var matches : bool;
 		var answer : string;
 		if (propertyId < 0 || propertyId >= propertyWon.Size() || !propertyWon[propertyId])
@@ -6776,11 +7107,105 @@ class CMFCore extends CObject
 			result = winners[i];
 			return true;
 		}
-		next = propertyFirst[propertyId];
-		while (next >= 0)
+		// Opening speed (1.10.1): the candidates are the winners of this property that can cover the pin (every pin,
+		// its type, its level variant type, its tag), in the order of the property's chain. Covers decides each one as
+		// before, so the answer is the one the whole chain gave. A pin type with no tag, variant or place asks the
+		// same thing every time in a preparation, so its answer is remembered.
+		candidates.Clear();
+		memoAt = -1;
+		if (indexBuilt)
 		{
-			i = next;
-			next = propertyNext[i];
+			t = typeKeys.FindFirst(pinType);
+			tv = -1;
+			if (variantNow != "" && variantNow != pinType)
+			{
+				tv = typeKeys.FindFirst(variantNow);
+			}
+			g = -1;
+			if (IsNameValid(pinTag))
+			{
+				g = tagKeys.FindFirst(pinTag);
+			}
+			if (t >= 0 && tv < 0 && g < 0 && !placeOk && maxLevel >= 0 && maxLevel <= 3 && (variantNow == "" || variantNow != pinType))
+			{
+				memoAt = (maxLevel * typeKeys.Size() + t) * 64 + propertyId;
+				if (memoState[memoAt] == 1)
+				{
+					if (debugTiming) { timingMemoHits += 1; }
+					return false;
+				}
+				if (memoState[memoAt] >= 2)
+				{
+					if (debugTiming) { timingMemoHits += 1; }
+					result = winners[memoState[memoAt] - 2];
+					return true;
+				}
+			}
+			next = globalHead[propertyId] - 1;
+			while (next >= 0)
+			{
+				candidates.PushBack(next);
+				next = globalNext[next] - 1;
+			}
+			if (t >= 0)
+			{
+				next = typeHead[t * 64 + propertyId] - 1;
+				while (next >= 0)
+				{
+					candidates.PushBack(next);
+					next = typeNext[next] - 1;
+				}
+			}
+			if (tv >= 0)
+			{
+				next = typeHead[tv * 64 + propertyId] - 1;
+				while (next >= 0)
+				{
+					candidates.PushBack(next);
+					next = typeNext[next] - 1;
+				}
+			}
+			if (g >= 0)
+			{
+				next = tagHead[g * 64 + propertyId] - 1;
+				while (next >= 0)
+				{
+					candidates.PushBack(next);
+					next = tagNext[next] - 1;
+				}
+			}
+			// Each list is in chain order; one ordered pass keeps ties going to the earlier winner.
+			for (a = 1; a < candidates.Size(); a += 1)
+			{
+				c = candidates[a];
+				b = a - 1;
+				while (b >= 0 && candidates[b] > c)
+				{
+					i = b + 1;
+					candidates[i] = candidates[b];
+					b -= 1;
+				}
+				i = b + 1;
+				candidates[i] = c;
+			}
+		}
+		else
+		{
+			next = propertyFirst[propertyId];
+			while (next >= 0)
+			{
+				candidates.PushBack(next);
+				next = propertyNext[next];
+			}
+		}
+		if (debugTiming)
+		{
+			timingFinds += 1;
+			timingCandidates += candidates.Size();
+		}
+		for (a = 0; a < candidates.Size(); a += 1)
+		{
+			i = candidates[a];
 			matches = winners[i].propertyId == propertyId && Covers(winners[i], pinType, pinTag, maxLevel);
 			if (matches && (winners[i].level == 2 || winners[i].level == CMFLevelPlace()))
 			{
@@ -6806,21 +7231,29 @@ class CMFCore extends CObject
 			}
 		}
 		// A selected global offer is a fallback; any eligible specific claim still wins.
+		chosen = -1;
 		if (picked >= 0 && pickedRank == 0 && bestRank > 0)
 		{
-			result = winners[best];
-			return true;
+			chosen = best;
 		}
-		if (picked >= 0)
+		else if (picked >= 0)
 		{
-			result = winners[picked];
-			return true;
+			chosen = picked;
 		}
-		if (best < 0 || (answer != "" && fallVanilla))
+		else if (!(best < 0 || (answer != "" && fallVanilla)))
+		{
+			chosen = best;
+		}
+		if (memoAt >= 0)
+		{
+			memoState[memoAt] = chosen + 2;
+			if (chosen < 0) { memoState[memoAt] = 1; }
+		}
+		if (chosen < 0)
 		{
 			return false;
 		}
-		result = winners[best];
+		result = winners[chosen];
 		return true;
 	}
 
@@ -8865,7 +9298,7 @@ function CMFDefaultNavigationValue(key : name) : float
 // and shows its panels when its fade-in starts, not when it ends) and revealEase (1: the panels' reveal eases in).
 function CMFThemeOpeningKeys() : string
 {
-	return "slideSeconds,slideOffset,closeSeconds,pinsDuringSlide,pinStepMs,pinBatch,pinBudgetMs,showDelayMs," +
+	return "slideSeconds,slideOffset,closeSeconds,pinsDuringSlide,pinStepMs,pinBatch,pinBudgetMs,pinBudgetAfterSlideMs,showDelayMs," +
 		"fadeSeconds,tileFadeSeconds,revealSeconds,readyAtFadeStart,revealEase,revealLegendSeconds,revealTrackerSeconds,revealCrosshairSeconds,waitForMap";
 }
 
@@ -8942,6 +9375,7 @@ function CMFThemeMotionValueOk(key : name, number : float) : bool
 			return number >= 1 && number <= 1000;
 		case 'padHoldMs':
 		case 'pinBudgetMs':
+		case 'pinBudgetAfterSlideMs':
 			return number >= 0 && number <= 1000;
 		case 'showDelayMs':
 			return number >= 0 && number <= 5000;
@@ -9342,7 +9776,8 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 // clearCursorWeight). Version 12 adds ('tooltip', 'tallMinHeight') and the other tall keys (tallX, tallTop, tallBottom,
 // tallAltX, tallAltTop, tallAltBottom, tallUnderLegend, tallClear). Version 17 adds ('screen', 'button'): a screen
 // movie's map.cmfMakeButton(navCode, keyCode, label) gives it one of the game's key buttons, and ('map', 'refreshPins')
-// says CMFMapRefreshPins() exists (it rebuilds the open map's pins). Abilities designed for later
+// says CMFMapRefreshPins() exists (it rebuilds the open map's pins), and ('screen', 'keyDecline') says a focused screen
+// movie's handleInput can return false to decline a key. Abilities designed for later
 // (images, the map hold) answer false until a CMF version adds them.
 function CMFHasAbility(part : name, key : name) : bool
 {
@@ -9351,6 +9786,8 @@ function CMFHasAbility(part : name, key : name) : bool
 	if (part == 'map' && key == 'rootValues') { return true; }
 	if (part == 'screen' && key == 'button') { return true; }
 	if (part == 'map' && key == 'refreshPins') { return true; }
+	if (part == 'map' && key == 'partialUpdate') { return true; }
+	if (part == 'screen' && key == 'keyDecline') { return true; }
 	if (part == 'claims')
 	{
 		return CMFListHas("tagTint,placeClaims,playerArt,levelVariants,vanillaRows,everyPinIcon,withdraw,labelHideMerge,everyPin,iconFrames,iconPrograms,pictureFit",
@@ -9734,6 +10171,7 @@ function UpdateData(optional ignoreSelectionChange : bool)
 	}
 	CMFMovieBuildSent();
 	theGame.CMFGetCore().ReportPinAsks();
+	theGame.CMFGetCore().ReportTiming();
 	theGame.CMFGetCore().ClearLabelHideState();
 	CMFStamp("end");
 }

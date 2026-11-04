@@ -41,19 +41,43 @@ class CoreRefreshPins(unittest.TestCase):
         self.assertIn('function CMFGetVersion() : int { return 17; }', CORE)
 
 
+    def test_pack_checker_dates_the_call_to_api_17(self):
+        # The wiki's API reference reads its "Since" column from cmf_pack.VERSION<n>.
+        self.assertIn('CMFMapRefreshPins', cmf_pack.VERSION17)
+        self.assertIn('CMFMapRefreshPins', cmf_pack.API)
+        report = cmf_pack.Report()
+        cmf_pack.check_script('test.ws', 'CMFMapRefreshPins();', 'modA', report, [], set())
+        self.assertEqual(report.errors, [])
+        self.assertTrue(any('compiles only with CMF API 17' in n for n in report.notes))
+        wiki = (Path(__file__).resolve().parents[1] / 'docs' / 'wiki' / 'API-Reference.md').read_text(encoding='utf-8')
+        self.assertIn('| `CMFMapRefreshPins() : bool` | 17 |', wiki)
+
 class AdapterAsksForIt(unittest.TestCase):
-    def test_both_save_paths_rebuild_pins_after_cfg_reload_with_the_games_own_call(self):
+    def test_only_the_filter_path_rebuilds_pins_after_cfg_reload_with_the_games_own_call(self):
         code = cmf_pack.strip_comments(QL)
-        self.assertEqual(code.count('MqiAdapterRefreshPins();'), 2)
-        for event in ('"thisRegion"', '"filter"'):
-            start = code.index('eventName == ' + event)
-            part = code[start:code.index('\n\t}\n', start)]
-            self.assertIn('QMI_CfgReload();', part)
-            self.assertLess(part.index('QMI_CfgReload();'), part.index('MqiAdapterRefreshPins();'))
+        self.assertEqual(code.count('MqiAdapterRefreshPins();'), 1)
         filt = code[code.index('eventName == "filter"'):]
-        self.assertIn('MqiAdapterRefreshPins();', filt[:filt.index('\n\t}\n')])
+        filt = filt[:filt.index('\n\t}\n')]
+        self.assertLess(filt.index('QMI_CfgReload();'), filt.index('MqiAdapterRefreshPins();'))
         self.assertLess(filt.index('MqiAdapterRefreshPins();'), filt.index('MqiAdapterQlSend();'))
         self.assertRegex(code, r'@addMethod\(CR4MapMenu\)\s*function MqiAdapterRefreshPins\(\)\s*\{\s*UpdateData\(true\);\s*\}')
+
+    def test_filter_marks_the_minimap_quest_records_dirty_after_the_rebuild_like_mqi(self):
+        code = cmf_pack.strip_comments(QL)
+        filt = code[code.index('eventName == "filter"'):]
+        filt = filt[:filt.index('\n\t}\n')]
+        self.assertIn('QMI_MmQuestDirtyHud();', filt)
+        self.assertLess(filt.index('MqiAdapterRefreshPins();'), filt.index('QMI_MmQuestDirtyHud();'))
+        self.assertEqual(code.count('QMI_MmQuestDirtyHud();'), 1)
+
+    def test_this_region_saves_and_resends_the_list_without_a_pin_build(self):
+        code = cmf_pack.strip_comments(QL)
+        part = code[code.index('eventName == "thisRegion"'):]
+        part = part[:part.index('\n\t}\n')]
+        self.assertIn('QMI_CfgReload();', part)
+        self.assertIn('MqiAdapterQlSend();', part)
+        self.assertNotIn('MqiAdapterRefreshPins', part)
+        self.assertNotIn('UpdateData', part)
 
     def test_adapter_scripts_name_no_api_17_function(self):
         # A call to a function an older core does not declare is a compile error for everyone on that CMF.

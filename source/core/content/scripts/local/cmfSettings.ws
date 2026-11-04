@@ -83,6 +83,16 @@ function CMFSettingsLogPins() : bool
 	return value == "1" || value == "true";
 }
 
+// Version 17 (hidden, no menu entry): the map panel reuses the pin clips of the last build when a full pin update (a quest
+// tracked, a filter toggled) draws the same pins again. On unless "0", "false" or "off" is stored, read at each theme send;
+// a value the game never stored reads "-1", which is on. For a before and after comparison in a log.
+function CMFSettingsPinRecycle() : bool
+{
+	var value : string;
+	value = StrLower(theGame.GetInGameConfigWrapper().GetVarValue('CMFSettings', 'CMFPinRecycle'));
+	return value != "false" && value != "0" && value != "off";
+}
+
 // Version 11: warn once per session if a fully shown map closes without CMF's panel callbacks.
 // Missing values (including the game's "-1") keep it on; only "false" or "0" turn it off.
 function CMFSettingsMapCheck() : bool

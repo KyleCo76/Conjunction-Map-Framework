@@ -145,7 +145,7 @@ class ApiTests(unittest.TestCase):
         prepare = body(self.core, 'public function Prepare()')
         self.assertLess(prepare.index('ChoiceOnlySkips(PropertyChoice('), prepare.index('CMFPropertyHidden()'))
         self.assertIn('!ChoiceOnlySkips(keyChoice, themeEntries[i].provider)',
-                      body(self.core, 'private function ThemeStyleOwner('))
+                      body(self.core, 'private function ComputeThemeStyleOwner('))
         self.assertIn('ChoiceOnlySkips(61, openingViews[i].provider)', body(self.core, 'private function OpeningViewWinner('))
         self.assertIn('choiceOnly = " choiceonly=" + skipped;', body(self.core, 'private function ReportProviders()'))
         # Offers still come from every claim, so the menu lists a choice-only provider.

@@ -10,7 +10,6 @@ Every function, property id, hook and map event CMF offers to mods (API version 
 | --- | --- | --- | --- |
 | `CMFGetVersion() : int` | 1 | `CMFRegisterIcon`, `CMFRegisterIconForTag` \| image path \| unused (`0`) \| 40 with this id at the same slot | [Writing your script](Writing-Your-Script.md), [Getting started](Getting-Started.md) |
 | `CMFHasProperty(propertyId : int) : bool` | 1 | `true` when the installed CMF understands that property id. | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md), [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md) |
-| `CMFMapRefreshPins() : bool` | 1 | `CMFMapRefreshPins()` (API 17; `CMFHasAbility('map', 'refreshPins')` says it exists) runs the game's full pin build again on the open map, for a mod whose settings change which markers show; it returns false when no map is open. | [Writing your script](Writing-Your-Script.md), [Map theme parts and keys](Theme-Parts-and-Keys.md), [Your own movie on the screen](Your-Own-Movie-on-the-Screen.md) |
 | `CMFRegister(provider : string, propertyId : int, target : name, mapContext : name, text : string, number : int) : bool` | 1 | One claim for a pin type (a map area for property 4). | [Writing your script](Writing-Your-Script.md), [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Animated pictures](Animated-Pictures.md) |
 | `CMFRegisterBackground(provider : string, area : name, imageRoot : string)` | 1 | Replaces the map image of one area, such as `'AN_NMLandNovigrad'` (Velen and Novigrad). | [Writing your script](Writing-Your-Script.md) |
 | `CMFRegisterDisabled(provider : string, pinType : name, mapContext : name, disable : bool)` | 1 | Draws every pin of that type greyed (grey art at reduced opacity, tint skipped). | [Writing your script](Writing-Your-Script.md), [Greying pins](Greying-Pins.md), [Settings file keys](Settings-File-Keys.md) |
@@ -106,6 +105,7 @@ Every function, property id, hook and map event CMF offers to mods (API version 
 | `CMFPropertyIconFrames() : int` | 14 | Returns property id `45`. | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md) |
 | `CMFPropertyIconUnderFrames() : int` | 14 | Returns property id `46`. | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md) |
 | `CMFPropertyPictureFit() : int` | 14 | Returns property id `48`. | [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Writing your script](Writing-Your-Script.md) |
+| `CMFMapRefreshPins() : bool` | 17 | `CMFMapRefreshPins()` (API 17; `CMFHasAbility('map', 'refreshPins')` says it exists) runs the game's full pin build again on the open map, for a mod whose settings change which markers show; it returns false when no map is open. | [Writing your script](Writing-Your-Script.md), [Map theme parts and keys](Theme-Parts-and-Keys.md), [Your own movie on the screen](Your-Own-Movie-on-the-Screen.md) |
 
 ## Property ids
 
@@ -195,7 +195,7 @@ CMF's map calls these events on `CR4MapMenu`. New events are core-owned; wrap th
 
 ## What each API version added
 
-- **1**: `CMFGetVersion`, `CMFHasProperty`, `CMFMapRefreshPins`, `CMFPropertyBackground`, `CMFPropertyDisabled`, `CMFPropertyIcon`, `CMFPropertyLegendIcon`, `CMFPropertyTint`, `CMFRegister`, `CMFRegisterBackground`, `CMFRegisterDisabled`, `CMFRegisterDisabledForTag`, `CMFRegisterForTag`, `CMFRegisterIcon`, `CMFRegisterIconForTag`, `CMFRegisterLegendIcon`, `CMFRegisterTint`, `CMFReleaseProvider`, `CMFRequireVersion`
+- **1**: `CMFGetVersion`, `CMFHasProperty`, `CMFPropertyBackground`, `CMFPropertyDisabled`, `CMFPropertyIcon`, `CMFPropertyLegendIcon`, `CMFPropertyTint`, `CMFRegister`, `CMFRegisterBackground`, `CMFRegisterDisabled`, `CMFRegisterDisabledForTag`, `CMFRegisterForTag`, `CMFRegisterIcon`, `CMFRegisterIconForTag`, `CMFRegisterLegendIcon`, `CMFRegisterTint`, `CMFReleaseProvider`, `CMFRequireVersion`
 - **2**: `CMFPropertyLegendCategory`, `CMFPropertyLegendLabel`, `CMFPropertyLegendRow`, `CMFRegisterLegendCategory`, `CMFRegisterLegendLabel`, `CMFRegisterLegendRow`, `CMFStylePin`, `CMFStylePinIcon`, `CMFStylePinTint`
 - **3**: `CMFHidePin`, `CMFPropertyHidden`, `CMFRegisterHidden`, `CMFRegisterHiddenForTag`
 - **4**: `CMFLabelHideCrosshair`, `CMFLabelHidePin`, `CMFLevelLabel`, `CMFPropertyInfoBoxHeight`, `CMFPropertyLabelHide`, `CMFPropertyLabelPlace`, `CMFPropertyLabelText`, `CMFPropertyPinScale`, `CMFPropertyTabHide`, `CMFStylePinLabel`, `CMFStylePinScale`, hook `OnPinReady`, hook `OnMapReady`
@@ -211,7 +211,7 @@ CMF's map calls these events on `CR4MapMenu`. New events are core-owned; wrap th
 - **14**: `CMFDrawSetBits`, `CMFGridKeepPin`, `CMFPropertyFrameOffset`, `CMFPropertyIconFrames`, `CMFPropertyIconUnderFrames`, `CMFPropertyPictureFit`
 - **15**: no new calls (new keys or abilities only)
 - **16**: movie facade `map.hidePanels`, the tracker glow keys
-- **17**: `CMFHasAbility('screen', 'button')`, movie facade `map.cmfMakeButton`, `CMFMapRefreshPins()`, `CMFHasAbility('map', 'refreshPins')`
+- **17**: `CMFMapRefreshPins`, `CMFHasAbility('screen', 'button')`, movie facade `map.cmfMakeButton`, `CMFMapRefreshPins()`, `CMFHasAbility('map', 'refreshPins')`, `CMFHasAbility('screen', 'keyDecline')`: a focused screen movie's `handleInput` can return `false` to decline a key, `CMFHasAbility('map', 'partialUpdate')`: a full pin update (a quest tracked, a filter changed) that draws the same pins again reuses their clips instead of making new ones; nothing to call
 
 ---
 

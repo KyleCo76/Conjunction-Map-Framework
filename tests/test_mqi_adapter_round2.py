@@ -490,10 +490,13 @@ class QuestListRetest251(unittest.TestCase):
 
     def test_script_sends_the_list_after_each_pin_build(self):
         event = body(code_of(QL_WS), 'function MqiAdapterQlEvent(')
-        for start in ('if (eventName == "thisRegion")', 'if (eventName == "filter")'):
-            part = event[event.index(start):]
-            part = part[:part.index('return;')]
-            self.assertLess(part.index('MqiAdapterRefreshPins();'), part.index('MqiAdapterQlSend();'))
+        part = event[event.index('if (eventName == "filter")'):]
+        part = part[:part.index('return;')]
+        self.assertLess(part.index('MqiAdapterRefreshPins();'), part.index('MqiAdapterQlSend();'))
+        this_region = event[event.index('if (eventName == "thisRegion")'):]
+        this_region = this_region[:this_region.index('return;')]
+        self.assertIn('MqiAdapterQlSend();', this_region)
+        self.assertNotIn('MqiAdapterRefreshPins', this_region)
 
     # 3. Keyboard: the hint row's key pictures, and the Objectives cap's text hidden again whenever it comes back.
     def test_buttons_take_the_hint_rows_key_pictures(self):
@@ -685,6 +688,61 @@ class QuestListFifthStart(unittest.TestCase):
         self.assertLess(fresh.index('removeChildAt(0)'), fresh.index('s.greyPic = null;'))
         self.assertIn('import flash.display.BitmapData;', self.AS)
         self.assertIn('import flash.geom.Point;', self.AS)
+
+
+class QuestListPromptClicks(unittest.TestCase):
+    """Adapter 2.5.2: a mouse click on the Objectives prompt does what Right does, on the fold prompt what C does."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.AS = AS_FILE.read_text()
+        cls.CLICK = as3_body(cls.AS, 'onClick')
+        cls.RENDER = as3_body(cls.AS, 'render')
+
+    def test_render_records_the_prompt_box_of_the_row_it_drew(self):
+        self.assertIn('promptRow = -1;', self.RENDER)
+        self.assertIn('promptBox = null;', self.RENDER)
+        self.assertIn('promptBox = promptBounds(s,objId);', self.RENDER)
+        self.assertLess(self.RENDER.index('promptPicture(s,objId'), self.RENDER.index('promptBox = promptBounds(s,objId);'))
+        bounds = as3_body(self.AS, 'promptBounds')
+        self.assertIn('buttons["row_" + id]', bounds)
+        self.assertIn('clip.getBounds(this)', bounds)
+        self.assertIn('s.obj.getBounds(this)', bounds)
+
+    def test_click_inside_the_prompt_toggles_and_never_tracks_or_swaps(self):
+        click = self.CLICK
+        hit = click[click.index('promptBox.contains(mouseX,mouseY)'):]
+        hit = hit[:hit.index('return;')]
+        self.assertIn('toggleObjectives();', hit)
+        self.assertIn('fold(row);', hit)
+        self.assertIn('swapAt = getTimer();', hit)  # the double click that follows does not track
+        for call in ('pick(', 'activate(', 'nextObjective('):
+            self.assertNotIn(call, hit)
+        # The prompt test comes before the select-and-track path and the swap path.
+        self.assertLess(click.index('promptBox.contains(mouseX,mouseY)'), click.index('nextObjective(rows[row].q)'))
+        self.assertLess(click.index('promptBox.contains(mouseX,mouseY)'), click.index('pick(selected,true)'))
+
+    def test_every_other_click_is_unchanged(self):
+        click = self.CLICK
+        self.assertIn('pick(selected,true); render();', click)
+        self.assertIn('else { activate(selected); }', click)
+        self.assertIn('swapAt = getTimer();', click)
+        self.assertEqual(click.count('promptBox.contains('), 1)
+
+    def test_rule_model(self):
+        """The rule of onClick as a function: a click inside the box of the prompt on its row toggles or folds."""
+        def click(row, prompt_row, prompt_id, box, x, y):
+            if row < 0:
+                return 'none'
+            if row == prompt_row and box and box[0] <= x <= box[2] and box[1] <= y <= box[3]:
+                return 'objectives' if prompt_id == 'objs' else 'fold'
+            return 'track'
+        box = (200, 40, 260, 60)
+        self.assertEqual(click(2, 2, 'objs', box, 230, 50), 'objectives')
+        self.assertEqual(click(2, 2, 'objs', box, 100, 50), 'track')  # the quest name
+        self.assertEqual(click(3, 2, 'objs', box, 230, 50), 'track')  # another row
+        self.assertEqual(click(0, 0, 'fold', box, 230, 50), 'fold')
+        self.assertEqual(click(2, -1, '', None, 230, 50), 'track')
 
 
 def code_of_as(source):

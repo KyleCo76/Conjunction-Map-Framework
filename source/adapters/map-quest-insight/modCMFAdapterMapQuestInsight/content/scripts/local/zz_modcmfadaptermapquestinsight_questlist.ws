@@ -6,7 +6,8 @@
 // movie of the adapter's own (movie-src/MqiAdapterQuestList.as, built into swf/modcmfadaptermqi/questlist.swf),
 // fed through a listen key, and a managed key hint list. It copies no Map Quest Insight code; it reads Map Quest
 // Insight's settings and calls only the names Wolfer listed as stable from 2.0.1 (QMI_QjHomeArea,
-// QMI_QuestHiddenByCategory, QMI_OptQjClose, QMI_CfgReload) and from 2.0.0 (QMI_GetQuestLevel, QMI_IconKind, QMI_LevelBandTint).
+// QMI_QuestHiddenByCategory, QMI_OptQjClose, QMI_CfgReload; a filter save also calls QMI_MmQuestDirtyHud, as Map Quest
+// Insight's own filter does, which is not on that list) and from 2.0.0 (QMI_GetQuestLevel, QMI_IconKind, QMI_LevelBandTint).
 // From 2.2.0 it also reads the Quests Available names Wolfer listed as stable for 2.1.0 (2026-10-28): the QMI_qa*
 // arrays its map fills while "Quests not started yet" is on, QMI_OptQuestGivers, QMI_QaTitleWord and the
 // OnQmiQaPick event, which sets or removes the custom map marker at a row's "!" marker.
@@ -272,9 +273,9 @@ function MqiAdapterQlEvent(eventName : string, value : string)
 		theGame.GetInGameConfigWrapper().SetVarValue('qmiHide', 'qmiQjThisRegion', MqiAdapterQlBool(value == "1"));
 		theGame.SaveUserSettings();
 		QMI_CfgReload();
-		MqiAdapterRefreshPins();
 		LogChannel('CMF', "CMF mqi adapter questlist thisRegion=" + value);
-		// The pin build shows the map's legend again: the list's next value has the movie hide its panels again.
+		// Only the list's rows change (Map Quest Insight's own OnQmiThisRegion saves the setting and builds no pins), so
+		// no pin build runs and the map's panels stay as they are; the list only needs its new rows.
 		MqiAdapterQlSend();
 		return;
 	}
@@ -290,6 +291,8 @@ function MqiAdapterQlEvent(eventName : string, value : string)
 			theGame.SaveUserSettings();
 			QMI_CfgReload();
 			MqiAdapterRefreshPins();
+			// As Map Quest Insight's own filter does: its minimap HUD marks the quest records dirty (nothing happens without the HUD).
+			QMI_MmQuestDirtyHud();
 			LogChannel('CMF', "CMF mqi adapter questlist filter " + hide[index] + "=" + right);
 			// Also the movie's cue to hide the map's panels again after the pin build.
 			MqiAdapterQlSend();

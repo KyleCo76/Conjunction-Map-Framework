@@ -119,7 +119,7 @@ class ApiTests(unittest.TestCase):
                 self.assertIn(key, cmf_pack.THEME_PART_KEYS[part], key)
 
     def test_theme_owner_uses_the_key_choice(self):
-        owner = body(self.core, 'private function ThemeStyleOwner(part : name, key : name) : string')
+        owner = body(self.core, 'private function ComputeThemeStyleOwner(part : name, key : name) : string')
         self.assertIn("|| part == 'wide'", owner)
         self.assertIn('keyChoice = PartKeyChoice(part, key);', owner)
         self.assertIn('choice = keyChoice;', owner)

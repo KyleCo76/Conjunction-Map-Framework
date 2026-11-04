@@ -13,6 +13,9 @@ class Array(list):
     def Clear(self): self.clear()
     def FindFirst(self,value): return self.index(value) if value in self else -1
     def Erase(self,index): self.pop(index)
+    def Resize(self,size):
+        del self[size:]
+        self.extend([0]*(size-len(self)))
 
 # WS backslashes are ordinary text; the next matching quote ends the literal.
 WS_LITERAL = r""""[^"]*"|'[^']*'"""

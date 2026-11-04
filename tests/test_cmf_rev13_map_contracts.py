@@ -59,6 +59,12 @@ def lookup_env(winners):
          "Covers":lambda c,t,tag,level:c.level<=level and
           (c.level==0 or c.level==1 and c.pinType==t or c.level==2 and c.pinTag==tag or c.level==3 and c.pinType==t)}
     env["PropertyWon"]=lambda p:run(CORE,"PropertyWon",dict(env,propertyId=p))
+    # Opening speed (1.10.1): the prepared winners index Find reads, built by the production BuildLookupIndex.
+    for name in ("typeKeys","tagKeys","typeHead","typeTail","typeNext","tagHead","tagTail","tagNext",
+                 "globalHead","globalTail","globalNext","memoState","candidates"):env[name]=Array()
+    env.update(IsNameValid=bool,indexBuilt=False,debugTiming=False,timingFinds=0,timingCandidates=0,timingMemoHits=0,
+               variantNow="",pinKeyNow="",placeOk=False)
+    env["BuildLookupIndex"]=bind(CORE,"BuildLookupIndex",env,(),capture=("indexBuilt",))
     run(CORE,"NoteLookups",env,capture=("placeClaims","everyPinClaims","infoEveryOrPlace"))
     return env
 
@@ -98,6 +104,8 @@ class CoreMapContracts(unittest.TestCase):
                     env["fallVanilla"]=strict
                     for answer in ("","@order","modGlobal","modSpecific","missing","vanilla"):
                         env["decideAnswer"]=Array([answer]*80)
+                        # The choices change only when winners are prepared, which also clears the remembered answers.
+                        env["memoState"]=Array([0]*len(env["memoState"]))
                         accepted,result=find(env)
                         if answer=="vanilla" or answer=="missing" and strict:
                             self.assertFalse(accepted,(level,strict,answer))
@@ -138,7 +146,8 @@ class CoreMapContracts(unittest.TestCase):
         def covers(c,*a):count["covers"]+=1;return True
         env["Covers"]=covers
         for i in range(1800):self.assertIs(find(env)[1],wanted)
-        self.assertEqual(count["covers"],1800)
+        # Opening speed (1.10.1): the pin type has no tag, variant or place, so the first answer is remembered.
+        self.assertEqual(count["covers"],1)
         self.assertLess(count["candidate_reads"],1800*10)
         self.assertEqual(env["propertyFirst"][10],100)
 
@@ -236,7 +245,7 @@ class PreparationLifecycleTests(unittest.TestCase):
             env[field]=Array()
         env.update(choiceKeys=Array(["key"]*80),choiceFeature=Array([0]*80),
                    menuChoices=Array([""]*80),fileChoices=Array([""]*80),revision=0,
-                   CMFSettingsProviderOrder=lambda:"",ReadChoices=lambda:None,
+                   CMFSettingsProviderOrder=lambda:"",ReadChoices=lambda:None,CMFSettingsDebug=lambda:False,debugTiming=False,themeMemoOn=False,
                    EnsureChoices=lambda:None,AdditiveAllows=lambda *a:True,
                    ReportClickShadow=lambda *a:None,PrepareItemStyles=lambda:None,PrepareDrawingRoots=lambda:None,
                    ReportProviders=lambda:None,PrepareOffers=lambda:None,

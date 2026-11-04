@@ -33,7 +33,9 @@ GUIDE = 'docs/authors/icon-pack-guide.md'
 VERSION_NOTES = {
     16: ['movie facade `map.hidePanels`', 'the tracker glow keys'],
     17: ["`CMFHasAbility('screen', 'button')`", 'movie facade `map.cmfMakeButton`',
-         '`CMFMapRefreshPins()`', "`CMFHasAbility('map', 'refreshPins')`"],
+         '`CMFMapRefreshPins()`', "`CMFHasAbility('map', 'refreshPins')`",
+         "`CMFHasAbility('screen', 'keyDecline')`: a focused screen movie's `handleInput` can return `false` to decline a key",
+         "`CMFHasAbility('map', 'partialUpdate')`: a full pin update (a quest tracked, a filter changed) that draws the same pins again reuses their clips instead of making new ones; nothing to call"],
 }
 THEME = 'docs/authors/theme-parts-and-keys.md'
 SETTINGS = 'docs/authors/settings-file-keys.md'

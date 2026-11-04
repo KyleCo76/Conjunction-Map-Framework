@@ -261,7 +261,7 @@ class OpeningSpeedTests(unittest.TestCase):
         self.assertIn('PropertyWon(CMFPropertyInfoTitle())', late)
         covered = self.body('private function PinCovered', 'private function PropertyWon')
         for part in ('everyPinClaims > 0', 'placeClaims > 0', 'claimedTypes.Contains(pinKey)',
-                     'claimedTypes.Contains(legendKey)', 'claimedTypes.Contains(variantNow)', 'tagNames[i] == pinTag'):
+                     'claimedTypes.Contains(legendKey)', 'claimedTypes.Contains(variantNow)', 'tagNames.FindFirst(pinTag) >= 0'):
             self.assertIn(part, covered)
 
     def test_info_box_pass_runs_only_for_pins_an_info_claim_reaches(self):

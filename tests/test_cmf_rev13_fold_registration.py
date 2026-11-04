@@ -66,7 +66,8 @@ def style_env():
     env=contracts.PreparationLifecycleTests().make_env()
     def entry():return Obj(provider="",kind=0,target="",anchor="",key="",text="",number=0.,order=0,item="",itemKind="",values=Array(),ints=Array())
     env.update(SCMFThemeEntry=entry,itemStyleOwners=Array(),itemStylesSent=False,
-               menuOrder="",providerOrder="",themeNotes=Array(),StrCmp=lambda a,b:(a>b)-(a<b),
+               menuOrder="",providerOrder="",themeNotes=Array(),themeMemoOn=False,
+               **{f:Array() for f in ("styleMemoKeys","styleMemoOwners","drawingMemoIds","drawingMemoOwners","kindMemoKeys","kindMemoValues","leftOutMemoKeys","leftOutMemoFlags","leftOutMemoOwners","rankMemoProviders","rankMemoValues")},StrCmp=lambda a,b:(a>b)-(a<b),
                StrReplaceAll=str.replace,CMFSettingsProviderRank=lambda order,p:-1,
                __ws_live_state__=("dirty","nextOrder","revision","providerOrder","hintListPreparedOwner","itemStylesSent"))
     env["hintListPreparedOwner"]=""
@@ -87,20 +88,20 @@ def style_env():
       ("UpsertItemStyle",("styleEntry",),()),("UpsertTheme",("themeEntry",),()),
       ("ThemeEntryEqual",("a","b"),()),("UnsetTheme",("provider","part","key"),()),
       ("PartChoice",("part",),()),("PartKeyChoice",("part","key"),()),
-      ("ThemeOwnershipKey",("part","key"),()),("ThemeStyleOwner",("part","key"),()),
+      ("ThemeOwnershipKey",("part","key"),()),("ThemeStyleOwner",("part","key"),()),("ComputeThemeStyleOwner",("part","key"),()),("ClearThemeMemo",(),()),
       ("ItemStyleOwner",("styleEntry",),()),("PrepareItemStyles",(),()),("Prepare",(),()),
       ("CMFFolderBeats",("a","b"),()),("ProviderBeats",("a","b"),()),("CMFProviderBeats",("a","b"),()),
       ("PickDecides",("pick","a","b","result"),(3,)),("OrderDecides",("order","a","b","result"),(3,)),
       ("PieceBeats",("choice","a","b"),()),("ChoiceKey",("choice",),()),
       ("WriteFoldMetadata",("item","styleEntry","storage"),()),
       ("WriteDrawingMetadata",("item","entryValue","storage"),()),
-      ("ThemeFolderRank",("provider",),()),("NoteTheme",("line",),()),
+      ("ThemeFolderRank",("provider",),()),("ComputeThemeFolderRank",("provider",),()),("NoteTheme",("line",),()),
       ("SendTheme",("storage",),()),("SendItemStyles",("storage",),()),
       ("InfoFoldOwner",("pin",),()),
     )
     for name,args,outs in methods:env[name]=bind(CORE,name,env,args,outs)
     # Independent channels are not part of fold registration/wire assertions.
-    for name in ("SendWideVanilla","SendLookOwners","SendMovieTags","SendWorld","SendLegendRowArt"):env[name]=lambda *args:None
+    for name in ("SendWideVanilla","SendPinRecycle","SendLookOwners","SendMovieTags","SendWorld","SendLegendRowArt"):env[name]=lambda *args:None
     env["SendDefaultMotion"]=lambda *args:0
     core=Obj(**{name:fn for name,fn in env.items() if callable(fn)})
     env.update(__ws_core_receiver__=core,theGame=Obj(CMFGetCore=lambda:core))

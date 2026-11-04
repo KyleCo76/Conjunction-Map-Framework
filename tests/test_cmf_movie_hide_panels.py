@@ -13,7 +13,7 @@ PARTS = ('legend', 'title', 'tracker', 'preview', 'worldButton', 'worldHint')
 
 
 def as3_body(text, name):
-    match = re.search(r'\bfunction ' + re.escape(name) + r'\([^{}]*\)\s*(?::\s*\w+)?\s*\{', text)
+    match = re.search(r'\bfunction ' + re.escape(name) + r'\([^{}]*\)\s*(?::\s*[\w*]+)?\s*\{', text)
     assert match, 'missing function ' + name
     start = match.end()
     depth = 1

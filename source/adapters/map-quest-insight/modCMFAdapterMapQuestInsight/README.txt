@@ -1,7 +1,13 @@
 Map Quest Insight adapter for Conjunction Map Framework
-Version 2.5.1 (for Map Quest Insight 2.1.0 and 2.2.0; icons by Wolfer, Map Quest Insight's author)
+Version 2.5.2 (for Map Quest Insight 2.1.0 and 2.2.0; icons by Wolfer, Map Quest Insight's author)
 
-What is new in 2.5.1: the Quest Filters rows follow Map Quest Insight's order and use
+What is new in 2.5.2: in the Quest List a mouse click on a quest row's Objectives prompt shows
+or hides its objectives (as Right does) and a click on a section's fold prompt folds it (as C
+does). Neither click tracks the quest or swaps its objective; every other click is as before.
+Only this region now saves the setting and refills the list without redrawing the map's markers,
+as Map Quest Insight's own button does.
+
+In 2.5.1: the Quest Filters rows follow Map Quest Insight's order and use
 Wolfer's glyphs (Wolfer is Map Quest Insight's author; the symbols are his). Colours,
 sizes and rows are read from Map Quest Insight's own file values. "[F] Quests" uses the
 game's own word. Saving in the Quest List reloads Map Quest Insight's settings. On an

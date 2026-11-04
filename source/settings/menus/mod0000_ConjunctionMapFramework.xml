@@ -94,6 +94,7 @@
 			<Var id="CMFDebug" value="false" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFLogPins" value="" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFMapCheck" value="true" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
+			<Var id="CMFPinRecycle" value="true" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFAnimatedPins" value="true" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFAnimationDragPause" value="true" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>
 			<Var id="CMFAnimationMemory" value="64" displayName="" displayType="TOGGLE" visibilityCondition="hideAlways"/>

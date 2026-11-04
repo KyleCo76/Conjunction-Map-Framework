@@ -158,6 +158,11 @@ package
       // prompt, its word and the device, so a change of any makes a new button. The fold and Objectives prompts keep
       // a place each, so moving between a header and a quest row only shows one and hides the other.
       private var buttons:Object = {};
+      // The selected row's prompt on show (set by render): its row, its id ("objs" or "fold") and its box, so a click
+      // inside the box does what the key does (2.5.2).
+      private var promptRow:int = -1;
+      private var promptId:String = "";
+      private var promptBox:Rectangle = null;
 
       private var pinsRef:Object;
       private var pinById:Object = {};
@@ -1437,6 +1442,15 @@ package
          s.obj.x = made.getBounds(this).left;
       }
 
+      // Where the prompt is drawn: the game button's box, or the text prompt's field.
+      private function promptBounds(s:Object, id:String) : Rectangle
+      {
+         var held:Object = buttons["row_" + id];
+         var clip:DisplayObject = held ? held.clip as DisplayObject : null;
+         if(clip && clip.visible) { return clip.getBounds(this); }
+         return s.obj.getBounds(this);
+      }
+
       private function hideButtons() : void
       {
          var place:String = null;
@@ -1548,6 +1562,9 @@ package
          }
          for(i = 0; i < hints.length; i++) { hints[i].visible = false; }
          hideButtons();
+         promptRow = -1;
+         promptId = "";
+         promptBox = null;
          bar.graphics.clear();
          if(!opened || !data) { g.clear(); return; }
          drawPlate();
@@ -1690,7 +1707,13 @@ package
             s.obj.x = r.type == ROW_QUEST ? (distHtml != "" ? s.dist.x + 2 - OBJ_PROMPT_GAP : ROW_RIGHT) + 2 - s.obj.width : (distHtml != "" ? s.dist.x + 2 : COUNT_RIGHT) - 14 + 2 - s.obj.width;
             placeLine(s.obj,r.type == ROW_QUEST ? y + h * 0.69 : y + h / 2,px(18));
             s.obj.visible = objLabel != "";
-            if(objLabel != "") { promptPicture(s,objId,objWord,r.type == ROW_QUEST ? y + h * 0.69 : y + h / 2); }
+            if(objLabel != "")
+            {
+               promptPicture(s,objId,objWord,r.type == ROW_QUEST ? y + h * 0.69 : y + h / 2);
+               promptRow = i;
+               promptId = objId;
+               promptBox = promptBounds(s,objId);
+            }
             // The region line sits under the name.
             s.right.autoSize = TextFieldAutoSize.RIGHT;
             s.right.htmlText = second;
@@ -2009,6 +2032,20 @@ package
          if(!opened) { return; }
          if(!focused) { focusAt = 0; takeFocus(); }
          if(row < 0 || rows[row].type == ROW_OBJECTIVE) { render(); return; }
+         // A click on the row's Objectives prompt does what Right does; on the fold prompt, what C does. It neither
+         // tracks the quest nor swaps its objective, and the double click that may follow is ignored.
+         if(row == promptRow && promptBox && promptBox.contains(mouseX,mouseY))
+         {
+            swapAt = getTimer();
+            restDone = true;
+            if(promptId == "objs")
+            {
+               selected = row;
+               toggleObjectives();
+            }
+            else { fold(row); }
+            return;
+         }
          // A second click on the tracked quest swaps its objective (Swap Obj); the double click that may follow is
          // the same swap.
          if(row == selected && rows[row].type == ROW_QUEST && nextObjective(rows[row].q))
@@ -2041,7 +2078,11 @@ package
          move(selected + (event.delta > 0 ? -1 : 1));
       }
 
-      public function handleInput(event:Object) : void
+      // Returns false for the keys that belong to the quest info box's Show more / Show less (the keyboard's X, the
+      // default key of Map Quest Insight's fold, and R3 on a controller), press and release alike, so CMF's panel
+      // (API 17, CMFHasAbility('screen','keyDecline')) lets the key go on to the box. On an older CMF the false is
+      // ignored and the key is swallowed as before. Every other path returns nothing.
+      public function handleInput(event:Object) : *
       {
          var details:Object = event ? event.details : null;
          var code:int = details ? int(details.code) : 0;
@@ -2051,6 +2092,7 @@ package
          if(!details) { return; }
          learnDevice(code,nav);
          if(!opened || !focused) { return; }
+         if(code == 88 || nav == "gamepad_R3") { return false; }
          // Esc and B close when released; every other key acts once, on its press (a held arrow keeps moving).
          if(details.value == "keyUp")
          {

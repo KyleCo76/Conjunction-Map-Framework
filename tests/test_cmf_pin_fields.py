@@ -302,7 +302,7 @@ class SourceTests(unittest.TestCase):
         tag = core[core.index('private function LateTag'):core.index('public function OnPinReady')]
         # Version 11 (opening speed): the tag claims' game ids are worked out once per preparation, from the winners,
         # hides, tab hides and added info lines, in that order.
-        self.assertIn('tagIds[i] == id', tag)
+        self.assertIn('tagIds.FindFirst(id)', tag)
         lookups = core[core.index('private function NoteLookups'):core.index('private function PropertyWon')]
         order = [lookups.index(f'{name}.Size()') for name in ('winners', 'hideClaims', 'tabHideClaims', 'infoAdds')]
         self.assertEqual(order, sorted(order))

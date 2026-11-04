@@ -623,6 +623,7 @@ Ran in game on 2026-10-20 through the Smooth Map and Map Quest Insight adapters 
 | `closeSeconds` | `0.3` | `0` to `5` | the close time. |
 | `pinsDuringSlide` | `0` | `0`/`1` | `1` prepares pins while the menu slides in. |
 | `pinStepMs`, `pinBatch`, `pinBudgetMs` | `20`, `30`, `0` | `1` to `1000`, `0` to `100000`, `0` to `1000` | the pin preparation tick, pins per tick (`0` = no count limit) and the ms a tick may take (`0` = no limit). Both `0` means 30 000 pins per tick. |
+| `pinBudgetAfterSlideMs` | `0` | `0` to `1000` | the ms a tick may take once the menu slide has finished; `0` = use `pinBudgetMs`. Pins and tiles are not drawn until the last tick, so a bigger value here finishes the opening sooner at the cost of longer frames after the slide. |
 | `showDelayMs` | `200` | `0` to `5000` | the wait between prepared pins and the fade-in. |
 | `fadeSeconds`, `tileFadeSeconds` | `0.33`, `0.66` | `0` to `5` | the edge gradient and pin fade-in, and the map tiles' fade-in. |
 | `revealSeconds` | `0` | `0` to `5` | the crosshair, edge pointers, legend and quest tracker fade in over this time; `0` shows them at once. |
