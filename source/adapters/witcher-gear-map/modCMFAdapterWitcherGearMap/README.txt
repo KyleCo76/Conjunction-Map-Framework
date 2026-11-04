@@ -1,12 +1,18 @@
 Witcher Gear Map adapter for Conjunction Map Framework
-Version 1.0.1 (gear art by MateusAnd, Gear Map's author; built with tools/cmf_pack.py)
+Version 1.0.2 (gear art by MateusAnd, Gear Map's author; built with tools/cmf_pack.py)
 
 Shows Witcher Upgrade Gear Map's diagram markers on Conjunction Map Framework's world
 map. Gear Map stays exactly as its author ships it. This adapter only tells CMF what
 to draw for the marker types Gear Map already uses.
 
+WHAT CHANGED
+- 1.0.2: with Show Diagrams on All, the gear markers show over Fog of War's fog (needs
+  the Fog of War adapter 1.1.3 or later). Needs CMF 1.7.0 or later.
+- 1.0.1: the gear art of Gear Map's author.
+
 REQUIREMENTS
-- Conjunction Map Framework version 1 or later.
+- Conjunction Map Framework 1.7.0 or later (API version 14). With an older CMF keep
+  adapter 1.0.1.
 - Witcher Upgrade Gear Map 1.0.1 (Nexus mod 14157), installed as its author describes.
   Install and remove the adapter together with it: the adapter calls Gear Map's own
   scripts, so the game stops at the script compile screen without Gear Map.
@@ -18,6 +24,9 @@ WHAT YOU SEE
   and "with circle" puts it in a circle of that colour.
 - Tooltips, titles, location hints and Gear Map's options work as before; they come
   from Gear Map's own scripts.
+- With Fog of War and its CMF adapter 1.1.3 or later: while Gear Map's "Show Diagrams"
+  option is All, the gear markers show over the fog, as they do without CMF. With
+  Discovered, the fog hides them until you explore there.
 - With CMF 2 or later: Gear Map's own "Witcher Gear" filter tab after the game's tabs,
   holding the Witcher Gear row, which is also listed under Default and All and is named
   "Witcher Gear". Both names are Gear Map's own text.

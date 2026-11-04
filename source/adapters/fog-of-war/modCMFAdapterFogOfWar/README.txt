@@ -1,5 +1,5 @@
 Fog of War adapter for Conjunction Map Framework
-Version 1.1.2 (script only, no art; needs CMF 1.7.0 or later)
+Version 1.1.3 (script only, no art; needs CMF 1.7.0 or later)
 
 Makes Fog of War hide every map icon under its fog on Conjunction Map Framework's world
 map, including the icons other mods add, such as Witcher Gear Map's diagram markers
@@ -14,6 +14,9 @@ Fog of War's colour, opacity and edge settings, and disappears when Fog of War i
 switched off.
 
 WHAT CHANGED
+- 1.1.3: leaves an icon over the fog when the mod that adds it asks CMF to keep it
+  there. Witcher Gear Map's adapter 1.0.2 does that for its markers while Gear Map's
+  "Show Diagrams" option is All, as they show without CMF.
 - 1.1.2: with CMF 1.8.0 or later, the first map opening after loading a save is
   covered dark until the fog is drawn, as every later opening already was. This
   readme now lists the versions that were actually released.
@@ -48,6 +51,8 @@ WHAT YOU SEE
   told you about (Fog of War's "In-world hints" option).
 - Hidden icons are gone from the map, the legend counts, the filter lists and the corner
   overview, as with Fog of War on its own.
+- An icon its own mod keeps over the fog stays visible: Witcher Gear Map's markers while
+  its "Show Diagrams" option is All (with its adapter 1.0.2 or later).
 - Turning Fog of War off in its menu turns this off too.
 
 KNOWN LIMITS

@@ -35,6 +35,10 @@
 // CMF only covers the map from the second opening on (it keeps the last opening's fog). The adapter now declares the fog
 // drawing, with Fog of War's colour and opacity, when the game starts, so CMF 1.8.0 or later covers the first opening
 // too. The cells still come only from each map build.
+//
+// 1.1.3: a pin another mod already kept over the fog (CMFGridKeepPin) before this wrapper is not asked and not hidden,
+// so the fog drawing's hidePins rule leaves it too. Witcher Gear Map's adapter 1.0.2 keeps Gear Map's markers that
+// way while Gear Map's Show Diagrams option is All, as they show without CMF; Discovered still hides them under fog.
 
 // Presence is independent of map settings; the existing source-mod compile dependency stays required.
 @wrapMethod(CR4Game)
@@ -187,7 +191,9 @@ function FowAdapterHidePins(flashArray : CScriptedFlashArray, start : int, step 
 	for (i = start; i < flashArray.GetLength(); i += 1)
 	{
 		pin = flashArray.GetElementFlashObject(i);
-		if (!pin || pin.GetMemberFlashBool("isPlayer") || pin.GetMemberFlashBool("isUserPin"))
+		// A pin its owner already kept over the fog (CMFGridKeepPin, for example Witcher Gear Map's markers with its
+		// Show Diagrams set to All) is not asked: Fog of War's filter does not decide for it.
+		if (!pin || pin.GetMemberFlashBool("isPlayer") || pin.GetMemberFlashBool("isUserPin") || pin.GetMemberFlashBool("cmfGridKeep"))
 		{
 			continue;
 		}

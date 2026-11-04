@@ -10032,7 +10032,8 @@ function CMFThemeGridValueOk(key : name, number : float) : bool
 
 // Version 14 (grid). Keeps one pin out of the hidePins rule of this provider's grid drawings in this map build: the
 // provider's own filter already decided to show it (Fog of War's tracked quest, known signposts and so on). Call it
-// from a pin wrapper before CMF's late pass; false without a pin.
+// from a pin wrapper before CMF's late pass; false without a pin. The mark is the pin's bool member cmfGridKeep: a
+// mod whose own pin filter runs later may read it (never write it) to leave a pin its owner kept over the fog.
 function CMFGridKeepPin(provider : string, dataObject : CScriptedFlashObject) : bool
 {
 	if (provider == "" || !dataObject)

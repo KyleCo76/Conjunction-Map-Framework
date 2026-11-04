@@ -12,9 +12,13 @@
 @wrapMethod(CR4MapMenu)
 function UpdateUserMapPins(out flashArray : CScriptedFlashArray, indexToUpdate : int) : void
 {
+	var start : int;
 	if (indexToUpdate < 0 && !WgmAdapterHasMarkers(flashArray))
 	{
+		start = flashArray.GetLength();
 		WgmAdapterAddMarkers(flashArray);
+		// Over the fog with Show Diagrams on All, as from Gear Map's own wrapper (z_modcmfadapterwitchergearmap_fog.ws).
+		WgmAdapterKeepOverFog(flashArray, start);
 	}
 	wrappedMethod(flashArray, indexToUpdate);
 }
