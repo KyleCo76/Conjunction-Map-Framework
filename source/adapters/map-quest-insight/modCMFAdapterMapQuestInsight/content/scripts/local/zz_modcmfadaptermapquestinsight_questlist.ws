@@ -41,6 +41,7 @@ function OnConfigUI()
 	result = wrappedMethod();
 	mqiAdapterQlOpen = 0;
 	mqiAdapterQlSeq = 0;
+	mqiAdapterQlTrackKey = "";
 	mqiAdapterQlOn = MqiAdapterQlWanted();
 	MqiAdapterQlDrawing(mqiAdapterQlOn);
 	if (mqiAdapterQlOn)
@@ -219,6 +220,58 @@ function MqiAdapterRefreshPins()
 	UpdateData(true);
 }
 
+// The tracked quest and highlighted objective by tag, as the last send showed them. Every pin build (UpdateData) checks
+// them after the game's build and resends once if they differ, so a map pin, the G key or a journal that changes them
+// is followed; the list's own track sends itself (mqiAdapterQlOwnTrack), so it is not sent twice.
+@addField(CR4MapMenu)
+var mqiAdapterQlOwnTrack : bool;
+
+@addField(CR4MapMenu)
+var mqiAdapterQlTrackKey : string;
+
+@addMethod(CR4MapMenu)
+function MqiAdapterQlTrackKey() : string
+{
+	var trackedQuest : CJournalQuest;
+	var objective : CJournalQuestObjective;
+	var key : string;
+	key = "";
+	trackedQuest = theGame.GetJournalManager().GetTrackedQuest();
+	if (trackedQuest)
+	{
+		key = NameToString(trackedQuest.GetUniqueScriptTag());
+	}
+	key += "|";
+	objective = theGame.GetJournalManager().GetHighlightedObjective();
+	if (objective)
+	{
+		key += NameToString(objective.GetUniqueScriptTag());
+	}
+	return key;
+}
+
+@addMethod(CR4MapMenu)
+function MqiAdapterQlNoteTracked()
+{
+	mqiAdapterQlTrackKey = MqiAdapterQlTrackKey();
+}
+
+@addMethod(CR4MapMenu)
+function MqiAdapterQlTrackChanged() : bool
+{
+	return mqiAdapterQlSeq > 0 && mqiAdapterQlTrackKey != MqiAdapterQlTrackKey();
+}
+
+@wrapMethod(CR4MapMenu)
+function UpdateData(optional ignoreSelectionChange : bool)
+{
+	wrappedMethod(ignoreSelectionChange);
+	if (mqiAdapterQlOn && !mqiAdapterQlOwnTrack && MqiAdapterQlTrackChanged())
+	{
+		MqiAdapterQlSend();
+	}
+}
+
 @addMethod(CR4MapMenu)
 function MqiAdapterQlEvent(eventName : string, value : string)
 {
@@ -256,14 +309,18 @@ function MqiAdapterQlEvent(eventName : string, value : string)
 				theGame.GetJournalManager().GetEntryStatus(mqiAdapterQlObjs[objectiveIndex]) == JS_Active)
 			{
 				objective = mqiAdapterQlObjs[objectiveIndex];
+				mqiAdapterQlOwnTrack = true;
 				OnHighlightObjectiveWithQuestChange(journalQuest.GetUniqueScriptTag(), objective.GetUniqueScriptTag());
+				mqiAdapterQlOwnTrack = false;
 				LogChannel('CMF', "CMF mqi adapter questlist objective quest=" + journalQuest.GetUniqueScriptTag() + " objective=" +
 					objective.GetUniqueScriptTag());
 				MqiAdapterQlSend();
 				return;
 			}
 		}
+		mqiAdapterQlOwnTrack = true;
 		OnTrackQuest(journalQuest.GetUniqueScriptTag());
+		mqiAdapterQlOwnTrack = false;
 		LogChannel('CMF', "CMF mqi adapter questlist track quest=" + journalQuest.GetUniqueScriptTag());
 		MqiAdapterQlSend();
 		return;
@@ -704,6 +761,7 @@ function MqiAdapterQlSend()
 	storage.SetFlashObject("mqiadapter.questlist", root);
 	LogChannel('CMF', "CMF mqi adapter questlist sent seq=" + mqiAdapterQlSeq + " open=" + mqiAdapterQlOpen + " quests=" +
 		mqiAdapterQlQuests.Size() + " objectives=" + mqiAdapterQlObjs.Size() + " available=" + availList.GetLength());
+	MqiAdapterQlNoteTracked();
 }
 
 // Map Quest Insight's Quests Available rows (QMI_qa*, filled by its map with the pins, for this map's "!" markers and

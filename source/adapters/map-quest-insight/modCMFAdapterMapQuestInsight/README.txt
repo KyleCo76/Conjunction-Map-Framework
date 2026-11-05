@@ -1,7 +1,11 @@
 Map Quest Insight adapter for Conjunction Map Framework
-Version 2.5.2 (for Map Quest Insight 2.1.0 and 2.2.0; icons by Wolfer, Map Quest Insight's author)
+Version 2.5.3 (for Map Quest Insight 2.1.0 and 2.2.0; icons by Wolfer, Map Quest Insight's author)
 
-What is new in 2.5.2: in the Quest List a mouse click on a quest row's Objectives prompt shows
+What is new in 2.5.3: the Quest List now follows the tracked quest and objective when they
+change any other way (a map pin, the change-objective key); it is sent once more after the
+map's pin build.
+
+In 2.5.2: in the Quest List a mouse click on a quest row's Objectives prompt shows
 or hides its objectives (as Right does) and a click on a section's fold prompt folds it (as C
 does). Neither click tracks the quest or swaps its objective; every other click is as before.
 Only this region now saves the setting and refills the list without redrawing the map's markers,

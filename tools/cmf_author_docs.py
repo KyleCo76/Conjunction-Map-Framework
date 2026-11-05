@@ -82,7 +82,7 @@ PAGES = [
     ('Abilities', None, 'Start here', [page_file('docs/authors/wiki-pages/Abilities.md')]),
     ('Getting-Started', 'Getting started', 'Start here',
      [guide(''), guide('1. What you need'), guide('2. Quick start'), guide('3. Name your pack folder'),
-      guide('4. Make your art')]),
+      guide('4. Make your art'), guide('Painted art and BC3')]),
     ('Writing-Your-Script', 'Writing your script', 'Start here',
      [guide('5. Write your script'), guide('Tell CMF you are here (API version 11)'), guide('The CMF calls')]),
     ('Choosing-Pin-Types', None, 'Start here', [guide('6. Choosing pin types')]),

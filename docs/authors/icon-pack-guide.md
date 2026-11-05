@@ -62,6 +62,31 @@ One image per pin type you change. The map draws the selected pin and the legend
 
 **You rarely need a legend image.** `CMFRegisterIcon` sets the legend row too. Register a separate legend image only when the legend should look different from the pins; the example does it for innkeepers only to show the call.
 
+### Painted art and BC3
+
+Keep your source pictures as RGBA8 PNG; the pack tool reads them that way. When you build, it stores each one as BC3 and nothing else; there is no other output format to choose. BC3 cuts the picture into 4 x 4 squares and fits each square between two colours, so it keeps flat colour and outlines and bends gradients, soft shadows and fine painted detail. The loss happens once, at build.
+
+| Art | Result |
+| --- | --- |
+| Flat fills, hard outlines, simple shapes | Looks the same |
+| Soft edges on a dark outline | Looks nearly the same |
+| Gradients, airbrush, many hues in one small area | Steps or colour drift inside a square |
+| Painted detail finer than 4 pixels | Blurs into the neighbouring colour |
+| Small animated frames of painted art | Each frame drifts a little differently, which can shimmer |
+
+**How to check.** Build, open the map at the size your pin is drawn, and compare with your source. The pack tool's warning is a floor, not a verdict: it speaks only when more than 5 percent of the visible pixels move by more than 40 in a colour channel, so a painted icon can change less than that and still look flatter. If it looks worse, simplify the art (fewer hues in each 4 x 4 square, a stronger outline); a bigger file does not help, and the tool offers no lossless route.
+
+**Size.** BC3 uses 16 bytes for each 4 x 4 block, 1 byte a pixel; RGBA8 uses 4. The cache file is also zlib-packed, so real files are smaller than these raw figures.
+
+| Picture | RGBA8 | BC3 |
+| --- | --- | --- |
+| One 96 x 96 | 36,864 bytes | 9,216 bytes |
+| 48 frames of 96 x 96 | 1,769,472 bytes (1.69 MiB) | 442,368 bytes (432 KiB) |
+
+BC3 saves file size, not the animation memory limit: `CMFAnimationMemory` (32, 64 or 128 MB) counts decoded pictures at 4 bytes a pixel, whatever the file format, so a 96 x 96 picture costs 36,864 bytes of it either way.
+
+**Masks.** CMF has no mask for a picture. To keep a part still while another part moves (an anvil under a hammer), put the still part alone in the under picture (property 46) and the moving part in the main frames (property 45), both on canvases of the same size with the other part's area transparent. A stage's `offset` is a start offset in frames, not a pixel shift, so there is no per-layer offset or crop today; that is an idea for a later version, not a promise.
+
 ## 5. Write your script
 
 Create one script, `content/scripts/local/<your folder in lower case>_cmf.ws`. The file name must be unique across every installed mod, so include your folder name. Use tabs, plain ASCII and LF line endings.

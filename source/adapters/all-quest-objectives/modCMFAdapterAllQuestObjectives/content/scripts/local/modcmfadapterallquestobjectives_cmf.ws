@@ -16,8 +16,10 @@
 //
 // Its own legend row. All Quest Objectives' map file lists the objectives of untracked quests (filteredType
 // QuestObjectiveOther) in their own row instead of the game's shared quest row, so the player can hide them
-// on their own: the game's Quests tab, priority 200, named by aqoomRowLabel ("All Quest Objectives", its
-// constant FILTER_LABEL). This adapter registers that row and its name once per session.
+// on their own: the game's Quests tab, priority 200, named by aqoomRowLabel. The name is the mod's own text
+// in the player's language: its constant FILTER_LABEL is empty, so GetText returns the string for the key
+// aqoom_filter_label (aqoomMap.ws 83, 209-215, 388). This adapter registers that row and the same text once
+// per session, with "All Quest Objectives" when the game finds no such string.
 //
 // Its name in CMF's in-game menu. The menu lists each mod by name, and without one it tidies the provider's
 // folder name, which here reads "AQOOMRemastered". The adapter names the provider "All Quest Objectives",
@@ -45,13 +47,26 @@
 
 // All Quest Objectives' own legend row for the objectives of untracked quests, as its map file lists it, and
 // the mod's name in CMF's in-game menu.
+// The text of All Quest Objectives' own key aqoom_filter_label. The game returns "" or a "#" placeholder for a
+// key no installed string table has; then the English name stands.
+function AqoAdapterRowLabel() : string
+{
+	var text : string;
+	text = GetLocStringByKeyExt("aqoom_filter_label");
+	if (StrLen(text) == 0 || StrBeginsWith(text, "#"))
+	{
+		return "All Quest Objectives";
+	}
+	return text;
+}
+
 @wrapMethod(CR4Game)
 function OnGameStarted(restored : bool)
 {
 	var result : bool;
 	result = wrappedMethod(restored);
 	CMFRegisterLegendRow("modAQOOMRemastered", 'QuestObjectiveOther', 'Quests', 200);
-	CMFRegisterLegendLabel("modAQOOMRemastered", 'QuestObjectiveOther', "All Quest Objectives");
+	CMFRegisterLegendLabel("modAQOOMRemastered", 'QuestObjectiveOther', AqoAdapterRowLabel());
 	CMFSetProviderName("modAQOOMRemastered", "All Quest Objectives");
 	return result;
 }

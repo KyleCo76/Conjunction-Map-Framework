@@ -71,7 +71,10 @@ class PanelTests(unittest.TestCase):
         rect = still[still.index('private function cmfFitRect'):still.index('private function cmfShowIconArt')]
         self.assertIn('!pin.cmfPictureFitEnabled || pin.cmfPictureFit != 1', rect)
         self.assertIn('return glyph;', rect)
-        self.assertIn('glyph.x + (glyph.width - CMF_FIT_BOX) / 2', rect)
+        self.assertIn('var side:Number = CMF_FIT_BOX * this.cmfScaleOf(pin) * (pin.cmfPictureScaleEnabled && pin.cmfPictureScale > 0 ? pin.cmfPictureScale : 1);', rect)
+        self.assertIn('glyph.x + (glyph.width - side) / 2', rect)
+        self.assertIn('glyph.y + (glyph.height - side) / 2,side,side)', rect)
+        self.assertNotIn('CMF_FIT_BOX,CMF_FIT_BOX)', rect)
         self.assertIn('this.cmfFitRect(data as StaticMapPinData,this.mcIcon.mcPinIcon.getBounds(this.mcIcon))', still)
         allrepl = '\n'.join(e.get('replace', '') for e in EDITS['red/game/witcher3/' + d])
         self.assertIn('if(!box) { box = this.cmfFitRect(pin,this.mcIcon.mcPinIcon.getBounds(this.mcIcon)); }', allrepl)
@@ -92,6 +95,13 @@ class PanelTests(unittest.TestCase):
             fit = (x + (w - 24) / 2, y + (h - 24) / 2, 24, 24)
             self.assertAlmostEqual(fit[0] + 12, x + w / 2)
             self.assertAlmostEqual(fit[1] + 12, y + h / 2)
+
+    def test_fit_box_follows_pin_size_and_picture_scale(self):
+        # A model of the side in cmfFitRect: CMF_FIT_BOX * pin size * picture scale (each 1 when unset).
+        def side(size, picture):
+            return 24 * size * picture
+        for size, picture, want in ((0.5, 1, 12), (1, 1, 24), (2, 1, 48), (0.5, 1.5, 18), (1, 1.5, 36), (2, 1.5, 72)):
+            self.assertAlmostEqual(side(size, picture), want)
 
     def test_no_bitmap_writes_or_filters_added(self):
         text = json.dumps(EDITS)

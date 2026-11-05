@@ -64,6 +64,8 @@ KNOWN DIFFERENCES AND LIMITS
 CHANGES
 - 1.2.0: All Quest Objectives' icons, levels and cached merchant pins show with The
   Stable installed too. Needs CMF 1.2.0 or later, as before.
+  The legend row now shows All Quest Objectives' own label text in the player's language
+  (the English name when the game finds none).
 - 1.1.0: names All Quest Objectives in CMF's in-game menu ("All Quest Objectives"
   instead of "AQOOMRemastered"). Needs CMF 1.2.0 or later. Nothing else changed.
 - 1.0.0: first release.
