@@ -82,7 +82,7 @@ class CoreTests(unittest.TestCase):
         self.assertIn(KEY, cmf_pack.THEME_PART_KEYS['opening'])
 
     def test_core_version_is_unchanged(self):
-        self.assertIn('function CMFGetVersion() : int { return 17; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 18; }', self.core)
 
 
 if __name__ == '__main__':

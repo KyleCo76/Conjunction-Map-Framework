@@ -21,7 +21,9 @@ VANILLA_FIELDS = ['id', 'type', 'filteredType', 'label', 'description', 'posX', 
                   'areaId', 'journalAreaId', 'rotation', 'isFastTravel', 'isQuest', 'isPlayer', 'isUserPin', 'distance',
                   'hidden', 'questScriptName']
 # CreatePin sets these again on a reused clip (place, offset, rotation) or nothing draws from them (distance).
-NOT_COMPARED = ['posX', 'posY', 'rotation', 'distance', 'cmfPinOffsetX', 'cmfPinOffsetY', 'cmfPinOffsetEnabled']
+NOT_COMPARED = ['posX', 'posY', 'rotation', 'distance', 'cmfPinOffsetX', 'cmfPinOffsetY', 'cmfPinOffsetEnabled',
+                # Seam S14: the grid keep marks (set by the core, read by no panel drawing).
+                'cmfGridKeep', 'cmfGridKeepBy']
 # Names other mods write into the pin; no panel code reads them (tests/test_cmf_pin_fields.py), so they cannot change a drawing.
 COMPAT_NOT_READ = ['qmiLevelText', 'iaiLv', 'iaiDiff', 'qmiIconScale', 'qmiIconTop', 'qmiIconKind', 'qmiNoCrosshairLabel',
                    'qmiIconTint', 'aqoomCachedPin', 'wmkIcon', 'aqoomRowLabel']
@@ -314,7 +316,7 @@ class HiddenSwitchAndAbility(unittest.TestCase):
 
     def test_ability_added_and_version_unchanged(self):
         self.assertIn("if (part == 'map' && key == 'partialUpdate') { return true; }", ws_body(CORE, 'CMFHasAbility'))
-        self.assertRegex(ws_body(CORE, 'CMFGetVersion'), r'return 17;')
+        self.assertRegex(ws_body(CORE, 'CMFGetVersion'), r'return 18;')
 
     def test_the_key_is_not_an_author_key(self):
         keys = ws_body(CORE, 'CMFThemeOpeningKeys')

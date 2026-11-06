@@ -120,4 +120,4 @@ Keep animation text in provider scripts. The game's settings values truncate at 
 
 ---
 
-[Previous: Changing one pin](Changing-One-Pin.md) · [Contents](Home.md) · [Next: Spreading stacked pins](Spreading-Stacked-Pins.md)
+[Previous: Changing one pin](Changing-One-Pin.md) · [Contents](Home.md) · [Next: Pins other mods add](Pins-Other-Mods-Add.md)

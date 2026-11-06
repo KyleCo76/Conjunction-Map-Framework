@@ -69,6 +69,11 @@
     "find": "      public function StaticMapPinData()",
     "replace": "      public var cmfLegendUnderPath:String = \"\";\n      public var cmfLegendUnderTint:uint = 0;\n      public var cmfLegendUnderTintEnabled:Boolean = false;\n      public var cmfLegendFit:int = 0;\n      public var cmfLegendFitEnabled:Boolean = false;\n\n      public function StaticMapPinData()",
     "count": 1
+   },
+   {
+    "find": "      public var cmfPictureFitBy:String = \"\";",
+    "replace": "      public var cmfPictureFitBy:String = \"\";\n\n      // seam S14: set by the core on a kept grid pin (the bool older adapters read) and the provider that keeps it.\n      public var cmfGridKeep:Boolean = false;\n\n      public var cmfGridKeepBy:String = \"\";",
+    "count": 1
    }
   ],
   "red/game/witcher3/menus/worldmap/StaticMapPinDescribed.as": [
@@ -610,6 +615,36 @@
    {
     "find": "         this.cmfDropIconLoader();\n         this.cmfDropUnder();\n         this.cmfUnwatchArt();\n",
     "replace": "         if(StaticMapPinDescribed.cmfPoolHold)\n         {\n            return;\n         }\n         this.cmfDropIconLoader();\n         this.cmfDropUnder();\n         this.cmfUnwatchArt();\n",
+    "count": 1
+   },
+   {
+    "find": "         filters = base.concat();\n         if(this._cmfDisabledLook)",
+    "replace": "         // seam S1: a pin with frames but no still, tint or disabled flag never reached the capture in cmfApplyIconTint.\n         if(this._cmfBaseIconAlpha < 0) { this._cmfBaseIconAlpha = this.mcIcon.mcPinIcon.alpha; }\n         filters = base.concat();\n         if(this._cmfDisabledLook)",
+    "count": 1
+   },
+   {
+    "find": "!this.cmfArtPath(param1) && !param1.cmfIconUnderPath && !this._cmfIconLoader",
+    "replace": "!this.cmfArtPath(param1) && !param1.cmfIconUnderPath && !this._cmfIconLoader && !param1.cmfIconFrames && !param1.cmfIconUnderFrames /* seam S1 */",
+    "count": 1
+   },
+   {
+    "find": "      private static var _cmfArtMisses:int = 0;",
+    "replace": "      private static var _cmfArtMisses:int = 0;\n      // seam S18: urls whose Loader failed; a pin does not request them again until the picture cache is reset.\n      private static var _cmfArtFailed:Object = {};",
+    "count": 1
+   },
+   {
+    "find": "      private function cmfOnIconArtFailed(param1:Event) : void\n      {\n         // A Bitmap (a shared decoded picture) has no loader info; only a Loader's own event may pass.\n",
+    "replace": "      private function cmfOnIconArtFailed(param1:Event) : void\n      {\n         // A Bitmap (a shared decoded picture) has no loader info; only a Loader's own event may pass.\n         if(this._cmfIconRequested && this._cmfIconLoader is Loader && param1.currentTarget == this._cmfIconLoader.contentLoaderInfo) { StaticMapPinDescribed._cmfArtFailed[this._cmfIconRequested] = true; } // seam S18\n",
+    "count": 1
+   },
+   {
+    "find": "         var cached:BitmapData = StaticMapPinDescribed.cmfArtCached(param1);\n         this.cmfCancelNext();",
+    "replace": "         if(StaticMapPinDescribed._cmfArtFailed[param1]) { this.cmfDropIconLoader(); return; } // seam S18\n         var cached:BitmapData = StaticMapPinDescribed.cmfArtCached(param1);\n         this.cmfCancelNext();",
+    "count": 1
+   },
+   {
+    "find": "            if(StaticMapPinDescribed._cmfArtCacheCount >= 64)\n            {\n               StaticMapPinDescribed._cmfArtCache = {};",
+    "replace": "            if(StaticMapPinDescribed._cmfArtCacheCount >= 64)\n            {\n               StaticMapPinDescribed._cmfArtFailed = {}; // seam S18\n               StaticMapPinDescribed._cmfArtCache = {};",
     "count": 1
    }
   ],
@@ -1654,6 +1689,21 @@
     "find": "         this.cmfMovieListSerial++;\n         this._mapPinDataArray = param1 as Array;",
     "replace": "         this.cmfMovieListSerial++;\n         this.cmfNote(\"pins list received sinceData=\" + (MapMenu.cmfMenu ? MapMenu.cmfMenu.cmfSinceData() : -1) + \"ms n=\" + (param1 as Array).length);\n         this._mapPinDataArray = param1 as Array;",
     "count": 2
+   },
+   {
+    "find": "            if(this._cmfPinOrderActive) { param1.cmfOrderWithinParent(); }",
+    "replace": "            if(this._cmfPinOrderActive) { param1.cmfOrderWithinParent(); if(MapMenu.cmfMenu && !param1.cmfAnimationOwner) { MapMenu.cmfMenu.cmfAnimationAttach(param1); } } // seam S2: re-attach after the move, as cmfRecycledPin does",
+    "count": 1
+   },
+   {
+    "find": "            this._cmfPoolChanged++;\n            return null;",
+    "replace": "            this._cmfPoolChanged++;\n            pin.cmfReleaseArt(); // seam S12: the clip is dropped, so unload its pictures now (cmfPoolHold is already off)\n            return null;",
+    "count": 1
+   },
+   {
+    "find": "      public function cmfMoviePinsCompleted(generation:int) : void\n      {\n",
+    "count": 1,
+    "replace": "      public function cmfMoviePinsCompleted(generation:int) : void\n      {\n         if(MapMenu.cmfMenu)\n         {\n            MapMenu.cmfMenu.cmfMovieSerialsNote(\"completed\",generation);\n         }\n"
    }
   ],
   "red/game/witcher3/menus/worldmap/MapMenu.as": [
@@ -3665,6 +3715,76 @@
    {
     "find": "      public function cmfStamp(param1:String) : void\n",
     "replace": "      public function cmfSinceData() : int\n      {\n         return getTimer() - this._cmfStampAt;\n      }\n\n      public function cmfStamp(param1:String) : void\n",
+    "count": 1
+   },
+   {
+    "find": "      // API 17: the on-screen rectangles of the open screen movies",
+    "replace": "      // API 18 (tooltip stretch): the nearest spot to want (the box at its first place) for a box of want's size that\n      // is clear of the anchor (grown by pad), the screen movies (hard) and the map panels (soft), each grown by 8.\n      // The candidate x and y values are want's, the limits' and every obstacle edge, which contain the exact nearest\n      // point among axis-aligned rectangles. pass 1 = clear of everything (least distance, then least vertical move,\n      // then away from the anchor); pass 2 = covers only soft parts (least distance, then least area); pass 0 = none\n      // (box is null and the caller keeps today's place). stretchMax, stretchDirs and stretchFlip are read here.\n      protected function cmfStretchPlace(want:Rectangle, anchor:Rectangle, pad:Number, side:String, limit:Rectangle, soft:Array, hard:Array) : Object\n      {\n         var result:Object = {\"box\":null,\"pass\":0,\"dist\":0,\"tried\":0,\"hold\":0};\n         var maxD:Number = MapMenu.cmfNum(\"tooltip\",\"stretchMax\",400,this.m_selectedPinData);\n         var flip:Number = MapMenu.cmfNum(\"tooltip\",\"stretchFlip\",1,this.m_selectedPinData);\n         var dirsValue:* = MapMenu.cmfStyle(\"tooltip\",\"stretchDirs\",this.m_selectedPinData);\n         var dirs:String = dirsValue is String && String(dirsValue) != \"\" ? \",\" + String(dirsValue).split(\" \").join(\",\") + \",\" : \",left,right,up,down,\";\n         var blocks:Array = [];\n         var softs:Array = [];\n         var xs:Array = [want.x,limit.left,limit.right - want.width];\n         var ys:Array = [want.y,limit.top,limit.bottom - want.height];\n         var o:Rectangle = null;\n         var c:Rectangle = null;\n         var best1:Rectangle = null;\n         var best2:Rectangle = null;\n         var key1:Array = null;\n         var key2:Array = null;\n         var key:Array = null;\n         var n:int = 0;\n         var i:int = 0;\n         var j:int = 0;\n         var dx:Number = 0;\n         var dy:Number = 0;\n         var dist:Number = 0;\n         var covered:Number = 0;\n         var acx:Number = anchor.x + anchor.width / 2;\n         var acy:Number = anchor.y + anchor.height / 2;\n         var wcx:Number = want.x + want.width / 2;\n         var wcy:Number = want.y + want.height / 2;\n         var away:Number = 0;\n         var skip:Boolean = false;\n         blocks.push(new Rectangle(anchor.x - pad,anchor.y - pad,anchor.width + 2 * pad,anchor.height + 2 * pad));\n         n = 0;\n         while(n < hard.length)\n         {\n            o = hard[n];\n            blocks.push(new Rectangle(o.x - 8,o.y - 8,o.width + 16,o.height + 16));\n            n++;\n         }\n         n = 0;\n         while(n < soft.length)\n         {\n            o = soft[n];\n            softs.push(new Rectangle(o.x - 8,o.y - 8,o.width + 16,o.height + 16));\n            n++;\n         }\n         n = 0;\n         while(n < blocks.length + softs.length)\n         {\n            o = n < blocks.length ? blocks[n] : softs[n - blocks.length];\n            xs.push(o.left - want.width);\n            xs.push(o.right);\n            ys.push(o.top - want.height);\n            ys.push(o.bottom);\n            n++;\n         }\n         i = 0;\n         while(i < xs.length)\n         {\n            j = 0;\n            while(j < ys.length)\n            {\n               result.tried++;\n               c = new Rectangle(xs[i],ys[j],want.width,want.height);\n               j++;\n               if(c.left < limit.left || c.top < limit.top || c.right > limit.right || c.bottom > limit.bottom) { continue; }\n               dx = c.x - want.x;\n               dy = c.y - want.y;\n               dist = Math.sqrt(dx * dx + dy * dy);\n               if(dist > maxD) { continue; }\n               if(dx < 0 && dirs.indexOf(\",left,\") < 0 || dx > 0 && dirs.indexOf(\",right,\") < 0 || dy < 0 && dirs.indexOf(\",up,\") < 0 || dy > 0 && dirs.indexOf(\",down,\") < 0) { continue; }\n               if(flip == 0)\n               {\n                  if((side == \"left\" || side == \"right\") && (c.x + c.width / 2 - acx) * (wcx - acx) < 0) { continue; }\n                  if((side == \"top\" || side == \"bottom\") && (c.y + c.height / 2 - acy) * (wcy - acy) < 0) { continue; }\n               }\n               skip = false;\n               n = 0;\n               while(n < blocks.length && !skip)\n               {\n                  skip = MapMenu.cmfOverlap(c,blocks[n]) > 0;\n                  n++;\n               }\n               if(skip) { continue; }\n               covered = 0;\n               n = 0;\n               while(n < softs.length)\n               {\n                  covered += MapMenu.cmfOverlap(c,softs[n]);\n                  n++;\n               }\n               away = Math.sqrt((c.x + c.width / 2 - acx) * (c.x + c.width / 2 - acx) + (c.y + c.height / 2 - acy) * (c.y + c.height / 2 - acy)) >= Math.sqrt((wcx - acx) * (wcx - acx) + (wcy - acy) * (wcy - acy)) ? 0 : 1;\n               if(covered == 0)\n               {\n                  key = [dist,Math.abs(dy),away];\n                  if(!key1 || key[0] < key1[0] || key[0] == key1[0] && (key[1] < key1[1] || key[1] == key1[1] && key[2] < key1[2]))\n                  {\n                     best1 = c;\n                     key1 = key;\n                  }\n               }\n               else\n               {\n                  key = [dist,covered];\n                  if(!key2 || key[0] < key2[0] || key[0] == key2[0] && key[1] < key2[1])\n                  {\n                     best2 = c;\n                     key2 = key;\n                  }\n               }\n            }\n            i++;\n         }\n         if(best1)\n         {\n            result.box = best1;\n            result.pass = 1;\n            result.dist = key1[0];\n         }\n         else if(best2)\n         {\n            result.box = best2;\n            result.pass = 2;\n            result.dist = key2[0];\n         }\n         return result;\n      }\n\n      // API 17: the on-screen rectangles of the open screen movies",
+    "count": 1
+   },
+   {
+    "find": "      private var _cmfPinAnchor:Rectangle;\n",
+    "replace": "      private var _cmfPinAnchor:Rectangle;\n      // API 18 (tooltip stretch): the box's last stretched place, kept while the next one is within 6 px of it.\n      private var _cmfStretchLast:Rectangle;\n",
+    "count": 1
+   },
+   {
+    "find": "         var hard:Array = [];\n         var slides:Array = null;\n",
+    "replace": "         var hard:Array = [];\n         var want:Rectangle = null;\n         var stretched:Object = null;\n         var slides:Array = null;\n",
+    "count": 1
+   },
+   {
+    "find": "            origin = r.clone();\n            slides = this.cmfClearSlides(sides[k],r,limit,avoid,hard);\n",
+    "replace": "            if(k == 0) { want = new Rectangle(Math.max(limit.left,Math.min(r.x,limit.right - r.width)),Math.max(limit.top,Math.min(r.y,limit.bottom - r.height)),r.width,r.height); }\n            origin = r.clone();\n            slides = this.cmfClearSlides(sides[k],r,limit,avoid,hard);\n",
+    "count": 1
+   },
+   {
+    "find": "         if(!anchor) { best = this.cmfClearPick(box,cx,cy,gap,limit,avoid.concat(hard),best); }",
+    "replace": "         // API 18 (tooltip stretch): with stretch 1 the nearest clear spot to the first place is asked for first; when none is\n         // found (pass 0) or stretch is off, today's place stands.\n         if(want && MapMenu.cmfNum(\"tooltip\",\"stretch\",0,this.m_selectedPinData) == 1)\n         {\n            stretched = this.cmfStretchPlace(want,cursor,anchor ? 3 : 0,sides[0],limit,avoid,hard);\n         }\n         if(stretched && stretched.pass > 0)\n         {\n            best = this.cmfStretchHold(stretched,cursor,anchor ? 3 : 0,limit,avoid,hard);\n         }\n         else\n         {\n            this._cmfStretchLast = null;\n            if(!anchor) { best = this.cmfClearPick(box,cx,cy,gap,limit,avoid.concat(hard),best); }\n         }\n         if(stretched)\n         {\n            dispatchEvent(new GameEvent(GameEvent.CALL,\"OnCMFPanelNote\",[\"info box stretch pass=\" + stretched.pass + \" dist=\" + Math.round(stretched.dist) + \" tried=\" + stretched.tried + \" hold=\" + stretched.hold]));\n         }",
+    "count": 1
+   },
+   {
+    "find": "      // API 17: the on-screen rectangles of the open screen movies",
+    "replace": "      // API 18 (tooltip stretch): true when c is inside the limits, clear of the anchor (grown by pad) and the screen movies\n      // (grown by 8) and, for pass 1, of the map panels (grown by 8) too: the test that keeps a held spot.\n      protected function cmfStretchFits(c:Rectangle, anchor:Rectangle, pad:Number, limit:Rectangle, soft:Array, hard:Array, pass:int) : Boolean\n      {\n         var o:Rectangle = new Rectangle(anchor.x - pad,anchor.y - pad,anchor.width + 2 * pad,anchor.height + 2 * pad);\n         var n:int = 0;\n         if(c.left < limit.left || c.top < limit.top || c.right > limit.right || c.bottom > limit.bottom) { return false; }\n         if(MapMenu.cmfOverlap(c,o) > 0) { return false; }\n         while(n < hard.length)\n         {\n            o = hard[n];\n            if(MapMenu.cmfOverlap(c,new Rectangle(o.x - 8,o.y - 8,o.width + 16,o.height + 16)) > 0) { return false; }\n            n++;\n         }\n         n = 0;\n         while(pass == 1 && n < soft.length)\n         {\n            o = soft[n];\n            if(MapMenu.cmfOverlap(c,new Rectangle(o.x - 8,o.y - 8,o.width + 16,o.height + 16)) > 0) { return false; }\n            n++;\n         }\n         return true;\n      }\n\n      // API 18 (tooltip stretch): the spot the search found, or the last spot when it is within 6 px of it on both axes and\n      // still fits the same pass, so the box does not jitter between neighbouring pins. Sets res.hold (1 when held).\n      protected function cmfStretchHold(res:Object, anchor:Rectangle, pad:Number, limit:Rectangle, soft:Array, hard:Array) : Rectangle\n      {\n         var box:Rectangle = res.box;\n         var last:Rectangle = this._cmfStretchLast;\n         res.hold = 0;\n         if(last && Math.abs(last.x - box.x) <= 6 && Math.abs(last.y - box.y) <= 6 && last.width == box.width && last.height == box.height && this.cmfStretchFits(last,anchor,pad,limit,soft,hard,res.pass))\n         {\n            box = last;\n            res.hold = 1;\n         }\n         this._cmfStretchLast = box.clone();\n         return box;\n      }\n\n      // API 17: the on-screen rectangles of the open screen movies",
+    "count": 1
+   },
+   {
+    "find": "         this._cmfClearMoved = false;\n         if(this._cmfTallPlaced)",
+    "replace": "         this._cmfClearMoved = false;\n         this._cmfStretchLast = null;\n         if(this._cmfTallPlaced)",
+    "count": 1
+   },
+   {
+    "find": "         this._cmfMovieBuildSerial = this.mcHubMap ? this.mcHubMap.cmfMovieListSerial : -1;\n         addEventListener(Event.REMOVED_FROM_STAGE,this.cmfCloseScreenMovies,false,0,true);\n         this.cmfMovieAreaReady();",
+    "count": 1,
+    "replace": "         this._cmfMovieBuildSerial = this.mcHubMap ? this.mcHubMap.cmfMovieListSerial : -1;\n         addEventListener(Event.REMOVED_FROM_STAGE,this.cmfCloseScreenMovies,false,0,true);\n         this.cmfMovieSerialsNote(\"sent\",data.build);\n         this.cmfMovieAreaReady();"
+   },
+   {
+    "find": "      public function cmfMovieBuildSent(data:Object) : void\n",
+    "count": 1,
+    "replace": "      // Debug aid: the movie serials at the marker and at each pin completion (the core logs it only under CMFDebug).\n      public function cmfMovieSerialsNote(where:String, build:*) : void\n      {\n         dispatchEvent(new GameEvent(GameEvent.CALL,\"OnCMFPanelNote\",[\"movie serials at=\" + where + \" build=\" + build + \" buildSerial=\" + this._cmfMovieBuildSerial + \" list=\" + (this.mcHubMap ? this.mcHubMap.cmfMovieListSerial : -2) + \" drawn=\" + (this.mcHubMap ? this.mcHubMap.cmfMovieDrawnSerial : -2)]));\n      }\n\n      public function cmfMovieBuildSent(data:Object) : void\n"
+   },
+   {
+    "find": "         if(this._cmfMovieReadyArea == data.area) { return; }\n         this._cmfMovieReadyArea = data.area;\n",
+    "count": 1,
+    "replace": "         // API 18: the ready call comes once per completed pin list (build), not once per area, so a same-area rebuild\n         // (a quest tracked, a refresh) reaches OnMapAreaReady too. The key is area and build; an area change resets it.\n         if(this._cmfMovieReadyArea == data.area + \":\" + data.build) { return; }\n         this._cmfMovieReadyArea = data.area + \":\" + data.build;\n"
+   },
+   {
+    "find": "               avoid.push(found[n].box);\n",
+    "count": 1,
+    "replace": "               avoid.push(this.cmfAvoidBox(parts[k],found[n].box));\n"
+   },
+   {
+    "find": "      protected function cmfClearTooltip() : void\n",
+    "count": 1,
+    "replace": "      // The info box keeps off the panels. The tracker's frame reaches below its text box (about 28 stage units, seen on a\n      // 3837 x 2157 screen), so its avoided rectangle is 30 units taller; the other panels are used as measured.\n      protected function cmfAvoidBox(part:String, box:Rectangle) : Rectangle\n      {\n         if(part != \"tracker\" || !box) { return box; }\n         return new Rectangle(box.x,box.y,box.width,box.height + 30);\n      }\n\n      protected function cmfClearTooltip() : void\n"
+   },
+   {
+    "find": "         this._cmfMovieReadyArea = \"\";\n         this._cmfMovieBuildSerial = -1;",
+    "replace": "         this._cmfMovieReadyArea = \"\";\n         this._cmfMovieDeferred = null;\n         this._cmfMovieBuildSerial = -1;\n         removeEventListener(Event.ENTER_FRAME,this.cmfMovieAreaFrame);",
+    "count": 1
+   },
+   {
+    "find": "         dispatchEvent(new GameEvent(GameEvent.CALL,\"OnCMFMovieAreaReady\",[String(data.area),int(data.build)]));\n      }\n",
+    "replace": "         // 1.12.0 Start 2: the call to the game waits for the next frame. This runs inside the pins handler, and a refresh\n         // asked from OnMapAreaReady would send its list back into that same handler, where it was lost.\n         this._cmfMovieDeferred = data;\n         addEventListener(Event.ENTER_FRAME,this.cmfMovieAreaFrame,false,0,true);\n      }\n\n      private var _cmfMovieDeferred:Object = null;\n\n      public function cmfMovieAreaFrame(event:Event) : void\n      {\n         var data:Object = this._cmfMovieDeferred;\n         removeEventListener(Event.ENTER_FRAME,this.cmfMovieAreaFrame);\n         this._cmfMovieDeferred = null;\n         if(!data || data != this._cmfMovieBuild || data.area != this._cmfSpaceAreaName || !this.mcHubMap || !this.mcHubMap.cmfMoviePinsDrawn()) { return; }\n         dispatchEvent(new GameEvent(GameEvent.CALL,\"OnCMFMovieAreaReady\",[String(data.area),int(data.build)]));\n      }\n",
     "count": 1
    }
   ],

@@ -74,7 +74,7 @@ class CoreAbility(unittest.TestCase):
     def test_ability_and_version(self):
         self.assertIn("if (part == 'screen' && key == 'keyDecline') { return true; }", CORE)
         self.assertIn("if (part == 'screen' && key == 'button') { return true; }", CORE)
-        self.assertIn('function CMFGetVersion() : int { return 17; }', CORE)
+        self.assertIn('function CMFGetVersion() : int { return 18; }', CORE)
 
     def test_documented(self):
         guide = (ROOT / 'docs/authors/own-screen-movie.md').read_text()

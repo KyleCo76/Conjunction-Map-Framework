@@ -32,7 +32,7 @@ class CoreTests(unittest.TestCase):
                    CMFIsPictureProperty=lambda p: 24 <= p <= 27)
         install(env, {'CMFHasProperty', 'CMFHasAbility', 'CMFOwnerField', 'CMFPropertyTextFree'})
         self.assertTrue(env['CMFHasProperty'](48))
-        self.assertFalse(env['CMFHasProperty'](49))
+        self.assertFalse(env['CMFHasProperty'](50))
         self.assertTrue(env['CMFHasAbility']('claims', 'pictureFit'))
         self.assertEqual(env['CMFOwnerField'](48), 'cmfPictureFitBy')
         self.assertTrue(env['CMFPropertyTextFree'](48))

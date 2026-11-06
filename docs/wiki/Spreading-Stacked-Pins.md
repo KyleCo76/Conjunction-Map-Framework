@@ -35,4 +35,4 @@ if (CMFHasAbility('spread', ''))
 
 ---
 
-[Previous: Animated pictures](Animated-Pictures.md) · [Contents](Home.md) · [Next: The map theme](Map-Theme.md)
+[Previous: Keeping pins over a grid, refreshing and one-pin updates](Grid-Keeps-Refresh-One-Pin.md) · [Contents](Home.md) · [Next: The map theme](Map-Theme.md)

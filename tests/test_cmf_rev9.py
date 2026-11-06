@@ -39,7 +39,7 @@ class ApiTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_and_property_ids(self):
-        self.assertIn('function CMFGetVersion() : int { return 17; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 18; }', self.core)
         self.assertRegex(self.core.split('function CMFGetVersion')[0], r'version 9: world overview pictures')
         ids = {'CMFPropertyWorldPainting': 24, 'CMFPropertyWorldCrest': 25, 'CMFPropertyButtonPicture': 26,
                'CMFPropertyWorldMarker': 27}

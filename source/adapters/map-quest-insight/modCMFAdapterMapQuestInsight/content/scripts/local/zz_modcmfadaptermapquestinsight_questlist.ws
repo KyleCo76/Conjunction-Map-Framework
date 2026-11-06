@@ -42,6 +42,7 @@ function OnConfigUI()
 	mqiAdapterQlOpen = 0;
 	mqiAdapterQlSeq = 0;
 	mqiAdapterQlTrackKey = "";
+	mqiAdapterQlAreaSent = "";
 	mqiAdapterQlOn = MqiAdapterQlWanted();
 	MqiAdapterQlDrawing(mqiAdapterQlOn);
 	if (mqiAdapterQlOn)
@@ -225,6 +226,9 @@ function MqiAdapterRefreshPins()
 // is followed; the list's own track sends itself (mqiAdapterQlOwnTrack), so it is not sent twice.
 @addField(CR4MapMenu)
 var mqiAdapterQlOwnTrack : bool;
+
+@addField(CR4MapMenu)
+var mqiAdapterQlAreaSent : string;
 
 @addField(CR4MapMenu)
 var mqiAdapterQlTrackKey : string;
@@ -865,8 +869,11 @@ function OnMapAreaReady(menu : CR4MapMenu, area : name)
 	if (menu && menu.mqiAdapterQlOn)
 	{
 		LogChannel('CMF', "CMF mqi adapter questlist area=" + area);
-		if (QMI_OptQuestGivers())
+		// CMF 1.12.0 reports the area ready after every rebuild, not once per area: the Quests Available rows are
+		// refilled by a region switch only, so the list is sent here once per area, as before.
+		if (QMI_OptQuestGivers() && menu.mqiAdapterQlAreaSent != NameToString(area))
 		{
+			menu.mqiAdapterQlAreaSent = NameToString(area);
 			menu.MqiAdapterQlSend();
 		}
 	}

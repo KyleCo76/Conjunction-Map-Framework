@@ -465,7 +465,7 @@ function OnPinReady(dataObject : CScriptedFlashObject, mapContext : name)
 - `CMFCore` and `OnPinReady` exist from API version 4 only: a wrapper on them stops older CMF versions at the compile screen. Say so in your README.
 - Ran in game on 2026-10-20: the Map Quest Insight and Ink and Iron adapters draw their level labels from it.
 
-**Once per map build: `OnMapReady`** (API version 4). After `OnPinReady` has run for every pin, CMF calls `OnMapReady(menuFlash : CScriptedFlashSprite)` once, before it writes the info box height. Wrap it to read the map menu's flash object and register or withdraw claims for this map opening, or to send data to your own drawings (section 5, "Drawing on the map itself"):
+**Once per map build: `OnMapReady`** (API version 4). After `OnPinReady` has run for every pin, CMF calls `OnMapReady(menuFlash : CScriptedFlashSprite)` once per build, before it writes the info box height; it runs again when late pins are caught (see "late pins caught" above), so make the handler safe to repeat. Wrap it to read the map menu's flash object and register or withdraw claims for this map opening, or to send data to your own drawings (section 5, "Drawing on the map itself"):
 
 ```
 @wrapMethod(CMFCore)
@@ -526,7 +526,7 @@ A `tag:<tag>` item target or a drawing's `pinTag` list needs a tag known to CMF.
 
 Text matching ignores case. CMF resolves the text when it sends styles and drawing filters, so the declaration may come after the style. An unknown tag matches nothing and logs `tag unknown, declare it with CMFDeclareTag` once per provider and tag. A pin with id 0 never matches a tag. For a pin your mod pushes itself, set its id to `NameToFlashUInt('my_tag')`. CMF never reconstructs a name from an arbitrary id.
 
-`CMFAddPin` tags use `provider.suffix` with a nonempty suffix; identifiers use letters, digits, dot, underscore or hyphen. Provider/tag ownership compares without case. Type and area must be nonempty, with area other than `AN_Undefined`; coordinates must be finite. Repeating identical data is a no-op; changing position/area/text updates the same record. The registry lasts only for the game session and retains no Flash objects. Full builds append only pins for the shown area, without duplicate ids, before ordinary claim/hide/click processing. The content is non-quest and non-travel. Releasing a provider removes its content. **A pin added while the map is open shows at the next opening.** No call forces a rebuild. These named calls require API version 13 to compile, even inside a runtime guard.
+`CMFAddPin` tags use `provider.suffix` with a nonempty suffix; identifiers use letters, digits, dot, underscore or hyphen. Provider/tag ownership compares without case. Type and area must be nonempty, with area other than `AN_Undefined`; from API version 18 an area of `AN_Velen` is stored as `AN_NMLandNovigrad`, the game's name for Velen and Novigrad, so the pin shows; coordinates must be finite. Repeating identical data is a no-op; changing position/area/text updates the same record. The registry lasts only for the game session and retains no Flash objects. Full builds append only pins for the shown area, without duplicate ids, before ordinary claim/hide/click processing. The content is non-quest and non-travel. Releasing a provider removes its content. **A pin added while the map is open shows at the next opening.** No call forces a rebuild. These named calls require API version 13 to compile, even inside a runtime guard.
 
 New choice keys 72 to 79 are Behaviour_InfoBoxMotion, Look_Sounds, Behaviour_InfoFold, Behaviour_PanelModes, Look_Badges, Look_PinLook, Size_Place and Behaviour_PinZoom. The piece-parent table starts empty. A future split inherits Automatic from its parent within the same menu or file tier; explicit child answers remain independent.
 
@@ -1168,6 +1168,58 @@ A failed frame position displays the next good position cyclically while keeping
 
 Keep animation text in provider scripts. The game's settings values truncate at commas: only provider names and scalar switches belong there. Existing `CMFFile_` keys and their provider/Vanilla/Automatic answers stay unchanged; a program, image path or filename is never a choice key or answer. Existing claim logs contain ownership and target metadata, not raw animation text. Animation summaries use provider, layer, counts, FPS and refusal reason; delimiters are never interpreted as log fields or passed whole to a minimap image loader. Legacy still-image URLs retain their existing comma/semicolon handling outside animation properties.
 
+### Pins other mods add (API version 18)
+
+CMF can tell another mod which mods add pins of their own to the map and which pin types and legend rows those are. A pin counts as added by a mod when its type is one the game's map does not use (the legend's group "pins added by mods"), or when a mod declared the type with `CMFDeclareAddedPinType`.
+
+- `CMFAddedPinMods(out mods : array<string>) : int` fills `mods` with each owning provider once and returns the count. A provider is the mod's folder name, as on the Status page. `""` comes last when some added type has no owner.
+- `CMFAddedPinTypes(mod : string, out types : array<string>, out rows : array<string>, out counts : array<int>) : int` fills three parallel arrays for one mod (`""` asks for the types nobody owns): the pin type, its legend row (`filteredType`) and how many pins of it were on the map in the last full build. A type that was not on the last build keeps its row with count 0.
+- `CMFDeclareAddedPinType(provider : string, pinType : name, filteredType : name) : bool` names a type as yours. Use it when your pins use a type name the game also uses, or to list your types before the first map build. It returns false for an empty provider or an invalid type. `filteredType` is the legend row when your pins send none.
+- `CMFHasAbility('pins', 'addedList')` says the three calls exist (version 18). Guard your calls with it.
+
+**Who owns a type.** A declared owner first, then a pin added with `CMFAddPin`, then the mod that defines the type's legend row (`CMFPropertyLegendRow`; an icon pack that only restyles the type does not count as its owner), then a mod's type claim on the type, then a type claim on its legend row; otherwise the type is listed under `""` with its legend row name, so a menu can still show it.
+
+**Limits.** The list is for this game session only; nothing is saved. It fills as the player opens the map in each region, and keeps every type seen so far, so it does not empty when the region changes. Pins hidden in a build still count. A mod that adds pins with one of the game's own type names cannot be told apart by type: it must declare its types. One-pin updates do not change the list.
+
+Read the list after CMF's late pass (for example in `OnPinReady`, or on a menu page). A mod that lets the player show one mod's pins over a fog can keep them in its pin wrapper:
+
+```
+var mods, types, rows : array<string>;
+var counts : array<int>;
+var n, i : int;
+if (CMFHasAbility('pins', 'addedList'))
+{
+	CMFAddedPinMods(mods);
+	n = CMFAddedPinTypes(mods[0], types, rows, counts);
+	for (i = 0; i < n; i += 1) { /* offer rows[i] in your menu */ }
+}
+// in your pin wrapper, for a chosen type: CMFGridKeepPin("modMyFog", dataObject);
+```
+
+### Keeping pins over a grid, refreshing and one-pin updates (API version 18)
+
+**Keeping pins over a grid.** Any provider's keep exempts the pin from every grid drawing's `hidePins` rule, not only the keeper's own grid, so one mod can keep its markers over another mod's fog. Each provider revokes only its own keeps:
+
+- `CMFGridKeepPin(provider, dataObject)` keeps a pin and records your provider with your current epoch on the pin. It returns false for an empty provider, no pin, or a provider name holding `;` or `=` (older CMF accepted those names). Also new in version 18: a tint (property 3) outside 0 to 16777215 is rejected with `reason=range`.
+- `CMFGridUnkeepPin(provider, dataObject) : bool` withdraws your keep on one pin and leaves other providers' keeps. It returns true also when there was nothing to withdraw.
+- Your epoch is property 49: `CMFRegister(provider, 49, '', '', "", epoch)` (`CMFPropertyGridKeepEpoch()`). Sending a different number revokes all your earlier keeps at once; epochs are compared for equality only, and a provider that never sent one is at epoch 0. Old CMF rejects the id (`reason=unknown`) and keeps every keep valid, so the call is safe to send.
+- `CMFHasAbility('grid', 'keepRevoke')` says all of this exists (version 18). Test it before relying on revoking.
+- The pin's bool member `cmfGridKeep` is true while a keep stands. CMF's late pass writes it false when every keep on the pin is revoked, but only while a grid with `hidePins` runs for the shown area, so a reader sees the answer only after the late pass and only then.
+
+```
+// a fog mod: when its pin-change check runs late, drop old keeps in one call
+if (CMFHasAbility('grid', 'keepRevoke'))
+{
+	CMFRegister("modMyFog", 49, '', '', "", myEpoch + 1);
+}
+// in the pin wrapper, for each pin the player chose to show:
+CMFGridKeepPin("modMyFog", dataObject);
+```
+
+**Refreshing.** `CMFMapRefreshPins` and `CMFMapRefresh` are refused (they return false and do nothing) during a build, for example when called from `OnPinReady`, `OnMapReady` or a pin wrapper, and when no map is open. Ask again after the build, for example on the next map event. `CMFMapRefreshPins` is the only way to run hide rules again on the open map.
+
+**One-pin updates.** The game sends a single pin on its own only for the player's own placed pin. That update is never hidden and never kept, and hide rules, keeps and added pins apply to full builds only.
+
 ### Choice-only claims (API version 9)
 
 Some pictures should show only when the player asks for them, for example art that matches an optional file of your mod that a script cannot detect. `CMFRegisterChoiceOnly(provider : string, choiceKey : string) : bool` makes one choice choice-only for your mod: your claims, theme part styles and opening views for that piece (or for every piece of a feature, when you give a feature key) are skipped unless the player picks your mod for that piece or its feature, on the in-game menu or in the settings file.
@@ -1309,7 +1361,7 @@ The pack tool carries `content/*.w3strings` and the menu XML into the build. CMF
 CMF's own script functions all start with `CMF`. Its map uses CMF's pin fields and names: `OnCMFArtFailed`, `OnCMFMapFilter`, `OnCMFMapHintsReady`, `OnCMFMapTab`, `OnCMFMapHints`, `OnCMFInfoFold`, `OnCMFMovieEvent`, `OnCMFMapThemeReady`, `OnCMFPinClicked`, `OnCMFMapView`, `OnCMFMapOpening` and `OnCMFPictureNote`; its data channels include `"cmf.map.hints"`, `"cmf.map.hints.owned"`, `"cmf.map.itemStyles"`, `"cmf.map.theme"`, `"cmf.map.world"` and `"cmf.map.view"`. CMF answers no other mod's names. The general calls let a mod keep its own data while sharing the map.
 
 <!-- API hook reference names used by the generated reference. -->
-From API version 13, `CMFCore.OnInfoFold(menu, provider, open)` reports a visible folded box toggle; `CMFCore.OnMovieEvent(menu, provider, id, eventName, value)` receives a live owned movie event and returns whether it handled it; `CMFCore.OnMapAreaReady(menu, area)` reports a completed shown-area pin list. Wrap these with their exact published signatures and preserve other wrappers. See [Your own movie on the screen](own-screen-movie.md).
+From API version 13, `CMFCore.OnInfoFold(menu, provider, open)` reports a visible folded box toggle; `CMFCore.OnMovieEvent(menu, provider, id, eventName, value)` receives a live owned movie event and returns whether it handled it; `CMFCore.OnMapAreaReady(menu, area)` reports a completed shown-area pin list (from CMF 1.12.0 after every completed rebuild of that area, such as a tracked quest or a refresh; before that, once per area per opening, so keep heavy work behind a check of your own). Wrap these with their exact published signatures and preserve other wrappers. See [Your own movie on the screen](own-screen-movie.md).
 
 
 One exception keeps existing mods' values readable for their adapters: the game builds pin objects from the map's pin class and drops any field that class does not declare, so CMF's map declares these pin fields of other mods as compatibility names. CMF itself reads none of them; only the named adapters do.

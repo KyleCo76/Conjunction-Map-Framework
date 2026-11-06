@@ -114,6 +114,9 @@ API |= VERSION14
 # CMF 17 (additive): the open map's pins rebuilt; an adapter asks CMFHasAbility('map', 'refreshPins') first.
 VERSION17 = {'CMFMapRefreshPins'}
 API |= VERSION17
+# CMF 18 (additive): the added-pins list, a grid keep revoke and its epoch property; abilities say they exist.
+VERSION18 = {'CMFAddedPinMods', 'CMFAddedPinTypes', 'CMFDeclareAddedPinType', 'CMFGridUnkeepPin', 'CMFPropertyGridKeepEpoch'}
+API |= VERSION18
 # The world overview's crest names (UniverseMapContainer.configUI); a region another mod adds goes by its area name.
 WORLD_REGIONS = ('kaer_morhen', 'skellige', 'novigrad', 'no_mans_land', 'prolog_village', 'wyzima_castle', 'bob')
 WORLD_MARKERS = ('player', 'quest')
@@ -149,7 +152,8 @@ THEME_PART_KEYS = {
                              'clearGap', 'clearBoxPad', 'clearPick', 'clearCursorWeight', 'tallMinHeight', 'tallX',
                              'tallTop', 'tallBottom', 'tallAltX', 'tallAltTop', 'tallAltBottom', 'tallUnderLegend', 'tallClear', 'showSeconds', 'hideSeconds', 'slide',
                              'plateColor', 'plateAlpha', 'thumbColor', 'trackColor', 'scrollStep', 'titleCase', 'hideScrollBar',
-                             'foldTag', 'foldMoreText', 'foldLessText', 'foldKeyPad', 'foldKeyKb', 'foldOpen', 'clearAnchor') + tuple(prefix + k[0].upper() + k[1:] for prefix in ('title', 'body') for k in THEME_GLOW_12),
+                             'foldTag', 'foldMoreText', 'foldLessText', 'foldKeyPad', 'foldKeyKb', 'foldOpen', 'clearAnchor',
+                             'stretch', 'stretchMax', 'stretchDirs', 'stretchFlip') + tuple(prefix + k[0].upper() + k[1:] for prefix in ('title', 'body') for k in THEME_GLOW_12),
     'preview': ('hide', 'x', 'y', 'scale', 'show', 'movingMs'),
     'worldButton': THEME_GLOW + ('hide', 'text', 'x', 'y', 'scale', 'font', 'size', 'show'),
     'worldHint': THEME_GLOW + ('hide', 'text', 'x', 'y', 'scale', 'font', 'size', 'show'),
@@ -192,7 +196,8 @@ THEME_KEY_ROWS = {
     for k in ('clearMinHeight', 'clearSide', 'clearCursor', 'clearLeft', 'clearTop', 'clearRight', 'clearBottom',
               'clearView', 'clearCursorAbove', 'clearCursorBelow', 'clearCursorTitle', 'clearPadX', 'clearPadY',
               'clearGap', 'clearBoxPad', 'clearPick', 'clearCursorWeight', 'x', 'y', 'tallMinHeight', 'tallX', 'tallTop',
-              'tallBottom', 'tallAltX', 'tallAltTop', 'tallAltBottom', 'tallUnderLegend', 'tallClear', 'clearAnchor')}
+              'tallBottom', 'tallAltX', 'tallAltTop', 'tallAltBottom', 'tallUnderLegend', 'tallClear', 'clearAnchor',
+              'stretch', 'stretchMax', 'stretchDirs', 'stretchFlip')}
 THEME_KEY_ROWS.update({('pinLabel', k): 'Map behaviour > Label place and hiding'
                        for k in ('rise', 'riseOffset', 'riseTracked', 'riseOffsetTracked')})
 THEME_KEY_ROWS.update({('navigation', k): 'Map movement > Zoom out to the whole region'
@@ -746,7 +751,8 @@ def item_style_issues(part, target, key):
 
 def fold_style_literal_issues(part, key, tail):
     """Check literal fold values; dynamic expressions remain the core's responsibility."""
-    if part != "tooltip" or key not in ("foldTag", "foldMoreText", "foldLessText", "foldKeyPad", "foldKeyKb", "foldOpen", "clearAnchor"):
+    if part != "tooltip" or key not in ("foldTag", "foldMoreText", "foldLessText", "foldKeyPad", "foldKeyKb", "foldOpen", "clearAnchor",
+                                        "stretch", "stretchMax", "stretchDirs", "stretchFlip"):
         return []
     tail = tail.lstrip()
     if tail.startswith(","):
@@ -761,6 +767,12 @@ def fold_style_literal_issues(part, key, tail):
         return ["tooltip.foldOpen must be 0 or 1"]
     if key == "clearAnchor" and text not in ("cursor", "pin"):
         return ["tooltip.clearAnchor must be cursor or pin"]
+    if key in ("stretch", "stretchFlip") and float(number) not in (0., 1.):
+        return ["tooltip.%s must be 0 or 1" % key]
+    if key == "stretchMax" and not 0 <= float(number) <= 4000:
+        return ["tooltip.stretchMax must be 0 to 4000"]
+    if key == "stretchDirs" and any(w not in ("left", "right", "up", "down") for w in re.split(r"[,\s]+", text.strip()) if w):
+        return ["tooltip.stretchDirs must use left, right, up, down"]
     if key == "foldTag" and not re.fullmatch(r"[A-Za-z0-9_:\-]*", text):
         return ["tooltip.foldTag must be empty or use marker-name letters, digits, underscore, hyphen or colon"]
     return []
@@ -1352,6 +1364,10 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
     if needs17:
         report.note(path_label, 'calls %s, so the pack compiles only with CMF API 17 (1.10.0) or later, even inside a runtime guard; say so in its README'
                     % ', '.join(needs17))
+    needs18 = sorted(set(m.group(1) for m in CALL.finditer(code)) & VERSION18)
+    if needs18:
+        report.note(path_label, 'calls %s, so the pack compiles only with CMF API 18 or later, even inside a runtime guard; say so in its README'
+                    % ', '.join(needs18))
     needs11 = sorted(set(m.group(1) for m in CALL.finditer(code)) & VERSION11)
     if needs11:
         report.note(path_label, 'calls %s, so the pack compiles only with CMF 11 or later; say so in its README '

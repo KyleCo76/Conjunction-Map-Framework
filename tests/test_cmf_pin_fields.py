@@ -512,7 +512,8 @@ class SourceTests(unittest.TestCase):
         menu = ''.join(e['replace'] for e in classes['red/game/witcher3/menus/worldmap/MapMenu.as'])
         self.assertIn('dispatchEvent(new GameEvent(GameEvent.CALL,"OnCMFPanelNote",[note]));', menu)
         core = SCRIPTS[0].read_text(encoding='ascii')
-        self.assertIn('event OnCMFPanelNote(note : string)\n{\n\tCMFLog("panel " + note);\n}', core)
+        self.assertIn('event OnCMFPanelNote(note : string)\n{', core)
+        self.assertIn('\tCMFLog("panel " + note);\n}', core[core.index('event OnCMFPanelNote(note : string)'):])
 
     def test_ink_and_iron_level_takes_the_localized_prefix(self):
         # Ink and Iron adapter design (PR #22) P1, now the general CMFLevelLabel (N4; Kyle 2026-10-20 05:05Z:

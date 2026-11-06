@@ -749,5 +749,23 @@ def code_of_as(source):
     return re.sub(r'//[^\n]*', '', source)
 
 
+class BesideStretchTests(unittest.TestCase):
+    def test_beside_sends_stretch_only_when_cmf_has_it(self):
+        code = code_of(CMF_WS)
+        send = body(code, 'function MqiAdapterSendBeside()')
+        line = "CMFStyle(\"modMapQuestInsight\", 'tooltip', types[i], 'stretch', on, 1);"
+        self.assertEqual(send.count(line), 1)
+        guard = send.index("if (CMFHasAbility('tooltip', 'stretch'))")
+        self.assertLess(guard, send.index(line))
+        # "unset" withdraws it the way it withdraws clearAnchor and clearMinHeight: the same `on` value
+        self.assertIn('on = "unset";', send)
+        self.assertIn('on = "";', send)
+
+    def test_version_2_5_4_in_the_three_places(self):
+        self.assertIn('adapter 2.5.4', CMF_WS.read_text())
+        self.assertIn('Version 2.5.4', (BASE / 'modCMFAdapterMapQuestInsight/README.txt').read_text(encoding='utf-8'))
+        self.assertIn('Adapter version 2.5.4', (BASE / 'README.md').read_text(encoding='utf-8'))
+
+
 if __name__ == '__main__':
     unittest.main()

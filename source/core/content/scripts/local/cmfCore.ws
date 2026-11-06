@@ -21,7 +21,7 @@
 // place apart from its height (the tooltip keys tallMinHeight and the tall* places).
 // Never remove a call once published.
 
-function CMFGetVersion() : int { return 17; }
+function CMFGetVersion() : int { return 18; }
 
 // API 14: frame programs and their winning provider's per-layer phase.
 function CMFPropertyIconFrames() : int { return 45; }
@@ -29,6 +29,8 @@ function CMFPropertyIconUnderFrames() : int { return 46; }
 function CMFPropertyFrameOffset() : int { return 47; }
 // API 14: 1 makes a provider's pictures fill one fixed box instead of the game's glyph bounds; 0 or no claim keeps the glyph box.
 function CMFPropertyPictureFit() : int { return 48; }
+// Version 18: a provider's grid keep epoch (number = any int). Changing it revokes that provider's earlier keeps.
+function CMFPropertyGridKeepEpoch() : int { return 49; }
 
 function CMFPropertyIcon() : int { return 1; }
 function CMFPropertyLegendIcon() : int { return 2; }
@@ -747,6 +749,16 @@ struct SCMFAddedPin
 	var order : int;
 }
 
+// Version 18: one pin type that mods add to the map (session only; strings, names and ints, never a Flash object).
+struct SCMFAddedPinType
+{
+	var provider : string;
+	var pinType : string;
+	var filteredType : string;
+	var count : int;
+	var declared : bool;
+}
+
 struct SCMFLabelHideState
 {
 	var pin : CScriptedFlashObject;
@@ -830,6 +842,13 @@ class CMFCore extends CObject
 	private var itemStyleOwners : array<string>;
 	private var itemStylesSent : bool;
 	private var addedPins : array<SCMFAddedPin>;
+	private var addedTypes : array<SCMFAddedPinType>;
+	private var declaredAddedTypes : int;
+	private var addedLastType : string;
+	private var addedLastIndex : int;
+	private var keepEpochProviders : array<string>;
+	private var keepEpochValues : array<int>;
+	private var keepRevoked : int;
 	private var hintListOwnerSent : string;
 	private var hintListPreparedOwner : string;
 	private var themeNotes : array<string>;
@@ -849,6 +868,12 @@ class CMFCore extends CObject
 	private var providerOrder : string;
 	private var clickNotes : array<string>;
 	private var spaceMenu : CR4MapMenu;
+	private var refreshBusy : int;
+	private var marksThisBuild : int;
+	private var lateStepRan : bool;
+	private var lateStepLogged : bool;
+	private var nonUserOneLogged : bool;
+	private var refuseLogged : bool;
 	private var spaceEarlyMenu : CR4MapMenu;
 	private var spaceEarlyOk : bool;
 	// The first grid sent by the last full build: its fill colour and alpha, for the cover shown before the map's first frame.
@@ -1709,6 +1734,13 @@ class CMFCore extends CObject
 				animationBindingKeys.Erase(i);
 			}
 		}
+		for (i = animationDirect.Size() - 1; i >= 0; i -= 1)
+		{
+			if (StrBeginsWith(animationDirect[i].pinKey, "object/"))
+			{
+				animationDirect.Erase(i);
+			}
+		}
 		animationPins.Clear();
 	}
 
@@ -1989,6 +2021,7 @@ class CMFCore extends CObject
 			return (StrBeginsWith(text, "img://") && StrLen(text) > 6) ||
 				(StrBeginsWith(text, "frame:") && StrLen(text) > 6);
 		}
+		if (propertyId == 3) { return number >= 0 && number <= 16777215; }
 		if (propertyId == 47) { return number >= 0 && number <= 15; }
 		if (propertyId == 48) { return number == 0 || number == 1; }
 		if (propertyId == 39) { return number == 0 || (number >= 200 && number <= 1920); }
@@ -2118,6 +2151,7 @@ class CMFCore extends CObject
 		if ((incoming.propertyId == CMFPropertyPinScale() && (incoming.number < 25 || incoming.number > 400)) ||
 			(incoming.propertyId == CMFPropertyLabelPlace() && (incoming.number < 0 || incoming.number > 10000)) ||
 			(incoming.propertyId == CMFPropertyLabelColor() && (incoming.number < 0 || incoming.number > 16777215)) ||
+			(incoming.propertyId == 3 && (incoming.number < 0 || incoming.number > 16777215)) ||
 			(incoming.propertyId == CMFPropertySpreadRank() && (incoming.number < 0 || incoming.number > 1000)) ||
 			(incoming.propertyId == CMFPropertyHoverName() && (incoming.number < 0 || incoming.number > 3)) ||
 			((incoming.propertyId == CMFPropertyInfoTitle() || incoming.propertyId == CMFPropertyInfoText()) &&
@@ -2295,6 +2329,7 @@ class CMFCore extends CObject
 			CMFLog("added pin rejected provider=" + pin.provider + " tag=" + NameToString(pin.tag));
 			return false;
 		}
+		if (pin.area == 'AN_Velen') { pin.area = 'AN_NMLandNovigrad'; }
 		DeclareTag(pin.provider, pin.tag);
 		for (i = 0; i < addedPins.Size(); i += 1)
 		{
@@ -3720,12 +3755,54 @@ class CMFCore extends CObject
 		else { CMFLog("space sent area=" + NameToString(area) + " entries=" + sent + " values=" + values); }
 	}
 
+	// API 18: a build (the whole UpdateData wrapper, late send included, and a map refresh's own send) counts in
+	// refreshBusy; a refresh asked meanwhile, or after the map closed, is refused (false, nothing done).
+	public function BuildBusy(on : bool)
+	{
+		if (on)
+		{
+			if (refreshBusy == 0)
+			{
+				refuseLogged = false;
+			}
+			refreshBusy += 1;
+		}
+		else if (refreshBusy > 0)
+		{
+			refreshBusy -= 1;
+		}
+	}
+
+	public function ForgetSpaceMenu(menu : CR4MapMenu)
+	{
+		if (menu && spaceMenu == menu)
+		{
+			spaceMenu = NULL;
+		}
+	}
+
+	private function NoteRefused(kind : string)
+	{
+		var why : string;
+		why = "closed";
+		if (refreshBusy > 0)
+		{
+			why = "build";
+		}
+		if (CMFSettingsDebug() && !refuseLogged)
+		{
+			refuseLogged = true;
+			CMFLog("refresh refused kind=" + kind + " reason=" + why);
+		}
+	}
+
 	// Map-space drawing (CMFMapRefresh): runs OnMapReady again and re-sends the theme and the map-space drawings
 	// to the open map. False when no map is open.
 	public function RefreshMap() : bool
 	{
-		if (!spaceMenu)
+		if (refreshBusy > 0 || !spaceMenu)
 		{
+			NoteRefused("map");
 			return false;
 		}
 		spaceEarlyOk = false;
@@ -3737,8 +3814,9 @@ class CMFCore extends CObject
 	// the space after). False when no map is open.
 	public function RefreshPins() : bool
 	{
-		if (!spaceMenu)
+		if (refreshBusy > 0 || !spaceMenu)
 		{
+			NoteRefused("pins");
 			return false;
 		}
 		spaceMenu.CMFRefreshPins();
@@ -4320,6 +4398,7 @@ class CMFCore extends CObject
 			case 'tooltip':
 				if (CMFListHas("foldTag,foldMoreText,foldLessText,foldKeyPad,foldKeyKb,foldOpen", NameToString(key))) { return 74; }
 				if (key == 'clearAnchor') { return 63; }
+				if (CMFListHas("stretch,stretchMax,stretchDirs,stretchFlip", NameToString(key))) { return 63; }
 				if (key == 'scrollStep' || key == 'hideScrollBar') { return 64; }
 				if (key == 'showSeconds' || key == 'hideSeconds' || key == 'slide') { return 72; }
 				// Version 11: x and y place the box too, so a mod that only moves the box never owns its look.
@@ -4899,6 +4978,10 @@ class CMFCore extends CObject
 		var i, w : int;
 		var found : bool;
 		debugTiming = CMFSettingsDebug();
+		if (inBuild && debugTiming)
+		{
+			CMFLog("prepare during build pins=" + timingPins);
+		}
 		providerOrder = CMFSettingsProviderOrder();
 		ReadChoices();
 		animationClaimIndices.Clear();
@@ -5629,6 +5712,14 @@ class CMFCore extends CObject
 			" textureSize=" + theGame.GetMiniMapTextureSize(area) + " minLod=" + theGame.GetMiniMapMinLod(area) +
 			" maxLod=" + theGame.GetMiniMapMaxLod(area) + " tileCount=" + theGame.GetMiniMapTileCount(area) +
 			" mapSize=" + FloatToString(theGame.GetMiniMapSize(area)));
+		// The area's visible (v) and scroll (s) limits and zoom range, in map units, as the game's map menu sends them to
+		// the panel. A world limit in metres is the value / (2 * textureSize / mapSize), y negated. Logging only.
+		CMFLog("background limits area=" + NameToString(area) +
+			" vMinX=" + FloatToString(theGame.GetMiniMapVminX(area)) + " vMaxX=" + FloatToString(theGame.GetMiniMapVmaxX(area)) +
+			" vMinY=" + FloatToString(theGame.GetMiniMapVminY(area)) + " vMaxY=" + FloatToString(theGame.GetMiniMapVmaxY(area)) +
+			" sMinX=" + FloatToString(theGame.GetMiniMapSminX(area)) + " sMaxX=" + FloatToString(theGame.GetMiniMapSmaxX(area)) +
+			" sMinY=" + FloatToString(theGame.GetMiniMapSminY(area)) + " sMaxY=" + FloatToString(theGame.GetMiniMapSmaxY(area)) +
+			" minZoom=" + FloatToString(theGame.GetMiniMapMinZoom(area)) + " maxZoom=" + FloatToString(theGame.GetMiniMapMaxZoom(area)));
 		return root;
 	}
 
@@ -5936,6 +6027,230 @@ class CMFCore extends CObject
 	// cmfRowHide lets hiding a legend row under All hide every pin type sharing its filteredType.
 	// On the full list (indexToUpdate -1) it also marks hidden pins and removes every marked pin, so the
 	// map's counts, cycling, tooltips, overview and quest-list lookup never see them.
+	// Version 18: the table of pin types mods add to the map. Filled in the late pass of each full build; a row stays for
+	// the session, its count is the last full build's.
+	private function AddedTypeIndex(pinType : string) : int
+	{
+		var i : int;
+		if (addedLastType != "" && pinType == addedLastType)
+		{
+			return addedLastIndex;
+		}
+		for (i = 0; i < addedTypes.Size(); i += 1)
+		{
+			if (addedTypes[i].pinType == pinType)
+			{
+				addedLastType = pinType;
+				addedLastIndex = i;
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	private function IsDeclaredAddedType(pinType : string) : bool
+	{
+		var at : int;
+		if (declaredAddedTypes == 0)
+		{
+			return false;
+		}
+		at = AddedTypeIndex(pinType);
+		return at >= 0 && addedTypes[at].declared;
+	}
+
+	// Owner of a type: a declared row, then a CMFAddPin pin of that type, then a type claim on the type, then a type claim
+	// on its legend row, else "".
+	private function AddedTypeOwner(pinType : string, filtered : string) : string
+	{
+		var i, at : int;
+		at = AddedTypeIndex(pinType);
+		if (at >= 0 && addedTypes[at].declared && addedTypes[at].provider != "")
+		{
+			return addedTypes[at].provider;
+		}
+		for (i = 0; i < addedPins.Size(); i += 1)
+		{
+			if (NameToString(addedPins[i].pinType) == pinType)
+			{
+				return addedPins[i].provider;
+			}
+		}
+		// A mod that defines the legend row of the type (property 6) is the one that adds it; an icon pack only styles it.
+		for (i = 0; i < claims.Size(); i += 1)
+		{
+			if (claims[i].level == 1 && claims[i].propertyId == CMFPropertyLegendRow() &&
+				(NameToString(claims[i].pinType) == filtered || NameToString(claims[i].pinType) == pinType))
+			{
+				return claims[i].provider;
+			}
+		}
+		for (i = 0; i < claims.Size(); i += 1)
+		{
+			if (claims[i].level == 1 && NameToString(claims[i].pinType) == pinType)
+			{
+				return claims[i].provider;
+			}
+		}
+		for (i = 0; i < claims.Size(); i += 1)
+		{
+			if (claims[i].level == 1 && NameToString(claims[i].pinType) == filtered)
+			{
+				return claims[i].provider;
+			}
+		}
+		return "";
+	}
+
+	private function NoteAddedPinType(pinType : string, filtered : string)
+	{
+		var at : int;
+		var first : bool;
+		var row : SCMFAddedPinType;
+		at = AddedTypeIndex(pinType);
+		if (at < 0)
+		{
+			row.pinType = pinType;
+			row.filteredType = filtered;
+			row.provider = AddedTypeOwner(pinType, filtered);
+			row.count = 1;
+			addedTypes.PushBack(row);
+			return;
+		}
+		first = addedTypes[at].count == 0;
+		addedTypes[at].count += 1;
+		if (addedTypes[at].filteredType == "")
+		{
+			addedTypes[at].filteredType = filtered;
+		}
+		// An unowned row looks for its owner once per build (the first pin of the type), not once per pin.
+		if (first && addedTypes[at].provider == "")
+		{
+			addedTypes[at].provider = AddedTypeOwner(pinType, filtered);
+		}
+	}
+
+	private function ResetAddedPinCounts()
+	{
+		var i : int;
+		for (i = 0; i < addedTypes.Size(); i += 1)
+		{
+			addedTypes[i].count = 0;
+		}
+	}
+
+	public function AddedPinMods(out mods : array<string>) : int
+	{
+		var i : int;
+		var unowned : bool;
+		mods.Clear();
+		for (i = 0; i < addedTypes.Size(); i += 1)
+		{
+			if (addedTypes[i].provider == "")
+			{
+				unowned = true;
+			}
+			else if (!mods.Contains(addedTypes[i].provider))
+			{
+				mods.PushBack(addedTypes[i].provider);
+			}
+		}
+		if (unowned)
+		{
+			mods.PushBack("");
+		}
+		return mods.Size();
+	}
+
+	public function AddedPinTypesOf(mod : string, out types : array<string>, out rows : array<string>, out counts : array<int>) : int
+	{
+		var i : int;
+		types.Clear();
+		rows.Clear();
+		counts.Clear();
+		for (i = 0; i < addedTypes.Size(); i += 1)
+		{
+			if (addedTypes[i].provider == mod)
+			{
+				types.PushBack(addedTypes[i].pinType);
+				rows.PushBack(addedTypes[i].filteredType);
+				counts.PushBack(addedTypes[i].count);
+			}
+		}
+		return types.Size();
+	}
+
+	public function DeclareAddedPinType(provider : string, pinType : name, filteredType : name) : bool
+	{
+		var at : int;
+		var row : SCMFAddedPinType;
+		if (provider == "" || !IsNameValid(pinType))
+		{
+			return false;
+		}
+		NoteProviderPresent(provider);
+		at = AddedTypeIndex(NameToString(pinType));
+		if (at < 0)
+		{
+			row.pinType = NameToString(pinType);
+			addedTypes.PushBack(row);
+			at = addedTypes.Size() - 1;
+		}
+		if (!addedTypes[at].declared)
+		{
+			declaredAddedTypes += 1;
+		}
+		addedTypes[at].declared = true;
+		addedTypes[at].provider = provider;
+		if (IsNameValid(filteredType))
+		{
+			addedTypes[at].filteredType = NameToString(filteredType);
+		}
+		return true;
+	}
+
+	// Debug only: what the tally found in this full build.
+	private function LogAddedPins()
+	{
+		var mods, types, rows : array<string>;
+		var counts : array<int>;
+		var i, j, k, sum, total : int;
+		var list : string;
+		AddedPinMods(mods);
+		total = 0;
+		for (i = 0; i < mods.Size(); i += 1)
+		{
+			total += AddedPinTypesOf(mods[i], types, rows, counts);
+		}
+		CMFLog("added pins mods=" + mods.Size() + " types=" + total);
+		for (i = 0; i < mods.Size() && i < 10; i += 1)
+		{
+			k = AddedPinTypesOf(mods[i], types, rows, counts);
+			sum = 0;
+			list = "";
+			for (j = 0; j < k; j += 1)
+			{
+				sum += counts[j];
+				if (j < 8)
+				{
+					if (j > 0) { list += ","; }
+					list += rows[j];
+				}
+			}
+			CMFLog("added pins mod=" + mods[i] + " types=" + k + " rows=" + list + " count=" + sum);
+		}
+	}
+
+	// A one-pin update carries only the player's own placed pin; log once per session if anything else arrives.
+	private function NoteOnePinType(dataObject : CScriptedFlashObject)
+	{
+		if (dataObject && !dataObject.GetMemberFlashBool("isPlayer") && !dataObject.GetMemberFlashBool("isUserPin"))
+		{
+			nonUserOneLogged = true;
+			CMFLog("one-pin update carries a non-user pin type=" + dataObject.GetMemberFlashString("type"));
+		}
+	}
+
 	public function FillMissingPinFields(flashArray : CScriptedFlashArray, mapContext : name, indexToUpdate : int,
 		area : name)
 	{
@@ -5952,6 +6267,10 @@ class CMFCore extends CObject
 		if (dirty)
 		{
 			Prepare();
+		}
+		if (!fullList && !nonUserOneLogged && flashArray && indexToUpdate < flashArray.GetLength())
+		{
+			NoteOnePinType(flashArray.GetElementFlashObject(indexToUpdate));
 		}
 		if (!flashArray)
 		{
@@ -5992,6 +6311,11 @@ class CMFCore extends CObject
 				if (filtered == "")
 				{
 					filtered = pinType;
+				}
+				// Version 18: pins of types mods add are tallied before any hide removes them.
+				if (fullList && (PinGroupOf(pinType) == 7 || IsDeclaredAddedType(pinType)))
+				{
+					NoteAddedPinType(pinType, filtered);
 				}
 				// A pin a mod pushes itself is reached by tag when its id is the game's id for that tag
 				// (NameToFlashUInt), as the game sets it on its own pins, so one mod can style or hide a pin
@@ -6058,6 +6382,10 @@ class CMFCore extends CObject
 		if (fullList)
 		{
 			RemoveHiddenPins(flashArray, area, mapContext);
+			if (debugTiming && addedTypes.Size() > 0)
+			{
+				LogAddedPins();
+			}
 		}
 		listOpen = false;
 	}
@@ -6396,6 +6724,9 @@ class CMFCore extends CObject
 		timingFinds = 0;
 		timingCandidates = 0;
 		timingMemoHits = 0;
+		ResetAddedPinCounts();
+		marksThisBuild = 0;
+		lateStepRan = false;
 		inBuild = true;
 		entityStepRan = false;
 		fieldsStepCount = 0;
@@ -6407,6 +6738,21 @@ class CMFCore extends CObject
 	{
 		inBuild = false;
 		listOpen = false;
+	}
+
+	public function NoteLateStep()
+	{
+		lateStepRan = true;
+	}
+
+	// One line per session when a full build ended without CMF's UpdateUserMapPins wrapper running.
+	public function CheckLateStep()
+	{
+		if (!lateStepRan && !lateStepLogged)
+		{
+			lateStepLogged = true;
+			CMFLog("late pin step skipped: another mod replaced UpdateUserMapPins; hides, added pins and drawings may be missing");
+		}
 	}
 
 	public function NoteEntityStep()
@@ -6470,6 +6816,7 @@ class CMFCore extends CObject
 			return NULL;
 		}
 		CMFLog("late pins caught n=" + missed + " of " + flashArray.GetLength());
+		marksThisBuild = 0;
 		OpenPinList();
 		catching = true;
 		FillMissingPinFields(flashArray, mapContext, -1, area);
@@ -6528,6 +6875,7 @@ class CMFCore extends CObject
 		existing = CMFPinOwner(dataObject, "cmfHiddenBy");
 		if (existing == "" || CMFProviderBeats(candidate, existing))
 		{
+			marksThisBuild += 1;
 			dataObject.SetMemberFlashString("cmfHiddenBy", candidate);
 		}
 	}
@@ -6561,7 +6909,12 @@ class CMFCore extends CObject
 		var counts : array<int>;
 		var owner, playerOwner : string;
 		var i, p, removed : int;
+		keepRevoked = 0;
 		HideGridPins(flashArray, area);
+		if (keepRevoked > 0 && CMFSettingsDebug())
+		{
+			CMFLog("grid keep revoked n=" + keepRevoked);
+		}
 		for (i = 0; i < hideClaims.Size(); i += 1)
 		{
 			if (!providers.Contains(hideClaims[i].provider))
@@ -6576,6 +6929,11 @@ class CMFCore extends CObject
 			playerOwner = PlayerHideOwner(mapContext);
 		}
 		removed = 0;
+		// Nothing was marked and no claim could mark: the sweep would only read every pin's hidden mark.
+		if (marksThisBuild == 0 && hideClaims.Size() == 0 && playerOwner == "")
+		{
+			return;
+		}
 		for (i = flashArray.GetLength() - 1; i >= 0; i -= 1)
 		{
 			dataObject = flashArray.GetElementFlashObject(i);
@@ -6641,6 +6999,128 @@ class CMFCore extends CObject
 	// of its covered cells in the shown area (launch fog5: another mod's pins, pushed after the owner's own filter ran,
 	// showed over the fog). The player marker, user pins, pins already hidden and pins the owner kept (CMFGridKeepPin)
 	// stay. Positions are the pins' posX and posY in world metres; a pin outside the grid's square is left alone.
+	// Version 18: a grid keep is stored on the pin as one record per provider, ";provider=epoch;" repeated, and is valid
+	// while the record's epoch equals that provider's current epoch (a provider with no row is at epoch 0).
+	public function SetGridKeepEpoch(provider : string, epoch : int)
+	{
+		var at : int;
+		at = keepEpochProviders.FindFirst(provider);
+		if (at < 0)
+		{
+			keepEpochProviders.PushBack(provider);
+			keepEpochValues.PushBack(epoch);
+		}
+		else
+		{
+			keepEpochValues[at] = epoch;
+		}
+		if (CMFSettingsDebug())
+		{
+			CMFLog("grid keep epoch provider=" + provider + " epoch=" + epoch);
+		}
+	}
+
+	public function GridKeepEpoch(provider : string) : int
+	{
+		var at : int;
+		at = keepEpochProviders.FindFirst(provider);
+		if (at < 0)
+		{
+			return 0;
+		}
+		return keepEpochValues[at];
+	}
+
+	public function GridKeepValid(keepBy : string) : bool
+	{
+		var rest, part : string;
+		var eq : int;
+		rest = keepBy + ";";
+		while (StrLen(rest) > 0)
+		{
+			part = StrBeforeFirst(rest, ";");
+			rest = StrAfterFirst(rest, ";");
+			eq = StrFindFirst(part, "=");
+			if (eq > 0 && StringToInt(StrMid(part, eq + 1), 0) == GridKeepEpoch(StrLeft(part, eq)))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// The records of keepBy without the one of this provider, in the same format.
+	private function GridKeepWithout(keepBy : string, provider : string) : string
+	{
+		var rest, part, result : string;
+		var eq : int;
+		rest = keepBy + ";";
+		while (StrLen(rest) > 0)
+		{
+			part = StrBeforeFirst(rest, ";");
+			rest = StrAfterFirst(rest, ";");
+			eq = StrFindFirst(part, "=");
+			if (eq > 0 && StrLeft(part, eq) != provider)
+			{
+				result += ";" + part;
+			}
+		}
+		if (result != "")
+		{
+			result += ";";
+		}
+		return result;
+	}
+
+	public function GridKeepAdd(provider : string, dataObject : CScriptedFlashObject) : bool
+	{
+		var records : string;
+		if (provider == "" || !dataObject || StrFindFirst(provider, ";") >= 0 || StrFindFirst(provider, "=") >= 0)
+		{
+			return false;
+		}
+		records = GridKeepWithout(dataObject.GetMemberFlashString("cmfGridKeepBy"), provider);
+		if (records == "")
+		{
+			records = ";";
+		}
+		dataObject.SetMemberFlashString("cmfGridKeepBy", records + provider + "=" + GridKeepEpoch(provider) + ";");
+		dataObject.SetMemberFlashBool("cmfGridKeep", true);
+		return true;
+	}
+
+	public function GridKeepRemove(provider : string, dataObject : CScriptedFlashObject) : bool
+	{
+		var records : string;
+		if (provider == "" || !dataObject)
+		{
+			return false;
+		}
+		records = GridKeepWithout(dataObject.GetMemberFlashString("cmfGridKeepBy"), provider);
+		dataObject.SetMemberFlashString("cmfGridKeepBy", records);
+		dataObject.SetMemberFlashBool("cmfGridKeep", records != "" && GridKeepValid(records));
+		return true;
+	}
+
+	// The late pass reads the bool first: false is not kept; true with no records is an old writer (kept); otherwise the
+	// pin is kept while one record is valid, and the bool is written false when none is.
+	private function GridPinKept(dataObject : CScriptedFlashObject) : bool
+	{
+		var keepBy : string;
+		if (!dataObject.GetMemberFlashBool("cmfGridKeep"))
+		{
+			return false;
+		}
+		keepBy = dataObject.GetMemberFlashString("cmfGridKeepBy");
+		if (keepBy == "" || GridKeepValid(keepBy))
+		{
+			return true;
+		}
+		dataObject.SetMemberFlashBool("cmfGridKeep", false);
+		keepRevoked += 1;
+		return false;
+	}
+
 	private function HideGridPins(flashArray : CScriptedFlashArray, area : name)
 	{
 		var dataObject : CScriptedFlashObject;
@@ -6700,7 +7180,7 @@ class CMFCore extends CObject
 			{
 				dataObject = flashArray.GetElementFlashObject(p);
 				if (!dataObject || dataObject.GetMemberFlashBool("isPlayer") || dataObject.GetMemberFlashBool("isUserPin") ||
-					dataObject.GetMemberFlashBool("cmfGridKeep") || CMFPinOwner(dataObject, "cmfHiddenBy") != "")
+					GridPinKept(dataObject) || CMFPinOwner(dataObject, "cmfHiddenBy") != "")
 				{
 					continue;
 				}
@@ -8516,7 +8996,7 @@ function CMFHasProperty(propertyId : int) : bool
 		propertyId == CMFPropertyInfoTitle() || propertyId == CMFPropertyInfoText() ||
 		propertyId == CMFPropertyIconUndiscovered() || propertyId == CMFPropertyIconCompleted() ||
 		propertyId == CMFPropertyTabHidden() || propertyId == CMFPropertyPresent() ||
-		(propertyId >= 31 && propertyId <= 36) || (propertyId >= 39 && propertyId <= 48);
+		(propertyId >= 31 && propertyId <= 36) || (propertyId >= 39 && propertyId <= 49);
 }
 
 // One pin type (a map area for CMFPropertyBackground, a filteredType for the legend row and label, a
@@ -8562,6 +9042,16 @@ function CMFRegister(provider : string, propertyId : int, target : name, mapCont
 			CMFLog("rejected provider=" + provider + " property=" + propertyId + " reason=empty");
 		}
 		return present;
+	}
+	if (propertyId == CMFPropertyGridKeepEpoch())
+	{
+		if (!present)
+		{
+			CMFLog("rejected provider=" + provider + " property=" + propertyId + " reason=empty");
+			return false;
+		}
+		theGame.CMFGetCore().SetGridKeepEpoch(provider, number);
+		return true;
 	}
 	if (!CMFHasProperty(propertyId))
 	{
@@ -9428,7 +9918,7 @@ function CMFThemePartKeys(part : name) : string
 				"clearCursorAbove,clearCursorBelow,clearCursorTitle,clearPadX,clearPadY,clearGap,clearBoxPad,clearPick,clearCursorWeight," +
 				"tallMinHeight,tallX,tallTop,tallBottom,tallAltX,tallAltTop,tallAltBottom,tallUnderLegend,tallClear,showSeconds,hideSeconds,slide," +
 				"plateColor,plateAlpha,thumbColor,trackColor,scrollStep,titleCase,hideScrollBar," +
-				"foldTag,foldMoreText,foldLessText,foldKeyPad,foldKeyKb,foldOpen,clearAnchor," +
+				"foldTag,foldMoreText,foldLessText,foldKeyPad,foldKeyKb,foldOpen,clearAnchor,stretch,stretchMax,stretchDirs,stretchFlip," +
 				"titleGlow1Color,titleGlow1Alpha,titleGlow1Blur,titleGlow1Strength,titleGlow2Color,titleGlow2Alpha,titleGlow2Blur,titleGlow2Strength," +
 				"bodyGlow1Color,bodyGlow1Alpha,bodyGlow1Blur,bodyGlow1Strength,bodyGlow2Color,bodyGlow2Alpha,bodyGlow2Blur,bodyGlow2Strength";
 		case 'preview':
@@ -9555,7 +10045,7 @@ function CMFThemeTextKey(key : name) : bool
 {
 	return CMFListHas("font,nameFont,titleFont,bodyFont,align,wrap,panLimit,frame,hide,layer,when,gradient,side,measure,view," +
 		"points,alphaList,area,src,tab,tabLabel,text,allText,listen,listenFields,clearView,clearSide,wideAnchor,fit,pinType,pinTag,titleCase,show," +
-		"foldTag,foldMoreText,foldLessText,foldKeyPad,foldKeyKb,clearAnchor", NameToString(key));
+		"foldTag,foldMoreText,foldLessText,foldKeyPad,foldKeyKb,clearAnchor,stretchDirs", NameToString(key));
 }
 
 // Map-space drawing: a word with no space or comma (area names, tab ids).
@@ -9596,6 +10086,7 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 	k = NameToString(key);
 	if (part == 'tooltip' && key == 'foldOpen') { return number == 0 || number == 1; }
 	if (part == 'tooltip' && key == 'clearAnchor') { return text == "cursor" || text == "pin"; }
+	if (part == 'tooltip' && key == 'stretchDirs') { return CMFThemeWordsOk(text, "left,right,up,down"); }
 	if (part == 'tooltip' && key == 'foldTag')
 	{
 		// Match the panel marker scanner's attribute-name grammar; empty disables folding.
@@ -9731,6 +10222,14 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 	{
 		return number == 0 || number == 1;
 	}
+	if (k == "stretch" || k == "stretchFlip")
+	{
+		return number == 0 || number == 1;
+	}
+	if (k == "stretchMax")
+	{
+		return number >= 0 && number <= 4000;
+	}
 	if (k == "tallUnderLegend" || k == "tallClear")
 	{
 		return number == 0 || number == 1;
@@ -9777,7 +10276,8 @@ function CMFThemeValueOk(part : name, key : name, text : string, number : float)
 // tallAltX, tallAltTop, tallAltBottom, tallUnderLegend, tallClear). Version 17 adds ('screen', 'button'): a screen
 // movie's map.cmfMakeButton(navCode, keyCode, label) gives it one of the game's key buttons, and ('map', 'refreshPins')
 // says CMFMapRefreshPins() exists (it rebuilds the open map's pins), and ('screen', 'keyDecline') says a focused screen
-// movie's handleInput can return false to decline a key. Abilities designed for later
+// movie's handleInput can return false to decline a key. Version 18 adds ('tooltip', 'stretch') and stretchMax,
+// stretchDirs and stretchFlip: a box moved clear goes to the nearest clear spot to its first place. Abilities designed for later
 // (images, the map hold) answer false until a CMF version adds them.
 function CMFHasAbility(part : name, key : name) : bool
 {
@@ -9786,6 +10286,8 @@ function CMFHasAbility(part : name, key : name) : bool
 	if (part == 'map' && key == 'rootValues') { return true; }
 	if (part == 'screen' && key == 'button') { return true; }
 	if (part == 'map' && key == 'refreshPins') { return true; }
+	if (part == 'grid' && key == 'keepRevoke') { return true; }
+	if (part == 'pins' && key == 'addedList') { return true; }
 	if (part == 'map' && key == 'partialUpdate') { return true; }
 	if (part == 'screen' && key == 'keyDecline') { return true; }
 	if (part == 'claims')
@@ -10030,18 +10532,45 @@ function CMFThemeGridValueOk(key : name, number : float) : bool
 	return true;
 }
 
-// Version 14 (grid). Keeps one pin out of the hidePins rule of this provider's grid drawings in this map build: the
-// provider's own filter already decided to show it (Fog of War's tracked quest, known signposts and so on). Call it
-// from a pin wrapper before CMF's late pass; false without a pin. The mark is the pin's bool member cmfGridKeep: a
-// mod whose own pin filter runs later may read it (never write it) to leave a pin its owner kept over the fog.
+// Version 14 (grid), API 18 rules. Keeps one pin out of the hidePins rule of every grid drawing in this map build: the
+// provider's own filter already decided to show it (a fog mod's tracked quest, known signposts and so on). Any
+// provider's valid keep exempts the pin from every grid. Each provider revokes only its own keeps: one pin with
+// CMFGridUnkeepPin, or all of them at once by sending a new epoch with CMFRegister(provider, 49, '', '', "", epoch)
+// (CMFHasAbility('grid', 'keepRevoke')). Call it from a pin wrapper before CMF's late pass; false without a pin or
+// provider, or for a provider name holding ; or =. The pin's bool member cmfGridKeep is true while a keep stands (CMF's
+// late pass rewrites it false when every keep is revoked); never write it.
 function CMFGridKeepPin(provider : string, dataObject : CScriptedFlashObject) : bool
 {
-	if (provider == "" || !dataObject)
-	{
-		return false;
-	}
-	dataObject.SetMemberFlashBool("cmfGridKeep", true);
-	return true;
+	return theGame.CMFGetCore().GridKeepAdd(provider, dataObject);
+}
+
+// Version 18. Withdraws this provider's keep on one pin; other providers' keeps stay. True also when there was nothing
+// to withdraw; false without a pin or provider.
+function CMFGridUnkeepPin(provider : string, dataObject : CScriptedFlashObject) : bool
+{
+	return theGame.CMFGetCore().GridKeepRemove(provider, dataObject);
+}
+
+// Version 18 (additive). The mods that add pins of their own to the map, by provider (the mod's folder, as on the Status
+// page), and "" last when some added pin type has no owner. Filled in CMF's late pass from the full map builds of this
+// game session; nothing is saved. Returns the count. CMFHasAbility('pins', 'addedList') says the calls exist.
+function CMFAddedPinMods(out mods : array<string>) : int
+{
+	return theGame.CMFGetCore().AddedPinMods(mods);
+}
+
+// Version 18. That mod's added pin types with their legend row and how many were on the map in the last full build
+// ("" asks for the types no mod owns). The three arrays are parallel. Returns the count.
+function CMFAddedPinTypes(mod : string, out types : array<string>, out rows : array<string>, out counts : array<int>) : int
+{
+	return theGame.CMFGetCore().AddedPinTypesOf(mod, types, rows, counts);
+}
+
+// Version 18. A mod names a pin type as its own, for a type that uses a name the game also uses, or before the first map
+// build. False for an empty provider or an invalid type. filteredType is the legend row when the pins send none.
+function CMFDeclareAddedPinType(provider : string, pinType : name, filteredType : name) : bool
+{
+	return theGame.CMFGetCore().DeclareAddedPinType(provider, pinType, filteredType);
 }
 
 // Version 14 (grid). The cells a grid drawing leaves clear, as index and word pairs: bit b (0 to 29) of word k is
@@ -10077,14 +10606,16 @@ function CMFDrawSetBits(provider : string, id : name, idx : array<int>, words : 
 }
 
 // Version 6 (map-space drawing). For a mod whose drawings change while the map stays open: runs OnMapReady
-// again and re-sends the theme and the map-space drawings to the open map. False when no map is open.
+// again and re-sends the theme and the map-space drawings to the open map. API 18: false, and nothing done, during a
+// build (for example from OnPinReady or OnMapReady) and when no map is open.
 function CMFMapRefresh() : bool
 {
 	return theGame.CMFGetCore().RefreshMap();
 }
 
 // Version 17 (additive, same API 17). For a mod whose pin settings change while the map stays open (a filter that
-// hides some markers): runs the game's full pin build again on the open map. False when no map is open.
+// hides some markers): runs the game's full pin build again on the open map. API 18: false, and nothing done, during a
+// build (for example from OnPinReady or OnMapReady) and when no map is open; ask again after the build.
 // CMFHasAbility('map', 'refreshPins') says the function exists.
 function CMFMapRefreshPins() : bool
 {
@@ -10124,6 +10655,7 @@ function UpdateUserMapPins(out flashArray : CScriptedFlashArray, indexToUpdate :
 	wrappedMethod(flashArray, indexToUpdate);
 	if (indexToUpdate < 0)
 	{
+		theGame.CMFGetCore().NoteLateStep();
 		CMFStamp("late");
 		theGame.CMFGetCore().CheckEntityStep();
 		theGame.CMFGetCore().AppendAddedPins(this, flashArray, m_shownArea);
@@ -10147,14 +10679,18 @@ function UpdateUserMapPins(out flashArray : CScriptedFlashArray, indexToUpdate :
 function UpdateData(optional ignoreSelectionChange : bool)
 {
 	var flashArray : CScriptedFlashArray;
+	var debugOn : bool;
 	cmfMovieBuild += 1;
+	theGame.CMFGetCore().BuildBusy(true);
 	CMFStamp("data");
 	theGame.CMFGetCore().SendCover(GetMenuFlash(), m_shownArea, "data");
 	theGame.CMFGetCore().SendSpaceEarly(GetMenuFlashValueStorage(), m_shownArea, this);
 	theGame.CMFGetCore().BeginBuild(m_shownArea);
 	wrappedMethod(ignoreSelectionChange);
 	theGame.CMFGetCore().EndBuild();
+	theGame.CMFGetCore().CheckLateStep();
 	CMFStamp("sent");
+	debugOn = CMFSettingsDebug();
 	flashArray = theGame.CMFGetCore().CatchLatePins(CMFMapContext(), m_shownArea);
 	if (flashArray)
 	{
@@ -10169,12 +10705,17 @@ function UpdateData(optional ignoreSelectionChange : bool)
 		{
 			GetMenuFlashValueStorage().SetFlashArray("worldmap.global.pins.static", flashArray);
 		}
+		if (debugOn)
+		{
+			CMFLog("late send n=" + flashArray.GetLength());
+		}
 	}
 	CMFMovieBuildSent();
 	theGame.CMFGetCore().ReportPinAsks();
 	theGame.CMFGetCore().ReportTiming();
 	theGame.CMFGetCore().ClearLabelHideState();
 	CMFStamp("end");
+	theGame.CMFGetCore().BuildBusy(false);
 }
 
 // API 17: the full pin build again on the open map (CMFMapRefreshPins); CMF's UpdateData wrapper re-sends covers and space.
@@ -10191,10 +10732,15 @@ function CMFMapSpaceSend(refresh : bool)
 {
 	if (refresh)
 	{
+		theGame.CMFGetCore().BuildBusy(true);
 		theGame.CMFGetCore().MapReady(GetMenuFlash());
 		theGame.CMFGetCore().SendTheme(GetMenuFlashValueStorage());
 	}
 	theGame.CMFGetCore().SendSpaceMode(GetMenuFlashValueStorage(), m_shownArea, this, refresh, false);
+	if (refresh)
+	{
+		theGame.CMFGetCore().BuildBusy(false);
+	}
 }
 
 // Version 11: a step of the pin build, timed by the map panel (MapMenu.cmfStamp) for the log line "build ...".
@@ -10238,6 +10784,10 @@ function AddPinTypeData(out dataObject : CScriptedFlashObject, targetPin : SComm
 @addMethod(CR4MapMenu)
 event OnCMFPanelNote(note : string)
 {
+	if ((StrBeginsWith(note, "movie serials") || StrBeginsWith(note, "info box stretch")) && !CMFSettingsDebug())
+	{
+		return false;
+	}
 	CMFLog("panel " + note);
 }
 
@@ -10510,6 +11060,7 @@ function OnClosingMenu()
 {
 	var result : bool;
 	CMFReportView('close');
+	theGame.CMFGetCore().ForgetSpaceMenu(this);
 	if (cmfHubBarHidden)
 	{
 		OnCMFHubBar(true);
@@ -10540,6 +11091,7 @@ public function CMFMapClosed(menu : CR4MapMenu)
 		cmfOpenMap = NULL;
 	}
 	CMFGetCore().CloseAnimationMenu(menu);
+	CMFGetCore().ForgetSpaceMenu(menu);
 }
 
 @addMethod(CR4Game)

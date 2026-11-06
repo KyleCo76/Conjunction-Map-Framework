@@ -1,4 +1,4 @@
-// Map Quest Insight adapter 2.5.3 for Conjunction Map Framework. Requires CMF 1.6.0 (API version 13) and Map Quest
+// Map Quest Insight adapter 2.5.4 for Conjunction Map Framework. Requires CMF 1.6.0 (API version 13) and Map Quest
 // Insight 2.1.0 or later (checked against 2.1.0 and 2.2.0) (Nexus 14219; the Quest List file uses names that exist from 2.1.0), which stays
 // unchanged. Install and remove the two together: this file calls Map Quest Insight's own functions (QMI_OptTypeIcons, QMI_IconKind, QMI_LevelBandTint and QMI_ColorTrackedIcon exist
 // from 2.0.0, which Wolfer named stable), so the game stops at the script compile screen when Map Quest Insight is
@@ -639,7 +639,9 @@ function MqiAdapterQuestTypes() : array<name>
 // box sits beside the marker, on the right or, without room, the left, above or below, and never covers it. Its
 // own map file does this from the pin's drawn bounds; CMF 13 does the same with clearAnchor pin, for the quest
 // pin types only, and every quest box takes that place (clearMinHeight 1). Other pins keep their place. Off
-// withdraws both keys.
+// withdraws both keys. 2.5.4 (CMF API 18, asked with CMFHasAbility): the box also stretches (tooltip stretch 1), so a place
+// that collides with a screen movie or a map panel moves to the nearest clear spot, as its own box does near the Quest
+// List; Off withdraws that key too.
 function MqiAdapterSendBeside()
 {
 	var types : array<name>;
@@ -661,6 +663,10 @@ function MqiAdapterSendBeside()
 	{
 		CMFStyle("modMapQuestInsight", 'tooltip', types[i], 'clearMinHeight', on, 1);
 		CMFStyle("modMapQuestInsight", 'tooltip', types[i], 'clearAnchor', anchor, 0);
+		if (CMFHasAbility('tooltip', 'stretch'))
+		{
+			CMFStyle("modMapQuestInsight", 'tooltip', types[i], 'stretch', on, 1);
+		}
 	}
 }
 

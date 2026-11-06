@@ -478,7 +478,7 @@ class SourceTests(unittest.TestCase):
         self.assertLess(text.index('SendLegendRowArt(storage);'), text.index('timing theme'))
 
     def test_the_version_is_unchanged_and_no_public_api_was_added(self):
-        self.assertIn('function CMFGetVersion() : int { return 17; }', CORE)
+        self.assertIn('function CMFGetVersion() : int { return 18; }', CORE)
         for name in ('ClearThemeMemo', 'ThemeStyleOwner', 'ThemeDrawingOwner', 'PanelDrawingLeftOut', 'ThemeFolderRank',
                      'ComputeThemeStyleOwner', 'ComputeThemeDrawingOwner', 'ComputeDrawingKind', 'ComputePanelDrawingLeftOut',
                      'ComputeThemeFolderRank'):

@@ -262,6 +262,7 @@ class PreparationLifecycleTests(unittest.TestCase):
             ("ChoiceOnlySkips",("choice","provider"),(),()),
             ("NoteLookups",(),(),("placeClaims","everyPinClaims","infoEveryOrPlace"))):
             env[method]=bind(CORE,method,env,params,outs,capture)
+        env.setdefault("inBuild",False);env.setdefault("timingPins",0)
         return env
 
     def prepare(self,env):

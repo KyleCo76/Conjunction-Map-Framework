@@ -69,8 +69,8 @@ class PanelMakeButton(unittest.TestCase):
 
 
 class CoreMakeButton(unittest.TestCase):
-    def test_version_17(self):
-        self.assertIn('function CMFGetVersion() : int { return 17; }', CORE)
+    def test_version_18(self):
+        self.assertIn('function CMFGetVersion() : int { return 18; }', CORE)
 
     def test_has_ability_screen_button(self):
         body = ws_body(CORE, 'CMFHasAbility')

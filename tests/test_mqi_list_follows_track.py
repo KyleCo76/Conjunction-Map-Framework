@@ -57,6 +57,12 @@ class ListFollowsTrack(unittest.TestCase):
     def test_no_clock_reads(self):
         self.assertNotIn('GetEngineTime', TEXT)
 
+    def test_area_ready_send_stays_once_per_area(self):
+        b = body('function OnMapAreaReady(')
+        self.assertIn('QMI_OptQuestGivers() && menu.mqiAdapterQlAreaSent != NameToString(area)', b)
+        self.assertIn('menu.mqiAdapterQlAreaSent = NameToString(area);', b)
+        self.assertIn('mqiAdapterQlAreaSent = "";', body('function OnConfigUI()'))
+
     def test_clean_text(self):
         TEXT.encode('ascii')
         self.assertNotIn('\r', TEXT)

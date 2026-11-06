@@ -2,7 +2,7 @@
 
 # API reference
 
-Every function, property id, hook and map event CMF offers to mods (API version 17). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
+Every function, property id, hook and map event CMF offers to mods (API version 18). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
 
 ## Functions
 
@@ -34,7 +34,7 @@ Every function, property id, hook and map event CMF offers to mods (API version 
 | `CMFStylePinTint(provider : string, dataObject : CScriptedFlashObject, rgb : int) : bool` | 2 | `CMFStylePin` with property 3. | [Styling one pin](Styling-One-Pin.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Quest Insight](Adapter-Map-Quest-Insight.md) |
 | `CMFPropertyLegendCategory() : int` | 2 | Returns property id `8`. | [Writing your script](Writing-Your-Script.md) |
 | `CMFPropertyLegendLabel() : int` | 2 | Returns property id `7`. | [Writing your script](Writing-Your-Script.md) |
-| `CMFPropertyLegendRow() : int` | 2 | Returns property id `6`. | [Writing your script](Writing-Your-Script.md) |
+| `CMFPropertyLegendRow() : int` | 2 | Returns property id `6`. | [Writing your script](Writing-Your-Script.md), [Pins other mods add](Pins-Other-Mods-Add.md) |
 | `CMFHidePin(provider : string, dataObject : CScriptedFlashObject) : bool` | 3 | Hides one pin object for this map opening; `CMFStylePin` with property 9. | [Writing your script](Writing-Your-Script.md), [Hiding pins](Hiding-Pins.md), [The pin hook: `OnPinReady`](Pin-Hook-OnPinReady.md) |
 | `CMFRegisterHidden(provider : string, pinType : name, mapContext : name, exemptions : string, hide : bool)` | 3 | Hides every pin of a type or `filteredType` (`''` for every pin) in one map context (`''` for every context); `hide` `false` withdraws. | [Writing your script](Writing-Your-Script.md), [Hiding pins](Hiding-Pins.md), [For players: installing CMF, icon packs and other map mods](For-Players.md) |
 | `CMFRegisterHiddenForTag(provider : string, pinTag : name, mapContext : name, exemptions : string, hide : bool)` | 3 | The same for one pin by its tag. | [Writing your script](Writing-Your-Script.md), [Hiding pins](Hiding-Pins.md), [For players: installing CMF, icon packs and other map mods](For-Players.md) |
@@ -52,11 +52,11 @@ Every function, property id, hook and map event CMF offers to mods (API version 
 | `CMFPropertyTabHide() : int` | 4 | Returns property id `15`. | [Writing your script](Writing-Your-Script.md), [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Adapter: Map Quest Insight](Adapter-Map-Quest-Insight.md) |
 | `CMFDraw(provider : string, anchor : name, id : name, kind : name) : bool` | 5 | Makes a drawing with your own `id`, tied to a part or to any drawing any mod made. | [Drawing on the map itself](Drawing-on-the-Map.md), [Map theme parts and keys](Theme-Parts-and-Keys.md), [The map theme](Map-Theme.md) |
 | `CMFDrawSet(provider : string, id : name, key : name, text : string, number : float) : bool` | 5 | Sets one key of your drawing: its place, paint, glow, layer and conditions. | [The map theme](Map-Theme.md), [Drawing on the map itself](Drawing-on-the-Map.md), [Map theme parts and keys](Theme-Parts-and-Keys.md) |
-| `CMFHasAbility(part : name, key : name) : bool` | 5 | Asks whether this CMF knows a part, layer or kind (`key` `''`) or a key, before you use it. | [Drawing on the map itself](Drawing-on-the-Map.md), [Map theme parts and keys](Theme-Parts-and-Keys.md), [Writing your script](Writing-Your-Script.md) |
+| `CMFHasAbility(part : name, key : name) : bool` | 5 | Asks whether this CMF knows a part, layer or kind (`key` `''`) or a key, before you use it. | [Map theme parts and keys](Theme-Parts-and-Keys.md), [Drawing on the map itself](Drawing-on-the-Map.md), [Writing your script](Writing-Your-Script.md) |
 | `CMFStylePart(provider : string, part : name, key : name, text : string, number : float) : bool` | 5 | Sets one style key of a part of the map: fonts, colours, glows, the game's own plates to hide, or a map behaviour. | [Smooth map movement](Map-Movement.md), [The map theme](Map-Theme.md), [Spreading stacked pins](Spreading-Stacked-Pins.md) |
 | `CMFPropertyLabelColor() : int` | 5 | Returns property id `17`. | [The map theme](Map-Theme.md), [Adapter: Ink and Iron](Adapter-Ink-and-Iron.md) |
 | `CMFDrawSetList(provider : string, id : name, key : name, values : array<float>) : bool` | 6 | Lists are set with `CMFDrawSetList(provider, id, key, values)` (at most 100000 values; an empty array withdraws the key). | [Drawing on the map itself](Drawing-on-the-Map.md), [Map theme parts and keys](Theme-Parts-and-Keys.md), [Adapter: Witcher's Path](Adapter-Witchers-Path.md) |
-| `CMFMapRefresh() : bool` | 6 | When your drawings change while the map stays open, `CMFMapRefresh()` runs `OnMapReady` again and redraws every drawing without rebuilding the pins, so the selected tab, pan and zoom stay. | [Drawing on the map itself](Drawing-on-the-Map.md), [Adapter: Witcher's Path](Adapter-Witchers-Path.md) |
+| `CMFMapRefresh() : bool` | 6 | When your drawings change while the map stays open, `CMFMapRefresh()` runs `OnMapReady` again and redraws every drawing without rebuilding the pins, so the selected tab, pan and zoom stay. | [Keeping pins over a grid, refreshing and one-pin updates](Grid-Keeps-Refresh-One-Pin.md), [Drawing on the map itself](Drawing-on-the-Map.md), [Adapter: Witcher's Path](Adapter-Witchers-Path.md) |
 | `CMFRegisterCategoryNoDefault(provider : string, category : name, noDefault : bool)` | 6 | Keeps the rows of your tab out of Default (`true`), or lists them there again (`false`). | [Writing your script](Writing-Your-Script.md), [Legend rows and filter tabs](Legend-Rows-and-Filter-Tabs.md), [Adapter: Botanist](Adapter-Botanist.md) |
 | `CMFPropertyCategoryNoDefault() : int` | 6 | Returns property id `23`. | [Writing your script](Writing-Your-Script.md) |
 | `CMFPropertyHoverName() : int` | 6 | Returns property id `28`. | [Names only on hover](Names-Only-on-Hover.md), [Writing your script](Writing-Your-Script.md) |
@@ -94,18 +94,23 @@ Every function, property id, hook and map event CMF offers to mods (API version 
 | `CMFRegisterForPlace(provider : string, propertyId : int, pinType : name, x : float, y : float, text : string, number : int) : bool` | 11 | API version 11. | [Changing one pin](Changing-One-Pin.md), [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md) |
 | `CMFSetLogPins(on : bool)` | 11 | API version 11. | [Writing your script](Writing-Your-Script.md), [Changing one pin](Changing-One-Pin.md) |
 | `CMFPropertyPresent() : int` | 11 | Returns property id `38`. | [Writing your script](Writing-Your-Script.md) |
-| `CMFAddPin(provider : string, tag : name, pinType : name, area : name, x : float, y : float, label : string, description : string) : bool` | 13 | API version 13. | [Writing your script](Writing-Your-Script.md), [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
+| `CMFAddPin(provider : string, tag : name, pinType : name, area : name, x : float, y : float, label : string, description : string) : bool` | 13 | API version 13. | [Writing your script](Writing-Your-Script.md), [Pins other mods add](Pins-Other-Mods-Add.md), [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
 | `CMFClickInputHold() : int` | 13 |  | [Pin clicks](Pin-Clicks.md) |
 | `CMFDeclareTag(provider : string, tag : name) : bool` | 13 | API version 13. | [Map theme parts and keys](Theme-Parts-and-Keys.md), [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md), [Writing your script](Writing-Your-Script.md) |
 | `CMFRemovePin(provider : string, tag : name) : bool` | 13 | API version 13. | [Writing your script](Writing-Your-Script.md) |
 | `CMFStyle(provider : string, part : name, target : name, key : name, text : string, number : float) : bool` | 13 | API version 13. | [Map theme parts and keys](Theme-Parts-and-Keys.md), [Writing your script](Writing-Your-Script.md), [Key hints and filter tab reports](Key-Hints-and-Filter-Tab-Reports.md) |
 | `CMFDrawSetBits(provider : string, id : name, idx : array<int>, words : array<int>) : bool` | 14 | Then send the cells to leave clear with `CMFDrawSetBits(provider, id, idx, words)`: bit `b` (0 to 29) of word `k` is cell `k * 30 + b`, counted row by row from the north-west corner. | [Drawing on the map itself](Drawing-on-the-Map.md), [Map theme parts and keys](Theme-Parts-and-Keys.md) |
-| `CMFGridKeepPin(provider : string, dataObject : CScriptedFlashObject) : bool` | 14 | `grid` (API version 14, `mapSpace` only) darkens a square of the map cell by cell, such as a fog over unexplored land: `n` cells per side (1 to 2048), the square's north-west corner `left`, `top` and side `span` in world metres, `fill` and `alpha` for the mask, `soft` (0 to 32 cells) for a soft edge, `steps` (1 to 16) for that edge's detail (CMF draws 8 layers per step, so the edge reads as a smooth gradient), and `hidePins` (0 or 1): 1 hides every pin standing on a covered cell, except the player marker, user pins and the pins you keep with `CMFGridKeepPin(provider, pin)` from a pin wrapper before CMF's late pass (for example the ones your own filter decided to show). | [Map theme parts and keys](Theme-Parts-and-Keys.md), [Drawing on the map itself](Drawing-on-the-Map.md), [Adapter: Fog of War](Adapter-Fog-of-War.md) |
+| `CMFGridKeepPin(provider : string, dataObject : CScriptedFlashObject) : bool` | 14 | `grid` (API version 14, `mapSpace` only) darkens a square of the map cell by cell, such as a fog over unexplored land: `n` cells per side (1 to 2048), the square's north-west corner `left`, `top` and side `span` in world metres, `fill` and `alpha` for the mask, `soft` (0 to 32 cells) for a soft edge, `steps` (1 to 16) for that edge's detail (CMF draws 8 layers per step, so the edge reads as a smooth gradient), and `hidePins` (0 or 1): 1 hides every pin standing on a covered cell, except the player marker, user pins and the pins any provider keeps with `CMFGridKeepPin(provider, pin)` from a pin wrapper before CMF's late pass (for example the ones your own filter decided to show). | [Keeping pins over a grid, refreshing and one-pin updates](Grid-Keeps-Refresh-One-Pin.md), [Pins other mods add](Pins-Other-Mods-Add.md), [Map theme parts and keys](Theme-Parts-and-Keys.md) |
 | `CMFPropertyFrameOffset() : int` | 14 | Returns property id `47`. | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md) |
 | `CMFPropertyIconFrames() : int` | 14 | Returns property id `45`. | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md) |
 | `CMFPropertyIconUnderFrames() : int` | 14 | Returns property id `46`. | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md) |
 | `CMFPropertyPictureFit() : int` | 14 | Returns property id `48`. | [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Writing your script](Writing-Your-Script.md) |
-| `CMFMapRefreshPins() : bool` | 17 | `CMFMapRefreshPins()` (API 17; `CMFHasAbility('map', 'refreshPins')` says it exists) runs the game's full pin build again on the open map, for a mod whose settings change which markers show; it returns false when no map is open. | [Writing your script](Writing-Your-Script.md), [Map theme parts and keys](Theme-Parts-and-Keys.md), [Your own movie on the screen](Your-Own-Movie-on-the-Screen.md) |
+| `CMFMapRefreshPins() : bool` | 17 | `CMFMapRefreshPins()` (API 17; `CMFHasAbility('map', 'refreshPins')` says it exists) runs the game's full pin build again on the open map, for a mod whose settings change which markers show; it returns false when no map is open. | [Keeping pins over a grid, refreshing and one-pin updates](Grid-Keeps-Refresh-One-Pin.md), [Your own movie on the screen](Your-Own-Movie-on-the-Screen.md), [Writing your script](Writing-Your-Script.md) |
+| `CMFAddedPinMods(out mods : array<string>) : int` | 18 |  | [Pins other mods add](Pins-Other-Mods-Add.md) |
+| `CMFAddedPinTypes(mod : string, out types : array<string>, out rows : array<string>, out counts : array<int>) : int` | 18 |  | [Pins other mods add](Pins-Other-Mods-Add.md) |
+| `CMFDeclareAddedPinType(provider : string, pinType : name, filteredType : name) : bool` | 18 |  | [Pins other mods add](Pins-Other-Mods-Add.md) |
+| `CMFGridUnkeepPin(provider : string, dataObject : CScriptedFlashObject) : bool` | 18 |  | [Keeping pins over a grid, refreshing and one-pin updates](Grid-Keeps-Refresh-One-Pin.md), [Map theme parts and keys](Theme-Parts-and-Keys.md) |
+| `CMFPropertyGridKeepEpoch() : int` | 18 |  | [Keeping pins over a grid, refreshing and one-pin updates](Grid-Keeps-Refresh-One-Pin.md) |
 
 ## Property ids
 
@@ -118,7 +123,7 @@ The generic calls `CMFRegister`, `CMFRegisterForTag` and `CMFStylePin` take one 
 | `3` | `CMFPropertyTint()` | 1 | [Writing your script](Writing-Your-Script.md) |
 | `4` | `CMFPropertyBackground()` | 1 | [Writing your script](Writing-Your-Script.md) |
 | `5` | `CMFPropertyDisabled()` | 1 | [Writing your script](Writing-Your-Script.md) |
-| `6` | `CMFPropertyLegendRow()` | 2 | [Writing your script](Writing-Your-Script.md) |
+| `6` | `CMFPropertyLegendRow()` | 2 | [Writing your script](Writing-Your-Script.md), [Pins other mods add](Pins-Other-Mods-Add.md) |
 | `7` | `CMFPropertyLegendLabel()` | 2 | [Writing your script](Writing-Your-Script.md) |
 | `8` | `CMFPropertyLegendCategory()` | 2 | [Writing your script](Writing-Your-Script.md) |
 | `9` | `CMFPropertyHidden()` | 3 | [Writing your script](Writing-Your-Script.md), [Hiding pins](Hiding-Pins.md) |
@@ -170,7 +175,7 @@ Wrap these methods of `CMFCore` with `@wrapMethod(CMFCore)` and always call `wra
 | Hook | Since | Explained on |
 | --- | --- | --- |
 | `OnPinReady(dataObject : CScriptedFlashObject, mapContext : name)` | 4 | [The pin hook: `OnPinReady`](Pin-Hook-OnPinReady.md), [Porting a map mod](Porting-a-Map-Mod.md), [Writing your script](Writing-Your-Script.md) |
-| `OnMapReady(menuFlash : CScriptedFlashSprite)` | 4 | [The pin hook: `OnPinReady`](Pin-Hook-OnPinReady.md), [Drawing on the map itself](Drawing-on-the-Map.md) |
+| `OnMapReady(menuFlash : CScriptedFlashSprite)` | 4 | [The pin hook: `OnPinReady`](Pin-Hook-OnPinReady.md), [Drawing on the map itself](Drawing-on-the-Map.md), [Keeping pins over a grid, refreshing and one-pin updates](Grid-Keeps-Refresh-One-Pin.md) |
 | `OnPinClicked(menu : CR4MapMenu, provider : string, pinTag : name, pinId : int, pinType : string, input : string, value : int) : bool` | 6 | [Pin clicks](Pin-Clicks.md), [Drawing on the map itself](Drawing-on-the-Map.md), [Adapter: All Quest Objectives](Adapter-All-Quest-Objectives.md) |
 | `OnDrawingClicked(menu : CR4MapMenu, provider : string, id : name, input : string, value : int) : bool` | 6 | [Map theme parts and keys](Theme-Parts-and-Keys.md), [Drawing on the map itself](Drawing-on-the-Map.md), [Adapter: Witcher's Path](Adapter-Witchers-Path.md) |
 | `OnMapListening(menu : CR4MapMenu, keys : string)` | 6 | [Drawing on the map itself](Drawing-on-the-Map.md), [Adapter: Witcher's Path](Adapter-Witchers-Path.md) |
@@ -212,6 +217,7 @@ CMF's map calls these events on `CR4MapMenu`. New events are core-owned; wrap th
 - **15**: no new calls (new keys or abilities only)
 - **16**: movie facade `map.hidePanels`, the tracker glow keys
 - **17**: `CMFMapRefreshPins`, `CMFHasAbility('screen', 'button')`, movie facade `map.cmfMakeButton`, `CMFMapRefreshPins()`, `CMFHasAbility('map', 'refreshPins')`, `CMFHasAbility('screen', 'keyDecline')`: a focused screen movie's `handleInput` can return `false` to decline a key, `CMFHasAbility('map', 'partialUpdate')`: a full pin update (a quest tracked, a filter changed) that draws the same pins again reuses their clips instead of making new ones; nothing to call
+- **18**: `CMFAddedPinMods`, `CMFAddedPinTypes`, `CMFDeclareAddedPinType`, `CMFGridUnkeepPin`, `CMFPropertyGridKeepEpoch`
 
 ---
 

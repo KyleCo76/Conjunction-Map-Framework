@@ -1,7 +1,11 @@
 Map Quest Insight adapter for Conjunction Map Framework
-Version 2.5.3 (for Map Quest Insight 2.1.0 and 2.2.0; icons by Wolfer, Map Quest Insight's author)
+Version 2.5.4 (for Map Quest Insight 2.1.0 and 2.2.0; icons by Wolfer, Map Quest Insight's author)
 
-What is new in 2.5.3: the Quest List now follows the tracked quest and objective when they
+What is new in 2.5.4: with CMF 1.12.0 (API 18) the info box beside a quest marker also moves to
+the nearest clear spot when its place would cover the Quest List or a map panel. Older CMF keeps the
+2.5.3 behaviour.
+
+In 2.5.3: the Quest List now follows the tracked quest and objective when they
 change any other way (a map pin, the change-objective key); it is sent once more after the
 map's pin build.
 
