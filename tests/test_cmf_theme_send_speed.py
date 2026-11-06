@@ -190,6 +190,7 @@ COMMON_BINDINGS = (
     ('PrepareDrawingRoots', (), ()), ('IsSpaceDrawing', ('id',), ()), ('DrawingSourceOk', ('entryValue',), ()),
     ('PinTagFilters', ('provider', 'text', 'storage'), ()), ('TrimFilterWord', ('text',), ()),
     ('ChoiceOnlySkips', ('choice', 'provider'), ()), ('PieceBeats', ('choice', 'a', 'b'), ()),
+    ('MenuPickDecides', ('choice', 'a', 'b', 'result'), (3,)),
 )
 OLD_BINDINGS = (
     ('ThemeStyleOwner', ('part', 'key'), ()), ('ThemeDrawingOwner', ('id',), ()), ('DrawingKind', ('provider', 'id'), ()),
@@ -478,7 +479,7 @@ class SourceTests(unittest.TestCase):
         self.assertLess(text.index('SendLegendRowArt(storage);'), text.index('timing theme'))
 
     def test_the_version_is_unchanged_and_no_public_api_was_added(self):
-        self.assertIn('function CMFGetVersion() : int { return 18; }', CORE)
+        self.assertIn('function CMFGetVersion() : int { return 19; }', CORE)
         for name in ('ClearThemeMemo', 'ThemeStyleOwner', 'ThemeDrawingOwner', 'PanelDrawingLeftOut', 'ThemeFolderRank',
                      'ComputeThemeStyleOwner', 'ComputeThemeDrawingOwner', 'ComputeDrawingKind', 'ComputePanelDrawingLeftOut',
                      'ComputeThemeFolderRank'):

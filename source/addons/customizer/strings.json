@@ -1,0 +1,244 @@
+{
+  "mod": "modCMFCustomizer",
+  "idBase": 2000250000,
+  "strings": [
+    {
+      "id": 2000250001,
+      "key": "panel_cmf_customizer",
+      "text": {
+        "en": "CMF Customizer"
+      }
+    },
+    {
+      "id": 2000250002,
+      "key": "cmf_customizer_page",
+      "text": {
+        "en": "CMF Customizer"
+      }
+    },
+    {
+      "id": 2000250003,
+      "key": "cmf_customizer_help",
+      "text": {
+        "en": "Changes apply when you open the map"
+      }
+    },
+    {
+      "id": 2000250004,
+      "key": "cmf_customizer_size",
+      "text": {
+        "en": "Pin size"
+      }
+    },
+    {
+      "id": 2000250005,
+      "key": "cmf_customizer_quest",
+      "text": {
+        "en": "Quest marker size"
+      }
+    },
+    {
+      "id": 2000250006,
+      "key": "cmf_customizer_unknown",
+      "text": {
+        "en": "Undiscovered place (?) size"
+      }
+    },
+    {
+      "id": 2000250007,
+      "key": "cmf_customizer_standard",
+      "text": {
+        "en": "Standardize icon sizes"
+      }
+    },
+    {
+      "id": 2000250008,
+      "key": "cmf_customizer_on",
+      "text": {
+        "en": "On"
+      }
+    },
+    {
+      "id": 2000250009,
+      "key": "cmf_customizer_selected",
+      "text": {
+        "en": "Selected pin growth"
+      }
+    },
+    {
+      "id": 2000250010,
+      "key": "cmf_customizer_labels",
+      "text": {
+        "en": "Show icon labels"
+      }
+    },
+    {
+      "id": 2000250011,
+      "key": "cmf_customizer_far_header",
+      "text": {
+        "en": "Hide pin groups by zoom"
+      }
+    },
+    {
+      "id": 2000250012,
+      "key": "cmf_customizer_group_general",
+      "text": {
+        "en": "General"
+      }
+    },
+    {
+      "id": 2000250013,
+      "key": "cmf_customizer_group_quests",
+      "text": {
+        "en": "Quests"
+      }
+    },
+    {
+      "id": 2000250014,
+      "key": "cmf_customizer_group_exploration",
+      "text": {
+        "en": "Exploration"
+      }
+    },
+    {
+      "id": 2000250015,
+      "key": "cmf_customizer_group_npcs",
+      "text": {
+        "en": "NPCs"
+      }
+    },
+    {
+      "id": 2000250016,
+      "key": "cmf_customizer_group_buffs",
+      "text": {
+        "en": "Buffs"
+      }
+    },
+    {
+      "id": 2000250017,
+      "key": "cmf_customizer_off",
+      "text": {
+        "en": "Off"
+      }
+    },
+    {
+      "id": 2000250018,
+      "key": "cmf_customizer_50",
+      "text": {
+        "en": "50%"
+      }
+    },
+    {
+      "id": 2000250019,
+      "key": "cmf_customizer_75",
+      "text": {
+        "en": "75%"
+      }
+    },
+    {
+      "id": 2000250020,
+      "key": "cmf_customizer_90",
+      "text": {
+        "en": "90%"
+      }
+    },
+    {
+      "id": 2000250021,
+      "key": "cmf_customizer_110",
+      "text": {
+        "en": "110%"
+      }
+    },
+    {
+      "id": 2000250022,
+      "key": "cmf_customizer_125",
+      "text": {
+        "en": "125%"
+      }
+    },
+    {
+      "id": 2000250023,
+      "key": "cmf_customizer_150",
+      "text": {
+        "en": "150%"
+      }
+    },
+    {
+      "id": 2000250024,
+      "key": "cmf_customizer_175",
+      "text": {
+        "en": "175%"
+      }
+    },
+    {
+      "id": 2000250025,
+      "key": "cmf_customizer_200",
+      "text": {
+        "en": "200%"
+      }
+    },
+    {
+      "id": 2000250026,
+      "key": "cmf_customizer_250",
+      "text": {
+        "en": "250%"
+      }
+    },
+    {
+      "id": 2000250027,
+      "key": "cmf_customizer_300",
+      "text": {
+        "en": "300%"
+      }
+    },
+    {
+      "id": 2000250028,
+      "key": "cmf_customizer_always",
+      "text": {
+        "en": "Always"
+      }
+    },
+    {
+      "id": 2000250029,
+      "key": "cmf_customizer_never",
+      "text": {
+        "en": "Never"
+      }
+    },
+    {
+      "id": 2000250030,
+      "key": "cmf_customizer_hover",
+      "text": {
+        "en": "On hover"
+      }
+    },
+    {
+      "id": 2000250031,
+      "key": "cmf_customizer_default",
+      "text": {
+        "en": "Game default"
+      }
+    },
+    {
+      "id": 2000250032,
+      "key": "cmf_customizer_zoom_far",
+      "text": {
+        "en": "Hide when zoomed far out"
+      }
+    },
+    {
+      "id": 2000250033,
+      "key": "cmf_customizer_zoom_out",
+      "text": {
+        "en": "Hide when zoomed out"
+      }
+    },
+    {
+      "id": 2000250034,
+      "key": "cmf_customizer_zoom_hide",
+      "text": {
+        "en": "Always hide"
+      }
+    }
+  ]
+}

@@ -60,7 +60,7 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(cmf_pack.fold_style_literal_issues('tooltip', 'stretchMax', '"", 400)'), [])
 
     def test_version_is_18(self):
-        self.assertIn('function CMFGetVersion() : int { return 18; }', CORE)
+        self.assertIn('function CMFGetVersion() : int { return 19; }', CORE)
 
     def test_ability_comment_names_stretch(self):
         self.assertIn("('tooltip', 'stretch')", CORE)

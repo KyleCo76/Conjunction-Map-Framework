@@ -117,6 +117,9 @@ API |= VERSION17
 # CMF 18 (additive): the added-pins list, a grid keep revoke and its epoch property; abilities say they exist.
 VERSION18 = {'CMFAddedPinMods', 'CMFAddedPinTypes', 'CMFDeclareAddedPinType', 'CMFGridUnkeepPin', 'CMFPropertyGridKeepEpoch'}
 API |= VERSION18
+# CMF 19 (additive): the Player setting level and the pin size multipliers; abilities say they exist.
+VERSION19 = {'CMFPropertyPlayerSetting', 'CMFPropertyPinScaleFactor', 'CMFPropertySelectedScaleFactor', 'CMFPropertyPinScaleStandard'}
+API |= VERSION19
 # The world overview's crest names (UniverseMapContainer.configUI); a region another mod adds goes by its area name.
 WORLD_REGIONS = ('kaer_morhen', 'skellige', 'novigrad', 'no_mans_land', 'prolog_village', 'wyzima_castle', 'bob')
 WORLD_MARKERS = ('player', 'quest')
@@ -507,17 +510,18 @@ PROPERTY_IDS = {'CMFPropertyIcon': 1, 'CMFPropertyLegendIcon': 2, 'CMFPropertyTi
                 'CMFPropertyHoverName': 28, 'CMFPropertyInfoTitle': 18, 'CMFPropertyInfoText': 19,
                 'CMFPropertyIconUndiscovered': 29, 'CMFPropertyIconCompleted': 30, 'CMFPropertyTabHidden': 37, 'CMFPropertyPresent': 38,
                 'CMFPropertyIconFrames': 45, 'CMFPropertyIconUnderFrames': 46, 'CMFPropertyFrameOffset': 47,
-                'CMFPropertyPictureFit': 48}
+                'CMFPropertyPictureFit': 48, 'CMFPropertyPlayerSetting': 50, 'CMFPropertyPinScaleFactor': 51,
+                'CMFPropertySelectedScaleFactor': 52, 'CMFPropertyPinScaleStandard': 53}
 # Property ids this CMF accepts.
 NUMERIC_PROPERTIES = {31: "IconSelected", 32: "SelectedScale", 33: "PinAlpha", 34: "PinOrder",
                       35: "PinOffset", 36: "PinZoom", 40: "Withdraw", 41: "LegendRowTint",
                       39: "InfoBoxWidth", 42: "IconUnder", 43: "IconUnderTint", 44: "PictureScale", 48: "PictureFit"}
-KNOWN_PROPERTIES = set(range(1, 49))
+KNOWN_PROPERTIES = set(range(1, 49)) | {50, 51, 52, 53}
 # Version 11: the ids a tag (CMFRegisterForTag) or place (CMFRegisterForPlace) claim takes (cmfCore.ws CMFOnePinProperty).
 # API version 11: the player's arrow and markers, reached by type claims with ids 1, 3 and 10 only.
 MARKER_TYPES = {'Player'} | {'User%d' % n for n in range(1, 8)}
-ONE_PIN_PROPERTIES = {1, 3, 5, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 28, 29, 30, 31, 32, 33, 34, 35, 36, 39, 42, 43, 44, 45, 46, 47, 48}
-EVERY_PIN_PROPERTIES = {1, 3, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 22, 28, 29, 30, 31, 32, 33, 34, 35, 36, 39, 42, 43, 44, 45, 46, 47, 48}
+ONE_PIN_PROPERTIES = {1, 3, 5, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 28, 29, 30, 31, 32, 33, 34, 35, 36, 39, 42, 43, 44, 45, 46, 47, 48, 51, 52}
+EVERY_PIN_PROPERTIES = {1, 3, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 22, 28, 29, 30, 31, 32, 33, 34, 35, 36, 39, 42, 43, 44, 45, 46, 47, 48, 51, 52, 53}
 # CMFRegisterForPlace("provider", id, 'type', x, y, "text", number)
 PLACE_CLAIM = re.compile(r'\s*"([^"]*)"\s*,\s*(\d+|CMFProperty\w+\(\s*\))\s*,\s*\'([^\']*)\'\s*,\s*(-?[\d.]+)\s*,'
                          r'\s*(-?[\d.]+)\s*,\s*"([^"]*)"\s*,\s*(0[xX][0-9A-Fa-f]+|-?\d+)\s*\)')
@@ -1368,6 +1372,10 @@ def check_script(path_label, text, pack, report, claims, calls, provider=None):
     if needs18:
         report.note(path_label, 'calls %s, so the pack compiles only with CMF API 18 or later, even inside a runtime guard; say so in its README'
                     % ', '.join(needs18))
+    needs19 = sorted(set(m.group(1) for m in CALL.finditer(code)) & VERSION19)
+    if needs19:
+        report.note(path_label, 'calls %s, so the pack compiles only with CMF API 19 or later, even inside a runtime guard; say so in its README'
+                    % ', '.join(needs19))
     needs11 = sorted(set(m.group(1) for m in CALL.finditer(code)) & VERSION11)
     if needs11:
         report.note(path_label, 'calls %s, so the pack compiles only with CMF 11 or later; say so in its README '

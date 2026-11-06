@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UserConfig>
+	<Group id="CMFCustomizer" displayName="Mods.cmf_customizer">
+		<VisibleVars>
+			<Var id="CMFCZHead_help" displayName="cmf_customizer_help" displayType="SEPARATOR" tags="customDisplayName"/>
+			<Var id="CMFCZ_Size" value="0" displayName="cmf_customizer_size" displayType="OPTIONS" tags="customDisplayName;customNames">
+				<OptionsArray>
+					<Option id="0" displayName="cmf_customizer_off"><Entry varId="CMFCZ_Size" value="0"/></Option>
+					<Option id="1" displayName="cmf_customizer_50"><Entry varId="CMFCZ_Size" value="1"/></Option>
+					<Option id="2" displayName="cmf_customizer_75"><Entry varId="CMFCZ_Size" value="2"/></Option>
+					<Option id="3" displayName="cmf_customizer_90"><Entry varId="CMFCZ_Size" value="3"/></Option>
+					<Option id="4" displayName="cmf_customizer_110"><Entry varId="CMFCZ_Size" value="4"/></Option>
+					<Option id="5" displayName="cmf_customizer_125"><Entry varId="CMFCZ_Size" value="5"/></Option>
+					<Option id="6" displayName="cmf_customizer_150"><Entry varId="CMFCZ_Size" value="6"/></Option>
+					<Option id="7" displayName="cmf_customizer_175"><Entry varId="CMFCZ_Size" value="7"/></Option>
+					<Option id="8" displayName="cmf_customizer_200"><Entry varId="CMFCZ_Size" value="8"/></Option>
+					<Option id="9" displayName="cmf_customizer_250"><Entry varId="CMFCZ_Size" value="9"/></Option>
+					<Option id="10" displayName="cmf_customizer_300"><Entry varId="CMFCZ_Size" value="10"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFCZ_Standard" value="0" displayName="cmf_customizer_standard" displayType="OPTIONS" tags="customDisplayName;customNames">
+				<OptionsArray>
+					<Option id="0" displayName="cmf_customizer_off"><Entry varId="CMFCZ_Standard" value="0"/></Option>
+					<Option id="1" displayName="cmf_customizer_on"><Entry varId="CMFCZ_Standard" value="1"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFCZ_Quest" value="0" displayName="cmf_customizer_quest" displayType="OPTIONS" tags="customDisplayName;customNames">
+				<OptionsArray>
+					<Option id="0" displayName="cmf_customizer_off"><Entry varId="CMFCZ_Quest" value="0"/></Option>
+					<Option id="1" displayName="cmf_customizer_50"><Entry varId="CMFCZ_Quest" value="1"/></Option>
+					<Option id="2" displayName="cmf_customizer_75"><Entry varId="CMFCZ_Quest" value="2"/></Option>
+					<Option id="3" displayName="cmf_customizer_90"><Entry varId="CMFCZ_Quest" value="3"/></Option>
+					<Option id="4" displayName="cmf_customizer_110"><Entry varId="CMFCZ_Quest" value="4"/></Option>
+					<Option id="5" displayName="cmf_customizer_125"><Entry varId="CMFCZ_Quest" value="5"/></Option>
+					<Option id="6" displayName="cmf_customizer_150"><Entry varId="CMFCZ_Quest" value="6"/></Option>
+					<Option id="7" displayName="cmf_customizer_175"><Entry varId="CMFCZ_Quest" value="7"/></Option>
+					<Option id="8" displayName="cmf_customizer_200"><Entry varId="CMFCZ_Quest" value="8"/></Option>
+					<Option id="9" displayName="cmf_customizer_250"><Entry varId="CMFCZ_Quest" value="9"/></Option>
+					<Option id="10" displayName="cmf_customizer_300"><Entry varId="CMFCZ_Quest" value="10"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFCZ_Unknown" value="0" displayName="cmf_customizer_unknown" displayType="OPTIONS" tags="customDisplayName;customNames">
+				<OptionsArray>
+					<Option id="0" displayName="cmf_customizer_off"><Entry varId="CMFCZ_Unknown" value="0"/></Option>
+					<Option id="1" displayName="cmf_customizer_50"><Entry varId="CMFCZ_Unknown" value="1"/></Option>
+					<Option id="2" displayName="cmf_customizer_75"><Entry varId="CMFCZ_Unknown" value="2"/></Option>
+					<Option id="3" displayName="cmf_customizer_90"><Entry varId="CMFCZ_Unknown" value="3"/></Option>
+					<Option id="4" displayName="cmf_customizer_110"><Entry varId="CMFCZ_Unknown" value="4"/></Option>
+					<Option id="5" displayName="cmf_customizer_125"><Entry varId="CMFCZ_Unknown" value="5"/></Option>
+					<Option id="6" displayName="cmf_customizer_150"><Entry varId="CMFCZ_Unknown" value="6"/></Option>
+					<Option id="7" displayName="cmf_customizer_175"><Entry varId="CMFCZ_Unknown" value="7"/></Option>
+					<Option id="8" displayName="cmf_customizer_200"><Entry varId="CMFCZ_Unknown" value="8"/></Option>
+					<Option id="9" displayName="cmf_customizer_250"><Entry varId="CMFCZ_Unknown" value="9"/></Option>
+					<Option id="10" displayName="cmf_customizer_300"><Entry varId="CMFCZ_Unknown" value="10"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFCZ_Selected" value="0" displayName="cmf_customizer_selected" displayType="OPTIONS" tags="customDisplayName;customNames">
+				<OptionsArray>
+					<Option id="0" displayName="cmf_customizer_off"><Entry varId="CMFCZ_Selected" value="0"/></Option>
+					<Option id="1" displayName="cmf_customizer_110"><Entry varId="CMFCZ_Selected" value="1"/></Option>
+					<Option id="2" displayName="cmf_customizer_125"><Entry varId="CMFCZ_Selected" value="2"/></Option>
+					<Option id="3" displayName="cmf_customizer_150"><Entry varId="CMFCZ_Selected" value="3"/></Option>
+					<Option id="4" displayName="cmf_customizer_175"><Entry varId="CMFCZ_Selected" value="4"/></Option>
+					<Option id="5" displayName="cmf_customizer_200"><Entry varId="CMFCZ_Selected" value="5"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFCZ_Labels" value="0" displayName="cmf_customizer_labels" displayType="OPTIONS" tags="customDisplayName;customNames">
+				<OptionsArray>
+					<Option id="0" displayName="cmf_customizer_off"><Entry varId="CMFCZ_Labels" value="0"/></Option>
+					<Option id="1" displayName="cmf_customizer_always"><Entry varId="CMFCZ_Labels" value="1"/></Option>
+					<Option id="2" displayName="cmf_customizer_never"><Entry varId="CMFCZ_Labels" value="2"/></Option>
+					<Option id="3" displayName="cmf_customizer_hover"><Entry varId="CMFCZ_Labels" value="3"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFCZHead_far_header" displayName="cmf_customizer_far_header" displayType="SEPARATOR" tags="customDisplayName"/>
+			<Var id="CMFCZ_Far_General" value="0" displayName="cmf_customizer_group_general" displayType="OPTIONS" tags="customDisplayName;customNames">
+				<OptionsArray>
+					<Option id="0" displayName="cmf_customizer_default"><Entry varId="CMFCZ_Far_General" value="0"/></Option>
+					<Option id="1" displayName="cmf_customizer_zoom_far"><Entry varId="CMFCZ_Far_General" value="1"/></Option>
+					<Option id="2" displayName="cmf_customizer_zoom_out"><Entry varId="CMFCZ_Far_General" value="2"/></Option>
+					<Option id="3" displayName="cmf_customizer_zoom_hide"><Entry varId="CMFCZ_Far_General" value="3"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFCZ_Far_Quests" value="0" displayName="cmf_customizer_group_quests" displayType="OPTIONS" tags="customDisplayName;customNames">
+				<OptionsArray>
+					<Option id="0" displayName="cmf_customizer_default"><Entry varId="CMFCZ_Far_Quests" value="0"/></Option>
+					<Option id="1" displayName="cmf_customizer_zoom_far"><Entry varId="CMFCZ_Far_Quests" value="1"/></Option>
+					<Option id="2" displayName="cmf_customizer_zoom_out"><Entry varId="CMFCZ_Far_Quests" value="2"/></Option>
+					<Option id="3" displayName="cmf_customizer_zoom_hide"><Entry varId="CMFCZ_Far_Quests" value="3"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFCZ_Far_Exploration" value="0" displayName="cmf_customizer_group_exploration" displayType="OPTIONS" tags="customDisplayName;customNames">
+				<OptionsArray>
+					<Option id="0" displayName="cmf_customizer_default"><Entry varId="CMFCZ_Far_Exploration" value="0"/></Option>
+					<Option id="1" displayName="cmf_customizer_zoom_far"><Entry varId="CMFCZ_Far_Exploration" value="1"/></Option>
+					<Option id="2" displayName="cmf_customizer_zoom_out"><Entry varId="CMFCZ_Far_Exploration" value="2"/></Option>
+					<Option id="3" displayName="cmf_customizer_zoom_hide"><Entry varId="CMFCZ_Far_Exploration" value="3"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFCZ_Far_NPCs" value="0" displayName="cmf_customizer_group_npcs" displayType="OPTIONS" tags="customDisplayName;customNames">
+				<OptionsArray>
+					<Option id="0" displayName="cmf_customizer_default"><Entry varId="CMFCZ_Far_NPCs" value="0"/></Option>
+					<Option id="1" displayName="cmf_customizer_zoom_far"><Entry varId="CMFCZ_Far_NPCs" value="1"/></Option>
+					<Option id="2" displayName="cmf_customizer_zoom_out"><Entry varId="CMFCZ_Far_NPCs" value="2"/></Option>
+					<Option id="3" displayName="cmf_customizer_zoom_hide"><Entry varId="CMFCZ_Far_NPCs" value="3"/></Option>
+				</OptionsArray>
+			</Var>
+			<Var id="CMFCZ_Far_Buffs" value="0" displayName="cmf_customizer_group_buffs" displayType="OPTIONS" tags="customDisplayName;customNames">
+				<OptionsArray>
+					<Option id="0" displayName="cmf_customizer_default"><Entry varId="CMFCZ_Far_Buffs" value="0"/></Option>
+					<Option id="1" displayName="cmf_customizer_zoom_far"><Entry varId="CMFCZ_Far_Buffs" value="1"/></Option>
+					<Option id="2" displayName="cmf_customizer_zoom_out"><Entry varId="CMFCZ_Far_Buffs" value="2"/></Option>
+					<Option id="3" displayName="cmf_customizer_zoom_hide"><Entry varId="CMFCZ_Far_Buffs" value="3"/></Option>
+				</OptionsArray>
+			</Var>
+		</VisibleVars>
+	</Group>
+</UserConfig>

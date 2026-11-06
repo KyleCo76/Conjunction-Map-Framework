@@ -1,4 +1,4 @@
-// CMF In-Game Menu 1.5.1 requires CMF API 11: PresentProviders is a direct compile-time dependency.
+// CMF In-Game Menu 1.5.2 requires CMF API 11: PresentProviders is a direct compile-time dependency.
 // CMF In-Game Menu (modCMFInGameMenu): the optional Options > Mods > Conjunction Map Framework entry for CMF 1.2.0
 // and later (CMFGetVersion 8). 1.2.0 adds the World overview, Region crests and markers, and Opening view rows, which
 // need CMF 1.3.0 (CMFGetVersion 9); on an older CMF the page leaves out every row whose choice key that CMF does not
@@ -784,13 +784,69 @@ function CMFMenuSetChoices(storage : CScriptedFlashValueStorage, row : CScripted
 	row.SetMemberFlashBool("disabled", disabled);
 }
 
-// A read-only Status row (a BUTTON row in the menu XML): the game shows "current" as plain text on the right, with no
-// bar or arrows. A disabled row is dimmed and cannot be pressed.
+// A read-only Status row (a BUTTON row in the menu XML). The value goes into the row's LABEL ("Map size, position and
+// backdrop: Ink and Iron (Default)") and "current" stays empty: Ink and Iron's options menu redraws BUTTON rows without the
+// text on the right, so a value kept in "current" showed blank there (Kyle, 11-06). A disabled row is dimmed and cannot be
+// pressed. A row whose label already holds a colon (the Screen row) takes " - " in place of ": ".
 function CMFMenuSetValue(row : CScriptedFlashObject, text : string, disabled : bool)
 {
-	row.SetMemberFlashString("current", text);
-	row.SetMemberFlashString("startingValue", text);
+	row.SetMemberFlashString("label", CMFMenuLabelWith(CMFMenuBaseName(row), text));
+	row.SetMemberFlashString("current", "");
+	row.SetMemberFlashString("startingValue", "");
 	row.SetMemberFlashBool("disabled", disabled);
+}
+
+// The row's name without its value. A row the game built carries its XML name in "label" the first time it is filled; that
+// name is kept in the row's own "cmfBase" member, so a second fill of the same row (the page reopened, a refresh after the map
+// opened) starts from the name again and never stacks one value on another.
+function CMFMenuBaseName(row : CScriptedFlashObject) : string
+{
+	var base : string;
+	base = row.GetMemberFlashString("cmfBase");
+	if (base == "" || base == "undefined")
+	{
+		base = row.GetMemberFlashString("label");
+		row.SetMemberFlashString("cmfBase", base);
+	}
+	return base;
+}
+
+// A row's name set by the code (a mod's name, "Screen: 21:9", "+3 more map mods"): it replaces the kept name and the label.
+function CMFMenuSetBase(row : CScriptedFlashObject, baseName : string)
+{
+	row.SetMemberFlashString("cmfBase", baseName);
+	row.SetMemberFlashString("label", baseName);
+}
+
+// The whole label is kept to 70 characters: the row name stays whole and the value part gives way
+// (a long mod name drops whole words from its end, then letters, and ends in "..."; a trailing " (level)" is kept).
+function CMFMenuLabelWith(label : string, text : string) : string
+{
+	var sep, head, tail : string;
+	var room, cut : int;
+	if (label == "")
+	{
+		return text;
+	}
+	sep = ": ";
+	if (StrFindFirst(label, ": ") >= 0)
+	{
+		sep = " - ";
+	}
+	room = 70 - StrLen(label) - StrLen(sep);
+	if (StrLen(text) <= room || room < 10)
+	{
+		return label + sep + text;
+	}
+	head = text;
+	tail = "";
+	cut = StrFindLast(text, " (");
+	if (cut > 0 && StrLen(text) - cut < room - 6)
+	{
+		head = StrLeft(text, cut);
+		tail = StrMid(text, cut);
+	}
+	return label + sep + CMFMenuFitTo(room, "", head, tail);
 }
 
 // Adds the stored answer when the list does not hold it, and returns its position: "(offers none)" for a loaded map
@@ -851,10 +907,16 @@ function CMFMenuJoin(answers : array<string>) : string
 // closing bracket), so a long mod name drops whole words from its end, then letters, and ends in "...".
 function CMFMenuFit(before : string, modName : string, after : string) : string
 {
+	return CMFMenuFitTo(32, before, modName, after);
+}
+
+// CMFMenuFit for any width: the text may be `limit` characters long.
+function CMFMenuFitTo(limit : int, before : string, modName : string, after : string) : string
+{
 	var shown : string;
 	var room, space : int;
 	shown = modName;
-	room = 32 - StrLen(before) - StrLen(after);
+	room = limit - StrLen(before) - StrLen(after);
 	if (StrLen(shown) <= room || room < 6)
 	{
 		return before + shown + after;
@@ -1072,7 +1134,7 @@ function CMFMenuFillMod(storage : CScriptedFlashValueStorage, row : CScriptedFla
 	// 1.5.1: the last of the 48 rows (16 before the map-mod inventory) says how many more there are when they do not all fit.
 	if (index == 47 && providers.Size() > 48)
 	{
-		row.SetMemberFlashString("label", "+" + IntToString(providers.Size() - 47) + " more map mods");
+		CMFMenuSetBase(row, "+" + IntToString(providers.Size() - 47) + " more map mods");
 		CMFMenuSetValue(row, "-", true);
 		return true;
 	}
@@ -1087,11 +1149,11 @@ function CMFMenuFillMod(storage : CScriptedFlashValueStorage, row : CScriptedFla
 	}
 	if (inventoryName != "")
 	{
-		row.SetMemberFlashString("label", inventoryName);
+		CMFMenuSetBase(row, inventoryName);
 	}
 	else
 	{
-		row.SetMemberFlashString("label", core.ProviderName(providers[index]));
+		CMFMenuSetBase(row, core.ProviderName(providers[index]));
 	}
 	text = "";
 	if (remembered)
@@ -1211,7 +1273,7 @@ function CMFMenuFillWin(storage : CScriptedFlashValueStorage, row : CScriptedFla
 	}
 	if (CMFMenuOldLabel(key) != "")
 	{
-		row.SetMemberFlashString("label", CMFMenuOldLabel(key));
+		CMFMenuSetBase(row, CMFMenuOldLabel(key));
 	}
 	greyed = false;
 	if (remembered)
@@ -1318,11 +1380,11 @@ function CMFMenuFillScreen(storage : CScriptedFlashValueStorage, row : CScripted
 	height = CMFScreenHeight();
 	if (width < 1 || height < 1)
 	{
-		row.SetMemberFlashString("label", "Screen: open the map once");
+		CMFMenuSetBase(row, "Screen: open the map once");
 	}
 	else
 	{
-		row.SetMemberFlashString("label", "Screen: " + CMFMenuAspectText(width, height));
+		CMFMenuSetBase(row, "Screen: " + CMFMenuAspectText(width, height));
 	}
 	if (remembered)
 	{

@@ -316,7 +316,7 @@ class HiddenSwitchAndAbility(unittest.TestCase):
 
     def test_ability_added_and_version_unchanged(self):
         self.assertIn("if (part == 'map' && key == 'partialUpdate') { return true; }", ws_body(CORE, 'CMFHasAbility'))
-        self.assertRegex(ws_body(CORE, 'CMFGetVersion'), r'return 18;')
+        self.assertRegex(ws_body(CORE, 'CMFGetVersion'), r'return 19;')
 
     def test_the_key_is_not_an_author_key(self):
         keys = ws_body(CORE, 'CMFThemeOpeningKeys')

@@ -84,7 +84,7 @@ class ApiTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_and_header(self):
-        self.assertIn('function CMFGetVersion() : int { return 18; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 19; }', self.core)
         self.assertRegex(self.core.split('function CMFGetVersion')[0], r'version 10: behaviour picked apart from art')
 
     def test_choice_keys_and_parents(self):

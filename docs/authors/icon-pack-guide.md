@@ -4,7 +4,7 @@ Conjunction Map Framework (CMF) is a single world map that map mods can share. C
 
 An **icon pack** is the simplest kind of CMF mod. It changes how existing map pins look on the full-screen world map: their icon, their legend icon and their colour. It does not add or move pins; from API version 3 any CMF mod can also hide pins, and from API version 4 resize pins and change their labels (section 5). You do not edit any map file and you do not need Script Merger, FFDec, REDkit or WolvenKit.
 
-This guide is for someone who has made a Witcher 3 mod before but has never seen CMF. It documents API version 15 (`CMFGetVersion()` returns `15`), independently of release numbering. The map applies the registered styles and dispatches the hooks described here. Source and offline package checks are separate from engine compilation, actual loading and gameplay acceptance; features without game-launch evidence say so. Section 12 shows how existing map mods move onto CMF. A finished example is in [`examples/modCMFExampleIconPack`](../../examples/modCMFExampleIconPack/).
+This guide is for someone who has made a Witcher 3 mod before but has never seen CMF. It documents API version 19 (`CMFGetVersion()` returns `19`), independently of release numbering. The map applies the registered styles and dispatches the hooks described here. Source and offline package checks are separate from engine compilation, actual loading and gameplay acceptance; features without game-launch evidence say so. Section 12 shows how existing map mods move onto CMF. A finished example is in [`examples/modCMFExampleIconPack`](../../examples/modCMFExampleIconPack/).
 
 ## 1. What you need
 
@@ -184,6 +184,10 @@ API version 2 adds legend rows, filter tabs and per-pin styling to the API versi
 | `46` IconUnderFrames (API version 14) | `CMFPropertyIconUnderFrames()` | comma-separated frames or program:v1 | integer FPS 1..30; 0 withdraws | 40 with this id at the same slot; or number 0 |
 | `47` FrameOffset (API version 14) | `CMFPropertyFrameOffset()` | unused | integer starting offset 0..15; zero is valid | ONLY 40 with this id at the same slot |
 | `48` PictureFit (API version 14) | `CMFPropertyPictureFit()` | unused | 1 fits every picture of the claim in one fixed box; 0 keeps the game glyph's box | 40 with this id at the same slot |
+| `50` PlayerSetting (API version 19) | `CMFPropertyPlayerSetting()` | the ids of your claims that are the player's own settings, as a list such as `"28,36,53"`; `""` clears the list | `1` sends the list, `0` clears it | send `""` (or number `0`) again; the list belongs to your provider and is not a claim |
+| `51` PinScaleFactor (API version 19) | `CMFPropertyPinScaleFactor()` | unused | percent, `25` to `400` of the size every other mod gives the pin | 40 with this id at the same slot |
+| `52` SelectedScaleFactor (API version 19) | `CMFPropertySelectedScaleFactor()` | unused | percent, `25` to `400`, of the pin's size while it is selected, on top of `51` | 40 with this id at the same slot |
+| `53` PinScaleStandard (API version 19; target `''` only, a type, tag or place target is refused) | `CMFPropertyPinScaleStandard()` | unused | `1` makes every pin the size most pins have; `0` withdraws | 40 with this id at the same slot; or number `0` |
 
 The map root supports arbitrary public script-set values when `CMFHasAbility('map', 'rootValues')` is true. Native `SetMemberFlash*` / `GetMemberFlash*` calls may store a mod's own number or string before `OnConfigUI` and read it back there. Existing declared fields and methods retain their meaning; use your own names.
 
@@ -625,7 +629,7 @@ The wrapper acts only when `provider` is your own folder name and passes every o
 
 Ran in game on 2026-10-20 through the Smooth Map and Map Quest Insight adapters (frame rate, pan and zoom timing, the opening slide, `zoomOutFit`). API version 6 makes the map's movement and opening themeable through the same `CMFStylePart` call: the `navigation` part gains keys and a new `opening` part arrives. They are behaviours, not looks, so each key is won on its own by the earliest folder that sets it, like `map` keys. A key nobody sets keeps the game's behaviour, except four that CMF sets itself: since 1.0.0 CMF's map runs at `frameRate` `60` with `frameTimed`, `zoomTimed` and `tweenEveryFrame` `1`, so it pans, zooms and fades at the game's speed but smoother. Before CMF 1.5.0 the pan distance was right but the map still moved in about 59 steps a second on the region map and 42 on the world view (see `frameTimed` below). Any folder's own value for one of these keys wins over CMF's; send `frameRate` `24` and the other three as `0` to keep the game's movement exactly. The log names each key CMF set itself (`theme default part=navigation key=frameRate value=60`). The map reads the keys once per opening.
 
-`navigation` (how the map moves). API version 5 already accepts `frameTimed`, `stepMs`, `worldStepMs`, `maxStepMs` and the controller crosshair keys; CMF's map now acts on the first four.
+`navigation` (how the map moves). API version 5 already accepts `frameTimed`, `stepMs`, `worldStepMs`, `maxStepMs` and the controller crosshair keys; CMF's map acts on the first four, and from CMF 1.12.2 on the crosshair keys too (see the controller crosshair note below).
 
 | Key | Game | Range | What it does |
 | --- | --- | --- | --- |
@@ -658,7 +662,7 @@ Ran in game on 2026-10-20 through the Smooth Map and Map Quest Insight adapters 
 - **Send every key your mod decides**, even one equal to the game's value, so a quieter mod does not take it from you.
 - **`"unset"` withdraws one key** (API version 6, any part and key): `CMFStylePart(provider, part, key, "unset", 0)` removes your own value, so the next folder's value or the game's applies from the next opening. Use it for an on/off option.
 - **Frame rate** ran in game on 2026-10-21: the log showed `frameRate asked=60 now=60`. If the game could not change the rate, CMF would answer `false` and the map would stay at 24; `tweenEveryFrame` `1` still makes tweens smooth.
-- **Controller keys** (`padHoldMs`, the crosshair keys) are checked by value only; no launch has used a controller.
+- **Controller crosshair** (`crosshairRoam`, the `safe` keys, `snapSeconds`, `centerSeconds`): from CMF 1.12.2, with a controller stick only, the map pans first; once the map stops at its limit on an axis, the crosshair moves on toward that edge, inside a box inset from the real screen edges (`safeLeft` and `safeRight` are measured from the wide layout's edges, so they hold on ultrawide). Pushing back, the crosshair returns to the centre before the map pans again; a pin snap brings the pin under the crosshair where it is; the mouse and the keyboard are unchanged; region map only. CMF 1.12.0 and older accept the keys but do nothing with them. `padHoldMs` is checked by value only; no launch has used a controller for it.
 - **Log.** Each opening writes `opening ms=N` (from the map's start to its first full pin build) and, with any key set, a line such as `nav frameTimed=1 step=17 world=24 max=100 zoomTimed=0 pad=0 tweens=frame frameRate asked=60 now=60 opening=slide:0.2/0 pins:120@1 ready=420ms`. Each held-key pan writes a line such as `nav pan ms=<held time> ticks=<steps> px=<distance>`; with `zoomOutFit` the map writes `nav zoomOutFit min=0.66 game=1.6`.
 
 An on/off option, checked key by key so the pack still loads on an older CMF:
@@ -820,11 +824,12 @@ Your script does not change. Keep registering as before: the player's choices de
 
 1. the Advanced in-game choice for the piece (Advanced),
 2. the Basic in-game choice for its feature (Basic),
-3. the in-game Mod order (Mod order),
-4. the Advanced file choice, `CMFFile_<Feature>_<Piece>` (Advanced file),
-5. the Basic file choice, `CMFFile_<Feature>` (Basic file),
-6. the file Mod order, `CMFProviderOrder1` to `CMFProviderOrder8` (File order),
-7. CMF's default order, folder names sorted (Default).
+3. a mod's own player setting (API version 19; Player setting): a mod that marked the property as the player's own setting wins over mods that did not (see "Player settings and size multipliers"),
+4. the in-game Mod order (Mod order),
+5. the Advanced file choice, `CMFFile_<Feature>_<Piece>` (Advanced file),
+6. the Basic file choice, `CMFFile_<Feature>` (Basic file),
+7. the file Mod order, `CMFProviderOrder1` to `CMFProviderOrder8` (File order),
+8. CMF's default order, folder names sorted (Default).
 
 When two mods claim the same thing, a level decides between them only when it names one of them; a level that names another mod, Vanilla or nothing passes the question to the next level. A mod chosen for a piece wins every pin it has something for. On a pin where it has nothing, the next mod in order decides, or the game's own look shows when the player sets the General row "If the chosen mod has nothing for a pin" (or `CMFFile_Fallthrough`) to Vanilla. In-game choices come only from the menu add-on: without it every in-game level reads Automatic, and values a removed add-on left behind steer nothing. From CMF 1.6.0, a pick of a mod that sends no added info box lines (row `71`) or no tab hides (`35`) reads as Automatic for that row, so the other mods' lines and hides still apply.
 
@@ -1219,6 +1224,24 @@ CMFGridKeepPin("modMyFog", dataObject);
 **Refreshing.** `CMFMapRefreshPins` and `CMFMapRefresh` are refused (they return false and do nothing) during a build, for example when called from `OnPinReady`, `OnMapReady` or a pin wrapper, and when no map is open. Ask again after the build, for example on the next map event. `CMFMapRefreshPins` is the only way to run hide rules again on the open map.
 
 **One-pin updates.** The game sends a single pin on its own only for the player's own placed pin. That update is never hidden and never kept, and hide rules, keeps and added pins apply to full builds only.
+
+### Player settings and size multipliers (API version 19)
+
+A mod with its own settings screen (a pin size slider, a label choice) can tell CMF that some of its claims are the player's own settings, and can change pin sizes in a way that adds to other mods' sizes instead of competing with them.
+
+**Player settings (property 50).** Only a mod whose settings screen the player uses to choose the value should mark it: an options page, never an icon pack marking its art. `CMFRegister("modMySettings", CMFPropertyPlayerSetting(), '', '', "28,36,53", 1)` sends the ids of the properties your claims set from the player's own choices in your mod. Check `CMFHasAbility('claims', 'playerSetting')` first. For such a property CMF asks one more question after the player's in-game picks (Advanced, Basic) and before the Mod order: does exactly one of the two competing mods mark it? Then that mod wins, at every level of detail (every pin, a type, a tag, a place), and the Status page names the level "Player setting". Two mods that both mark it, or neither, go on to the Mod order as before. The player's own picks in CMF's menu still beat it, and Vanilla still means Vanilla.
+
+- Send the list again whenever it changes. `""` or number `0` clears it. A list that does not change costs nothing. Withdrawing the provider removes the list.
+- Ids that are added together (hides, label hides, filter-tab hides, hints and buttons of clicks, frame offsets, and the size multipliers 51 and 52) have no winner, so they are refused as marks and logged as `player setting refused provider=... property=... reason=added`; unknown ids are refused with `reason=unknown`. The ids of the player-setting list itself (50), presence (38) and the grid keep epoch (49) cannot be marked.
+- A zoom range (property 36) from a mod that marks it is held inside the region's own zoom range by the map, so a minimum above the closest zoom a region allows (for example 4.7 in White Orchard, where the range is 0.9 to 3.5) still shows the pin at the closest zoom instead of hiding it everywhere. A minimum or maximum of `0` still means no limit on that side, and other mods' ranges are used exactly as sent.
+- It never reaches the player's arrow or the player's own markers (`Player`, `User1` to `User7`).
+- It does not change theme parts (the map's look, fonts, frames), the opening view, clicks, or any mod that sends nothing. Claims that never use property 50 are decided exactly as before.
+
+**Size multipliers (properties 51 and 52).** Property 10 gives a pin a size and one mod wins it. Property 51 is a multiplier on top of whatever size the winners give: `CMFRegister("modMySettings", CMFPropertyPinScaleFactor(), 'Boat', '', "", 150)` makes boats 150 percent of the size they would have. Target `''` is every pin, a type, a tag or a place. Number 25 to 400. Within one mod the most specific claim for a pin applies (a tag beats a type beats every pin); the factors of different mods multiply, so two mods asking 150 percent and 200 percent give 300 percent. Property 52 is the same for the pin while it is selected, on top of 51 and the selected size. The result is held between 25 and 400 percent. Check `CMFHasAbility('claims', 'scaleFactor')`.
+
+**Standardize icon sizes (property 53).** `CMFRegister("modMySettings", CMFPropertyPinScaleStandard(), '', '', "", 1)` asks that every pin be drawn at the size most pins have. CMF counts the base size of the pins of the current map (the size the winners give each pin, 100 percent for a pin no mod sizes; hidden pins, the player's arrow and the player's own markers do not count). The size with the most pins is the standard; a tie goes to the size nearer 100, then to the smaller. A selected pin keeps its mod's growth ratio (the standard times its selected size over its own size). A map where no mod sizes any pin has the standard 100, and nothing changes. This is one winner, so mark it with property 50 if the player turns it on in your mod. Check `CMFHasAbility('claims', 'scaleStandard')`. The Status page names the mod that turned Standardize on as the winner of the Pin size row (Player setting), although the base sizes still come from the Mod order. A Pin size pick of another mod does not turn Standardize off unless that pick leaves out the mod that sent 53.
+
+All three follow CMF's Pin size row: when the player sets it to Vanilla, no multiplier and no standard applies.
 
 ### Choice-only claims (API version 9)
 

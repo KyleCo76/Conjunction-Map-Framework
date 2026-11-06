@@ -165,7 +165,7 @@ class QuestListLayout(unittest.TestCase):
         self.assertRegex(keys, r'code == 70[^\n]*close\(\)')
         self.assertRegex(keys, r'code == 84[^\n]*cycleSort\(\)')
         self.assertRegex(keys, r'code == 67[^\n]*fold\(selected\)')
-        self.assertRegex(keys, r'code == 69[^\n]*activate\(selected\)')
+        self.assertRegex(keys, r'code == 69[\s\S]*?activate\(selected\)')
         self.assertNotRegex(keys, r'journal')
 
     def test_bottom_hints_and_labels_from_strings(self):
@@ -273,7 +273,7 @@ class QuestListKeysAndPrompts(unittest.TestCase):
     def test_region_track_sort_fold(self):
         keys = self.KEYS
         self.assertRegex(keys, r'code == 72 \|\| nav == "gamepad_X"\) \{ toggleRegion\(\); \}')
-        self.assertRegex(keys, r'code == 13 \|\| code == 69 \|\| nav == "enter-gamepad_A"\) \{ activate\(selected\); \}')
+        self.assertRegex(keys, r'code == 13 \|\| code == 69 \|\| nav == "enter-gamepad_A"\)\s*\{\s*if\(padA && selected >= 0 && selected < rows.length && rows\[selected\].type == ROW_CAT\)[^\n]*\s*else\s*\{[\s\S]*?activate\(selected\);\s*\}\s*\}')
         self.assertRegex(keys, r'code == 84 \|\| nav == "gamepad_R2"\) \{ cycleSort\(\); \}')
         self.assertRegex(keys, r'code == 67 \|\| nav == "gamepad_Y"')
 
@@ -281,18 +281,18 @@ class QuestListKeysAndPrompts(unittest.TestCase):
         keys = self.KEYS
         self.assertIn('private function objectivesOpen(open:Boolean) : void', self.AS)
         self.assertIn('private function toggleObjectives() : void', self.AS)
-        # D-pad Left and the stick's left/right are taken by the list (swallowed) and reach sideKey.
-        self.assertIn('var isStick:Boolean = (nav == "left" || nav == "right") && code != 37 && code != 39;', keys)
-        self.assertRegex(keys, r'nav == "dpad_left" \|\| nav == "dpad_right" \|\| isStick\) \{ sideKey\(code,nav,isStick\); \}')
+        # Since 2.5.5 the D-pad's direction-coded twin is dropped and the stick is found by fromJoystick (tests/test_mqi_pad_fix.py).
+        self.assertIn('stick = arrow != "" && details.fromJoystick == true;', keys)
+        self.assertRegex(keys, r'code == 37 \|\| code == 39 \|\| nav == "dpad_left" \|\| nav == "dpad_right"\) \{ sideKey\(pad != "" \? pad : arrow,pad != ""\); \}')
         self.assertTrue(keys.rstrip().endswith('event.handled = true;'))
 
     def test_keyboard_left_only_closes_pad_left_is_swallowed(self):
         body = as3_body(self.AS, 'sideKey')
         self.assertIn('r.type == ROW_QUEST', body)
-        self.assertIn('if(isStick || nav == "dpad_left") { return; }', body)
-        self.assertRegex(body, r'code == 39 \|\| nav == "dpad_right"\) \{ toggleObjectives\(\); \}')
-        self.assertRegex(body, r'code == 37\) \{ objectivesOpen\(false\); \}')
-        self.assertRegex(body, r'r\.type == ROW_CAT && !isStick\) \{ fold\(selected\); \}')
+        self.assertIn('if(dpad && dir == "left") { return; }', body)
+        self.assertIn('if(dir == "right") { toggleObjectives(); }', body)
+        self.assertIn('else { objectivesOpen(false); }', body)
+        self.assertIn('else if(r.type == ROW_CAT) { fold(selected); }', body)
 
     def test_device_from_key_events_and_the_game(self):
         self.assertIn('private function learnDevice(code:int, nav:String) : void', self.AS)
@@ -762,9 +762,9 @@ class BesideStretchTests(unittest.TestCase):
         self.assertIn('on = "";', send)
 
     def test_version_2_5_4_in_the_three_places(self):
-        self.assertIn('adapter 2.5.4', CMF_WS.read_text())
-        self.assertIn('Version 2.5.4', (BASE / 'modCMFAdapterMapQuestInsight/README.txt').read_text(encoding='utf-8'))
-        self.assertIn('Adapter version 2.5.4', (BASE / 'README.md').read_text(encoding='utf-8'))
+        self.assertIn('adapter 2.5.5', CMF_WS.read_text())
+        self.assertIn('Version 2.5.5', (BASE / 'modCMFAdapterMapQuestInsight/README.txt').read_text(encoding='utf-8'))
+        self.assertIn('Adapter version 2.5.5', (BASE / 'README.md').read_text(encoding='utf-8'))
 
 
 if __name__ == '__main__':

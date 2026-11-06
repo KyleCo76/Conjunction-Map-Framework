@@ -38,7 +38,7 @@ class CoreTests(unittest.TestCase):
         self.core = CORE.read_text(encoding='ascii')
 
     def test_version_7(self):
-        self.assertIn('function CMFGetVersion() : int { return 18; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 19; }', self.core)
 
     def test_tooltip_takes_the_clear_keys(self):
         keys = body(self.core, 'function CMFThemePartKeys(')
@@ -173,7 +173,7 @@ class TallPlaceTests(unittest.TestCase):
                       'this.getChildIndex(this.mcHubMapPinPanel))', tall)
         self.assertLess(tall.index('_loc5_ = this.cmfTallSpan(_loc2_,_loc3_,_loc4_);'), tall.index('if(_loc1_ > _loc4_ - _loc3_)'))
         span = tall[tall.index('protected function cmfTallSpan('):]
-        self.assertIn('var parts:Array = ["legend","tracker","preview","worldButton","worldHint","title"];', span)
+        self.assertIn('var parts:Array = ["legend","tracker","preview","worldButton","worldHint","title","hints"];', span)
         self.assertIn('bottom = Math.min(bottom,r.top - 12);', span)
         self.assertIn('top = Math.max(top,r.bottom + 12);', span)
         self.assertIn('if(bottom - top < 120)', span)

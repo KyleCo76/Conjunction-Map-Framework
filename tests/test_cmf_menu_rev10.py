@@ -127,7 +127,8 @@ class ScriptTests(unittest.TestCase):
             self.assertIn('if (key == "%s")\n\t{\n\t\treturn "%s";' % (key, label), old)
         for fill in ('function CMFMenuFillPick(', 'function CMFMenuFillWin('):
             text = body(self.script, fill)
-            self.assertIn('row.SetMemberFlashString("label", CMFMenuOldLabel(key));', text)
+            # The Who wins row names itself with CMFMenuSetBase (its value goes after the name and is refilled safely).
+            self.assertIn('row.SetMemberFlashString("label", CMFMenuOldLabel(key));' if fill.endswith('Pick(') else 'CMFMenuSetBase(row, CMFMenuOldLabel(key));', text)
             # Only after the unknown-key check, so a row newer than the CMF is still left out.
             self.assertLess(text.index('if (choice < 0)'), text.index('CMFMenuOldLabel(key)'))
 

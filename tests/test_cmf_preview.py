@@ -192,6 +192,28 @@ class BuildTests(unittest.TestCase):
         second = preview.build(self.spec, self.src, self.root/'again/1.0.0-preview-3', self.repo)
         self.assertEqual([p['sha256'] for p in manifest['packages']], [p['sha256'] for p in second['packages']])
 
+    def test_fill_writes_files_maps_from_staged_folders(self):
+        spec = {'schema': preview.SCHEMA, 'version': '1.0.0', 'preview': 1, 'gameBuild': 'x', 'notes': 'n',
+                'packages': [{'name': 'modCMFDemo', 'role': 'addon', 'readme': 'r', 'acceptance': 'a', 'files': {}},
+                             {'name': 'modCMFOther', 'role': 'addon', 'readme': 'r', 'acceptance': 'a', 'files': {}}]}
+        stage = self.root/'probes/rel/demo/Mods/modCMFDemo/content'
+        stage.mkdir(parents=True)
+        (stage/'a.ws').write_bytes(b'one\n')
+        (stage/'b.bundle').write_bytes(b'two')
+        path = self.root/'spec.json'
+        path.write_text(json.dumps(spec), encoding='utf-8')
+        filled = preview.fill_files(path, self.root/'probes', {'modCMFDemo': 'rel/demo'})
+        files = filled['packages'][0]['files']
+        self.assertEqual(sorted(files), ['Mods/modCMFDemo/content/a.ws', 'Mods/modCMFDemo/content/b.bundle'])
+        self.assertEqual(files['Mods/modCMFDemo/content/a.ws'],
+                         {'from': 'rel/demo/Mods/modCMFDemo/content/a.ws', 'sha256': hashlib.sha256(b'one\n').hexdigest()})
+        self.assertEqual(filled['packages'][1]['files'], {})
+        self.assertEqual(json.loads(path.read_text(encoding='utf-8')), filled)
+        with self.assertRaises(preview.SpecError):
+            preview.fill_files(path, self.root/'probes', {'modCMFNope': 'rel/demo'})
+        with self.assertRaises(preview.SpecError):
+            preview.fill_files(path, self.root/'probes', {'modCMFDemo': 'rel/missing'})
+
     def test_build_never_overwrites(self):
         self.build()
         with self.assertRaisesRegex(preview.SpecError, 'never overwritten'):

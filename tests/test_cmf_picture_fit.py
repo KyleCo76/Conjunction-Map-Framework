@@ -32,7 +32,7 @@ class CoreTests(unittest.TestCase):
                    CMFIsPictureProperty=lambda p: 24 <= p <= 27)
         install(env, {'CMFHasProperty', 'CMFHasAbility', 'CMFOwnerField', 'CMFPropertyTextFree'})
         self.assertTrue(env['CMFHasProperty'](48))
-        self.assertFalse(env['CMFHasProperty'](50))
+        self.assertFalse(env['CMFHasProperty'](54))
         self.assertTrue(env['CMFHasAbility']('claims', 'pictureFit'))
         self.assertEqual(env['CMFOwnerField'](48), 'cmfPictureFitBy')
         self.assertTrue(env['CMFPropertyTextFree'](48))
@@ -42,7 +42,7 @@ class CoreTests(unittest.TestCase):
         self.assertIn('case 48:\n\t\t\t\tdataObject.SetMemberFlashInt("cmfPictureFit", number);\n'
                       '\t\t\t\tdataObject.SetMemberFlashBool("cmfPictureFitEnabled", true);', CORE)
         self.assertIn('propertyId >= 42 && propertyId <= 48', CORE)
-        self.assertIn('propertyId == 47 || propertyId == 48;\n}', CORE)
+        self.assertIn('propertyId == 47 || propertyId == 48 || propertyId == 51 || propertyId == 52 || propertyId == 53;\n}', CORE)
         self.assertIn('i == 45 || i == 46 || i == 48)) { activeWriteSlots', CORE)
 
     def test_legend_gets_the_same_claim(self):

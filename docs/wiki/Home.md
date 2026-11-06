@@ -60,6 +60,7 @@ CMF, its adapters and its example icon pack are published under the Creative Com
 - [Animated pictures](Animated-Pictures.md)
 - [Pins other mods add](Pins-Other-Mods-Add.md)
 - [Keeping pins over a grid, refreshing and one-pin updates](Grid-Keeps-Refresh-One-Pin.md)
+- [Player settings and size multipliers](Player-Settings-And-Size.md)
 - [Spreading stacked pins](Spreading-Stacked-Pins.md)
 
 **The map's look and behaviour**

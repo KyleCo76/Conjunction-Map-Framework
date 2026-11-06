@@ -2,7 +2,7 @@
 
 # API reference
 
-Every function, property id, hook and map event CMF offers to mods (API version 18). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
+Every function, property id, hook and map event CMF offers to mods (API version 19). The signatures are read from `cmfCore.ws`, and the list of calls from the pack tool, which refuses any other `CMF...` call. "Since" is the API version that added it: check it with `CMFRequireVersion`, or ask `CMFHasProperty` or `CMFHasAbility` first. "Explained on" names the pages that use it.
 
 ## Functions
 
@@ -67,6 +67,10 @@ Every function, property id, hook and map event CMF offers to mods (API version 
 | `CMFPropertyPinClick() : int` | 6 | Returns property id `16`. | [Pin clicks](Pin-Clicks.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Pin Teleport](Adapter-Map-Pin-Teleport.md) |
 | `CMFPropertyPinClickButton() : int` | 6 | Returns property id `21`. | [Pin clicks](Pin-Clicks.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Pin Teleport](Adapter-Map-Pin-Teleport.md) |
 | `CMFPropertyPinClickHint() : int` | 6 | Returns property id `20`. | [Pin clicks](Pin-Clicks.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Pin Teleport](Adapter-Map-Pin-Teleport.md) |
+| `CMFPropertyPinScaleFactor() : int` | 6 | Returns property id `51`. | [Writing your script](Writing-Your-Script.md), [Player settings and size multipliers](Player-Settings-And-Size.md) |
+| `CMFPropertyPinScaleStandard() : int` | 6 | Returns property id `53`. | [Writing your script](Writing-Your-Script.md), [Player settings and size multipliers](Player-Settings-And-Size.md) |
+| `CMFPropertyPlayerSetting() : int` | 6 | Returns property id `50`. | [Writing your script](Writing-Your-Script.md), [Player settings and size multipliers](Player-Settings-And-Size.md) |
+| `CMFPropertySelectedScaleFactor() : int` | 6 | Returns property id `52`. | [Writing your script](Writing-Your-Script.md) |
 | `CMFPropertySpreadRank() : int` | 6 | Returns property id `22`. | [Spreading stacked pins](Spreading-Stacked-Pins.md), [Writing your script](Writing-Your-Script.md), [Adapter: Map Quest Insight](Adapter-Map-Quest-Insight.md) |
 | `CMFPropertyTabHidden() : int` | 6 | Returns property id `37`. | [Writing your script](Writing-Your-Script.md) |
 | `CMFChoicesChanged()` | 8 | Tells CMF that a player's choice changed, so it prepares its winners again before the next lookup. | [Writing your script](Writing-Your-Script.md), [Players' choices: who wins each feature](Who-Wins-Each-Feature.md) |
@@ -154,6 +158,10 @@ The generic calls `CMFRegister`, `CMFRegisterForTag` and `CMFStylePin` take one 
 | `46` | `CMFPropertyIconUnderFrames()` | 14 | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md) |
 | `47` | `CMFPropertyFrameOffset()` | 14 | [Writing your script](Writing-Your-Script.md), [Animated pictures](Animated-Pictures.md) |
 | `48` | `CMFPropertyPictureFit()` | 14 | [Pin size, labels and the info box](Pin-Size-Labels-and-Info-Box.md), [Writing your script](Writing-Your-Script.md) |
+| `50` | `CMFPropertyPlayerSetting()` | 6 | [Writing your script](Writing-Your-Script.md), [Player settings and size multipliers](Player-Settings-And-Size.md) |
+| `51` | `CMFPropertyPinScaleFactor()` | 6 | [Writing your script](Writing-Your-Script.md), [Player settings and size multipliers](Player-Settings-And-Size.md) |
+| `52` | `CMFPropertySelectedScaleFactor()` | 6 | [Writing your script](Writing-Your-Script.md) |
+| `53` | `CMFPropertyPinScaleStandard()` | 6 | [Writing your script](Writing-Your-Script.md), [Player settings and size multipliers](Player-Settings-And-Size.md) |
 | `31` | IconSelected (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
 | `32` | SelectedScale (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
 | `33` | PinAlpha (numeric id; no helper) | 13 | [Property values](Writing-Your-Script.md) |
@@ -205,7 +213,7 @@ CMF's map calls these events on `CR4MapMenu`. New events are core-owned; wrap th
 - **3**: `CMFHidePin`, `CMFPropertyHidden`, `CMFRegisterHidden`, `CMFRegisterHiddenForTag`
 - **4**: `CMFLabelHideCrosshair`, `CMFLabelHidePin`, `CMFLevelLabel`, `CMFPropertyInfoBoxHeight`, `CMFPropertyLabelHide`, `CMFPropertyLabelPlace`, `CMFPropertyLabelText`, `CMFPropertyPinScale`, `CMFPropertyTabHide`, `CMFStylePinLabel`, `CMFStylePinScale`, hook `OnPinReady`, hook `OnMapReady`
 - **5**: `CMFDraw`, `CMFDrawSet`, `CMFHasAbility`, `CMFPropertyLabelColor`, `CMFStylePart`
-- **6**: `CMFDrawSetList`, `CMFMapRefresh`, `CMFPropertyCategoryNoDefault`, `CMFPropertyHoverName`, `CMFPropertyIconCompleted`, `CMFPropertyIconUndiscovered`, `CMFPropertyInfoText`, `CMFPropertyInfoTitle`, `CMFPropertyPinClick`, `CMFPropertyPinClickButton`, `CMFPropertyPinClickHint`, `CMFPropertySpreadRank`, `CMFPropertyTabHidden`, `CMFRegisterCategoryNoDefault`, hook `OnPinClicked`, hook `OnDrawingClicked`, hook `OnMapListening`
+- **6**: `CMFDrawSetList`, `CMFMapRefresh`, `CMFPropertyCategoryNoDefault`, `CMFPropertyHoverName`, `CMFPropertyIconCompleted`, `CMFPropertyIconUndiscovered`, `CMFPropertyInfoText`, `CMFPropertyInfoTitle`, `CMFPropertyPinClick`, `CMFPropertyPinClickButton`, `CMFPropertyPinClickHint`, `CMFPropertyPinScaleFactor`, `CMFPropertyPinScaleStandard`, `CMFPropertyPlayerSetting`, `CMFPropertySelectedScaleFactor`, `CMFPropertySpreadRank`, `CMFPropertyTabHidden`, `CMFRegisterCategoryNoDefault`, hook `OnPinClicked`, hook `OnDrawingClicked`, hook `OnMapListening`
 - **7**: no new calls (new keys or abilities only)
 - **8**: `CMFChoicesChanged`, `CMFSetProviderName`
 - **9**: `CMFPropertyButtonPicture`, `CMFPropertyWorldCrest`, `CMFPropertyWorldMarker`, `CMFPropertyWorldPainting`, `CMFRegisterButtonPicture`, `CMFRegisterChoiceOnly`, `CMFRegisterWorldCrest`, `CMFRegisterWorldMarker`, `CMFRegisterWorldPainting`, `CMFRegisterWorldPaintingTiles`, `CMFSetOpeningView`, `CMFSetOpeningWorld`, hook `OnMapView`, hook `OnMapOpening`
@@ -218,6 +226,7 @@ CMF's map calls these events on `CR4MapMenu`. New events are core-owned; wrap th
 - **16**: movie facade `map.hidePanels`, the tracker glow keys
 - **17**: `CMFMapRefreshPins`, `CMFHasAbility('screen', 'button')`, movie facade `map.cmfMakeButton`, `CMFMapRefreshPins()`, `CMFHasAbility('map', 'refreshPins')`, `CMFHasAbility('screen', 'keyDecline')`: a focused screen movie's `handleInput` can return `false` to decline a key, `CMFHasAbility('map', 'partialUpdate')`: a full pin update (a quest tracked, a filter changed) that draws the same pins again reuses their clips instead of making new ones; nothing to call
 - **18**: `CMFAddedPinMods`, `CMFAddedPinTypes`, `CMFDeclareAddedPinType`, `CMFGridUnkeepPin`, `CMFPropertyGridKeepEpoch`
+- **19**: no new calls (new keys or abilities only)
 
 ---
 

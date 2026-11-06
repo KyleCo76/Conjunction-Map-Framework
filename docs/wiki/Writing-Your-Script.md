@@ -99,6 +99,10 @@ API version 2 adds legend rows, filter tabs and per-pin styling to the API versi
 | `46` IconUnderFrames (API version 14) | `CMFPropertyIconUnderFrames()` | comma-separated frames or program:v1 | integer FPS 1..30; 0 withdraws | 40 with this id at the same slot; or number 0 |
 | `47` FrameOffset (API version 14) | `CMFPropertyFrameOffset()` | unused | integer starting offset 0..15; zero is valid | ONLY 40 with this id at the same slot |
 | `48` PictureFit (API version 14) | `CMFPropertyPictureFit()` | unused | 1 fits every picture of the claim in one fixed box; 0 keeps the game glyph's box | 40 with this id at the same slot |
+| `50` PlayerSetting (API version 19) | `CMFPropertyPlayerSetting()` | the ids of your claims that are the player's own settings, as a list such as `"28,36,53"`; `""` clears the list | `1` sends the list, `0` clears it | send `""` (or number `0`) again; the list belongs to your provider and is not a claim |
+| `51` PinScaleFactor (API version 19) | `CMFPropertyPinScaleFactor()` | unused | percent, `25` to `400` of the size every other mod gives the pin | 40 with this id at the same slot |
+| `52` SelectedScaleFactor (API version 19) | `CMFPropertySelectedScaleFactor()` | unused | percent, `25` to `400`, of the pin's size while it is selected, on top of `51` | 40 with this id at the same slot |
+| `53` PinScaleStandard (API version 19; target `''` only, a type, tag or place target is refused) | `CMFPropertyPinScaleStandard()` | unused | `1` makes every pin the size most pins have; `0` withdraws | 40 with this id at the same slot; or number `0` |
 
 The map root supports arbitrary public script-set values when `CMFHasAbility('map', 'rootValues')` is true. Native `SetMemberFlash*` / `GetMemberFlash*` calls may store a mod's own number or string before `OnConfigUI` and read it back there. Existing declared fields and methods retain their meaning; use your own names.
 

@@ -1,7 +1,14 @@
 Map Quest Insight adapter for Conjunction Map Framework
-Version 2.5.4 (for Map Quest Insight 2.1.0 and 2.2.0; icons by Wolfer, Map Quest Insight's author)
+Version 2.5.5 (for Map Quest Insight 2.1.0 and 2.2.0; icons by Wolfer, Map Quest Insight's author)
 
-What is new in 2.5.4: with CMF 1.12.0 (API 18) the info box beside a quest marker also moves to
+What is new in 2.5.5: with a controller (and CMF 1.12.2), the Quest List takes only the D-pad and stick up and down; the left stick
+pans the map in every direction while the list is open, and a D-pad press moves the list one step (it used to act twice).
+The A button goes to the map when the reticle is over a pin, and acts on the highlighted row otherwise; on a section
+header Y folds it and A does nothing. Moving the highlight in the list puts the reticle on that quest's pin. The info box
+beside a quest marker also looks up to 800 units away for a clear spot (a trial for the overlap with the top-right tracker).
+Keyboard and mouse are unchanged.
+
+In 2.5.4: with CMF 1.12.0 (API 18) the info box beside a quest marker also moves to
 the nearest clear spot when its place would cover the Quest List or a map panel. Older CMF keeps the
 2.5.3 behaviour.
 

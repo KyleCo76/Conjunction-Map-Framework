@@ -93,6 +93,17 @@ package
       // (or ending at ROW_RIGHT when there is none); the region text is clipped for it, to 40 px at the least.
       private static const OBJ_PROMPT_GAP:Number = 14;
       private static const REGION_MIN_W:Number = 40;
+      // A D-pad press and the arrow-coded twin the game sends after it arrive within this many ms.
+      private static const TWIN_MS:int = 30;
+
+      private var dpadDir:String = "";
+
+      private var dpadAt:int = 0;
+
+      private var axisDeclined:Boolean = false;
+      // The controller's A, from its press to its release, went to the map: a pin was under the reticle (map.pinAtReticle).
+      private var aToMap:Boolean = false;
+
       // Prompt key names: the keyboard key, then the controller button, then the PlayStation button. The only place
       // that names them, so the game's button pictures can replace the text in promptButton alone.
       private static const PROMPT_KEYS:Object = {"close":["F","LT","L2"],"track":["E","A","Cross"],"region":["H","X","Square"],"sort":["T","RT","R2"],"objs":[">","D-pad Right","D-pad Right"],"fold":["C","Y","Triangle"]};
@@ -1898,20 +1909,85 @@ package
          render();
       }
 
-      // Left and Right keys, the D-pad and the stick. On a quest row Right (D-pad Right) toggles the objectives, the
-      // keyboard's Left closes them, and D-pad Left and the stick do nothing; on a section header Left and Right (the
-      // D-pad's) fold it.
-      private function sideKey(code:int, nav:String, isStick:Boolean) : void
+      // Left and Right on the keyboard and the D-pad (one press each: the direction-coded twin of a D-pad press is dropped in
+      // handleInput). On a quest row Right (D-pad Right) toggles the objectives, the keyboard's Left closes them, and
+      // D-pad Left does nothing (Map Quest Insight's own); on a section header Left and Right fold it. param1 is "left" or
+      // "right"; param2 true when it came from the D-pad.
+      private function sideKey(dir:String, dpad:Boolean) : void
       {
          var r:Object = selected >= 0 && selected < rows.length ? rows[selected] : null;
          if(!r) { return; }
          if(r.type == ROW_QUEST)
          {
-            if(isStick || nav == "dpad_left") { return; }
-            if(code == 39 || nav == "dpad_right") { toggleObjectives(); }
-            else if(code == 37) { objectivesOpen(false); }
+            if(dpad && dir == "left") { return; }
+            if(dir == "right") { toggleObjectives(); }
+            else { objectivesOpen(false); }
          }
-         else if(r.type == ROW_CAT && !isStick) { fold(selected); }
+         else if(r.type == ROW_CAT) { fold(selected); }
+      }
+
+      // The left stick's sideways moves while the list has focus. Kyle's pick: the stick pans the map left and right and the list
+      // takes only stick up and down, so the list declines them (CMF API 17, the key goes on to the map; from the panel that pairs with this change
+      // the stick's pan axis does too). param1 is the event's details, param2 the arrow direction its code says, param3 true when
+      // it came from the stick (fromJoystick). One place to change.
+      private function stickDeclines(details:Object, arrow:String, stick:Boolean) : Boolean
+      {
+         var v:Object = null;
+         if(stick) { return arrow != ""; }
+         if(details.type == "axis")
+         {
+            v = details.value;
+            if(v && v.xvalue != undefined) { return Math.abs(Number(v.xvalue)) >= 0.6 || Math.abs(Number(v.yvalue)) >= 0.6; }
+         }
+         return false;
+      }
+
+      // A pin the reticle chose is under it (CMF's map.pinAtReticle). The pin the list itself selected for its highlighted row does not
+      // count. An older CMF has no such value: false, and the list keeps A as before.
+      private function reticlePin() : Boolean
+      {
+         try { return map != null && map.pinAtReticle === true; } catch(error:Error) { }
+         return false;
+      }
+
+      // Debug lines for the pad (CMF's log, written when the game runs with -debugscripts): what the list took, the twins it dropped and the stick
+      // moves it declined, so a controller test shows each press.
+      private function padLog(text:String) : void
+      {
+         note("padlog",text);
+      }
+
+      private function logDecline(details:Object, arrow:String) : void
+      {
+         if(details.type == "axis")
+         {
+            if(!axisDeclined)
+            {
+               axisDeclined = true;
+               padLog("axis declined x=" + Math.round(Number(details.value.xvalue) * 100) / 100 + " y=" + Math.round(Number(details.value.yvalue) * 100) / 100);
+            }
+         }
+         else if(details.value == "keyDown") { padLog("stick " + arrow + " declined code=" + int(details.code)); }
+      }
+
+      // The D-pad button's direction: its own codes (142 up, 143 down, 144 left, 145 right) or its dpad_ navigation name; "" if the event is not the D-pad.
+      private function padDirOf(code:int, nav:String) : String
+      {
+         if(code == 142 || nav == "dpad_up") { return "up"; }
+         if(code == 143 || nav == "dpad_down") { return "down"; }
+         if(code == 144 || nav == "dpad_left") { return "left"; }
+         if(code == 145 || nav == "dpad_right") { return "right"; }
+         return "";
+      }
+
+      // The direction an arrow code says (the keyboard, the left stick, and the twin the game sends after a D-pad press).
+      private function arrowDirOf(code:int) : String
+      {
+         if(code == 38) { return "up"; }
+         if(code == 40) { return "down"; }
+         if(code == 37) { return "left"; }
+         if(code == 39) { return "right"; }
+         return "";
       }
 
       // Swap Obj: the tracked quest's next objective you have not done, in the journal's order, round again at the end.
@@ -2079,7 +2155,7 @@ package
       }
 
       // Returns false for the keys that belong to the quest info box's Show more / Show less (the keyboard's X, the
-      // default key of Map Quest Insight's fold, and R3 on a controller), press and release alike, so CMF's panel
+      // default key of Map Quest Insight's fold, and R3 on a controller) and for the left stick's moves in every direction, press and release alike, so CMF's panel
       // (API 17, CMFHasAbility('screen','keyDecline')) lets the key go on to the box. On an older CMF the false is
       // ignored and the key is swallowed as before. Every other path returns nothing.
       public function handleInput(event:Object) : *
@@ -2088,24 +2164,65 @@ package
          var code:int = details ? int(details.code) : 0;
          var nav:String = details ? String(details.navEquivalent) : "";
          var held:Boolean = details && details.value == "keyHold";
-         var isStick:Boolean = (nav == "left" || nav == "right") && code != 37 && code != 39;
+         var pad:String = "";
+         var arrow:String = "";
+         var stick:Boolean = false;
+         var declines:Boolean = false;
+         var padA:Boolean = false;
+         var aDeclines:Boolean = false;
          if(!details) { return; }
+         pad = padDirOf(code,nav);
+         arrow = arrowDirOf(code);
+         stick = arrow != "" && details.fromJoystick == true;
          learnDevice(code,nav);
          if(!opened || !focused) { return; }
-         if(code == 88 || nav == "gamepad_R3") { return false; }
+         // The controller's A: with a pin under the reticle it belongs to the map (press, hold and release alike); with none it acts on the
+         // highlighted row as before, except on a section header, where Y folds and A does nothing. The keyboard keeps Enter and E.
+         padA = this.pad && nav == "enter-gamepad_A" && code != 69;
+         if(padA && details.value == "keyDown")
+         {
+            aToMap = reticlePin();
+            padLog(aToMap ? "A goes to the map, a pin is under the reticle" : "A stays with the list, no pin under the reticle");
+         }
+         aDeclines = padA && aToMap;
+         if(padA && details.value != "keyDown" && details.value != "keyHold") { aToMap = false; }
+         declines = stickDeclines(details,arrow,stick) || aDeclines;
+         if(details.type == "axis" && !declines) { axisDeclined = false; }
+         if(code == 88 || nav == "gamepad_R3" || declines)
+         {
+            if(declines && !aDeclines) { logDecline(details,arrow); }
+            return false;
+         }
          // Esc and B close when released; every other key acts once, on its press (a held arrow keeps moving).
          if(details.value == "keyUp")
          {
             if(code == 27 || nav == "escape-gamepad_B") { close(); event.handled = true; }
             return;
          }
-         if(details.value != "keyDown" && !(held && (code == 38 || code == 40 || nav == "up" || nav == "down" || nav == "dpad_up" || nav == "dpad_down"))) { return; }
+         if(details.value != "keyDown" && !(held && (code == 38 || code == 40 || code == 142 || code == 143 || nav == "up" || nav == "down" || nav == "dpad_up" || nav == "dpad_down"))) { return; }
+         // A D-pad press arrives twice, 0 to 10 ms apart: its own code, then the arrow code of the same direction (not from the stick).
+         // The list acts on the D-pad code and drops the twin; the stick (fromJoystick) and the keyboard have no D-pad code before them.
+         if(pad != "") { dpadDir = pad; dpadAt = getTimer(); }
+         else if(arrow != "" && !stick && arrow == dpadDir && getTimer() - dpadAt <= TWIN_MS)
+         {
+            if(details.value == "keyDown") { padLog("twin dropped " + arrow + " code=" + code + " dt=" + (getTimer() - dpadAt)); }
+            event.handled = true;
+            return;
+         }
+         if(details.value == "keyDown" && (pad != "" || stick)) { padLog((pad != "" ? "dpad " + pad : "stick " + arrow) + " code=" + code + " nav=" + nav + " taken"); }
          if(code == 70 || nav == "gamepad_L2") { close(); }
          else if(code == 27 || nav == "escape-gamepad_B") { }
          else if(code == 38 || nav == "up" || nav == "dpad_up") { move(selected - 1); }
          else if(code == 40 || nav == "down" || nav == "dpad_down") { move(selected + 1); }
-         else if(code == 37 || code == 39 || nav == "dpad_left" || nav == "dpad_right" || isStick) { sideKey(code,nav,isStick); }
-         else if(code == 13 || code == 69 || nav == "enter-gamepad_A") { activate(selected); }
+         else if(code == 37 || code == 39 || nav == "dpad_left" || nav == "dpad_right") { sideKey(pad != "" ? pad : arrow,pad != ""); }
+         else if(code == 13 || code == 69 || nav == "enter-gamepad_A") {
+            if(padA && selected >= 0 && selected < rows.length && rows[selected].type == ROW_CAT) { if(details.value == "keyDown") { padLog("A on a section header does nothing, Y folds"); } }
+            else
+            {
+               if(padA && details.value == "keyDown") { padLog("A acts on the highlighted row " + selected); }
+               activate(selected);
+            }
+         }
          else if(code == 72 || nav == "gamepad_X") { toggleRegion(); }
          else if(code == 84 || nav == "gamepad_R2") { cycleSort(); }
          else if(code == 67 || nav == "gamepad_Y") { fold(selected); }

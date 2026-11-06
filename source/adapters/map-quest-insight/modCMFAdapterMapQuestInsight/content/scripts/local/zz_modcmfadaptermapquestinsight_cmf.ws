@@ -1,4 +1,4 @@
-// Map Quest Insight adapter 2.5.4 for Conjunction Map Framework. Requires CMF 1.6.0 (API version 13) and Map Quest
+// Map Quest Insight adapter 2.5.5 for Conjunction Map Framework. Requires CMF 1.6.0 (API version 13) and Map Quest
 // Insight 2.1.0 or later (checked against 2.1.0 and 2.2.0) (Nexus 14219; the Quest List file uses names that exist from 2.1.0), which stays
 // unchanged. Install and remove the two together: this file calls Map Quest Insight's own functions (QMI_OptTypeIcons, QMI_IconKind, QMI_LevelBandTint and QMI_ColorTrackedIcon exist
 // from 2.0.0, which Wolfer named stable), so the game stops at the script compile screen when Map Quest Insight is
@@ -666,6 +666,8 @@ function MqiAdapterSendBeside()
 		if (CMFHasAbility('tooltip', 'stretch'))
 		{
 			CMFStyle("modMapQuestInsight", 'tooltip', types[i], 'stretch', on, 1);
+			// TRY (Kyle's test of the overlap with the top-right tracker): an expanded box often has no clear spot within the default 400.
+			CMFStyle("modMapQuestInsight", 'tooltip', types[i], 'stretchMax', on, 800);
 		}
 	}
 }

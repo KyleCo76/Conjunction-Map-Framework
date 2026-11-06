@@ -15,7 +15,7 @@ CMFFile_Painting_Skellige=Vanilla
 - **The value** is a map mod's folder name (capital and small letters count the same), `Vanilla` (or `Off`) for the game's own look, or `Automatic` (or `Auto`, `Default`, or nothing) to let the next level decide. Spaces are ignored.
 - **One name per value, never a comma.** The game ends a value at its first comma and rewrites the file that way when it exits.
 - **A Basic key** (`CMFFile_<Feature>`) chooses for a whole feature. **An Advanced key** (`CMFFile_<Feature>_<Piece>`) chooses for one piece of it and comes before the Basic key.
-- **In-game choices come first.** When the menu add-on is installed, its rows and its Mod order decide before any file choice. Without it, file choices decide before the file Mod order.
+- **In-game choices come first.** When the menu add-on is installed, its rows and its Mod order decide before any file choice. Without it, file choices decide before the file Mod order. A mod's own player settings (API version 19, property 50) come after the in-game Basic choice and before the in-game Mod order; they have no file key.
 - **Hidden pins and drawings add together**: every mod's applies. `CMFFile_Hidden` and `CMFFile_Drawings` keep only the named mod's (or none with `Vanilla`), and the three `_Ignore` keys of each leave one mod out each.
 - A folder name no installed mod has decides nothing. Values left in the file do nothing once CMF is removed.
 

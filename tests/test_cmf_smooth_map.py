@@ -155,7 +155,7 @@ class CoreTests(unittest.TestCase):
 
     def test_version_is_six(self):
         # P6 ships with pin clicks as API version 6.
-        self.assertIn('function CMFGetVersion() : int { return 18; }', self.core)
+        self.assertIn('function CMFGetVersion() : int { return 19; }', self.core)
 
 
 class PanelTests(unittest.TestCase):

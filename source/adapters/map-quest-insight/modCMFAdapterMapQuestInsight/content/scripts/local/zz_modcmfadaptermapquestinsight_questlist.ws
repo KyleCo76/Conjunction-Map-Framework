@@ -284,6 +284,11 @@ function MqiAdapterQlEvent(eventName : string, value : string)
 	var left, right : string;
 	var index, objectiveIndex : int;
 	var hide : array<name>;
+	if (eventName == "padlog")
+	{
+		LogChannel('CMF', "CMF mqi adapter questlist pad " + value);
+		return;
+	}
 	if (eventName == "track" || eventName == "journal" || eventName == "objective")
 	{
 		left = value;

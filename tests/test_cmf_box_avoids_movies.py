@@ -106,7 +106,7 @@ class BoxAvoidsMovies(unittest.TestCase):
 
     def test_the_debug_note_comes_before_the_box_moves_and_counts_hard_and_soft(self):
         call = edit_with('this.cmfNoteMovieAvoid(best,avoid);')
-        first = edit_with('this.cmfNoteMovieAvoid(best);\n         this.tooltipInstance.x')
+        first = edit_with('this.cmfNoteMovieAvoid(best);\n         this.cmfNoteHintsRect(best);\n         this.tooltipInstance.x')
         self.assertLess(EDITS.index(first), EDITS.index(call))
         self.assertTrue(first['replace'].endswith('this.tooltipInstance.x += Math.round(best.x - box.x);\n'))
         note = ''.join(e['replace'] for e in EDITS)

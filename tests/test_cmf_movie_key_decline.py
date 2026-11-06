@@ -74,7 +74,7 @@ class CoreAbility(unittest.TestCase):
     def test_ability_and_version(self):
         self.assertIn("if (part == 'screen' && key == 'keyDecline') { return true; }", CORE)
         self.assertIn("if (part == 'screen' && key == 'button') { return true; }", CORE)
-        self.assertIn('function CMFGetVersion() : int { return 18; }', CORE)
+        self.assertIn('function CMFGetVersion() : int { return 19; }', CORE)
 
     def test_documented(self):
         guide = (ROOT / 'docs/authors/own-screen-movie.md').read_text()
@@ -87,7 +87,7 @@ class QuestListDeclines(unittest.TestCase):
     def test_declines_the_fold_keys_press_and_release(self):
         m = re.search(r'public function handleInput\(event:Object\) : \*\n.*?\n      \}\n', AS, re.S)
         body = m.group(0)
-        self.assertIn('if(code == 88 || nav == "gamepad_R3") { return false; }', body)
+        self.assertIn('if(code == 88 || nav == "gamepad_R3" || declines)', body)
         # After learnDevice and the opened/focused test, before the key-up branch and every other key.
         decline = body.index('return false;')
         self.assertGreater(decline, body.index('if(!opened || !focused) { return; }'))

@@ -8,6 +8,9 @@ accepted bytes and refuses any file whose hash differs.
   build   check the spec, then write <out>/<name>-<label>.zip per package, the notes file
           as README.md, SHA256SUMS and manifest.json (written last). Refuses an existing
           <out>, so a preview is never overwritten.
+  fill    write each package's "files" map (every staged file with its SHA-256) into a spec, from the
+          staged folders the release builds were copied to. Run it once the builds are staged; it
+          replaces the maps and touches nothing else in the spec.
   verify  re-hash a built folder against SHA256SUMS and manifest.json, entry by entry. Takes a
           preview folder or a dist/<version> folder (the manifest schema says which).
   promote copy a release candidate (a preview folder that passed the final matrix) into
@@ -629,6 +632,30 @@ def load_spec(path):
     return spec
 
 
+def fill_files(spec_path, sources, stages):
+    """Rewrite each named package's "files" map from its staged folder. stages is {package name: folder relative to
+    sources}; every file below the folder becomes one entry, "from" being its path relative to sources."""
+    path = Path(spec_path)
+    spec = json.loads(path.read_text(encoding='utf-8'))
+    names = {package.get('name') for package in spec.get('packages', [])}
+    if set(stages) - names:
+        raise SpecError('not in the spec: %s' % ', '.join(sorted(set(stages) - names)))
+    for package in spec['packages']:
+        if package['name'] not in stages:
+            continue
+        folder = Path(sources)/stages[package['name']]
+        if not folder.is_dir():
+            raise SpecError('%s: staged folder %s is missing' % (package['name'], folder))
+        files = {}
+        for item in sorted(folder.rglob('*')):
+            if item.is_file():
+                files[item.relative_to(folder).as_posix()] = {
+                    'from': item.relative_to(sources).as_posix(), 'sha256': sha256(item.read_bytes())}
+        package['files'] = files
+    path.write_text(json.dumps(spec, indent=1, ensure_ascii=False) + '\n', encoding='utf-8', newline='\n')
+    return spec
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest='command', required=True)
@@ -636,6 +663,11 @@ def main(argv=None):
     b.add_argument('--spec', required=True, help='source/previews/<label>.json')
     b.add_argument('--sources', required=True, help='folder the spec\'s "from" paths are relative to (the shared probes folder)')
     b.add_argument('--out', required=True, help='new folder previews/<label>; must not exist')
+    f = sub.add_parser('fill', help='write the packages\' files maps from their staged folders')
+    f.add_argument('--spec', required=True, help='source/previews/<label>.json')
+    f.add_argument('--sources', required=True, help='folder the "from" paths are relative to (the shared probes folder)')
+    f.add_argument('--stage', action='append', required=True, metavar='NAME=FOLDER',
+                   help='package name and its staged folder below --sources; repeat for each package')
     v = sub.add_parser('verify', help='check a built preview or dist folder')
     v.add_argument('folder')
     p = sub.add_parser('promote', help='copy a passing release candidate into dist/<version>, byte for byte')
@@ -650,6 +682,14 @@ def main(argv=None):
             for package in manifest['packages']:
                 print('%s  %s  (%d files)' % (package['sha256'], package['zip'], len(package['files'])))
             problems = verify(args.out)
+        elif args.command == 'fill':
+            stages = dict(item.split('=', 1) for item in args.stage if '=' in item)
+            if len(stages) != len(args.stage):
+                raise SpecError('--stage takes NAME=FOLDER')
+            spec = fill_files(args.spec, args.sources, stages)
+            for package in spec['packages']:
+                print('%s  (%d files)' % (package['name'], len(package.get('files', {}))))
+            problems = check_spec(spec)
         elif args.command == 'promote':
             spec = load_release_spec(args.spec or ROOT/('source/releases/%s.json' % args.version))
             if not isinstance(spec, dict) or spec.get('version') != args.version:

@@ -1,0 +1,65 @@
+{
+ "schema": "cmf-release-spec-1",
+ "version": "1.12.2",
+ "candidate": "1.12.2-preview-1",
+ "candidateManifestSha256": "351c39bf81c69db90a7f96f64bbcc153ec21820803adc674c29945877ab20d3f",
+ "apiVersion": 19,
+ "sourceCommit": "ef3533041862cff11ad63c8da4757152fb35aefa",
+ "notes": {
+  "README.md": "source/releases/1.12.2/README.md",
+  "rollback-notes.md": "source/releases/1.12.2/rollback-notes.md",
+  "test-notes.md": "source/releases/1.12.2/test-notes.md"
+ },
+ "matrix": [
+  {
+   "set": "cmf-1-12-2-check",
+   "record": "source/probes/release_1_12_2_check/README.md; logs build\\animpins\\logs\\release-1-12-2-check.txt, -3.txt and -4.txt; steps 17 and 18 not run, Part A on earlier builds",
+   "result": "PASS",
+   "launched": "2026-11-06T16:4xZ"
+  },
+  {
+   "set": "release-archive-check",
+   "record": "source/probes/release_1_12_2/README.md; log build\\animpins\\logs\\release-archive-check-1-12-2.txt: 0 compile errors, 0 CMF errors, no failed pin update, no refused refresh",
+   "result": "PASS",
+   "launched": "2026-11-06T17:4xZ"
+  }
+ ],
+ "notChecked": [
+  "the Player setting level and size multipliers with a mod other than the CMF Customizer",
+  "install through Vortex or Mod Organizer 2",
+  "Steam Deck",
+  "Proton/Linux",
+  "Ultrawide screens on the final builds (the last check starts ran at 16:9)"
+ ],
+ "packages": {
+  "mod0000_ConjunctionMapFramework": {
+   "role": "core",
+   "needsApi": 19,
+   "acceptance": "cmfCore.ws 08d1c778 ran in check start 4 (d7ab7068); panel blob0.bundle and metadata.store built by RC at the freeze commit include the later info box hints strip edit and first run in the release-archive start"
+  },
+  "modCMFInGameMenu": {
+   "role": "addon",
+   "needsApi": 11,
+   "version": "1.12.2",
+   "acceptance": "menu add-on 1.5.2 (source and tools/cmf_menu_addon.py), cmfMenu.ws built at the freeze commit; check start 3 ran its Status pages with Ink and Iron, and the file has changed since only in its version comment"
+  },
+  "modCMFCustomizer": {
+   "role": "addon",
+   "needsApi": 19,
+   "version": "1.0.0",
+   "acceptance": "check start 4 ran this modcmfcustomizer.ws (320633da); steps 9 to 16 ran across the check starts (the White Orchard clamp in the first, on an earlier add-on build), step 17 and step 18 were not run"
+  },
+  "modCMFAdapterMapQuestInsight": {
+   "role": "adapter",
+   "needsApi": 13,
+   "version": "2.5.5",
+   "adapts": {
+    "folder": "modMapQuestInsight",
+    "name": "Map Quest Insight",
+    "version": "2.2.0",
+    "nexus": 14219
+   },
+   "acceptance": "the combined check start's Part A with Map Quest Insight 2.2.0; movie bundle 4b909da4 built by RC from MqiAdapterQuestList.as at the freeze commit is the one those starts ran, and the scripts changed since only in the version comment"
+  }
+ }
+}

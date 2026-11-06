@@ -28,4 +28,4 @@ CMFGridKeepPin("modMyFog", dataObject);
 
 ---
 
-[Previous: Pins other mods add](Pins-Other-Mods-Add.md) · [Contents](Home.md) · [Next: Spreading stacked pins](Spreading-Stacked-Pins.md)
+[Previous: Pins other mods add](Pins-Other-Mods-Add.md) · [Contents](Home.md) · [Next: Player settings and size multipliers](Player-Settings-And-Size.md)

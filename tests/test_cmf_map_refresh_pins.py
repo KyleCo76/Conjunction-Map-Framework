@@ -38,7 +38,7 @@ class CoreRefreshPins(unittest.TestCase):
 
     def test_ability_key_and_version(self):
         self.assertIn("if (part == 'map' && key == 'refreshPins') { return true; }", ws_body(CORE, 'CMFHasAbility'))
-        self.assertIn('function CMFGetVersion() : int { return 18; }', CORE)
+        self.assertIn('function CMFGetVersion() : int { return 19; }', CORE)
 
 
     def test_pack_checker_dates_the_call_to_api_17(self):

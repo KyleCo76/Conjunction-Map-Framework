@@ -65,7 +65,7 @@ class Storage:
 def style_env():
     env=contracts.PreparationLifecycleTests().make_env()
     def entry():return Obj(provider="",kind=0,target="",anchor="",key="",text="",number=0.,order=0,item="",itemKind="",values=Array(),ints=Array())
-    env.update(SCMFThemeEntry=entry,itemStyleOwners=Array(),itemStylesSent=False,
+    env.update(SCMFThemeEntry=entry,itemStyleOwners=Array(),anySetter=False,scaleClaims=Array(),standardScale=0,setterMarked=Array(),playerSetters=Array(),playerSetterIds=Array(),itemStylesSent=False,
                menuOrder="",providerOrder="",themeNotes=Array(),themeMemoOn=False,
                **{f:Array() for f in ("styleMemoKeys","styleMemoOwners","drawingMemoIds","drawingMemoOwners","kindMemoKeys","kindMemoValues","leftOutMemoKeys","leftOutMemoFlags","leftOutMemoOwners","rankMemoProviders","rankMemoValues")},StrCmp=lambda a,b:(a>b)-(a<b),
                StrReplaceAll=str.replace,CMFSettingsProviderRank=lambda order,p:-1,
@@ -91,6 +91,7 @@ def style_env():
       ("ThemeOwnershipKey",("part","key"),()),("ThemeStyleOwner",("part","key"),()),("ComputeThemeStyleOwner",("part","key"),()),("ClearThemeMemo",(),()),
       ("ItemStyleOwner",("styleEntry",),()),("PrepareItemStyles",(),()),("Prepare",(),()),
       ("CMFFolderBeats",("a","b"),()),("ProviderBeats",("a","b"),()),("CMFProviderBeats",("a","b"),()),
+      ("MenuPickDecides",("choice","a","b","result"),(3,)),("PrepareSetters",(),()),
       ("PickDecides",("pick","a","b","result"),(3,)),("OrderDecides",("order","a","b","result"),(3,)),
       ("PieceBeats",("choice","a","b"),()),("ChoiceKey",("choice",),()),
       ("WriteFoldMetadata",("item","styleEntry","storage"),()),

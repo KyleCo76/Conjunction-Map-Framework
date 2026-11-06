@@ -65,7 +65,7 @@ class PresenceSourceTests(unittest.TestCase):
 
     def test_property_is_generic_only_and_named_helper_uses_empty_payload(self):
         self.assertEqual(body(self.core, 'CMFPropertyPresent').strip(), 'return 38;')
-        self.assertEqual(body(self.core, 'CMFGetVersion').strip(), 'return 18;')
+        self.assertEqual(body(self.core, 'CMFGetVersion').strip(), 'return 19;')
         self.assertIn('CMFPropertyPresent()', body(self.core, 'CMFHasProperty'))
         self.assertNotIn('CMFPropertyPresent()', body(self.core, 'CMFOnePinProperty'))
         self.assertIn('CMFRegister(provider, CMFPropertyPresent(), \'\', \'\', "", 1)',
@@ -218,7 +218,7 @@ class PresenceSourceTests(unittest.TestCase):
         strings = {s['key']: s for s in addon.catalog()['strings']}
         self.assertEqual(strings['cmf_menu_support_present'], {'id': 2000200127, 'key': 'cmf_menu_support_present',
                                                              'text': {'en': 'CMF support present'}})
-        self.assertEqual(addon.VERSION, '1.5.1')
+        self.assertEqual(addon.VERSION, '1.5.2')
         self.assertEqual(addon.MIN_API, 11)
 
 

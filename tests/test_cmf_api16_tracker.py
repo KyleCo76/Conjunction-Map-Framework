@@ -23,7 +23,7 @@ def func(name):
 
 class Api16Tracker(unittest.TestCase):
     def test_api_is_17(self):
-        self.assertIn("function CMFGetVersion() : int { return 18; }", CORE)
+        self.assertIn("function CMFGetVersion() : int { return 19; }", CORE)
 
     def test_third_glow_keys(self):
         self.assertTrue(body(CORE, "CMFThemeGlowKeys").rstrip().endswith('glow3Color,glow3Alpha,glow3Blur,glow3Strength";'))

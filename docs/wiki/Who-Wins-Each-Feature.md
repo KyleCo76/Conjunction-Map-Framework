@@ -12,11 +12,12 @@ Your script does not change. Keep registering as before: the player's choices de
 
 1. the Advanced in-game choice for the piece (Advanced),
 2. the Basic in-game choice for its feature (Basic),
-3. the in-game Mod order (Mod order),
-4. the Advanced file choice, `CMFFile_<Feature>_<Piece>` (Advanced file),
-5. the Basic file choice, `CMFFile_<Feature>` (Basic file),
-6. the file Mod order, `CMFProviderOrder1` to `CMFProviderOrder8` (File order),
-7. CMF's default order, folder names sorted (Default).
+3. a mod's own player setting (API version 19; Player setting): a mod that marked the property as the player's own setting wins over mods that did not (see [Player settings and size multipliers](Player-Settings-And-Size.md)),
+4. the in-game Mod order (Mod order),
+5. the Advanced file choice, `CMFFile_<Feature>_<Piece>` (Advanced file),
+6. the Basic file choice, `CMFFile_<Feature>` (Basic file),
+7. the file Mod order, `CMFProviderOrder1` to `CMFProviderOrder8` (File order),
+8. CMF's default order, folder names sorted (Default).
 
 When two mods claim the same thing, a level decides between them only when it names one of them; a level that names another mod, Vanilla or nothing passes the question to the next level. A mod chosen for a piece wins every pin it has something for. On a pin where it has nothing, the next mod in order decides, or the game's own look shows when the player sets the General row "If the chosen mod has nothing for a pin" (or `CMFFile_Fallthrough`) to Vanilla. In-game choices come only from the menu add-on: without it every in-game level reads Automatic, and values a removed add-on left behind steer nothing. From CMF 1.6.0, a pick of a mod that sends no added info box lines (row `71`) or no tab hides (`35`) reads as Automatic for that row, so the other mods' lines and hides still apply.
 

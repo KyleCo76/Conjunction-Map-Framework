@@ -18,10 +18,11 @@
 // its height per type, tag or pin, art for a level variant type, claims by place (CMFRegisterForPlace), the player marker
 // and the player's own markers restyled by type, the game's own legend rows moved and whole filter tabs hidden, and the
 // pin list in the log, [CMFSettings] CMFLogPins, and provider presence without feature ownership); version 12: the info box's
-// place apart from its height (the tooltip keys tallMinHeight and the tall* places).
+// place apart from its height (the tooltip keys tallMinHeight and the tall* places); version 19: the Player setting level
+// (property 50: a provider marks its own player settings, which win over the Mod order).
 // Never remove a call once published.
 
-function CMFGetVersion() : int { return 18; }
+function CMFGetVersion() : int { return 19; }
 
 // API 14: frame programs and their winning provider's per-layer phase.
 function CMFPropertyIconFrames() : int { return 45; }
@@ -31,6 +32,12 @@ function CMFPropertyFrameOffset() : int { return 47; }
 function CMFPropertyPictureFit() : int { return 48; }
 // Version 18: a provider's grid keep epoch (number = any int). Changing it revokes that provider's earlier keeps.
 function CMFPropertyGridKeepEpoch() : int { return 49; }
+// Version 19: a provider's player settings (text = the comma list of its own property ids that are the player's own picks,
+// number 1; "" or 0 clears). Not a stored claim: for those properties its claims sit in the Player setting level.
+function CMFPropertyPlayerSetting() : int { return 50; }
+function CMFPropertyPinScaleFactor() : int { return 51; }
+function CMFPropertySelectedScaleFactor() : int { return 52; }
+function CMFPropertyPinScaleStandard() : int { return 53; }
 
 function CMFPropertyIcon() : int { return 1; }
 function CMFPropertyLegendIcon() : int { return 2; }
@@ -357,7 +364,7 @@ function CMFPropertyTextFree(propertyId : int) : bool
 		propertyId == CMFPropertyCategoryNoDefault() || propertyId == CMFPropertySpreadRank() ||
 		propertyId == CMFPropertyHoverName() || propertyId == CMFPropertyTabHidden() ||
 		propertyId == 32 || propertyId == 33 || propertyId == 34 || propertyId == 39 || propertyId == 41 || propertyId == 43 ||
-		propertyId == 44 || propertyId == 47 || propertyId == 48;
+		propertyId == 44 || propertyId == 47 || propertyId == 48 || propertyId == 51 || propertyId == 52 || propertyId == 53;
 }
 
 // Version 6: the click properties (16, 20, 21), which reach user pins and follow the click's winner.
@@ -829,6 +836,9 @@ class CMFCore extends CObject
 	private var hideClaims : array<SCMFClaim>;
 	private var tabHideClaims : array<SCMFClaim>;
 	private var labelHideClaims : array<SCMFClaim>;
+	// Version 19: the size multipliers (51, 52) of every provider, and the standard size of the current full build (percent, 0 = off).
+	private var scaleClaims : array<SCMFClaim>;
+	private var standardScale : int;
 	private var labelHidePins : array<SCMFLabelHideState>;
 	private var labelHideBuckets : array<int>;
 	private var labelHideOffers : array<string>;
@@ -846,6 +856,12 @@ class CMFCore extends CObject
 	private var declaredAddedTypes : int;
 	private var addedLastType : string;
 	private var addedLastIndex : int;
+	// Version 19: the providers that mark some of their properties as the player's own settings (CMFPropertyPlayerSetting),
+	// each with its comma list of property ids; anySetter and setterMarked are worked out in Prepare.
+	private var playerSetters : array<string>;
+	private var playerSetterIds : array<string>;
+	private var anySetter : bool;
+	private var setterMarked : array<bool>;
 	private var keepEpochProviders : array<string>;
 	private var keepEpochValues : array<int>;
 	private var keepRevoked : int;
@@ -1893,7 +1909,7 @@ class CMFCore extends CObject
 		return propertyId == 1 || propertyId == 3 || propertyId == 9 ||
 			(propertyId >= 10 && propertyId <= 15) || propertyId == 17 || propertyId == 18 ||
 			propertyId == 19 || propertyId == 22 || (propertyId >= 28 && propertyId <= 36) ||
-			propertyId == 39 || (propertyId >= 42 && propertyId <= 48);
+			propertyId == 39 || (propertyId >= 42 && propertyId <= 48) || (propertyId >= 51 && propertyId <= 53);
 	}
 
 	private function ClaimTargetOk(claim : SCMFClaim) : bool
@@ -1904,6 +1920,10 @@ class CMFCore extends CObject
 			return false;
 		}
 		if (IsNameValid(claim.mapContext) && claim.propertyId != 5 && claim.propertyId != 9)
+		{
+			return false;
+		}
+		if (claim.propertyId == 53 && claim.level != 0)
 		{
 			return false;
 		}
@@ -1944,6 +1964,7 @@ class CMFCore extends CObject
 			return "level";
 		}
 		if (IsNameValid(claim.mapContext) && claim.propertyId != 5 && claim.propertyId != 9) { return "context"; }
+		if (claim.propertyId == 53 && claim.level != 0) { return "level"; }
 		if (claim.level == 0)
 		{
 			if (!EveryPinProperty(claim.propertyId)) { return "level"; }
@@ -2148,7 +2169,9 @@ class CMFCore extends CObject
 				incoming.number = 1;
 			}
 		}
-		if ((incoming.propertyId == CMFPropertyPinScale() && (incoming.number < 25 || incoming.number > 400)) ||
+		if (((incoming.propertyId == CMFPropertyPinScale() || incoming.propertyId == 51 || incoming.propertyId == 52) &&
+			(incoming.number < 25 || incoming.number > 400)) ||
+			(incoming.propertyId == 53 && (incoming.number < 0 || incoming.number > 1)) ||
 			(incoming.propertyId == CMFPropertyLabelPlace() && (incoming.number < 0 || incoming.number > 10000)) ||
 			(incoming.propertyId == CMFPropertyLabelColor() && (incoming.number < 0 || incoming.number > 16777215)) ||
 			(incoming.propertyId == 3 && (incoming.number < 0 || incoming.number > 16777215)) ||
@@ -2234,6 +2257,13 @@ class CMFCore extends CObject
 		var animationReleased : bool;
 		NoteProviderPresent(provider);
 		released = 0;
+		i = playerSetters.FindFirst(provider);
+		if (i >= 0)
+		{
+			playerSetters.Erase(i);
+			playerSetterIds.Erase(i);
+			dirty = true;
+		}
 		for (i = claims.Size() - 1; i >= 0; i -= 1)
 		{
 			if (claims[i].provider == provider)
@@ -4159,6 +4189,8 @@ class CMFCore extends CObject
 				return "File order";
 			case 7:
 				return "Default";
+			case 8:
+				return "Player setting";
 		}
 		return "";
 	}
@@ -4173,11 +4205,7 @@ class CMFCore extends CObject
 		if (choicesActive && choice >= 0 && a != b)
 		{
 			feature = choiceFeature[choice];
-			if (choice != feature && PickDecides(menuChoices[choice], a, b, result))
-			{
-				return result;
-			}
-			if (PickDecides(menuChoices[feature], a, b, result))
+			if (MenuPickDecides(choice, a, b, result))
 			{
 				return result;
 			}
@@ -4195,6 +4223,23 @@ class CMFCore extends CObject
 			}
 		}
 		return ProviderBeats(a, b);
+	}
+
+	// Version 19: the two in-game picks (the piece's Advanced row, then its feature's Basic row), which stay above the
+	// Player setting level.
+	private function MenuPickDecides(choice : int, a : string, b : string, out result : bool) : bool
+	{
+		var feature : int;
+		if (!choicesActive || choice < 0 || a == b)
+		{
+			return false;
+		}
+		feature = choiceFeature[choice];
+		if (choice != feature && PickDecides(menuChoices[choice], a, b, result))
+		{
+			return true;
+		}
+		return PickDecides(menuChoices[feature], a, b, result);
 	}
 
 	private function PickDecides(pick : string, a : string, b : string, out result : bool) : bool
@@ -4301,6 +4346,9 @@ class CMFCore extends CObject
 			case 10:
 			case 32:
 			case 44:
+			case 51:
+			case 52:
+			case 53:
 				return 27; // Size_Scale
 			case 22:
 				return 28; // Size_Lead
@@ -4786,6 +4834,23 @@ class CMFCore extends CObject
 		feature = choiceFeature[choice];
 		for (l = 1; l <= 6; l += 1)
 		{
+			// Version 19: the Player setting level sits between the Basic pick and the Mod order.
+			if (l == 3 && anySetter && skipLevel != 8)
+			{
+				best = "";
+				for (i = 0; i < candidates.Size(); i += 1)
+				{
+					if (SetterOffers(candidates[i], choice) && (best == "" || ProviderBeats(candidates[i], best)))
+					{
+						best = candidates[i];
+					}
+				}
+				if (best != "")
+				{
+					level = 8;
+					return best;
+				}
+			}
 			if (l == skipLevel)
 			{
 				continue;
@@ -4984,11 +5049,13 @@ class CMFCore extends CObject
 		}
 		providerOrder = CMFSettingsProviderOrder();
 		ReadChoices();
+		PrepareSetters();
 		animationClaimIndices.Clear();
 		winners.Clear();
 		hideClaims.Clear();
 		tabHideClaims.Clear();
 		labelHideClaims.Clear();
+		scaleClaims.Clear();
 		choiceOnlySkipped.Clear();
 		infoAdds.Clear();
 		tabsHidden.Clear();
@@ -5016,6 +5083,12 @@ class CMFCore extends CObject
 			if (claims[i].propertyId == CMFPropertyLabelHide())
 			{
 				if (claims[i].number != 0) { labelHideClaims.PushBack(claims[i]); }
+				continue;
+			}
+			// Version 19: size multipliers are never arbitrated: every provider's applies (WriteScaleFactors).
+			if (claims[i].propertyId == 51 || claims[i].propertyId == 52)
+			{
+				scaleClaims.PushBack(claims[i]);
 				continue;
 			}
 			if (claims[i].propertyId == CMFPropertyTabHide())
@@ -5047,7 +5120,8 @@ class CMFCore extends CObject
 				continue;
 			}
 			// A withdrawn label hide or info box height leaves the slot to the next folder.
-			if ((claims[i].propertyId == CMFPropertyLabelHide() || claims[i].propertyId == CMFPropertyInfoBoxHeight() || claims[i].propertyId == 39) &&
+			if ((claims[i].propertyId == CMFPropertyLabelHide() || claims[i].propertyId == CMFPropertyInfoBoxHeight() || claims[i].propertyId == 39 ||
+				claims[i].propertyId == 53) &&
 				claims[i].number == 0)
 			{
 				continue;
@@ -5249,6 +5323,10 @@ class CMFCore extends CObject
 		for (i = 0; i < labelHideClaims.Size(); i += 1)
 		{
 			NoteLookupClaim(labelHideClaims[i]);
+		}
+		for (i = 0; i < scaleClaims.Size(); i += 1)
+		{
+			NoteLookupClaim(scaleClaims[i]);
 		}
 		for (i = 0; i < infoAdds.Size(); i += 1)
 		{
@@ -5766,6 +5844,11 @@ class CMFCore extends CObject
 				gamePinNow = false;
 			}
 			WriteStateIcon(dataObject, pinKey, NameToString(realType), pinTag);
+		}
+		// Version 19: the game's own pins take the size multipliers here (FillMissingPinFields skips a pin marked done).
+		if (scaleClaims.Size() > 0)
+		{
+			WriteScaleFactors(dataObject, pinKey, pinKey, pinTag, CMFLevelPlace());
 		}
 		ClearPinContext();
 	}
@@ -6346,6 +6429,14 @@ class CMFCore extends CObject
 					}
 					WriteStateIcon(dataObject, pinType, "", pinTag);
 				}
+				if (scaleClaims.Size() > 0)
+				{
+					WriteScaleFactors(dataObject, pinType, filtered, pinTag, maxLevel);
+				}
+				if (!fullList && standardScale > 0)
+				{
+					dataObject.SetMemberFlashNumber("cmfStandardScale", (float)standardScale / 100.0);
+				}
 				ClearPinContext();
 			}
 			// Version 11: the player marker and the player's own markers take type claims on exactly their type.
@@ -6382,12 +6473,229 @@ class CMFCore extends CObject
 		if (fullList)
 		{
 			RemoveHiddenPins(flashArray, area, mapContext);
+			FinishStandard(flashArray);
+			if (debugTiming && (scaleClaims.Size() > 0 || standardScale > 0))
+			{
+				LogScaleLines(flashArray);
+			}
 			if (debugTiming && addedTypes.Size() > 0)
 			{
 				LogAddedPins();
 			}
 		}
 		listOpen = false;
+	}
+
+	// Version 19: the Pin size row (choice 27) reading Vanilla leaves every pin at the game's size.
+	private function SizeIsVanilla() : bool
+	{
+		return choicesActive && decideAnswer[27] == "vanilla";
+	}
+
+	// Version 19: whether a size multiplier covers the pin. A type claim also reaches the pin's legend type.
+	private function ScaleCovers(claim : SCMFClaim, pinType : string, filtered : string, pinTag : name, maxLevel : int) : bool
+	{
+		if ((claim.level == 2 || claim.level == CMFLevelPlace()) && (CMFKindHidden(pinType) || CMFKindHidden(filtered)))
+		{
+			return false;
+		}
+		return Covers(claim, pinType, pinTag, maxLevel) || (claim.level == 1 && NameToString(claim.pinType) == filtered);
+	}
+
+	// Version 19: the product of every provider's most specific covering claim of one property (51 or 52), as a
+	// factor (150 percent = 1.5). 0 when no claim covers the pin.
+	private function ScaleProduct(propertyId : int, pinType : string, filtered : string, pinTag : name, maxLevel : int) : float
+	{
+		var i, at, rank, n : int;
+		var providers : array<string>;
+		var ranks, numbers : array<int>;
+		var product : float;
+		for (i = 0; i < scaleClaims.Size(); i += 1)
+		{
+			if (scaleClaims[i].propertyId != propertyId || !ScaleCovers(scaleClaims[i], pinType, filtered, pinTag, maxLevel))
+			{
+				continue;
+			}
+			rank = Specific(scaleClaims[i]);
+			if (scaleClaims[i].level == 1 && NameToString(scaleClaims[i].pinType) != pinType)
+			{
+				rank = 1;
+			}
+			at = providers.FindFirst(scaleClaims[i].provider);
+			if (at < 0)
+			{
+				providers.PushBack(scaleClaims[i].provider);
+				ranks.PushBack(rank);
+				numbers.PushBack(scaleClaims[i].number);
+			}
+			else if (rank > ranks[at])
+			{
+				ranks[at] = rank;
+				numbers[at] = scaleClaims[i].number;
+			}
+		}
+		if (numbers.Size() == 0)
+		{
+			return 0.0;
+		}
+		product = 1.0;
+		for (i = 0; i < numbers.Size(); i += 1)
+		{
+			n = numbers[i];
+			product = product * (float)n / 100.0;
+		}
+		return product;
+	}
+
+	// Version 19: the size multipliers of one pin (not the player's or a user pin). Written only while some provider
+	// sent one, and not while the Pin size row reads Vanilla.
+	private function WriteScaleFactors(dataObject : CScriptedFlashObject, pinType : string, filtered : string,
+		pinTag : name, maxLevel : int)
+	{
+		var factor : float;
+		if (SizeIsVanilla() || dataObject.GetMemberFlashBool("isPlayer") || dataObject.GetMemberFlashBool("isUserPin"))
+		{
+			return;
+		}
+		factor = ScaleProduct(51, pinType, filtered, pinTag, maxLevel);
+		if (factor > 0.0)
+		{
+			dataObject.SetMemberFlashNumber("cmfScaleFactor", factor);
+		}
+		factor = ScaleProduct(52, pinType, filtered, pinTag, maxLevel);
+		if (factor > 0.0)
+		{
+			dataObject.SetMemberFlashNumber("cmfSelectedFactor", factor);
+		}
+	}
+
+	// Version 19: a size fraction as whole percent.
+	private function ScalePercent(scale : float) : int
+	{
+		return (int)(scale * 100.0 + 0.5);
+	}
+
+	// Version 19: whether size a (percent) is the better standard than b: nearer 100, then the smaller.
+	private function StandardCloser(a : int, b : int) : bool
+	{
+		var da, db : int;
+		da = a - 100;
+		db = b - 100;
+		if (da < 0) { da = -da; }
+		if (db < 0) { db = -db; }
+		return da < db || (da == db && a < b);
+	}
+
+	// Version 19: the most common base size (percent) among the pins left in a full list (the player's and the user's
+	// own pins, and hidden pins already removed, do not count). A pin no mod sizes counts as 100. Ties go to the size
+	// nearer 100, then the smaller.
+	private function StandardOfList(flashArray : CScriptedFlashArray) : int
+	{
+		var i, at, percent, best, bestCount : int;
+		var dataObject : CScriptedFlashObject;
+		var percents, counts : array<int>;
+		var scale : float;
+		for (i = 0; i < flashArray.GetLength(); i += 1)
+		{
+			dataObject = flashArray.GetElementFlashObject(i);
+			if (!dataObject || dataObject.GetMemberFlashBool("isPlayer") || dataObject.GetMemberFlashBool("isUserPin"))
+			{
+				continue;
+			}
+			scale = dataObject.GetMemberFlashNumber("cmfIconScale");
+			percent = 100;
+			if (scale > 0.0)
+			{
+				percent = ScalePercent(scale);
+			}
+			at = percents.FindFirst(percent);
+			if (at < 0)
+			{
+				percents.PushBack(percent);
+				counts.PushBack(1);
+			}
+			else
+			{
+				counts[at] += 1;
+			}
+		}
+		best = 100;
+		for (i = 0; i < percents.Size(); i += 1)
+		{
+			if (counts[i] > bestCount || (counts[i] == bestCount && StandardCloser(percents[i], best)))
+			{
+				best = percents[i];
+				bestCount = counts[i];
+			}
+		}
+		return best;
+	}
+
+	// Version 19, CMFDebug only: one line per pin type of a full list with the pin's base size, its factors, the
+	// standard and the size the panel draws (before the clamp), so a launch log shows base x factor.
+	private function LogScaleLines(flashArray : CScriptedFlashArray)
+	{
+		var i, at : int;
+		var dataObject : CScriptedFlashObject;
+		var seen : array<string>;
+		var kind : string;
+		var sizeBase, factor, selected, sizeFinal : float;
+		for (i = 0; i < flashArray.GetLength(); i += 1)
+		{
+			dataObject = flashArray.GetElementFlashObject(i);
+			if (!dataObject || dataObject.GetMemberFlashBool("isPlayer") || dataObject.GetMemberFlashBool("isUserPin"))
+			{
+				continue;
+			}
+			kind = dataObject.GetMemberFlashString("type");
+			at = seen.FindFirst(kind);
+			if (at >= 0)
+			{
+				continue;
+			}
+			seen.PushBack(kind);
+			sizeBase = dataObject.GetMemberFlashNumber("cmfIconScale");
+			if (sizeBase <= 0.0) { sizeBase = 1.0; }
+			factor = dataObject.GetMemberFlashNumber("cmfScaleFactor");
+			if (factor <= 0.0) { factor = 1.0; }
+			selected = dataObject.GetMemberFlashNumber("cmfSelectedFactor");
+			if (selected <= 0.0) { selected = 1.0; }
+			sizeFinal = sizeBase;
+			if (standardScale > 0) { sizeFinal = (float)standardScale / 100.0; }
+			sizeFinal = sizeFinal * factor;
+			CMFLog("scale type=" + kind + " base=" + FloatToString(sizeBase) + " factor=" + FloatToString(factor) + " selected=" + FloatToString(selected) +
+				" standard=" + standardScale + " final=" + FloatToString(sizeFinal));
+		}
+	}
+
+	// Version 19, the end of a full list: with Standardize (53) won, every pin of the list carries the build's standard
+	// size (cmfStandardScale, a fraction) before the panel draws it. A second pass for late pins keeps the value.
+	private function FinishStandard(flashArray : CScriptedFlashArray)
+	{
+		var i : int;
+		var dataObject : CScriptedFlashObject;
+		var claim : SCMFClaim;
+		if (!catching)
+		{
+			standardScale = 0;
+			if (PropertyWon(53) && !SizeIsVanilla() && Find(53, "", '', 0, claim))
+			{
+				standardScale = StandardOfList(flashArray);
+				CMFLog("scale standard percent=" + standardScale + " pins=" + flashArray.GetLength());
+			}
+		}
+		if (standardScale <= 0)
+		{
+			return;
+		}
+		for (i = 0; i < flashArray.GetLength(); i += 1)
+		{
+			dataObject = flashArray.GetElementFlashObject(i);
+			if (dataObject && !dataObject.GetMemberFlashBool("isPlayer") && !dataObject.GetMemberFlashBool("isUserPin"))
+			{
+				dataObject.SetMemberFlashNumber("cmfStandardScale", (float)standardScale / 100.0);
+			}
+		}
 	}
 
 	// Version 11: the info box claims of one pin of the full list. A pushed pin keys on its own type, then its legend name;
@@ -7001,6 +7309,173 @@ class CMFCore extends CObject
 	// stay. Positions are the pins' posX and posY in world metres; a pin outside the grid's square is left alone.
 	// Version 18: a grid keep is stored on the pin as one record per provider, ";provider=epoch;" repeated, and is valid
 	// while the record's epoch equals that provider's current epoch (a provider with no row is at epoch 0).
+	// Version 19: why a property id cannot be a player setting: "" when it can. Added-together properties and the ones
+	// that are not claims have no winner, so the level cannot order them.
+	private function PlayerSettingRefusal(id : int) : string
+	{
+		if (id == 5 || id == CMFPropertyHidden() || id == CMFPropertyLabelHide() || id == CMFPropertyTabHide() ||
+			id == CMFPropertyTabHidden() || id == CMFPropertyPinClickHint() || id == CMFPropertyPinClickButton() || id == 47 ||
+			id == 51 || id == 52)
+		{
+			return "added";
+		}
+		if (id < 1 || (id > 48 && id != 53) || !CMFHasProperty(id) || id == CMFPropertyPresent() || id == 40)
+		{
+			return "unknown";
+		}
+		return "";
+	}
+
+	// Version 19: replaces the provider's list of player-setting properties; "" clears it. A changed list prepares
+	// the winners again at the next lookup; the same list changes nothing.
+	public function SetPlayerSettings(provider : string, text : string)
+	{
+		var rest, word, clean, why : string;
+		var id, at : int;
+		rest = text + ",";
+		while (StrLen(rest) > 0)
+		{
+			word = StrBeforeFirst(rest, ",");
+			rest = StrAfterFirst(rest, ",");
+			id = StringToInt(word, -1);
+			if (word == "" || word != "" + id)
+			{
+				continue;
+			}
+			why = PlayerSettingRefusal(id);
+			if (why != "")
+			{
+				CMFLog("player setting refused provider=" + provider + " property=" + id + " reason=" + why);
+			}
+			else if (!CMFListHas(clean, word))
+			{
+				if (clean != "") { clean += ","; }
+				clean += word;
+			}
+		}
+		at = playerSetters.FindFirst(provider);
+		if (clean == "" && at >= 0)
+		{
+			playerSetters.Erase(at);
+			playerSetterIds.Erase(at);
+			dirty = true;
+		}
+		else if (clean != "" && at < 0)
+		{
+			playerSetters.PushBack(provider);
+			playerSetterIds.PushBack(clean);
+			dirty = true;
+		}
+		else if (clean != "" && playerSetterIds[at] != clean)
+		{
+			playerSetterIds[at] = clean;
+			dirty = true;
+		}
+	}
+
+	// Version 19: worked out once per preparation (the marks are fixed until the next one).
+	private function PrepareSetters()
+	{
+		var i, id : int;
+		var rest, word : string;
+		setterMarked.Clear();
+		anySetter = playerSetters.Size() > 0;
+		for (i = 0; i < 64; i += 1)
+		{
+			setterMarked.PushBack(false);
+		}
+		for (i = 0; i < playerSetters.Size(); i += 1)
+		{
+			rest = playerSetterIds[i] + ",";
+			while (StrLen(rest) > 0)
+			{
+				word = StrBeforeFirst(rest, ",");
+				rest = StrAfterFirst(rest, ",");
+				id = StringToInt(word, -1);
+				if (id >= 0 && id < 64)
+				{
+					setterMarked[id] = true;
+				}
+			}
+			CMFLog("player setting provider=" + playerSetters[i] + " properties=" + playerSetterIds[i]);
+		}
+	}
+
+	private function IsSetter(provider : string, propertyId : int) : bool
+	{
+		var at : int;
+		at = playerSetters.FindFirst(provider);
+		return at >= 0 && CMFListHas(playerSetterIds[at], "" + propertyId);
+	}
+
+	// Decides only when exactly one of a and b marks propertyId as a player setting: that one wins. Two setters, or
+	// none, pass on to the next step.
+	private function SetterDecides(propertyId : int, a : string, b : string, out result : bool) : bool
+	{
+		var markA, markB : bool;
+		if (!anySetter || a == b)
+		{
+			return false;
+		}
+		markA = IsSetter(a, propertyId);
+		markB = IsSetter(b, propertyId);
+		if (markA == markB)
+		{
+			return false;
+		}
+		result = markA;
+		return true;
+	}
+
+	// Version 19: between the pin's current owner and a provider styling it: the menu's pick, then the player setting
+	// level (version 19), then the piece's order. Same answer as PieceBeats while no provider marks a setting.
+	private function StyleOwnerBeats(choice : int, propertyId : int, owner : string, provider : string, pinType : string) : bool
+	{
+		var result : bool;
+		if (anySetter && !IsOwnMarkerType(pinType) && !MenuPickDecides(choice, owner, provider, result) &&
+			SetterDecides(propertyId, owner, provider, result))
+		{
+			return result;
+		}
+		return PieceBeats(choice, owner, provider);
+	}
+
+	// The player's own markers keep their look whatever the settings say (version 11).
+	private function IsOwnMarkerType(pinType : string) : bool
+	{
+		return pinType == "Player" || (StrLen(pinType) == 5 && StrBeginsWith(pinType, "User"));
+	}
+
+	// Status page: whether provider marks a property that belongs to this choice (a property split by pin group
+	// belongs to each group's choice).
+	private function SetterOffers(provider : string, choice : int) : bool
+	{
+		var at, id, g : int;
+		var rest, word : string;
+		at = playerSetters.FindFirst(provider);
+		if (at < 0)
+		{
+			return false;
+		}
+		rest = playerSetterIds[at] + ",";
+		while (StrLen(rest) > 0)
+		{
+			word = StrBeforeFirst(rest, ",");
+			rest = StrAfterFirst(rest, ",");
+			id = StringToInt(word, -1);
+			if (id >= 0 && PropertyChoice(id, "") == choice)
+			{
+				return true;
+			}
+			for (g = 1; g <= 8; g += 1)
+			{
+				if (choice == 10 + g && (id == 1 || id == 2 || id == 31 || id == 45)) { return true; }
+				if (choice == 18 + g && (id == 3 || id == 41 || id == 33)) { return true; }
+			}
+		}
+		return false;
+	}
+
 	public function SetGridKeepEpoch(provider : string, epoch : int)
 	{
 		var at : int;
@@ -7442,6 +7917,11 @@ class CMFCore extends CObject
 				dataObject.SetMemberFlashNumber("cmfPinZoomMin", x);
 				dataObject.SetMemberFlashNumber("cmfPinZoomMax", y);
 				dataObject.SetMemberFlashBool("cmfPinZoomEnabled", true);
+				// Version 19: a zoom range the player set in a mod's own settings is held inside the region's range (panel).
+				if (anySetter && IsSetter(provider, 36))
+				{
+					dataObject.SetMemberFlashBool("cmfPinZoomClamp", true);
+				}
 				break;
 		}
 	}
@@ -7552,7 +8032,8 @@ class CMFCore extends CObject
 	private function Find(propertyId : int, pinType : string, pinTag : name, maxLevel : int, out result : SCMFClaim) : bool
 	{
 		var i, a, b, c, next, best, picked, chosen, choice, rank, bestRank, pickedRank, t, tv, g, memoAt : int;
-		var matches : bool;
+		var setterBest, setterRank : int;
+		var matches, setterOn : bool;
 		var answer : string;
 		if (propertyId < 0 || propertyId >= propertyWon.Size() || !propertyWon[propertyId])
 		{
@@ -7562,6 +8043,8 @@ class CMFCore extends CObject
 		picked = -1;
 		bestRank = -1;
 		pickedRank = -1;
+		setterBest = -1;
+		setterRank = -1;
 		answer = "";
 		if (choicesActive)
 		{
@@ -7683,6 +8166,7 @@ class CMFCore extends CObject
 			timingFinds += 1;
 			timingCandidates += candidates.Size();
 		}
+		setterOn = anySetter && setterMarked[propertyId] && maxLevel >= 0 && !IsOwnMarkerType(pinType);
 		for (a = 0; a < candidates.Size(); a += 1)
 		{
 			i = candidates[a];
@@ -7704,11 +8188,23 @@ class CMFCore extends CObject
 				best = i;
 				bestRank = rank;
 			}
+			// Version 19: the player's own settings win at any level of detail (not on the player's own markers).
+			if (setterOn && IsSetter(winners[i].provider, propertyId) &&
+				(setterBest < 0 || SetterClaimBeats(winners[i], rank, winners[setterBest], setterRank)))
+			{
+				setterBest = i;
+				setterRank = rank;
+			}
 			if (answer != "" && winners[i].provider == answer && (picked < 0 || rank > pickedRank))
 			{
 				picked = i;
 				pickedRank = rank;
 			}
+		}
+		if (setterBest >= 0)
+		{
+			best = setterBest;
+			bestRank = setterRank;
 		}
 		// A selected global offer is a fallback; any eligible specific claim still wins.
 		chosen = -1;
@@ -7737,12 +8233,31 @@ class CMFCore extends CObject
 		return true;
 	}
 
+	// Version 19: between two setters' claims on one pin: the earlier provider; within one provider, the more specific claim.
+	private function SetterClaimBeats(a : SCMFClaim, rankA : int, b : SCMFClaim, rankB : int) : bool
+	{
+		if (a.provider != b.provider)
+		{
+			return ProviderBeats(a.provider, b.provider);
+		}
+		return rankA > rankB;
+	}
+
 	// Version 12: between two providers' tag claims on one tag, the one whose provider wins the pin's piece (choice).
 	private function TagBeats(choice : int, a : SCMFClaim, b : SCMFClaim) : bool
 	{
+		var result : bool;
 		if (a.level != 2 || b.level != 2 || a.provider == b.provider)
 		{
 			return false;
+		}
+		if (MenuPickDecides(choice, a.provider, b.provider, result))
+		{
+			return result;
+		}
+		if (anySetter && SetterDecides(a.propertyId, a.provider, b.provider, result))
+		{
+			return result;
 		}
 		if (choicesActive && choice >= 0)
 		{
@@ -7842,11 +8357,27 @@ class CMFCore extends CObject
 	// registration order.
 	private function Beats(a : SCMFClaim, b : SCMFClaim) : bool
 	{
+		var choice : int;
+		var result : bool;
 		if (a.provider != b.provider)
 		{
+			choice = -1;
 			if (choicesActive)
 			{
-				return PieceBeats(PropertyChoice(a.propertyId, NameToString(a.pinType)), a.provider, b.provider);
+				choice = PropertyChoice(a.propertyId, NameToString(a.pinType));
+				if (MenuPickDecides(choice, a.provider, b.provider, result))
+				{
+					return result;
+				}
+			}
+			// Version 19: a provider that marks this property as the player's own setting wins over one that does not.
+			if (anySetter && SetterDecides(a.propertyId, a.provider, b.provider, result))
+			{
+				return result;
+			}
+			if (choicesActive)
+			{
+				return PieceBeats(choice, a.provider, b.provider);
 			}
 			return ProviderBeats(a.provider, b.provider);
 		}
@@ -8151,7 +8682,7 @@ class CMFCore extends CObject
 		owner = CMFPinOwner(dataObject, ownerField);
 		if (owner != "" && owner != provider)
 		{
-			if (PieceBeats(choice, owner, provider))
+			if (StyleOwnerBeats(choice, propertyId, owner, provider, dataObject.GetMemberFlashString("type")))
 			{
 				NoteStyleShadow(provider, owner, dataObject, propertyId);
 				if (propertyId == 45 || propertyId == 46) { AnimationNote(provider, propertyId, "shadowed"); AnimationPrune(); }
@@ -8996,7 +9527,7 @@ function CMFHasProperty(propertyId : int) : bool
 		propertyId == CMFPropertyInfoTitle() || propertyId == CMFPropertyInfoText() ||
 		propertyId == CMFPropertyIconUndiscovered() || propertyId == CMFPropertyIconCompleted() ||
 		propertyId == CMFPropertyTabHidden() || propertyId == CMFPropertyPresent() ||
-		(propertyId >= 31 && propertyId <= 36) || (propertyId >= 39 && propertyId <= 49);
+		(propertyId >= 31 && propertyId <= 36) || (propertyId >= 39 && propertyId <= 53);
 }
 
 // One pin type (a map area for CMFPropertyBackground, a filteredType for the legend row and label, a
@@ -9051,6 +9582,20 @@ function CMFRegister(provider : string, propertyId : int, target : name, mapCont
 			return false;
 		}
 		theGame.CMFGetCore().SetGridKeepEpoch(provider, number);
+		return true;
+	}
+	if (propertyId == CMFPropertyPlayerSetting())
+	{
+		if (!present)
+		{
+			CMFLog("rejected provider=" + provider + " property=" + propertyId + " reason=empty");
+			return false;
+		}
+		if (number == 0)
+		{
+			text = "";
+		}
+		theGame.CMFGetCore().SetPlayerSettings(provider, text);
 		return true;
 	}
 	if (!CMFHasProperty(propertyId))
@@ -9149,7 +9694,8 @@ function CMFOnePinProperty(propertyId : int) : bool
 		propertyId == CMFPropertyHoverName() || propertyId == CMFPropertyInfoTitle() || propertyId == CMFPropertyInfoText() ||
 		propertyId == CMFPropertyIconUndiscovered() || propertyId == CMFPropertyIconCompleted() ||
 		(propertyId >= 31 && propertyId <= 36) || propertyId == 39 || propertyId == 42 || propertyId == 43 ||
-		propertyId == 44 || propertyId == 45 || propertyId == 46 || propertyId == 47 || propertyId == 48;
+		propertyId == 44 || propertyId == 45 || propertyId == 46 || propertyId == 47 || propertyId == 48 ||
+		propertyId == 51 || propertyId == 52;
 }
 
 // Version 11: one pin by place, for a pin with no tag (pins a mod pushes with plain numbers) or with a tag nobody knows:
@@ -10292,7 +10838,7 @@ function CMFHasAbility(part : name, key : name) : bool
 	if (part == 'screen' && key == 'keyDecline') { return true; }
 	if (part == 'claims')
 	{
-		return CMFListHas("tagTint,placeClaims,playerArt,levelVariants,vanillaRows,everyPinIcon,withdraw,labelHideMerge,everyPin,iconFrames,iconPrograms,pictureFit",
+		return CMFListHas("tagTint,placeClaims,playerArt,levelVariants,vanillaRows,everyPinIcon,withdraw,labelHideMerge,everyPin,iconFrames,iconPrograms,pictureFit,playerSetting,scaleFactor,scaleStandard",
 			NameToString(key));
 	}
 	if (!IsNameValid(key))

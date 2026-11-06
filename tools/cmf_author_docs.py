@@ -107,6 +107,7 @@ PAGES = [
     ('Animated-Pictures', None, 'Pins and the legend', [guide('Animated pictures (API version 14)')]),
     ('Pins-Other-Mods-Add', None, 'Pins and the legend', [guide('Pins other mods add (API version 18)')]),
     ('Grid-Keeps-Refresh-One-Pin', None, 'Pins and the legend', [guide('Keeping pins over a grid, refreshing and one-pin updates (API version 18)')]),
+    ('Player-Settings-And-Size', None, 'Pins and the legend', [guide('Player settings and size multipliers (API version 19)')]),
     ('Spreading-Stacked-Pins', None, 'Pins and the legend', [guide('Spreading stacked pins (API version 6)')]),
     ('Map-Theme', None, "The map's look and behaviour", [guide('The map theme (API version 5)')]),
     ('Theme-Parts-and-Keys', None, "The map's look and behaviour", [page_file(THEME)]),

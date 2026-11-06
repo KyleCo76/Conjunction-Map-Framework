@@ -35,4 +35,4 @@ if (CMFHasAbility('spread', ''))
 
 ---
 
-[Previous: Keeping pins over a grid, refreshing and one-pin updates](Grid-Keeps-Refresh-One-Pin.md) · [Contents](Home.md) · [Next: The map theme](Map-Theme.md)
+[Previous: Player settings and size multipliers](Player-Settings-And-Size.md) · [Contents](Home.md) · [Next: The map theme](Map-Theme.md)

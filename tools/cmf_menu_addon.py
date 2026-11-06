@@ -33,7 +33,7 @@ from xml.sax.saxutils import quoteattr
 
 ROOT = Path(__file__).resolve().parents[1]
 MOD = 'modCMFInGameMenu'
-VERSION = '1.5.1'
+VERSION = '1.5.2'
 MIN_API = 11
 MENU = ROOT/'source/menu'/(MOD + '.xml')
 CATALOG = ROOT/'source/menu/strings.json'

@@ -64,7 +64,7 @@ def pin():
 class TextTests(unittest.TestCase):
     def test_property_49_is_known_and_makes_no_claim(self):
         self.assertIn('function CMFPropertyGridKeepEpoch() : int { return 49; }', CORE)
-        self.assertIn('propertyId <= 49', ws_function(CORE, 'function CMFHasProperty('))
+        self.assertIn('propertyId <= 53', ws_function(CORE, 'function CMFHasProperty('))
         body = ws_function(CORE, 'function CMFRegister(')
         branch = body.index('propertyId == CMFPropertyGridKeepEpoch()')
         self.assertLess(branch, body.index('if (!CMFHasProperty(propertyId))'))

@@ -77,7 +77,7 @@ class PublicTests(unittest.TestCase):
 
     def test_ability_and_version(self):
         self.assertIn("if (part == 'pins' && key == 'addedList') { return true; }", ws_function(CORE, 'function CMFHasAbility('))
-        self.assertIn('function CMFGetVersion() : int { return 18; }', CORE)
+        self.assertIn('function CMFGetVersion() : int { return 19; }', CORE)
 
     def test_outputs_cleared_first(self):
         mods = ws_function(CORE, 'public function AddedPinMods(')

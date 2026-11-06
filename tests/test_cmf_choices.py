@@ -391,6 +391,7 @@ class AuthorityTests(unittest.TestCase):
                      'if (pick == "vanilla" || (!candidates.Contains(pick) && fallVanilla))'):
             self.assertIn(line, winner)
         beats = function_body(text, 'public function PieceBeats(choice : int, a : string, b : string) : bool')
+        beats = function_body(text, 'private function MenuPickDecides(choice : int, a : string, b : string, out result : bool) : bool') + beats
         order = [beats.index(s) for s in ('PickDecides(menuChoices[choice]', 'PickDecides(menuChoices[feature]',
                                            'OrderDecides(menuOrder', 'PickDecides(fileChoices[choice]',
                                            'PickDecides(fileChoices[feature]', 'return ProviderBeats(a, b);')]
@@ -517,8 +518,9 @@ class MenuScriptTests(unittest.TestCase):
 
     def test_long_names_keep_their_brackets(self):
         text = self.script()
-        body = function_body(text, 'function CMFMenuFit(before : string, modName : string, after : string) : string')
-        self.assertIn('room = 32 - StrLen(before) - StrLen(after);', body)
+        self.assertIn('return CMFMenuFitTo(32, before, modName, after);', function_body(text, 'function CMFMenuFit(before : string, modName : string, after : string) : string'))
+        body = function_body(text, 'function CMFMenuFitTo(limit : int, before : string, modName : string, after : string) : string')
+        self.assertIn('room = limit - StrLen(before) - StrLen(after);', body)
         self.assertIn('space = StrFindLast(shown, " ");', body)
 
         def fit(before, name, after):
